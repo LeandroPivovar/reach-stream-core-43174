@@ -5,6 +5,15 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -22,11 +31,30 @@ import {
   Eye,
   Edit,
   Trash2,
-  Calendar,
-  Users
+  Calendar as CalendarIcon,
+  Users,
+  ArrowLeft,
+  ArrowRight,
+  Send,
+  Clock
 } from 'lucide-react';
 
 export default function Campanhas() {
+  const [isNewCampaignOpen, setIsNewCampaignOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [newCampaign, setNewCampaign] = useState({
+    name: '',
+    group: '',
+    format: '' as 'wpp' | 'sms' | 'email' | '',
+    content: '',
+    htmlContent: '',
+    scheduleType: 'now' as 'now' | 'schedule',
+    scheduleDate: '',
+    scheduleTime: ''
+  });
+
+  const contactGroups = ['VIP', 'Regular', 'Novos', 'Inativos'];
+
   const [campaigns, setCampaigns] = useState([
     {
       id: 1,
@@ -111,11 +139,39 @@ export default function Campanhas() {
     }
   };
 
+  const handleNextStep = () => {
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleCreateCampaign = () => {
+    console.log('Creating campaign:', newCampaign);
+    setIsNewCampaignOpen(false);
+    setCurrentStep(1);
+    setNewCampaign({
+      name: '',
+      group: '',
+      format: '',
+      content: '',
+      htmlContent: '',
+      scheduleType: 'now',
+      scheduleDate: '',
+      scheduleTime: ''
+    });
+  };
+
   const actions = (
     <>
       <HeaderActions.Filter onClick={() => console.log('Filter clicked')} />
       <HeaderActions.Export onClick={() => console.log('Export clicked')} />
-      <HeaderActions.Add onClick={() => console.log('Add campaign clicked')}>
+      <HeaderActions.Add onClick={() => setIsNewCampaignOpen(true)}>
         Nova Campanha
       </HeaderActions.Add>
     </>
@@ -174,7 +230,7 @@ export default function Campanhas() {
                 <p className="text-2xl font-bold text-foreground">2</p>
               </div>
               <div className="w-10 h-10 bg-orange-500/10 rounded-lg flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-orange-500" />
+                <CalendarIcon className="w-5 h-5 text-orange-500" />
               </div>
             </div>
           </Card>
@@ -295,6 +351,336 @@ export default function Campanhas() {
           </div>
         </Card>
       </div>
+
+      {/* Modal Nova Campanha */}
+      <Dialog open={isNewCampaignOpen} onOpenChange={(open) => {
+        setIsNewCampaignOpen(open);
+        if (!open) {
+          setCurrentStep(1);
+          setNewCampaign({
+            name: '',
+            group: '',
+            format: '',
+            content: '',
+            htmlContent: '',
+            scheduleType: 'now',
+            scheduleDate: '',
+            scheduleTime: ''
+          });
+        }
+      }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova Campanha - Etapa {currentStep} de 3</DialogTitle>
+          </DialogHeader>
+
+          {/* Etapa 1: Seleção de Grupo e Formato */}
+          {currentStep === 1 && (
+            <div className="space-y-6 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="campaign-name">Nome da Campanha *</Label>
+                <Input
+                  id="campaign-name"
+                  value={newCampaign.name}
+                  onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
+                  placeholder="Ex: Promoção Black Friday"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="contact-group">Grupo de Contatos *</Label>
+                <Select 
+                  value={newCampaign.group} 
+                  onValueChange={(value) => setNewCampaign({ ...newCampaign, group: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um grupo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contactGroups.map((group) => (
+                      <SelectItem key={group} value={group}>{group}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Formato de Envio *</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <Card 
+                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.format === 'wpp' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, format: 'wpp' })}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <MessageSquare className="w-8 h-8 text-green-500" />
+                      <span className="font-medium">WhatsApp</span>
+                      <span className="text-xs text-muted-foreground text-center">
+                        Mensagens de texto diretas
+                      </span>
+                    </div>
+                  </Card>
+
+                  <Card 
+                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.format === 'sms' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, format: 'sms' })}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <Smartphone className="w-8 h-8 text-blue-500" />
+                      <span className="font-medium">SMS</span>
+                      <span className="text-xs text-muted-foreground text-center">
+                        Mensagens de texto curtas
+                      </span>
+                    </div>
+                  </Card>
+
+                  <Card 
+                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.format === 'email' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, format: 'email' })}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <Mail className="w-8 h-8 text-orange-500" />
+                      <span className="font-medium">E-mail</span>
+                      <span className="text-xs text-muted-foreground text-center">
+                        Emails personalizados em HTML
+                      </span>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={!newCampaign.name || !newCampaign.group || !newCampaign.format}
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 2: Editor de Conteúdo */}
+          {currentStep === 2 && (
+            <div className="space-y-6 py-4">
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                {newCampaign.format === 'wpp' && <MessageSquare className="w-5 h-5 text-green-500" />}
+                {newCampaign.format === 'sms' && <Smartphone className="w-5 h-5 text-blue-500" />}
+                {newCampaign.format === 'email' && <Mail className="w-5 h-5 text-orange-500" />}
+                <div>
+                  <p className="font-medium">{newCampaign.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Grupo: {newCampaign.group}
+                  </p>
+                </div>
+              </div>
+
+              {/* Editor WhatsApp */}
+              {newCampaign.format === 'wpp' && (
+                <div className="grid gap-2">
+                  <Label htmlFor="wpp-content">Mensagem WhatsApp *</Label>
+                  <Textarea
+                    id="wpp-content"
+                    value={newCampaign.content}
+                    onChange={(e) => setNewCampaign({ ...newCampaign, content: e.target.value })}
+                    placeholder="Digite sua mensagem aqui...&#10;&#10;Dica: Use variáveis como {nome}, {email} para personalizar"
+                    rows={10}
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Caracteres: {newCampaign.content.length}
+                  </p>
+                </div>
+              )}
+
+              {/* Editor SMS */}
+              {newCampaign.format === 'sms' && (
+                <div className="grid gap-2">
+                  <Label htmlFor="sms-content">Mensagem SMS *</Label>
+                  <Textarea
+                    id="sms-content"
+                    value={newCampaign.content}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 160) {
+                        setNewCampaign({ ...newCampaign, content: e.target.value });
+                      }
+                    }}
+                    placeholder="Digite sua mensagem SMS (máx 160 caracteres)..."
+                    rows={6}
+                    maxLength={160}
+                  />
+                  <p className={`text-xs ${newCampaign.content.length > 140 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                    Caracteres: {newCampaign.content.length}/160
+                  </p>
+                </div>
+              )}
+
+              {/* Editor Email HTML */}
+              {newCampaign.format === 'email' && (
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="email-subject">Assunto do E-mail *</Label>
+                    <Input
+                      id="email-subject"
+                      value={newCampaign.content}
+                      onChange={(e) => setNewCampaign({ ...newCampaign, content: e.target.value })}
+                      placeholder="Ex: Confira nossas promoções especiais!"
+                    />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="email-html">Conteúdo HTML *</Label>
+                    <Textarea
+                      id="email-html"
+                      value={newCampaign.htmlContent}
+                      onChange={(e) => setNewCampaign({ ...newCampaign, htmlContent: e.target.value })}
+                      placeholder="Cole ou escreva seu HTML aqui...&#10;&#10;Exemplo:&#10;<h1>Olá {nome}!</h1>&#10;<p>Confira nossas ofertas...</p>"
+                      rows={15}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-sm font-medium mb-2">Pré-visualização:</p>
+                    <div 
+                      className="bg-background p-4 rounded border min-h-[100px]"
+                      dangerouslySetInnerHTML={{ __html: newCampaign.htmlContent || '<p class="text-muted-foreground">Sua pré-visualização aparecerá aqui...</p>' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={
+                    (newCampaign.format !== 'email' && !newCampaign.content) ||
+                    (newCampaign.format === 'email' && (!newCampaign.content || !newCampaign.htmlContent))
+                  }
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 3: Agendamento */}
+          {currentStep === 3 && (
+            <div className="space-y-6 py-4">
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                {newCampaign.format === 'wpp' && <MessageSquare className="w-5 h-5 text-green-500" />}
+                {newCampaign.format === 'sms' && <Smartphone className="w-5 h-5 text-blue-500" />}
+                {newCampaign.format === 'email' && <Mail className="w-5 h-5 text-orange-500" />}
+                <div>
+                  <p className="font-medium">{newCampaign.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Grupo: {newCampaign.group}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4">
+                <Label>Quando enviar a campanha?</Label>
+                
+                <Card 
+                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                    newCampaign.scheduleType === 'now' ? 'border-primary bg-primary/5' : ''
+                  }`}
+                  onClick={() => setNewCampaign({ ...newCampaign, scheduleType: 'now' })}
+                >
+                  <div className="flex items-start gap-3">
+                    <Send className="w-5 h-5 text-green-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Enviar Agora</p>
+                      <p className="text-sm text-muted-foreground">
+                        A campanha será enviada imediatamente após a criação
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                    newCampaign.scheduleType === 'schedule' ? 'border-primary bg-primary/5' : ''
+                  }`}
+                  onClick={() => setNewCampaign({ ...newCampaign, scheduleType: 'schedule' })}
+                >
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-5 h-5 text-blue-500 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-medium">Agendar Envio</p>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Escolha data e hora para enviar a campanha
+                      </p>
+                      
+                      {newCampaign.scheduleType === 'schedule' && (
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          <div className="grid gap-2">
+                            <Label htmlFor="schedule-date">Data</Label>
+                            <Input
+                              id="schedule-date"
+                              type="date"
+                              value={newCampaign.scheduleDate}
+                              onChange={(e) => setNewCampaign({ ...newCampaign, scheduleDate: e.target.value })}
+                              min={new Date().toISOString().split('T')[0]}
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="schedule-time">Hora</Label>
+                            <Input
+                              id="schedule-time"
+                              type="time"
+                              value={newCampaign.scheduleTime}
+                              onChange={(e) => setNewCampaign({ ...newCampaign, scheduleTime: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleCreateCampaign}
+                  disabled={
+                    newCampaign.scheduleType === 'schedule' && 
+                    (!newCampaign.scheduleDate || !newCampaign.scheduleTime)
+                  }
+                >
+                  {newCampaign.scheduleType === 'now' ? (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Criar e Enviar
+                    </>
+                  ) : (
+                    <>
+                      <CalendarIcon className="w-4 h-4 mr-2" />
+                      Criar e Agendar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
