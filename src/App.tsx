@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 import Campanhas from "./pages/Campanhas";
 import Contatos from "./pages/Contatos";
 import Conexoes from "./pages/Conexoes";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/" element={<Dashboard />} />
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
           <Route path="/campanhas" element={<Campanhas />} />
           <Route path="/contatos" element={<Contatos />} />
           <Route path="/conexoes" element={<Conexoes />} />
