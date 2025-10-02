@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   BarChart3,
@@ -28,6 +28,11 @@ const menuItems = [
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate('/auth/login');
+  };
 
   return (
     <div className="w-64 bg-card border-r border-border flex flex-col h-screen fixed left-0 top-0 z-50">
@@ -81,7 +86,10 @@ export function Sidebar() {
           </div>
         </div>
         
-        <button className="w-full flex items-center space-x-3 px-3 py-2 mt-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors">
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-3 px-3 py-2 mt-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+        >
           <LogOut className="w-4 h-4" />
           <span>Sair</span>
         </button>
