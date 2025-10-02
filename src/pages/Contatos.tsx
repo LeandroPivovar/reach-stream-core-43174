@@ -14,6 +14,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   MoreHorizontal,
   Eye,
@@ -23,10 +31,26 @@ import {
   Tag,
   Users,
   MapPin,
-  Activity
+  Activity,
+  Download,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export default function Contatos() {
+  const [isNewContactOpen, setIsNewContactOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [newContact, setNewContact] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    group: '',
+    status: 'Ativo',
+    tags: [] as string[],
+    state: '',
+    city: ''
+  });
+
   const [contacts, setContacts] = useState([
     {
       id: 1,
@@ -81,15 +105,66 @@ export default function Contatos() {
     }
   };
 
+  const handleSaveContact = () => {
+    const contactToAdd = {
+      id: contacts.length + 1,
+      name: newContact.name,
+      phone: newContact.phone,
+      email: newContact.email,
+      group: newContact.group,
+      status: newContact.status,
+      tags: newContact.tags,
+      state: newContact.state,
+      city: newContact.city,
+      lastInteraction: new Date().toISOString().split('T')[0]
+    };
+    setContacts([...contacts, contactToAdd]);
+    setIsNewContactOpen(false);
+    setNewContact({
+      name: '',
+      phone: '',
+      email: '',
+      group: '',
+      status: 'Ativo',
+      tags: [],
+      state: '',
+      city: ''
+    });
+  };
+
+  const handleExport = () => {
+    const csvContent = [
+      ['Nome', 'Telefone', 'Email', 'Grupo', 'Status', 'Etiquetas', 'Estado', 'Cidade'].join(','),
+      ...contacts.map(c => [
+        c.name,
+        c.phone,
+        c.email,
+        c.group,
+        c.status,
+        c.tags.join(';'),
+        c.state,
+        c.city
+      ].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'contatos.csv';
+    a.click();
+    setIsExportOpen(false);
+  };
+
   const actions = (
     <>
       <HeaderActions.Filter onClick={() => console.log('Filter clicked')} />
-      <HeaderActions.Export onClick={() => console.log('Export clicked')} />
-      <Button variant="outline">
+      <HeaderActions.Export onClick={() => setIsExportOpen(true)} />
+      <Button variant="outline" onClick={() => setIsImportOpen(true)}>
         <Upload className="w-4 h-4 mr-2" />
         Importar
       </Button>
-      <HeaderActions.Add onClick={() => console.log('Add contact clicked')}>
+      <HeaderActions.Add onClick={() => setIsNewContactOpen(true)}>
         Novo Contato
       </HeaderActions.Add>
     </>
@@ -339,6 +414,226 @@ export default function Contatos() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal Novo Contato */}
+      <Dialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Novo Contato</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Nome *</Label>
+              <Input
+                id="name"
+                value={newContact.name}
+                onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
+                placeholder="Digite o nome completo"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Telefone *</Label>
+                <Input
+                  id="phone"
+                  value={newContact.phone}
+                  onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newContact.email}
+                  onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="group">Grupo</Label>
+                <Select 
+                  value={newContact.group} 
+                  onValueChange={(value) => setNewContact({ ...newContact, group: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um grupo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups.map((group) => (
+                      <SelectItem key={group} value={group}>{group}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="status">Status</Label>
+                <Select 
+                  value={newContact.status} 
+                  onValueChange={(value) => setNewContact({ ...newContact, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statuses.map((status) => (
+                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="tags">Etiquetas</Label>
+              <Select 
+                value={newContact.tags[0] || ''} 
+                onValueChange={(value) => {
+                  if (!newContact.tags.includes(value)) {
+                    setNewContact({ ...newContact, tags: [...newContact.tags, value] });
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione etiquetas" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tags.map((tag) => (
+                    <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {newContact.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {newContact.tags.map((tag) => (
+                    <Badge 
+                      key={tag} 
+                      variant="secondary"
+                      className="cursor-pointer"
+                      onClick={() => setNewContact({ 
+                        ...newContact, 
+                        tags: newContact.tags.filter(t => t !== tag) 
+                      })}
+                    >
+                      {tag} ×
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="state">Estado</Label>
+                <Select 
+                  value={newContact.state} 
+                  onValueChange={(value) => setNewContact({ ...newContact, state: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {states.map((state) => (
+                      <SelectItem key={state} value={state}>{state}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="city">Cidade</Label>
+                <Input
+                  id="city"
+                  value={newContact.city}
+                  onChange={(e) => setNewContact({ ...newContact, city: e.target.value })}
+                  placeholder="Digite a cidade"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsNewContactOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveContact}>
+              Salvar Contato
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Exportar */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Exportar Contatos</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground mb-4">
+              Baixe todos os seus contatos em formato CSV (planilha).
+            </p>
+            <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+              <FileSpreadsheet className="w-8 h-8 text-primary" />
+              <div>
+                <p className="font-medium">contatos.csv</p>
+                <p className="text-sm text-muted-foreground">{contacts.length} contatos</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsExportOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Baixar Planilha
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Importar */}
+      <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Importar Contatos</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <p className="text-muted-foreground">
+              Faça upload de uma planilha CSV com seus contatos.
+            </p>
+            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="font-medium mb-2">Arraste e solte seu arquivo aqui</p>
+              <p className="text-sm text-muted-foreground mb-4">ou</p>
+              <Button variant="outline">
+                Selecionar Arquivo
+              </Button>
+              <p className="text-xs text-muted-foreground mt-4">
+                Formatos aceitos: CSV (até 5MB)
+              </p>
+            </div>
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="font-medium mb-2 text-sm">Formato esperado do CSV:</p>
+              <p className="text-xs text-muted-foreground font-mono">
+                Nome,Telefone,Email,Grupo,Status,Etiquetas,Estado,Cidade
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsImportOpen(false)}>
+              Cancelar
+            </Button>
+            <Button>
+              Importar Contatos
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
