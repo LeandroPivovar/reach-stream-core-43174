@@ -36,11 +36,15 @@ import {
   ArrowLeft,
   ArrowRight,
   Send,
-  Clock
+  Clock,
+  Download,
+  Link2,
+  BarChart2
 } from 'lucide-react';
 
 export default function Campanhas() {
   const [isNewCampaignOpen, setIsNewCampaignOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [newCampaign, setNewCampaign] = useState({
     name: '',
@@ -50,6 +54,12 @@ export default function Campanhas() {
       wpp: '',
       sms: '',
       email: { subject: '', html: '' }
+    },
+    tracking: {
+      type: '' as 'utm' | 'pixel' | 'shortlink' | '',
+      utmSource: '',
+      utmMedium: '',
+      utmCampaign: ''
     },
     scheduleType: 'now' as 'now' | 'schedule',
     scheduleDate: '',
@@ -143,7 +153,7 @@ export default function Campanhas() {
   };
 
   const getTotalSteps = () => {
-    return 1 + newCampaign.formats.length + 1; // seleção + formatos + agendamento
+    return 1 + newCampaign.formats.length + 1 + 1; // seleção + formatos + tracking + agendamento
   };
 
   const getCurrentFormatIndex = () => {
@@ -188,16 +198,27 @@ export default function Campanhas() {
         sms: '',
         email: { subject: '', html: '' }
       },
+      tracking: {
+        type: '',
+        utmSource: '',
+        utmMedium: '',
+        utmCampaign: ''
+      },
       scheduleType: 'now',
       scheduleDate: '',
       scheduleTime: ''
     });
   };
 
+  const handleExport = (format: 'csv' | 'excel' | 'pdf') => {
+    console.log('Exporting campaigns as:', format);
+    setIsExportOpen(false);
+  };
+
   const actions = (
     <>
       <HeaderActions.Filter onClick={() => console.log('Filter clicked')} />
-      <HeaderActions.Export onClick={() => console.log('Export clicked')} />
+      <HeaderActions.Export onClick={() => setIsExportOpen(true)} />
       <HeaderActions.Add onClick={() => setIsNewCampaignOpen(true)}>
         Nova Campanha
       </HeaderActions.Add>
@@ -392,6 +413,12 @@ export default function Campanhas() {
               wpp: '',
               sms: '',
               email: { subject: '', html: '' }
+            },
+            tracking: {
+              type: '',
+              utmSource: '',
+              utmMedium: '',
+              utmCampaign: ''
             },
             scheduleType: 'now',
             scheduleDate: '',
@@ -626,6 +653,140 @@ export default function Campanhas() {
             </div>
           )}
 
+          {/* Penúltima Etapa: Trackeamento */}
+          {currentStep === getTotalSteps() - 1 && (
+            <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <BarChart2 className="w-5 h-5 text-primary" />
+                  <span className="font-medium">Configurar Trackeamento</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Escolha como deseja rastrear os resultados desta campanha
+                </p>
+              </div>
+
+              <div className="grid gap-4">
+                <Label>Tipo de Trackeamento *</Label>
+                
+                <Card 
+                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                    newCampaign.tracking.type === 'utm' ? 'border-primary bg-primary/5' : ''
+                  }`}
+                  onClick={() => setNewCampaign({ 
+                    ...newCampaign, 
+                    tracking: { ...newCampaign.tracking, type: 'utm' }
+                  })}
+                >
+                  <div className="flex items-start gap-3">
+                    <Link2 className="w-5 h-5 text-blue-500 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-medium">Parâmetros UTM</p>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Adicione tags UTM aos seus links para rastreamento no Google Analytics
+                      </p>
+                      
+                      {newCampaign.tracking.type === 'utm' && (
+                        <div className="space-y-3 mt-3">
+                          <div className="grid gap-2">
+                            <Label htmlFor="utm-source">Origem (utm_source)</Label>
+                            <Input
+                              id="utm-source"
+                              value={newCampaign.tracking.utmSource}
+                              onChange={(e) => setNewCampaign({ 
+                                ...newCampaign, 
+                                tracking: { ...newCampaign.tracking, utmSource: e.target.value }
+                              })}
+                              placeholder="Ex: newsletter, whatsapp, sms"
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="utm-medium">Mídia (utm_medium)</Label>
+                            <Input
+                              id="utm-medium"
+                              value={newCampaign.tracking.utmMedium}
+                              onChange={(e) => setNewCampaign({ 
+                                ...newCampaign, 
+                                tracking: { ...newCampaign.tracking, utmMedium: e.target.value }
+                              })}
+                              placeholder="Ex: email, social, paid"
+                            />
+                          </div>
+                          <div className="grid gap-2">
+                            <Label htmlFor="utm-campaign">Campanha (utm_campaign)</Label>
+                            <Input
+                              id="utm-campaign"
+                              value={newCampaign.tracking.utmCampaign}
+                              onChange={(e) => setNewCampaign({ 
+                                ...newCampaign, 
+                                tracking: { ...newCampaign.tracking, utmCampaign: e.target.value }
+                              })}
+                              placeholder="Ex: black-friday, lancamento"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                    newCampaign.tracking.type === 'pixel' ? 'border-primary bg-primary/5' : ''
+                  }`}
+                  onClick={() => setNewCampaign({ 
+                    ...newCampaign, 
+                    tracking: { ...newCampaign.tracking, type: 'pixel' }
+                  })}
+                >
+                  <div className="flex items-start gap-3">
+                    <Eye className="w-5 h-5 text-purple-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Pixel de Conversão</p>
+                      <p className="text-sm text-muted-foreground">
+                        Rastreie conversões usando pixels do Facebook, Google ou outros
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                    newCampaign.tracking.type === 'shortlink' ? 'border-primary bg-primary/5' : ''
+                  }`}
+                  onClick={() => setNewCampaign({ 
+                    ...newCampaign, 
+                    tracking: { ...newCampaign.tracking, type: 'shortlink' }
+                  })}
+                >
+                  <div className="flex items-start gap-3">
+                    <Link2 className="w-5 h-5 text-orange-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Link Curto Rastreável</p>
+                      <p className="text-sm text-muted-foreground">
+                        Crie links curtos personalizados com rastreamento de cliques
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={!newCampaign.tracking.type}
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Última Etapa: Agendamento */}
           {currentStep === getTotalSteps() && (
             <div className="space-y-6 py-4">
@@ -734,6 +895,87 @@ export default function Campanhas() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Exportar Campanhas */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Campanhas</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <p className="text-sm text-muted-foreground">
+              Escolha o formato para exportar os dados das campanhas
+            </p>
+
+            <div className="grid gap-3">
+              <Card 
+                className="p-4 cursor-pointer hover:border-primary transition-colors"
+                onClick={() => handleExport('csv')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
+                    <Download className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium">CSV</p>
+                    <p className="text-xs text-muted-foreground">
+                      Arquivo de valores separados por vírgula
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card 
+                className="p-4 cursor-pointer hover:border-primary transition-colors"
+                onClick={() => handleExport('excel')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                    <Download className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Excel</p>
+                    <p className="text-xs text-muted-foreground">
+                      Planilha do Microsoft Excel (.xlsx)
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card 
+                className="p-4 cursor-pointer hover:border-primary transition-colors"
+                onClick={() => handleExport('pdf')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center">
+                    <Download className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium">PDF</p>
+                    <p className="text-xs text-muted-foreground">
+                      Documento portátil para impressão
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            <div className="bg-muted p-3 rounded-lg">
+              <p className="text-xs text-muted-foreground">
+                <strong>Dados incluídos:</strong> Nome da campanha, canais, status, 
+                destinatários, métricas de envio, aberturas e cliques.
+              </p>
+            </div>
+
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={() => setIsExportOpen(false)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </Layout>
