@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import logoNucleocrm from '@/assets/logo-nucleocrm.png';
 import {
   BarChart3,
   MessageSquare,
@@ -38,11 +39,12 @@ export function Sidebar() {
     <div className="w-64 bg-card border-r border-border flex flex-col h-screen fixed left-0 top-0 z-50">
       {/* Logo */}
       <div className="p-6 border-b border-border">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-hover rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">N</span>
-          </div>
-          <span className="text-xl font-semibold text-gradient">Núcleo</span>
+        <div className="flex items-center justify-center">
+          <img 
+            src={logoNucleocrm} 
+            alt="Núcleo CRM" 
+            className="h-8 w-auto"
+          />
         </div>
       </div>
 
