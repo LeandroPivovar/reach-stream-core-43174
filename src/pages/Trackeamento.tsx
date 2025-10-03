@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -7,6 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Target, 
   Code, 
@@ -15,10 +22,21 @@ import {
   ExternalLink,
   Eye,
   MousePointer,
-  Users
+  Users,
+  Check
 } from 'lucide-react';
 
 export default function Trackeamento() {
+  const { toast } = useToast();
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [isNewPixelOpen, setIsNewPixelOpen] = useState(false);
+  const [selectedPixel, setSelectedPixel] = useState<any>(null);
+  const [newPixelType, setNewPixelType] = useState<'facebook' | 'google' | 'custom' | null>(null);
+  const [newPixelData, setNewPixelData] = useState({
+    name: '',
+    pixelId: ''
+  });
+
   const trackingCodes = [
     {
       id: 1,
@@ -26,7 +44,25 @@ export default function Trackeamento() {
       type: 'Facebook',
       status: 'Ativo',
       events: 1247,
-      conversions: 89
+      conversions: 89,
+      code: `<!-- Facebook Pixel Code -->
+<script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', 'YOUR_PIXEL_ID');
+  fbq('track', 'PageView');
+</script>
+<noscript>
+  <img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"/>
+</noscript>
+<!-- End Facebook Pixel Code -->`
     },
     {
       id: 2,
@@ -34,7 +70,16 @@ export default function Trackeamento() {
       type: 'Google',
       status: 'Ativo',
       events: 3421,
-      conversions: 156
+      conversions: 156,
+      code: `<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'GA_MEASUREMENT_ID');
+</script>
+<!-- End Google Analytics -->`
     },
     {
       id: 3,
@@ -42,12 +87,52 @@ export default function Trackeamento() {
       type: 'Form',
       status: 'Ativo',
       events: 892,
-      conversions: 234
+      conversions: 234,
+      code: `<!-- Pixel de Conversão -->
+<script>
+  (function() {
+    var img = document.createElement('img');
+    img.src = 'https://api.nucleo.com/pixel/track?id=FORM_ID';
+    img.style.display = 'none';
+    document.body.appendChild(img);
+  })();
+</script>
+<!-- End Pixel de Conversão -->`
     }
   ];
 
+  const handleOpenCode = (pixel: any) => {
+    setSelectedPixel(pixel);
+    setIsCodeModalOpen(true);
+  };
+
+  const handleCopyCode = () => {
+    if (selectedPixel?.code) {
+      navigator.clipboard.writeText(selectedPixel.code);
+      toast({
+        title: "Código copiado!",
+        description: "O código HTML foi copiado para a área de transferência.",
+      });
+    }
+  };
+
+  const handleSelectPixelType = (type: 'facebook' | 'google' | 'custom') => {
+    setNewPixelType(type);
+  };
+
+  const handleCreatePixel = () => {
+    console.log('Creating pixel:', { type: newPixelType, ...newPixelData });
+    setIsNewPixelOpen(false);
+    setNewPixelType(null);
+    setNewPixelData({ name: '', pixelId: '' });
+    toast({
+      title: "Pixel configurado!",
+      description: "O novo pixel foi configurado com sucesso.",
+    });
+  };
+
   const actions = (
-    <HeaderActions.Add onClick={() => console.log('New tracking')}>
+    <HeaderActions.Add onClick={() => setIsNewPixelOpen(true)}>
       Novo Pixel
     </HeaderActions.Add>
   );
@@ -156,7 +241,11 @@ export default function Trackeamento() {
                           </td>
                           <td className="py-4 px-2 text-right">
                             <div className="flex justify-end space-x-2">
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleOpenCode(code)}
+                              >
                                 <Code className="w-4 h-4" />
                               </Button>
                               <Button variant="ghost" size="sm">
@@ -175,15 +264,27 @@ export default function Trackeamento() {
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Configurar Novo Pixel</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button variant="outline" className="h-20 flex-col space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col space-y-2"
+                    onClick={() => setIsNewPixelOpen(true)}
+                  >
                     <div className="w-8 h-8 bg-blue-500 rounded"></div>
                     <span>Facebook Pixel</span>
                   </Button>
-                  <Button variant="outline" className="h-20 flex-col space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col space-y-2"
+                    onClick={() => setIsNewPixelOpen(true)}
+                  >
                     <div className="w-8 h-8 bg-red-500 rounded"></div>
                     <span>Google Analytics</span>
                   </Button>
-                  <Button variant="outline" className="h-20 flex-col space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col space-y-2"
+                    onClick={() => setIsNewPixelOpen(true)}
+                  >
                     <div className="w-8 h-8 bg-gray-500 rounded"></div>
                     <span>Pixel Customizado</span>
                   </Button>
@@ -278,6 +379,206 @@ export default function Trackeamento() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal Código HTML */}
+      <Dialog open={isCodeModalOpen} onOpenChange={setIsCodeModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Código de Rastreamento - {selectedPixel?.name}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="bg-blue-500/10 p-3 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                Copie o código abaixo e cole no <code className="bg-muted px-1 rounded">{"<head>"}</code> do seu site
+              </p>
+            </div>
+
+            <div className="relative">
+              <pre className="p-4 bg-muted rounded-lg overflow-x-auto text-xs">
+                <code>{selectedPixel?.code}</code>
+              </pre>
+              <Button
+                size="sm"
+                className="absolute top-2 right-2"
+                onClick={handleCopyCode}
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                Copiar Código
+              </Button>
+            </div>
+
+            <div className="bg-muted p-4 rounded-lg">
+              <p className="text-sm font-medium mb-2">Instruções:</p>
+              <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Copie todo o código acima</li>
+                <li>Acesse o código-fonte do seu site</li>
+                <li>Localize a tag {"<head>"} no início do HTML</li>
+                <li>Cole o código logo após a abertura do {"<head>"}</li>
+                <li>Salve e publique as alterações</li>
+              </ol>
+            </div>
+
+            <div className="flex justify-end">
+              <Button onClick={() => setIsCodeModalOpen(false)}>
+                Fechar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Novo Pixel */}
+      <Dialog open={isNewPixelOpen} onOpenChange={(open) => {
+        setIsNewPixelOpen(open);
+        if (!open) {
+          setNewPixelType(null);
+          setNewPixelData({ name: '', pixelId: '' });
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {!newPixelType ? 'Configurar Novo Pixel' : 
+               newPixelType === 'facebook' ? 'Facebook Pixel' :
+               newPixelType === 'google' ? 'Google Analytics' :
+               'Pixel Customizado'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {!newPixelType ? (
+            <div className="space-y-6 py-4">
+              <p className="text-sm text-muted-foreground">
+                Selecione o tipo de pixel que deseja configurar
+              </p>
+
+              <div className="grid gap-4">
+                <Card 
+                  className="p-6 cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleSelectPixelType('facebook')}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold">f</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">Facebook Pixel</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Rastreie conversões, otimize anúncios e crie públicos para remarketing
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className="p-6 cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleSelectPixelType('google')}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white font-bold">G</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">Google Analytics</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Analise o tráfego do site, comportamento dos usuários e conversões
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className="p-6 cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleSelectPixelType('custom')}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gray-500 rounded-lg flex items-center justify-center">
+                      <Code className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold mb-1">Pixel Customizado</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Configure um pixel personalizado para outras plataformas
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setIsNewPixelOpen(false)}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6 py-4">
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="pixel-name">Nome do Pixel *</Label>
+                  <Input
+                    id="pixel-name"
+                    value={newPixelData.name}
+                    onChange={(e) => setNewPixelData({ ...newPixelData, name: e.target.value })}
+                    placeholder={
+                      newPixelType === 'facebook' ? 'Ex: Facebook Pixel Principal' :
+                      newPixelType === 'google' ? 'Ex: Google Analytics Site' :
+                      'Ex: Pixel Personalizado'
+                    }
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="pixel-id">
+                    {newPixelType === 'facebook' ? 'ID do Pixel Facebook *' :
+                     newPixelType === 'google' ? 'ID de Medição (GA4) *' :
+                     'ID ou Código do Pixel *'}
+                  </Label>
+                  <Input
+                    id="pixel-id"
+                    value={newPixelData.pixelId}
+                    onChange={(e) => setNewPixelData({ ...newPixelData, pixelId: e.target.value })}
+                    placeholder={
+                      newPixelType === 'facebook' ? 'Ex: 1234567890' :
+                      newPixelType === 'google' ? 'Ex: G-XXXXXXXXXX' :
+                      'Cole o ID ou código completo'
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {newPixelType === 'facebook' && 'Encontre no Gerenciador de Eventos do Facebook'}
+                    {newPixelType === 'google' && 'Encontre nas configurações de propriedade do GA4'}
+                    {newPixelType === 'custom' && 'Cole o ID fornecido pela plataforma'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" />
+                  Próximos passos
+                </p>
+                <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>Após criar, copie o código gerado</li>
+                  <li>Instale o código no seu site</li>
+                  <li>Teste se o pixel está funcionando</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setNewPixelType(null)}>
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleCreatePixel}
+                  disabled={!newPixelData.name || !newPixelData.pixelId}
+                >
+                  Configurar Pixel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
