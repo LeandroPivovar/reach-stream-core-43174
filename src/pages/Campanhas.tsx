@@ -496,7 +496,135 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 2: Editor de Conteúdo */}
+          {/* Etapas 2 a N: Editor de Conteúdo para cada formato */}
+          {currentStep > 1 && currentStep <= newCampaign.formats.length + 1 && (
+            <div className="space-y-6 py-4">
+              {getCurrentFormat() === 'wpp' && (
+                <div className="space-y-4">
+                  <div className="bg-green-500/10 p-3 rounded-lg mb-4">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-green-500" />
+                      <span className="font-medium">Configuração WhatsApp</span>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="wpp-message">Mensagem WhatsApp *</Label>
+                    <Textarea
+                      id="wpp-message"
+                      value={newCampaign.formatContents.wpp}
+                      onChange={(e) => setNewCampaign({ 
+                        ...newCampaign, 
+                        formatContents: { ...newCampaign.formatContents, wpp: e.target.value }
+                      })}
+                      placeholder="Digite sua mensagem..."
+                      rows={8}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {getCurrentFormat() === 'sms' && (
+                <div className="space-y-4">
+                  <div className="bg-blue-500/10 p-3 rounded-lg mb-4">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="w-5 h-5 text-blue-500" />
+                      <span className="font-medium">Configuração SMS</span>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="sms-message">Mensagem SMS *</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {newCampaign.formatContents.sms.length}/160 caracteres
+                      </span>
+                    </div>
+                    <Textarea
+                      id="sms-message"
+                      value={newCampaign.formatContents.sms}
+                      onChange={(e) => setNewCampaign({ 
+                        ...newCampaign, 
+                        formatContents: { ...newCampaign.formatContents, sms: e.target.value }
+                      })}
+                      placeholder="Digite sua mensagem SMS (máx. 160 caracteres)..."
+                      rows={4}
+                      maxLength={160}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {getCurrentFormat() === 'email' && (
+                <div className="space-y-4">
+                  <div className="bg-orange-500/10 p-3 rounded-lg mb-4">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-5 h-5 text-orange-500" />
+                      <span className="font-medium">Configuração E-mail</span>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email-subject">Assunto do E-mail *</Label>
+                    <Input
+                      id="email-subject"
+                      value={newCampaign.formatContents.email.subject}
+                      onChange={(e) => setNewCampaign({ 
+                        ...newCampaign, 
+                        formatContents: { 
+                          ...newCampaign.formatContents, 
+                          email: { ...newCampaign.formatContents.email, subject: e.target.value }
+                        }
+                      })}
+                      placeholder="Digite o assunto do e-mail..."
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email-html">Conteúdo HTML *</Label>
+                    <Textarea
+                      id="email-html"
+                      value={newCampaign.formatContents.email.html}
+                      onChange={(e) => setNewCampaign({ 
+                        ...newCampaign, 
+                        formatContents: { 
+                          ...newCampaign.formatContents, 
+                          email: { ...newCampaign.formatContents.email, html: e.target.value }
+                        }
+                      })}
+                      placeholder="Digite o HTML do e-mail..."
+                      rows={12}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  {newCampaign.formatContents.email.html && (
+                    <div className="grid gap-2">
+                      <Label>Preview</Label>
+                      <div 
+                        className="border rounded-lg p-4 bg-card"
+                        dangerouslySetInnerHTML={{ __html: newCampaign.formatContents.email.html }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={
+                    (getCurrentFormat() === 'email' && 
+                      (!newCampaign.formatContents.email.subject || !newCampaign.formatContents.email.html)) ||
+                    (getCurrentFormat() === 'wpp' && !newCampaign.formatContents.wpp) ||
+                    (getCurrentFormat() === 'sms' && !newCampaign.formatContents.sms)
+                  }
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Última Etapa: Agendamento */}
           {currentStep === getTotalSteps() && (
