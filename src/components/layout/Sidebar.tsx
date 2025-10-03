@@ -43,7 +43,7 @@ export function Sidebar() {
           <img 
             src={logoNucleocrm} 
             alt="Núcleo CRM" 
-            className="h-16 w-auto"
+            className="h-32 w-auto"
           />
         </div>
       </div>
