@@ -66,9 +66,13 @@ export default function Conexoes() {
     }
   ];
 
-  const handleOpenConnection = (type: 'whatsapp' | 'gmail' | 'sms') => {
-    setConnectionType(type);
+  const handleOpenNewConnection = () => {
+    setConnectionType(null);
     setIsNewConnectionOpen(true);
+  };
+
+  const handleSelectType = (type: 'whatsapp' | 'gmail' | 'sms') => {
+    setConnectionType(type);
   };
 
   const handleCloseConnection = () => {
@@ -90,7 +94,7 @@ export default function Conexoes() {
   };
 
   const actions = (
-    <HeaderActions.Add onClick={() => handleOpenConnection('whatsapp')}>
+    <HeaderActions.Add onClick={handleOpenNewConnection}>
       Nova Conexão
     </HeaderActions.Add>
   );
@@ -232,7 +236,7 @@ export default function Conexoes() {
             <Button 
               variant="outline" 
               className="h-20 flex-col space-y-2"
-              onClick={() => handleOpenConnection('whatsapp')}
+              onClick={handleOpenNewConnection}
             >
               <MessageSquare className="w-6 h-6" />
               <span>WhatsApp</span>
@@ -240,7 +244,7 @@ export default function Conexoes() {
             <Button 
               variant="outline" 
               className="h-20 flex-col space-y-2"
-              onClick={() => handleOpenConnection('gmail')}
+              onClick={handleOpenNewConnection}
             >
               <Mail className="w-6 h-6" />
               <span>E-mail</span>
@@ -248,7 +252,7 @@ export default function Conexoes() {
             <Button 
               variant="outline" 
               className="h-20 flex-col space-y-2"
-              onClick={() => handleOpenConnection('sms')}
+              onClick={handleOpenNewConnection}
             >
               <Smartphone className="w-6 h-6" />
               <span>SMS</span>
@@ -262,11 +266,80 @@ export default function Conexoes() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
+              {!connectionType && 'Selecione o tipo de conexão'}
               {connectionType === 'whatsapp' && 'Conectar WhatsApp'}
               {connectionType === 'gmail' && 'Conectar Gmail (SMTP)'}
               {connectionType === 'sms' && 'Conectar SMS'}
             </DialogTitle>
           </DialogHeader>
+
+          {/* Seleção de Tipo */}
+          {!connectionType && (
+            <div className="space-y-6 py-4">
+              <p className="text-sm text-muted-foreground">
+                Escolha qual canal de comunicação deseja conectar
+              </p>
+
+              <div className="grid grid-cols-1 gap-4">
+                <Card 
+                  className="p-6 cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleSelectType('whatsapp')}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
+                      <MessageSquare className="w-6 h-6 text-green-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">WhatsApp Business</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Conecte sua conta do WhatsApp Business usando QR Code para enviar mensagens aos seus contatos
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className="p-6 cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleSelectType('gmail')}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-orange-500/10 rounded-lg flex items-center justify-center">
+                      <Mail className="w-6 h-6 text-orange-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">E-mail (SMTP)</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Configure seu servidor SMTP (Gmail, Outlook, etc.) para enviar campanhas de e-mail
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className="p-6 cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleSelectType('sms')}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                      <Smartphone className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">SMS</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Adicione um número de telefone para enviar mensagens SMS aos seus contatos
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={handleCloseConnection}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* WhatsApp - QR Code */}
           {connectionType === 'whatsapp' && (
@@ -304,9 +377,9 @@ export default function Conexoes() {
               </div>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={handleCloseConnection}>
+                <Button variant="outline" onClick={() => setConnectionType(null)}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Cancelar
+                  Voltar
                 </Button>
                 <Button onClick={handleConnect}>
                   Conectar
@@ -392,9 +465,9 @@ export default function Conexoes() {
               </div>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={handleCloseConnection}>
+                <Button variant="outline" onClick={() => setConnectionType(null)}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Cancelar
+                  Voltar
                 </Button>
                 <Button 
                   onClick={handleConnect}
@@ -444,9 +517,9 @@ export default function Conexoes() {
               </div>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={handleCloseConnection}>
+                <Button variant="outline" onClick={() => setConnectionType(null)}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Cancelar
+                  Voltar
                 </Button>
                 <Button 
                   onClick={handleConnect}
