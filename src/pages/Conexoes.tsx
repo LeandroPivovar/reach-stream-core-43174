@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   MessageSquare, 
   Mail, 
@@ -11,10 +19,23 @@ import {
   Wifi,
   WifiOff,
   Settings,
-  Trash2
+  Trash2,
+  QrCode,
+  ArrowLeft
 } from 'lucide-react';
 
 export default function Conexoes() {
+  const [isNewConnectionOpen, setIsNewConnectionOpen] = useState(false);
+  const [connectionType, setConnectionType] = useState<'whatsapp' | 'gmail' | 'sms' | null>(null);
+  const [smtpData, setSmtpData] = useState({
+    email: '',
+    server: '',
+    port: '587',
+    username: '',
+    password: ''
+  });
+  const [smsNumber, setSmsNumber] = useState('');
+
   const connections = [
     {
       id: 1,
@@ -45,8 +66,31 @@ export default function Conexoes() {
     }
   ];
 
+  const handleOpenConnection = (type: 'whatsapp' | 'gmail' | 'sms') => {
+    setConnectionType(type);
+    setIsNewConnectionOpen(true);
+  };
+
+  const handleCloseConnection = () => {
+    setIsNewConnectionOpen(false);
+    setConnectionType(null);
+    setSmtpData({
+      email: '',
+      server: '',
+      port: '587',
+      username: '',
+      password: ''
+    });
+    setSmsNumber('');
+  };
+
+  const handleConnect = () => {
+    console.log('Connecting:', { connectionType, smtpData, smsNumber });
+    handleCloseConnection();
+  };
+
   const actions = (
-    <HeaderActions.Add onClick={() => console.log('New connection')}>
+    <HeaderActions.Add onClick={() => handleOpenConnection('whatsapp')}>
       Nova Conexão
     </HeaderActions.Add>
   );
@@ -185,21 +229,236 @@ export default function Conexoes() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Conectar Novo Canal</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-20 flex-col space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col space-y-2"
+              onClick={() => handleOpenConnection('whatsapp')}
+            >
               <MessageSquare className="w-6 h-6" />
               <span>WhatsApp</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col space-y-2"
+              onClick={() => handleOpenConnection('gmail')}
+            >
               <Mail className="w-6 h-6" />
               <span>E-mail</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col space-y-2">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col space-y-2"
+              onClick={() => handleOpenConnection('sms')}
+            >
               <Smartphone className="w-6 h-6" />
               <span>SMS</span>
             </Button>
           </div>
         </Card>
       </div>
+
+      {/* Modal Nova Conexão */}
+      <Dialog open={isNewConnectionOpen} onOpenChange={setIsNewConnectionOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {connectionType === 'whatsapp' && 'Conectar WhatsApp'}
+              {connectionType === 'gmail' && 'Conectar Gmail (SMTP)'}
+              {connectionType === 'sms' && 'Conectar SMS'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* WhatsApp - QR Code */}
+          {connectionType === 'whatsapp' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-green-500/10 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <MessageSquare className="w-5 h-5 text-green-500" />
+                  <span className="font-medium">Conectar WhatsApp Business</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Escaneie o QR Code abaixo com seu WhatsApp para conectar
+                </p>
+              </div>
+
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-64 h-64 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border">
+                  <div className="text-center space-y-2">
+                    <QrCode className="w-16 h-16 mx-auto text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Gerando QR Code...
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="text-center space-y-2">
+                  <p className="text-sm font-medium">Como conectar:</p>
+                  <ol className="text-xs text-muted-foreground space-y-1 text-left">
+                    <li>1. Abra o WhatsApp no seu celular</li>
+                    <li>2. Toque em Menu (⋮) ou Configurações</li>
+                    <li>3. Toque em Aparelhos conectados</li>
+                    <li>4. Toque em Conectar um aparelho</li>
+                    <li>5. Aponte seu celular para esta tela para escanear o código</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handleCloseConnection}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button onClick={handleConnect}>
+                  Conectar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Gmail - SMTP */}
+          {connectionType === 'gmail' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-orange-500/10 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Mail className="w-5 h-5 text-orange-500" />
+                  <span className="font-medium">Configuração SMTP</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Configure seu servidor SMTP para enviar e-mails
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">E-mail *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={smtpData.email}
+                    onChange={(e) => setSmtpData({ ...smtpData, email: e.target.value })}
+                    placeholder="seu@email.com"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="server">Servidor SMTP *</Label>
+                  <Input
+                    id="server"
+                    value={smtpData.server}
+                    onChange={(e) => setSmtpData({ ...smtpData, server: e.target.value })}
+                    placeholder="smtp.gmail.com"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Gmail: smtp.gmail.com | Outlook: smtp-mail.outlook.com
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="port">Porta *</Label>
+                  <Input
+                    id="port"
+                    value={smtpData.port}
+                    onChange={(e) => setSmtpData({ ...smtpData, port: e.target.value })}
+                    placeholder="587"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Porta comum: 587 (TLS) ou 465 (SSL)
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="username">Usuário *</Label>
+                  <Input
+                    id="username"
+                    value={smtpData.username}
+                    onChange={(e) => setSmtpData({ ...smtpData, username: e.target.value })}
+                    placeholder="seu@email.com"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Senha *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={smtpData.password}
+                    onChange={(e) => setSmtpData({ ...smtpData, password: e.target.value })}
+                    placeholder="••••••••"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Para Gmail, use uma Senha de App específica
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handleCloseConnection}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleConnect}
+                  disabled={!smtpData.email || !smtpData.server || !smtpData.username || !smtpData.password}
+                >
+                  Conectar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* SMS - Número */}
+          {connectionType === 'sms' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-blue-500/10 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <Smartphone className="w-5 h-5 text-blue-500" />
+                  <span className="font-medium">Configurar SMS</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Insira o número que será usado para enviar SMS
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="sms-number">Número de Telefone *</Label>
+                  <Input
+                    id="sms-number"
+                    value={smsNumber}
+                    onChange={(e) => setSmsNumber(e.target.value)}
+                    placeholder="+55 11 99999-9999"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Inclua o código do país (ex: +55 para Brasil)
+                  </p>
+                </div>
+
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="text-sm font-medium mb-2">Informações importantes:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• O número deve estar ativo e habilitado para SMS</li>
+                    <li>• Verifique com seu provedor os custos de envio</li>
+                    <li>• Certifique-se de ter créditos suficientes</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handleCloseConnection}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleConnect}
+                  disabled={!smsNumber}
+                >
+                  Conectar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
