@@ -45,9 +45,12 @@ export default function Campanhas() {
   const [newCampaign, setNewCampaign] = useState({
     name: '',
     group: '',
-    format: '' as 'wpp' | 'sms' | 'email' | '',
-    content: '',
-    htmlContent: '',
+    formats: [] as ('wpp' | 'sms' | 'email')[],
+    formatContents: {
+      wpp: '',
+      sms: '',
+      email: { subject: '', html: '' }
+    },
     scheduleType: 'now' as 'now' | 'schedule',
     scheduleDate: '',
     scheduleTime: ''
@@ -139,8 +142,20 @@ export default function Campanhas() {
     }
   };
 
+  const getTotalSteps = () => {
+    return 1 + newCampaign.formats.length + 1; // seleção + formatos + agendamento
+  };
+
+  const getCurrentFormatIndex = () => {
+    return currentStep - 2; // step 2 = primeiro formato (index 0)
+  };
+
+  const getCurrentFormat = () => {
+    return newCampaign.formats[getCurrentFormatIndex()];
+  };
+
   const handleNextStep = () => {
-    if (currentStep < 3) {
+    if (currentStep < getTotalSteps()) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -151,6 +166,15 @@ export default function Campanhas() {
     }
   };
 
+  const toggleFormat = (format: 'wpp' | 'sms' | 'email') => {
+    setNewCampaign(prev => ({
+      ...prev,
+      formats: prev.formats.includes(format)
+        ? prev.formats.filter(f => f !== format)
+        : [...prev.formats, format]
+    }));
+  };
+
   const handleCreateCampaign = () => {
     console.log('Creating campaign:', newCampaign);
     setIsNewCampaignOpen(false);
@@ -158,9 +182,12 @@ export default function Campanhas() {
     setNewCampaign({
       name: '',
       group: '',
-      format: '',
-      content: '',
-      htmlContent: '',
+      formats: [],
+      formatContents: {
+        wpp: '',
+        sms: '',
+        email: { subject: '', html: '' }
+      },
       scheduleType: 'now',
       scheduleDate: '',
       scheduleTime: ''
@@ -360,9 +387,12 @@ export default function Campanhas() {
           setNewCampaign({
             name: '',
             group: '',
-            format: '',
-            content: '',
-            htmlContent: '',
+            formats: [],
+            formatContents: {
+              wpp: '',
+              sms: '',
+              email: { subject: '', html: '' }
+            },
             scheduleType: 'now',
             scheduleDate: '',
             scheduleTime: ''
@@ -371,7 +401,7 @@ export default function Campanhas() {
       }}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nova Campanha - Etapa {currentStep} de 3</DialogTitle>
+            <DialogTitle>Nova Campanha - Etapa {currentStep} de {getTotalSteps()}</DialogTitle>
           </DialogHeader>
 
           {/* Etapa 1: Seleção de Grupo e Formato */}
@@ -405,13 +435,13 @@ export default function Campanhas() {
               </div>
 
               <div className="grid gap-2">
-                <Label>Formato de Envio *</Label>
+                <Label>Formatos de Envio * (selecione um ou mais)</Label>
                 <div className="grid grid-cols-3 gap-4">
                   <Card 
                     className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.format === 'wpp' ? 'border-primary bg-primary/5' : ''
+                      newCampaign.formats.includes('wpp') ? 'border-primary bg-primary/5' : ''
                     }`}
-                    onClick={() => setNewCampaign({ ...newCampaign, format: 'wpp' })}
+                    onClick={() => toggleFormat('wpp')}
                   >
                     <div className="flex flex-col items-center gap-2">
                       <MessageSquare className="w-8 h-8 text-green-500" />
@@ -424,9 +454,9 @@ export default function Campanhas() {
 
                   <Card 
                     className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.format === 'sms' ? 'border-primary bg-primary/5' : ''
+                      newCampaign.formats.includes('sms') ? 'border-primary bg-primary/5' : ''
                     }`}
-                    onClick={() => setNewCampaign({ ...newCampaign, format: 'sms' })}
+                    onClick={() => toggleFormat('sms')}
                   >
                     <div className="flex flex-col items-center gap-2">
                       <Smartphone className="w-8 h-8 text-blue-500" />
@@ -439,9 +469,9 @@ export default function Campanhas() {
 
                   <Card 
                     className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.format === 'email' ? 'border-primary bg-primary/5' : ''
+                      newCampaign.formats.includes('email') ? 'border-primary bg-primary/5' : ''
                     }`}
-                    onClick={() => setNewCampaign({ ...newCampaign, format: 'email' })}
+                    onClick={() => toggleFormat('email')}
                   >
                     <div className="flex flex-col items-center gap-2">
                       <Mail className="w-8 h-8 text-orange-500" />
@@ -457,7 +487,7 @@ export default function Campanhas() {
               <div className="flex justify-end">
                 <Button 
                   onClick={handleNextStep}
-                  disabled={!newCampaign.name || !newCampaign.group || !newCampaign.format}
+                  disabled={!newCampaign.name || !newCampaign.group || newCampaign.formats.length === 0}
                 >
                   Próximo
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -467,126 +497,23 @@ export default function Campanhas() {
           )}
 
           {/* Etapa 2: Editor de Conteúdo */}
-          {currentStep === 2 && (
+
+          {/* Última Etapa: Agendamento */}
+          {currentStep === getTotalSteps() && (
             <div className="space-y-6 py-4">
-              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                {newCampaign.format === 'wpp' && <MessageSquare className="w-5 h-5 text-green-500" />}
-                {newCampaign.format === 'sms' && <Smartphone className="w-5 h-5 text-blue-500" />}
-                {newCampaign.format === 'email' && <Mail className="w-5 h-5 text-orange-500" />}
-                <div>
-                  <p className="font-medium">{newCampaign.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Grupo: {newCampaign.group}
-                  </p>
-                </div>
-              </div>
-
-              {/* Editor WhatsApp */}
-              {newCampaign.format === 'wpp' && (
-                <div className="grid gap-2">
-                  <Label htmlFor="wpp-content">Mensagem WhatsApp *</Label>
-                  <Textarea
-                    id="wpp-content"
-                    value={newCampaign.content}
-                    onChange={(e) => setNewCampaign({ ...newCampaign, content: e.target.value })}
-                    placeholder="Digite sua mensagem aqui...&#10;&#10;Dica: Use variáveis como {nome}, {email} para personalizar"
-                    rows={10}
-                    className="font-mono"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Caracteres: {newCampaign.content.length}
-                  </p>
-                </div>
-              )}
-
-              {/* Editor SMS */}
-              {newCampaign.format === 'sms' && (
-                <div className="grid gap-2">
-                  <Label htmlFor="sms-content">Mensagem SMS *</Label>
-                  <Textarea
-                    id="sms-content"
-                    value={newCampaign.content}
-                    onChange={(e) => {
-                      if (e.target.value.length <= 160) {
-                        setNewCampaign({ ...newCampaign, content: e.target.value });
-                      }
-                    }}
-                    placeholder="Digite sua mensagem SMS (máx 160 caracteres)..."
-                    rows={6}
-                    maxLength={160}
-                  />
-                  <p className={`text-xs ${newCampaign.content.length > 140 ? 'text-orange-500' : 'text-muted-foreground'}`}>
-                    Caracteres: {newCampaign.content.length}/160
-                  </p>
-                </div>
-              )}
-
-              {/* Editor Email HTML */}
-              {newCampaign.format === 'email' && (
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="email-subject">Assunto do E-mail *</Label>
-                    <Input
-                      id="email-subject"
-                      value={newCampaign.content}
-                      onChange={(e) => setNewCampaign({ ...newCampaign, content: e.target.value })}
-                      placeholder="Ex: Confira nossas promoções especiais!"
-                    />
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex gap-2">
+                    {newCampaign.formats.includes('wpp') && <MessageSquare className="w-5 h-5 text-green-500" />}
+                    {newCampaign.formats.includes('sms') && <Smartphone className="w-5 h-5 text-blue-500" />}
+                    {newCampaign.formats.includes('email') && <Mail className="w-5 h-5 text-orange-500" />}
                   </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="email-html">Conteúdo HTML *</Label>
-                    <Textarea
-                      id="email-html"
-                      value={newCampaign.htmlContent}
-                      onChange={(e) => setNewCampaign({ ...newCampaign, htmlContent: e.target.value })}
-                      placeholder="Cole ou escreva seu HTML aqui...&#10;&#10;Exemplo:&#10;<h1>Olá {nome}!</h1>&#10;<p>Confira nossas ofertas...</p>"
-                      rows={15}
-                      className="font-mono text-sm"
-                    />
+                  <div>
+                    <p className="font-medium">{newCampaign.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Grupo: {newCampaign.group}
+                    </p>
                   </div>
-
-                  <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-sm font-medium mb-2">Pré-visualização:</p>
-                    <div 
-                      className="bg-background p-4 rounded border min-h-[100px]"
-                      dangerouslySetInnerHTML={{ __html: newCampaign.htmlContent || '<p class="text-muted-foreground">Sua pré-visualização aparecerá aqui...</p>' }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={handlePrevStep}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-                <Button 
-                  onClick={handleNextStep}
-                  disabled={
-                    (newCampaign.format !== 'email' && !newCampaign.content) ||
-                    (newCampaign.format === 'email' && (!newCampaign.content || !newCampaign.htmlContent))
-                  }
-                >
-                  Próximo
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Etapa 3: Agendamento */}
-          {currentStep === 3 && (
-            <div className="space-y-6 py-4">
-              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                {newCampaign.format === 'wpp' && <MessageSquare className="w-5 h-5 text-green-500" />}
-                {newCampaign.format === 'sms' && <Smartphone className="w-5 h-5 text-blue-500" />}
-                {newCampaign.format === 'email' && <Mail className="w-5 h-5 text-orange-500" />}
-                <div>
-                  <p className="font-medium">{newCampaign.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Grupo: {newCampaign.group}
-                  </p>
                 </div>
               </div>
 
