@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -53,7 +54,7 @@ export default function Campanhas() {
     formatContents: {
       wpp: '',
       sms: '',
-      email: { subject: '', html: '' }
+      email: { subject: '', content: '', mode: 'text' as 'text' | 'html' }
     },
     tracking: {
       type: '' as 'utm' | 'pixel' | 'shortlink' | '',
@@ -196,7 +197,7 @@ export default function Campanhas() {
       formatContents: {
         wpp: '',
         sms: '',
-        email: { subject: '', html: '' }
+        email: { subject: '', content: '', mode: 'text' as 'text' | 'html' }
       },
       tracking: {
         type: '',
@@ -408,12 +409,12 @@ export default function Campanhas() {
           setNewCampaign({
             name: '',
             group: '',
-            formats: [],
-            formatContents: {
-              wpp: '',
-              sms: '',
-              email: { subject: '', html: '' }
-            },
+      formats: [],
+      formatContents: {
+        wpp: '',
+        sms: '',
+        email: { subject: '', content: '', mode: 'text' as 'text' | 'html' }
+      },
             tracking: {
               type: '',
               utmSource: '',
@@ -603,29 +604,61 @@ export default function Campanhas() {
                       placeholder="Digite o assunto do e-mail..."
                     />
                   </div>
+                  
                   <div className="grid gap-2">
-                    <Label htmlFor="email-html">Conteúdo HTML *</Label>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Modo de Edição</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {newCampaign.formatContents.email.mode === 'text' ? '✉️ Texto simples' : '💻 HTML avançado'}
+                        </span>
+                        <Switch
+                          checked={newCampaign.formatContents.email.mode === 'html'}
+                          onCheckedChange={(checked) => setNewCampaign({ 
+                            ...newCampaign, 
+                            formatContents: { 
+                              ...newCampaign.formatContents, 
+                              email: { 
+                                ...newCampaign.formatContents.email, 
+                                mode: checked ? 'html' : 'text'
+                              }
+                            }
+                          })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="email-content">
+                      {newCampaign.formatContents.email.mode === 'html' ? 'Conteúdo HTML *' : 'Conteúdo do E-mail *'}
+                    </Label>
                     <Textarea
-                      id="email-html"
-                      value={newCampaign.formatContents.email.html}
+                      id="email-content"
+                      value={newCampaign.formatContents.email.content}
                       onChange={(e) => setNewCampaign({ 
                         ...newCampaign, 
                         formatContents: { 
                           ...newCampaign.formatContents, 
-                          email: { ...newCampaign.formatContents.email, html: e.target.value }
+                          email: { ...newCampaign.formatContents.email, content: e.target.value }
                         }
                       })}
-                      placeholder="Digite o HTML do e-mail..."
+                      placeholder={
+                        newCampaign.formatContents.email.mode === 'html' 
+                          ? 'Digite o HTML do e-mail...' 
+                          : 'Digite o conteúdo do e-mail...'
+                      }
                       rows={12}
-                      className="font-mono text-sm"
+                      className={newCampaign.formatContents.email.mode === 'html' ? 'font-mono text-sm' : ''}
                     />
                   </div>
-                  {newCampaign.formatContents.email.html && (
+                  
+                  {newCampaign.formatContents.email.mode === 'html' && newCampaign.formatContents.email.content && (
                     <div className="grid gap-2">
                       <Label>Preview</Label>
                       <div 
                         className="border rounded-lg p-4 bg-card"
-                        dangerouslySetInnerHTML={{ __html: newCampaign.formatContents.email.html }}
+                        dangerouslySetInnerHTML={{ __html: newCampaign.formatContents.email.content }}
                       />
                     </div>
                   )}
@@ -641,7 +674,7 @@ export default function Campanhas() {
                   onClick={handleNextStep}
                   disabled={
                     (getCurrentFormat() === 'email' && 
-                      (!newCampaign.formatContents.email.subject || !newCampaign.formatContents.email.html)) ||
+                      (!newCampaign.formatContents.email.subject || !newCampaign.formatContents.email.content)) ||
                     (getCurrentFormat() === 'wpp' && !newCampaign.formatContents.wpp) ||
                     (getCurrentFormat() === 'sms' && !newCampaign.formatContents.sms)
                   }
