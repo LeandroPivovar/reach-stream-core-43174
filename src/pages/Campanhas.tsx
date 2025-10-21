@@ -61,7 +61,6 @@ export default function Campanhas() {
   const [newCampaign, setNewCampaign] = useState({
     name: '',
     group: '',
-    formats: [] as ('wpp' | 'sms' | 'email')[],
     campaignType: '' as 'dispatch' | 'coupon' | 'giftback' | '',
     campaignConfig: {
       coupon: {
@@ -79,10 +78,10 @@ export default function Campanhas() {
         maxRedemptions: ''
       }
     },
-    formatContents: {
-      wpp: '',
-      sms: '',
-      email: { subject: '', content: '', mode: 'text' as 'text' | 'html' }
+    email: { 
+      subject: '', 
+      content: '', 
+      mode: 'text' as 'text' | 'html' 
     },
     tracking: {
       type: '' as 'utm' | 'pixel' | 'shortlink' | '',
@@ -182,18 +181,9 @@ export default function Campanhas() {
   };
 
   const getTotalSteps = () => {
-    // seleção básica + tipo + config tipo + formatos + tracking + agendamento
+    // 1. Dados básicos + 2. Tipo + 3. Config específicas (se não for dispatch) + 4. Editor email + 5. Workflow
     const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
-    return 1 + 1 + configStep + newCampaign.formats.length + 1 + 1;
-  };
-
-  const getCurrentFormatIndex = () => {
-    const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
-    return currentStep - 3 - configStep; // ajusta pelo step de config
-  };
-
-  const getCurrentFormat = () => {
-    return newCampaign.formats[getCurrentFormatIndex()];
+    return 5 - (configStep === 0 ? 1 : 0); // Se dispatch, pula etapa 3
   };
 
   const handleNextStep = () => {
@@ -208,14 +198,6 @@ export default function Campanhas() {
     }
   };
 
-  const toggleFormat = (format: 'wpp' | 'sms' | 'email') => {
-    setNewCampaign(prev => ({
-      ...prev,
-      formats: prev.formats.includes(format)
-        ? prev.formats.filter(f => f !== format)
-        : [...prev.formats, format]
-    }));
-  };
 
   const handleCreateCampaign = () => {
     console.log('Creating campaign:', newCampaign);
@@ -224,7 +206,6 @@ export default function Campanhas() {
     setNewCampaign({
       name: '',
       group: '',
-      formats: [],
       campaignType: '',
       campaignConfig: {
         coupon: {
@@ -242,10 +223,10 @@ export default function Campanhas() {
           maxRedemptions: ''
         }
       },
-      formatContents: {
-        wpp: '',
-        sms: '',
-        email: { subject: '', content: '', mode: 'text' as 'text' | 'html' }
+      email: { 
+        subject: '', 
+        content: '', 
+        mode: 'text' 
       },
       tracking: {
         type: '',
@@ -457,7 +438,6 @@ export default function Campanhas() {
           setNewCampaign({
             name: '',
             group: '',
-            formats: [],
             campaignType: '',
             campaignConfig: {
               coupon: {
@@ -475,10 +455,10 @@ export default function Campanhas() {
                 maxRedemptions: ''
               }
             },
-            formatContents: {
-              wpp: '',
-              sms: '',
-              email: { subject: '', content: '', mode: 'text' as 'text' | 'html' }
+            email: { 
+              subject: '', 
+              content: '', 
+              mode: 'text' 
             },
             tracking: {
               type: '',
@@ -497,16 +477,22 @@ export default function Campanhas() {
             <DialogTitle>Nova Campanha - Etapa {currentStep} de {getTotalSteps()}</DialogTitle>
           </DialogHeader>
 
-          {/* Etapa 1: Seleção de Grupo e Formato */}
+          {/* Etapa 1: Dados Básicos */}
           {currentStep === 1 && (
             <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Comece definindo o nome e o público-alvo da sua campanha
+                </p>
+              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="campaign-name">Nome da Campanha *</Label>
                 <Input
                   id="campaign-name"
                   value={newCampaign.name}
                   onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
-                  placeholder="Ex: Promoção Black Friday"
+                  placeholder="Ex: Promoção Black Friday 2025"
                 />
               </div>
 
@@ -527,60 +513,10 @@ export default function Campanhas() {
                 </Select>
               </div>
 
-              <div className="grid gap-2">
-                <Label>Formatos de Envio * (selecione um ou mais)</Label>
-                <div className="grid grid-cols-3 gap-4">
-                  <Card 
-                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.formats.includes('wpp') ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => toggleFormat('wpp')}
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <MessageSquare className="w-8 h-8 text-green-500" />
-                      <span className="font-medium">WhatsApp</span>
-                      <span className="text-xs text-muted-foreground text-center">
-                        Mensagens de texto diretas
-                      </span>
-                    </div>
-                  </Card>
-
-                  <Card 
-                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.formats.includes('sms') ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => toggleFormat('sms')}
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <Smartphone className="w-8 h-8 text-blue-500" />
-                      <span className="font-medium">SMS</span>
-                      <span className="text-xs text-muted-foreground text-center">
-                        Mensagens de texto curtas
-                      </span>
-                    </div>
-                  </Card>
-
-                  <Card 
-                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.formats.includes('email') ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => toggleFormat('email')}
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <Mail className="w-8 h-8 text-orange-500" />
-                      <span className="font-medium">E-mail</span>
-                      <span className="text-xs text-muted-foreground text-center">
-                        Emails personalizados em HTML
-                      </span>
-                    </div>
-                  </Card>
-                </div>
-              </div>
-
               <div className="flex justify-end">
                 <Button 
                   onClick={handleNextStep}
-                  disabled={!newCampaign.name || !newCampaign.group || newCampaign.formats.length === 0}
+                  disabled={!newCampaign.name || !newCampaign.group}
                 >
                   Próximo
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -982,149 +918,79 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapas 4+ a N: Editor de Conteúdo para cada formato */}
-          {(() => {
-            const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
-            const isFormatStep = currentStep > 2 + configStep && 
-                                 currentStep <= newCampaign.formats.length + 2 + configStep;
-            return isFormatStep;
-          })() && (
+          {/* Etapa 4: Editor de E-mail */}
+          {((newCampaign.campaignType === 'dispatch' && currentStep === 3) || 
+            (newCampaign.campaignType !== 'dispatch' && currentStep === 4)) && (
             <div className="space-y-6 py-4">
-              {getCurrentFormat() === 'wpp' && (
-                <div className="space-y-4">
-                  <div className="bg-green-500/10 p-3 rounded-lg mb-4">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-green-500" />
-                      <span className="font-medium">Configuração WhatsApp</span>
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="wpp-message">Mensagem WhatsApp *</Label>
-                    <Textarea
-                      id="wpp-message"
-                      value={newCampaign.formatContents.wpp}
-                      onChange={(e) => setNewCampaign({ 
+              <div className="bg-orange-500/10 p-4 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-orange-500" />
+                  <span className="font-medium">Configure o conteúdo do seu e-mail</span>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="email-subject">Assunto do E-mail *</Label>
+                <Input
+                  id="email-subject"
+                  value={newCampaign.email.subject}
+                  onChange={(e) => setNewCampaign({ 
+                    ...newCampaign, 
+                    email: { ...newCampaign.email, subject: e.target.value }
+                  })}
+                  placeholder="Ex: Aproveite 20% de desconto na Black Friday!"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Modo de Edição</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {newCampaign.email.mode === 'text' ? '✉️ Texto simples' : '💻 HTML avançado'}
+                    </span>
+                    <Switch
+                      checked={newCampaign.email.mode === 'html'}
+                      onCheckedChange={(checked) => setNewCampaign({ 
                         ...newCampaign, 
-                        formatContents: { ...newCampaign.formatContents, wpp: e.target.value }
+                        email: { 
+                          ...newCampaign.email, 
+                          mode: checked ? 'html' : 'text'
+                        }
                       })}
-                      placeholder="Digite sua mensagem..."
-                      rows={8}
                     />
                   </div>
                 </div>
-              )}
+              </div>
 
-              {getCurrentFormat() === 'sms' && (
-                <div className="space-y-4">
-                  <div className="bg-blue-500/10 p-3 rounded-lg mb-4">
-                    <div className="flex items-center gap-2">
-                      <Smartphone className="w-5 h-5 text-blue-500" />
-                      <span className="font-medium">Configuração SMS</span>
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="sms-message">Mensagem SMS *</Label>
-                      <span className="text-xs text-muted-foreground">
-                        {newCampaign.formatContents.sms.length}/160 caracteres
-                      </span>
-                    </div>
-                    <Textarea
-                      id="sms-message"
-                      value={newCampaign.formatContents.sms}
-                      onChange={(e) => setNewCampaign({ 
-                        ...newCampaign, 
-                        formatContents: { ...newCampaign.formatContents, sms: e.target.value }
-                      })}
-                      placeholder="Digite sua mensagem SMS (máx. 160 caracteres)..."
-                      rows={4}
-                      maxLength={160}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {getCurrentFormat() === 'email' && (
-                <div className="space-y-4">
-                  <div className="bg-orange-500/10 p-3 rounded-lg mb-4">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-5 h-5 text-orange-500" />
-                      <span className="font-medium">Configuração E-mail</span>
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="email-subject">Assunto do E-mail *</Label>
-                    <Input
-                      id="email-subject"
-                      value={newCampaign.formatContents.email.subject}
-                      onChange={(e) => setNewCampaign({ 
-                        ...newCampaign, 
-                        formatContents: { 
-                          ...newCampaign.formatContents, 
-                          email: { ...newCampaign.formatContents.email, subject: e.target.value }
-                        }
-                      })}
-                      placeholder="Digite o assunto do e-mail..."
-                    />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label>Modo de Edição</Label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                          {newCampaign.formatContents.email.mode === 'text' ? '✉️ Texto simples' : '💻 HTML avançado'}
-                        </span>
-                        <Switch
-                          checked={newCampaign.formatContents.email.mode === 'html'}
-                          onCheckedChange={(checked) => setNewCampaign({ 
-                            ...newCampaign, 
-                            formatContents: { 
-                              ...newCampaign.formatContents, 
-                              email: { 
-                                ...newCampaign.formatContents.email, 
-                                mode: checked ? 'html' : 'text'
-                              }
-                            }
-                          })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="email-content">
-                      {newCampaign.formatContents.email.mode === 'html' ? 'Conteúdo HTML *' : 'Conteúdo do E-mail *'}
-                    </Label>
-                    <Textarea
-                      id="email-content"
-                      value={newCampaign.formatContents.email.content}
-                      onChange={(e) => setNewCampaign({ 
-                        ...newCampaign, 
-                        formatContents: { 
-                          ...newCampaign.formatContents, 
-                          email: { ...newCampaign.formatContents.email, content: e.target.value }
-                        }
-                      })}
-                      placeholder={
-                        newCampaign.formatContents.email.mode === 'html' 
-                          ? 'Digite o HTML do e-mail...' 
-                          : 'Digite o conteúdo do e-mail...'
-                      }
-                      rows={12}
-                      className={newCampaign.formatContents.email.mode === 'html' ? 'font-mono text-sm' : ''}
-                    />
-                  </div>
-                  
-                  {newCampaign.formatContents.email.mode === 'html' && newCampaign.formatContents.email.content && (
-                    <div className="grid gap-2">
-                      <Label>Preview</Label>
-                      <div 
-                        className="border rounded-lg p-4 bg-card"
-                        dangerouslySetInnerHTML={{ __html: newCampaign.formatContents.email.content }}
-                      />
-                    </div>
-                  )}
+              <div className="grid gap-2">
+                <Label htmlFor="email-content">
+                  {newCampaign.email.mode === 'html' ? 'Conteúdo HTML *' : 'Conteúdo do E-mail *'}
+                </Label>
+                <Textarea
+                  id="email-content"
+                  value={newCampaign.email.content}
+                  onChange={(e) => setNewCampaign({ 
+                    ...newCampaign, 
+                    email: { ...newCampaign.email, content: e.target.value }
+                  })}
+                  placeholder={
+                    newCampaign.email.mode === 'html' 
+                      ? 'Digite o HTML do e-mail...' 
+                      : 'Digite o conteúdo do e-mail...'
+                  }
+                  rows={12}
+                  className={newCampaign.email.mode === 'html' ? 'font-mono text-sm' : ''}
+                />
+              </div>
+              
+              {newCampaign.email.mode === 'html' && newCampaign.email.content && (
+                <div className="grid gap-2">
+                  <Label>Preview</Label>
+                  <div 
+                    className="border rounded-lg p-4 bg-card"
+                    dangerouslySetInnerHTML={{ __html: newCampaign.email.content }}
+                  />
                 </div>
               )}
 
@@ -1135,12 +1001,7 @@ export default function Campanhas() {
                 </Button>
                 <Button 
                   onClick={handleNextStep}
-                  disabled={
-                    (getCurrentFormat() === 'email' && 
-                      (!newCampaign.formatContents.email.subject || !newCampaign.formatContents.email.content)) ||
-                    (getCurrentFormat() === 'wpp' && !newCampaign.formatContents.wpp) ||
-                    (getCurrentFormat() === 'sms' && !newCampaign.formatContents.sms)
-                  }
+                  disabled={!newCampaign.email.subject || !newCampaign.email.content}
                 >
                   Próximo
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -1149,16 +1010,29 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Penúltima Etapa: Trackeamento */}
-          {currentStep === getTotalSteps() - 1 && (
+          {/* Etapa 5: Workflow e Envio */}
+          {((newCampaign.campaignType === 'dispatch' && currentStep === 4) || 
+            (newCampaign.campaignType !== 'dispatch' && currentStep === 5)) && (
             <div className="space-y-6 py-4">
+              <div className="p-3 bg-muted rounded-lg mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Mail className="w-5 h-5 text-orange-500" />
+                  <div>
+                    <p className="font-medium">{newCampaign.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Grupo: {newCampaign.group}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-primary/10 p-4 rounded-lg">
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mb-2">
                   <BarChart2 className="w-5 h-5 text-primary" />
-                  <span className="font-medium">Configurar Trackeamento</span>
+                  <span className="font-medium">Trackeamento e Envio</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Escolha como deseja rastrear os resultados desta campanha
+                  Configure o rastreamento e escolha quando enviar sua campanha
                 </p>
               </div>
 
@@ -1267,42 +1141,7 @@ export default function Campanhas() {
                 </Card>
               </div>
 
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={handlePrevStep}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-                <Button 
-                  onClick={handleNextStep}
-                  disabled={!newCampaign.tracking.type}
-                >
-                  Próximo
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Última Etapa: Agendamento */}
-          {currentStep === getTotalSteps() && (
-            <div className="space-y-6 py-4">
-              <div className="p-3 bg-muted rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex gap-2">
-                    {newCampaign.formats.includes('wpp') && <MessageSquare className="w-5 h-5 text-green-500" />}
-                    {newCampaign.formats.includes('sms') && <Smartphone className="w-5 h-5 text-blue-500" />}
-                    {newCampaign.formats.includes('email') && <Mail className="w-5 h-5 text-orange-500" />}
-                  </div>
-                  <div>
-                    <p className="font-medium">{newCampaign.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Grupo: {newCampaign.group}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-4">
+              <div className="grid gap-4 mt-6">
                 <Label>Quando enviar a campanha?</Label>
                 
                 <Card 
@@ -1372,8 +1211,8 @@ export default function Campanhas() {
                 <Button 
                   onClick={handleCreateCampaign}
                   disabled={
-                    newCampaign.scheduleType === 'schedule' && 
-                    (!newCampaign.scheduleDate || !newCampaign.scheduleTime)
+                    (newCampaign.scheduleType === 'schedule' && 
+                    (!newCampaign.scheduleDate || !newCampaign.scheduleTime))
                   }
                 >
                   {newCampaign.scheduleType === 'now' ? (
