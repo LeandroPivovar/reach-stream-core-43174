@@ -40,7 +40,10 @@ import {
   Clock,
   Download,
   Link2,
-  BarChart2
+  BarChart2,
+  Zap,
+  Tag,
+  Gift
 } from 'lucide-react';
 
 export default function Campanhas() {
@@ -51,6 +54,7 @@ export default function Campanhas() {
     name: '',
     group: '',
     formats: [] as ('wpp' | 'sms' | 'email')[],
+    campaignType: '' as 'dispatch' | 'coupon' | 'giftback' | '',
     formatContents: {
       wpp: '',
       sms: '',
@@ -154,11 +158,11 @@ export default function Campanhas() {
   };
 
   const getTotalSteps = () => {
-    return 1 + newCampaign.formats.length + 1 + 1; // seleção + formatos + tracking + agendamento
+    return 1 + 1 + newCampaign.formats.length + 1 + 1; // seleção básica + tipo + formatos + tracking + agendamento
   };
 
   const getCurrentFormatIndex = () => {
-    return currentStep - 2; // step 2 = primeiro formato (index 0)
+    return currentStep - 3; // step 3 = primeiro formato (index 0)
   };
 
   const getCurrentFormat = () => {
@@ -194,6 +198,7 @@ export default function Campanhas() {
       name: '',
       group: '',
       formats: [],
+      campaignType: '',
       formatContents: {
         wpp: '',
         sms: '',
@@ -409,12 +414,13 @@ export default function Campanhas() {
           setNewCampaign({
             name: '',
             group: '',
-      formats: [],
-      formatContents: {
-        wpp: '',
-        sms: '',
-        email: { subject: '', content: '', mode: 'text' as 'text' | 'html' }
-      },
+            formats: [],
+            campaignType: '',
+            formatContents: {
+              wpp: '',
+              sms: '',
+              email: { subject: '', content: '', mode: 'text' as 'text' | 'html' }
+            },
             tracking: {
               type: '',
               utmSource: '',
@@ -524,8 +530,95 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapas 2 a N: Editor de Conteúdo para cada formato */}
-          {currentStep > 1 && currentStep <= newCampaign.formats.length + 1 && (
+          {/* Etapa 2: Seleção de Tipo de Campanha */}
+          {currentStep === 2 && (
+            <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Escolha o tipo de campanha que melhor se adequa ao seu objetivo
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Tipo de Campanha *</Label>
+                <div className="grid grid-cols-1 gap-4">
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.campaignType === 'dispatch' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, campaignType: 'dispatch' })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Zap className="w-6 h-6 text-blue-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">Apenas Disparo</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Envio simples de mensagens, emails ou SMS para seus contatos. Ideal para comunicações diretas, newsletters e avisos.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.campaignType === 'coupon' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, campaignType: 'coupon' })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-orange-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Tag className="w-6 h-6 text-orange-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">Cupons de Desconto</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Crie e distribua cupons promocionais personalizados. Perfeito para campanhas de vendas, promoções sazonais e incentivos.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.campaignType === 'giftback' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, campaignType: 'giftback' })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Gift className="w-6 h-6 text-green-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">Gift Back / Cash Back</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Configure programas de recompensa e cashback para seus clientes. Estimule a fidelização e o retorno de compras.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={!newCampaign.campaignType}
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapas 3 a N: Editor de Conteúdo para cada formato */}
+          {currentStep > 2 && currentStep <= newCampaign.formats.length + 2 && (
             <div className="space-y-6 py-4">
               {getCurrentFormat() === 'wpp' && (
                 <div className="space-y-4">
