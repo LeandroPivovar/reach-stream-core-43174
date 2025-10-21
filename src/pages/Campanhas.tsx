@@ -30,6 +30,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { WorkflowBuilder, WorkflowStep } from '@/components/workflow/WorkflowBuilder';
 import { 
   MessageSquare, 
   Mail, 
@@ -83,6 +84,7 @@ export default function Campanhas() {
       content: '', 
       mode: 'text' as 'text' | 'html' 
     },
+    workflow: [] as WorkflowStep[],
     tracking: {
       type: '' as 'utm' | 'pixel' | 'shortlink' | '',
       utmSource: '',
@@ -181,9 +183,9 @@ export default function Campanhas() {
   };
 
   const getTotalSteps = () => {
-    // 1. Dados básicos + 2. Tipo + 3. Config específicas (se não for dispatch) + 4. Editor email + 5. Workflow
+    // 1. Dados básicos + 2. Tipo + 3. Config específicas (se não for dispatch) + 4. Editor email + 5. Workflow + 6. Agendamento
     const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
-    return 5 - (configStep === 0 ? 1 : 0); // Se dispatch, pula etapa 3
+    return 6 - (configStep === 0 ? 1 : 0);
   };
 
   const handleNextStep = () => {
@@ -237,6 +239,7 @@ export default function Campanhas() {
         content: '', 
         mode: 'text' 
       },
+      workflow: [],
       tracking: {
         type: '',
         utmSource: '',
@@ -469,6 +472,7 @@ export default function Campanhas() {
               content: '', 
               mode: 'text' 
             },
+            workflow: [],
             tracking: {
               type: '',
               utmSource: '',
@@ -1032,9 +1036,41 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 5: Workflow e Envio */}
+          {/* Etapa 5: Workflow Avançado */}
           {((newCampaign.campaignType === 'dispatch' && currentStep === 4) || 
             (newCampaign.campaignType !== 'dispatch' && currentStep === 5)) && (
+            <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <BarChart2 className="w-5 h-5 text-primary" />
+                  <span className="font-medium">Editor de Workflow</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Configure a automação da sua campanha com condições, delays e ações encadeadas
+                </p>
+              </div>
+
+              <WorkflowBuilder
+                workflow={newCampaign.workflow}
+                onChange={(workflow) => setNewCampaign({ ...newCampaign, workflow })}
+              />
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button onClick={handleNextStep}>
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 6: Trackeamento e Envio */}
+          {((newCampaign.campaignType === 'dispatch' && currentStep === 5) || 
+            (newCampaign.campaignType !== 'dispatch' && currentStep === 6)) && (
             <div className="space-y-6 py-4">
               <div className="p-3 bg-muted rounded-lg mb-4">
                 <div className="flex items-center gap-2 mb-2">
