@@ -22,6 +22,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { 
   MessageSquare, 
   Mail, 
@@ -55,6 +63,22 @@ export default function Campanhas() {
     group: '',
     formats: [] as ('wpp' | 'sms' | 'email')[],
     campaignType: '' as 'dispatch' | 'coupon' | 'giftback' | '',
+    campaignConfig: {
+      coupon: {
+        discountPercentage: '',
+        validityStart: undefined as Date | undefined,
+        validityEnd: undefined as Date | undefined
+      },
+      cashback: {
+        returnPercentage: '',
+        validityStart: undefined as Date | undefined,
+        validityEnd: undefined as Date | undefined
+      },
+      giftback: {
+        giftValue: '',
+        maxRedemptions: ''
+      }
+    },
     formatContents: {
       wpp: '',
       sms: '',
@@ -158,11 +182,14 @@ export default function Campanhas() {
   };
 
   const getTotalSteps = () => {
-    return 1 + 1 + newCampaign.formats.length + 1 + 1; // seleção básica + tipo + formatos + tracking + agendamento
+    // seleção básica + tipo + config tipo + formatos + tracking + agendamento
+    const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
+    return 1 + 1 + configStep + newCampaign.formats.length + 1 + 1;
   };
 
   const getCurrentFormatIndex = () => {
-    return currentStep - 3; // step 3 = primeiro formato (index 0)
+    const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
+    return currentStep - 3 - configStep; // ajusta pelo step de config
   };
 
   const getCurrentFormat = () => {
@@ -199,6 +226,22 @@ export default function Campanhas() {
       group: '',
       formats: [],
       campaignType: '',
+      campaignConfig: {
+        coupon: {
+          discountPercentage: '',
+          validityStart: undefined,
+          validityEnd: undefined
+        },
+        cashback: {
+          returnPercentage: '',
+          validityStart: undefined,
+          validityEnd: undefined
+        },
+        giftback: {
+          giftValue: '',
+          maxRedemptions: ''
+        }
+      },
       formatContents: {
         wpp: '',
         sms: '',
@@ -416,6 +459,22 @@ export default function Campanhas() {
             group: '',
             formats: [],
             campaignType: '',
+            campaignConfig: {
+              coupon: {
+                discountPercentage: '',
+                validityStart: undefined,
+                validityEnd: undefined
+              },
+              cashback: {
+                returnPercentage: '',
+                validityStart: undefined,
+                validityEnd: undefined
+              },
+              giftback: {
+                giftValue: '',
+                maxRedemptions: ''
+              }
+            },
             formatContents: {
               wpp: '',
               sms: '',
@@ -617,8 +676,319 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapas 3 a N: Editor de Conteúdo para cada formato */}
-          {currentStep > 2 && currentStep <= newCampaign.formats.length + 2 && (
+          {/* Etapa 3: Configurações Específicas do Tipo de Campanha */}
+          {currentStep === 3 && newCampaign.campaignType !== 'dispatch' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Configure os parâmetros específicos desta campanha
+                </p>
+              </div>
+
+              {/* Cupom de Desconto */}
+              {newCampaign.campaignType === 'coupon' && (
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="discount-percentage">Porcentagem do Desconto (%)*</Label>
+                    <Input
+                      id="discount-percentage"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={newCampaign.campaignConfig.coupon.discountPercentage}
+                      onChange={(e) => setNewCampaign({
+                        ...newCampaign,
+                        campaignConfig: {
+                          ...newCampaign.campaignConfig,
+                          coupon: {
+                            ...newCampaign.campaignConfig.coupon,
+                            discountPercentage: e.target.value
+                          }
+                        }
+                      })}
+                      placeholder="Ex: 20"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Válido de *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "justify-start text-left font-normal",
+                              !newCampaign.campaignConfig.coupon.validityStart && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {newCampaign.campaignConfig.coupon.validityStart ? (
+                              format(newCampaign.campaignConfig.coupon.validityStart, "dd/MM/yyyy")
+                            ) : (
+                              <span>Selecione a data</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={newCampaign.campaignConfig.coupon.validityStart}
+                            onSelect={(date) => setNewCampaign({
+                              ...newCampaign,
+                              campaignConfig: {
+                                ...newCampaign.campaignConfig,
+                                coupon: {
+                                  ...newCampaign.campaignConfig.coupon,
+                                  validityStart: date
+                                }
+                              }
+                            })}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>Válido até *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "justify-start text-left font-normal",
+                              !newCampaign.campaignConfig.coupon.validityEnd && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {newCampaign.campaignConfig.coupon.validityEnd ? (
+                              format(newCampaign.campaignConfig.coupon.validityEnd, "dd/MM/yyyy")
+                            ) : (
+                              <span>Selecione a data</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={newCampaign.campaignConfig.coupon.validityEnd}
+                            onSelect={(date) => setNewCampaign({
+                              ...newCampaign,
+                              campaignConfig: {
+                                ...newCampaign.campaignConfig,
+                                coupon: {
+                                  ...newCampaign.campaignConfig.coupon,
+                                  validityEnd: date
+                                }
+                              }
+                            })}
+                            disabled={(date) => 
+                              newCampaign.campaignConfig.coupon.validityStart 
+                                ? date < newCampaign.campaignConfig.coupon.validityStart 
+                                : false
+                            }
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Cash Back */}
+              {newCampaign.campaignType === 'giftback' && (
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="return-percentage">Percentual de Retorno (%)*</Label>
+                    <Input
+                      id="return-percentage"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={newCampaign.campaignConfig.cashback.returnPercentage}
+                      onChange={(e) => setNewCampaign({
+                        ...newCampaign,
+                        campaignConfig: {
+                          ...newCampaign.campaignConfig,
+                          cashback: {
+                            ...newCampaign.campaignConfig.cashback,
+                            returnPercentage: e.target.value
+                          }
+                        }
+                      })}
+                      placeholder="Ex: 10"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Válido de *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "justify-start text-left font-normal",
+                              !newCampaign.campaignConfig.cashback.validityStart && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {newCampaign.campaignConfig.cashback.validityStart ? (
+                              format(newCampaign.campaignConfig.cashback.validityStart, "dd/MM/yyyy")
+                            ) : (
+                              <span>Selecione a data</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={newCampaign.campaignConfig.cashback.validityStart}
+                            onSelect={(date) => setNewCampaign({
+                              ...newCampaign,
+                              campaignConfig: {
+                                ...newCampaign.campaignConfig,
+                                cashback: {
+                                  ...newCampaign.campaignConfig.cashback,
+                                  validityStart: date
+                                }
+                              }
+                            })}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>Válido até *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "justify-start text-left font-normal",
+                              !newCampaign.campaignConfig.cashback.validityEnd && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {newCampaign.campaignConfig.cashback.validityEnd ? (
+                              format(newCampaign.campaignConfig.cashback.validityEnd, "dd/MM/yyyy")
+                            ) : (
+                              <span>Selecione a data</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={newCampaign.campaignConfig.cashback.validityEnd}
+                            onSelect={(date) => setNewCampaign({
+                              ...newCampaign,
+                              campaignConfig: {
+                                ...newCampaign.campaignConfig,
+                                cashback: {
+                                  ...newCampaign.campaignConfig.cashback,
+                                  validityEnd: date
+                                }
+                              }
+                            })}
+                            disabled={(date) => 
+                              newCampaign.campaignConfig.cashback.validityStart 
+                                ? date < newCampaign.campaignConfig.cashback.validityStart 
+                                : false
+                            }
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="gift-value">Valor do Brinde *</Label>
+                    <Input
+                      id="gift-value"
+                      value={newCampaign.campaignConfig.giftback.giftValue}
+                      onChange={(e) => setNewCampaign({
+                        ...newCampaign,
+                        campaignConfig: {
+                          ...newCampaign.campaignConfig,
+                          giftback: {
+                            ...newCampaign.campaignConfig.giftback,
+                            giftValue: e.target.value
+                          }
+                        }
+                      })}
+                      placeholder="Ex: R$ 50,00 ou Brinde Premium"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="max-redemptions">Quantidade Máxima de Resgates *</Label>
+                    <Input
+                      id="max-redemptions"
+                      type="number"
+                      min="1"
+                      value={newCampaign.campaignConfig.giftback.maxRedemptions}
+                      onChange={(e) => setNewCampaign({
+                        ...newCampaign,
+                        campaignConfig: {
+                          ...newCampaign.campaignConfig,
+                          giftback: {
+                            ...newCampaign.campaignConfig.giftback,
+                            maxRedemptions: e.target.value
+                          }
+                        }
+                      })}
+                      placeholder="Ex: 100"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={
+                    (newCampaign.campaignType === 'coupon' && (
+                      !newCampaign.campaignConfig.coupon.discountPercentage ||
+                      !newCampaign.campaignConfig.coupon.validityStart ||
+                      !newCampaign.campaignConfig.coupon.validityEnd
+                    )) ||
+                    (newCampaign.campaignType === 'giftback' && (
+                      !newCampaign.campaignConfig.cashback.returnPercentage ||
+                      !newCampaign.campaignConfig.cashback.validityStart ||
+                      !newCampaign.campaignConfig.cashback.validityEnd ||
+                      !newCampaign.campaignConfig.giftback.giftValue ||
+                      !newCampaign.campaignConfig.giftback.maxRedemptions
+                    ))
+                  }
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapas 4+ a N: Editor de Conteúdo para cada formato */}
+          {(() => {
+            const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
+            const isFormatStep = currentStep > 2 + configStep && 
+                                 currentStep <= newCampaign.formats.length + 2 + configStep;
+            return isFormatStep;
+          })() && (
             <div className="space-y-6 py-4">
               {getCurrentFormat() === 'wpp' && (
                 <div className="space-y-4">
