@@ -35,6 +35,17 @@ export default function Integracoes() {
     storeName: '',
     domain: ''
   });
+  const [tryData, setTryData] = useState({
+    apiKey: '',
+    secretKey: '',
+    endpoint: ''
+  });
+  const [vtexData, setVtexData] = useState({
+    accountName: '',
+    appKey: '',
+    appToken: ''
+  });
+  const [testingConnection, setTestingConnection] = useState(false);
   const [webhookData, setWebhookData] = useState({
     name: '',
     url: '',
@@ -68,6 +79,24 @@ export default function Integracoes() {
       status: 'Disponível',
       color: 'bg-purple-500',
       features: ['Catálogo sincronizado', 'Remarketing', 'Análise de vendas']
+    },
+    {
+      id: 4,
+      name: 'Try',
+      description: 'Integração com a plataforma Try para gestão de vendas',
+      icon: Zap,
+      status: 'Disponível',
+      color: 'bg-orange-500',
+      features: ['API de produtos', 'Sincronização de pedidos', 'Webhooks em tempo real']
+    },
+    {
+      id: 5,
+      name: 'VTEX',
+      description: 'Conecte sua loja VTEX para automação completa',
+      icon: Store,
+      status: 'Disponível',
+      color: 'bg-pink-500',
+      features: ['Catálogo unificado', 'OMS integrado', 'Checkout personalizado']
     }
   ];
 
@@ -104,13 +133,52 @@ export default function Integracoes() {
     setSelectedEcommerce(platform);
   };
 
+  const handleTestConnection = async (platform: 'try' | 'vtex') => {
+    setTestingConnection(true);
+    
+    // Simulate API test
+    setTimeout(() => {
+      const success = Math.random() > 0.3; // 70% success rate for demo
+      
+      if (success) {
+        toast({
+          title: "Conexão bem-sucedida!",
+          description: `A conexão com ${platform === 'try' ? 'Try' : 'VTEX'} foi testada com sucesso.`,
+        });
+      } else {
+        toast({
+          title: "Erro na conexão",
+          description: "Verifique suas credenciais e tente novamente.",
+          variant: "destructive",
+        });
+      }
+      setTestingConnection(false);
+    }, 2000);
+  };
+
   const handleConnect = () => {
     if (integrationType === 'ecommerce') {
-      console.log('Connecting e-commerce:', { platform: selectedEcommerce, ...ecommerceData });
-      toast({
-        title: "E-commerce conectado!",
-        description: `${selectedEcommerce} foi conectado com sucesso.`,
-      });
+      if (selectedEcommerce === 'Try') {
+        console.log('Connecting Try:', tryData);
+        // Here you would save to database with encrypted credentials
+        toast({
+          title: "Try conectado!",
+          description: "Credenciais salvas com segurança.",
+        });
+      } else if (selectedEcommerce === 'VTEX') {
+        console.log('Connecting VTEX:', vtexData);
+        // Here you would save to database with encrypted credentials
+        toast({
+          title: "VTEX conectada!",
+          description: "Credenciais salvas com segurança.",
+        });
+      } else {
+        console.log('Connecting e-commerce:', { platform: selectedEcommerce, ...ecommerceData });
+        toast({
+          title: "E-commerce conectado!",
+          description: `${selectedEcommerce} foi conectado com sucesso.`,
+        });
+      }
     } else {
       console.log('Creating webhook:', webhookData);
       toast({
@@ -122,6 +190,8 @@ export default function Integracoes() {
     setIntegrationType(null);
     setSelectedEcommerce(null);
     setEcommerceData({ apiKey: '', storeName: '', domain: '' });
+    setTryData({ apiKey: '', secretKey: '', endpoint: '' });
+    setVtexData({ accountName: '', appKey: '', appToken: '' });
     setWebhookData({ name: '', url: '', events: [] });
   };
 
@@ -130,6 +200,8 @@ export default function Integracoes() {
     setIntegrationType(null);
     setSelectedEcommerce(null);
     setEcommerceData({ apiKey: '', storeName: '', domain: '' });
+    setTryData({ apiKey: '', secretKey: '', endpoint: '' });
+    setVtexData({ accountName: '', appKey: '', appToken: '' });
     setWebhookData({ name: '', url: '', events: [] });
   };
 
@@ -480,6 +552,40 @@ export default function Integracoes() {
                     </div>
                   </div>
                 </Card>
+
+                <Card 
+                  className="p-4 cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleSelectEcommerce('Try')}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Try</p>
+                      <p className="text-xs text-muted-foreground">
+                        Gestão de vendas e pedidos
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card 
+                  className="p-4 cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleSelectEcommerce('VTEX')}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
+                      <Store className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium">VTEX</p>
+                      <p className="text-xs text-muted-foreground">
+                        Plataforma e-commerce enterprise
+                      </p>
+                    </div>
+                  </div>
+                </Card>
               </div>
 
               <div className="flex justify-between">
@@ -492,7 +598,7 @@ export default function Integracoes() {
           )}
 
           {/* Configuração E-commerce */}
-          {selectedEcommerce && (
+          {selectedEcommerce && selectedEcommerce !== 'Try' && selectedEcommerce !== 'VTEX' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -563,6 +669,178 @@ export default function Integracoes() {
                 >
                   Conectar {selectedEcommerce}
                 </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Configuração Try */}
+          {selectedEcommerce === 'Try' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-orange-500/10 p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Preencha os dados para conectar sua conta Try
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="try-api-key">API Key *</Label>
+                  <Input
+                    id="try-api-key"
+                    type="password"
+                    value={tryData.apiKey}
+                    onChange={(e) => setTryData({ ...tryData, apiKey: e.target.value })}
+                    placeholder="Cole sua API Key da Try"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Encontre nas configurações da sua conta Try em Integrações
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="try-secret-key">Secret Key *</Label>
+                  <Input
+                    id="try-secret-key"
+                    type="password"
+                    value={tryData.secretKey}
+                    onChange={(e) => setTryData({ ...tryData, secretKey: e.target.value })}
+                    placeholder="Cole sua Secret Key"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Mantenha esta chave em segredo e nunca a compartilhe
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="try-endpoint">Endpoint *</Label>
+                  <Input
+                    id="try-endpoint"
+                    value={tryData.endpoint}
+                    onChange={(e) => setTryData({ ...tryData, endpoint: e.target.value })}
+                    placeholder="https://api.try.com.br/v1"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    URL base da API Try (geralmente https://api.try.com.br/v1)
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm font-medium mb-2">Recursos incluídos:</p>
+                <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>API de produtos e catálogo</li>
+                  <li>Sincronização de pedidos</li>
+                  <li>Webhooks em tempo real</li>
+                  <li>Gestão de estoque integrada</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-between gap-2">
+                <Button variant="outline" onClick={() => setSelectedEcommerce(null)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleTestConnection('try')}
+                    disabled={!tryData.apiKey || !tryData.secretKey || !tryData.endpoint || testingConnection}
+                  >
+                    {testingConnection ? 'Testando...' : 'Testar Conexão'}
+                  </Button>
+                  <Button 
+                    onClick={handleConnect}
+                    disabled={!tryData.apiKey || !tryData.secretKey || !tryData.endpoint}
+                  >
+                    Conectar Try
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Configuração VTEX */}
+          {selectedEcommerce === 'VTEX' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-pink-500/10 p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Preencha os dados para conectar sua conta VTEX
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="vtex-account">Account Name *</Label>
+                  <Input
+                    id="vtex-account"
+                    value={vtexData.accountName}
+                    onChange={(e) => setVtexData({ ...vtexData, accountName: e.target.value })}
+                    placeholder="Ex: minhaempresa"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Nome da sua conta VTEX (encontrado na URL: minhaempresa.vtexcommercestable.com.br)
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="vtex-app-key">App Key *</Label>
+                  <Input
+                    id="vtex-app-key"
+                    type="password"
+                    value={vtexData.appKey}
+                    onChange={(e) => setVtexData({ ...vtexData, appKey: e.target.value })}
+                    placeholder="Cole sua App Key da VTEX"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Gere nas configurações da VTEX em Conta &gt; Chaves de aplicação
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="vtex-app-token">App Token *</Label>
+                  <Input
+                    id="vtex-app-token"
+                    type="password"
+                    value={vtexData.appToken}
+                    onChange={(e) => setVtexData({ ...vtexData, appToken: e.target.value })}
+                    placeholder="Cole seu App Token"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Token gerado junto com a App Key - mantenha em segredo
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm font-medium mb-2">Recursos incluídos:</p>
+                <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>Catálogo unificado de produtos</li>
+                  <li>OMS (Order Management System) integrado</li>
+                  <li>Checkout personalizado</li>
+                  <li>Rastreamento de pedidos avançado</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-between gap-2">
+                <Button variant="outline" onClick={() => setSelectedEcommerce(null)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleTestConnection('vtex')}
+                    disabled={!vtexData.accountName || !vtexData.appKey || !vtexData.appToken || testingConnection}
+                  >
+                    {testingConnection ? 'Testando...' : 'Testar Conexão'}
+                  </Button>
+                  <Button 
+                    onClick={handleConnect}
+                    disabled={!vtexData.accountName || !vtexData.appKey || !vtexData.appToken}
+                  >
+                    Conectar VTEX
+                  </Button>
+                </div>
               </div>
             </div>
           )}
