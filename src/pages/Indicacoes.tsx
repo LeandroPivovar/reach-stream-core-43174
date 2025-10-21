@@ -16,7 +16,8 @@ import {
   Gift,
   Star,
   Calendar,
-  Percent
+  Percent,
+  Info
 } from 'lucide-react';
 
 export default function Indicacoes() {
@@ -244,6 +245,49 @@ export default function Indicacoes() {
                 <p className="text-sm text-muted-foreground">
                   Ganhe R$ 50 extras na primeira indicação que assinar um plano pago.
                 </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Como funciona o acordo */}
+        <Card className="p-6 border-2 border-primary/20">
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+              <Info className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold mb-3 flex items-center space-x-2">
+                <span>Como funciona o seu acordo</span>
+              </h3>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <p className="leading-relaxed">
+                  <strong className="text-foreground">Você recebe {commissionPercentage}% por cada venda</strong> feita através da sua indicação. 
+                  O valor é calculado sobre as vendas confirmadas no mês seguinte.
+                </p>
+                <div className="bg-muted/30 rounded-lg p-4 space-y-2">
+                  <p className="flex items-start">
+                    <span className="text-primary mr-2">•</span>
+                    <span>As comissões são creditadas automaticamente 30 dias após o primeiro pagamento do indicado</span>
+                  </p>
+                  <p className="flex items-start">
+                    <span className="text-primary mr-2">•</span>
+                    <span>Você continua recebendo enquanto o indicado mantiver a assinatura ativa</span>
+                  </p>
+                  <p className="flex items-start">
+                    <span className="text-primary mr-2">•</span>
+                    <span>Os pagamentos são processados mensalmente via PIX ou depósito bancário</span>
+                  </p>
+                  <p className="flex items-start">
+                    <span className="text-primary mr-2">•</span>
+                    <span>Não há limite de indicações - quanto mais você indicar, mais você ganha</span>
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-border">
+                  <p className="text-xs text-muted-foreground italic">
+                    💡 Dica: Você pode ajustar a porcentagem de comissão que o seu indicado receberá antes de enviar o convite.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
