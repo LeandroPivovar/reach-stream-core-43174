@@ -60,6 +60,7 @@ export default function Campanhas() {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [newCampaign, setNewCampaign] = useState({
+    campaignComplexity: '' as 'simple' | 'advanced' | '',
     name: '',
     groups: [] as string[],
     campaignType: '' as 'dispatch' | 'coupon' | 'giftback' | '',
@@ -183,9 +184,13 @@ export default function Campanhas() {
   };
 
   const getTotalSteps = () => {
-    // 1. Dados básicos + 2. Tipo + 3. Config específicas (se não for dispatch) + 4. Editor email + 5. Workflow + 6. Agendamento
+    if (newCampaign.campaignComplexity === 'simple') {
+      // Simple: 1. Complexity + 2. Basic Data + 3. Email + 4. Tracking/Send
+      return 4;
+    }
+    // Advanced: 1. Complexity + 2. Basic Data + 3. Type + 4. Config (if not dispatch) + 5. Email + 6. Workflow + 7. Tracking/Send
     const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
-    return 6 - (configStep === 0 ? 1 : 0);
+    return 7 - (configStep === 0 ? 1 : 0);
   };
 
   const handleNextStep = () => {
@@ -215,6 +220,7 @@ export default function Campanhas() {
     setIsNewCampaignOpen(false);
     setCurrentStep(1);
     setNewCampaign({
+      campaignComplexity: '',
       name: '',
       groups: [],
       campaignType: '',
@@ -448,6 +454,7 @@ export default function Campanhas() {
         if (!open) {
           setCurrentStep(1);
           setNewCampaign({
+            campaignComplexity: '',
             name: '',
             groups: [],
             campaignType: '',
@@ -490,8 +497,87 @@ export default function Campanhas() {
             <DialogTitle>Nova Campanha - Etapa {currentStep} de {getTotalSteps()}</DialogTitle>
           </DialogHeader>
 
-          {/* Etapa 1: Dados Básicos */}
+          {/* Etapa 1: Seleção de Complexidade */}
           {currentStep === 1 && (
+            <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Escolha o tipo de campanha mais adequado para suas necessidades
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Tipo de Campanha *</Label>
+                <div className="grid grid-cols-1 gap-4">
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.campaignComplexity === 'simple' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ 
+                      ...newCampaign, 
+                      campaignComplexity: 'simple',
+                      campaignType: 'dispatch' // Simple campaigns are always dispatch
+                    })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Zap className="w-6 h-6 text-blue-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">Campanha Simples</h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Fluxo simplificado e rápido para envio direto de mensagens
+                        </p>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li>• Apenas nome, grupos e conteúdo do e-mail</li>
+                          <li>• Envio imediato ou agendado</li>
+                          <li>• Ideal para iniciantes ou comunicações rápidas</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.campaignComplexity === 'advanced' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, campaignComplexity: 'advanced' })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <BarChart2 className="w-6 h-6 text-purple-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">Campanha Avançada</h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Controle total com automações, cupons e análises detalhadas
+                        </p>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li>• Cupons de desconto e gift back / cashback</li>
+                          <li>• Editor HTML avançado para e-mails</li>
+                          <li>• Workflow de automação personalizado</li>
+                          <li>• Projeção de resultados e tracking completo</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={!newCampaign.campaignComplexity}
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 2: Dados Básicos */}
+          {currentStep === 2 && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -539,7 +625,11 @@ export default function Campanhas() {
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
                 <Button 
                   onClick={handleNextStep}
                   disabled={!newCampaign.name || newCampaign.groups.length === 0}
@@ -551,8 +641,8 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 2: Seleção de Tipo de Campanha */}
-          {currentStep === 2 && (
+          {/* Etapa 3: Seleção de Tipo de Campanha (apenas para advanced) */}
+          {currentStep === 3 && newCampaign.campaignComplexity === 'advanced' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -638,8 +728,8 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 3: Configurações Específicas do Tipo de Campanha */}
-          {currentStep === 3 && newCampaign.campaignType !== 'dispatch' && (
+          {/* Etapa 4: Configurações Específicas do Tipo de Campanha (apenas para advanced) */}
+          {currentStep === 4 && newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -944,9 +1034,12 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 4: Editor de E-mail */}
-          {((newCampaign.campaignType === 'dispatch' && currentStep === 3) || 
-            (newCampaign.campaignType !== 'dispatch' && currentStep === 4)) && (
+          {/* Email Editor Step */}
+          {(
+            (newCampaign.campaignComplexity === 'simple' && currentStep === 3) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 4) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 5)
+          ) && (
             <div className="space-y-6 py-4">
               <div className="bg-orange-500/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2">
@@ -968,30 +1061,32 @@ export default function Campanhas() {
                 />
               </div>
               
-              <div className="grid gap-2">
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Modo de Edição</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      {newCampaign.email.mode === 'text' ? '✉️ Texto simples' : '💻 HTML avançado'}
-                    </span>
-                    <Switch
-                      checked={newCampaign.email.mode === 'html'}
-                      onCheckedChange={(checked) => setNewCampaign({ 
-                        ...newCampaign, 
-                        email: { 
-                          ...newCampaign.email, 
-                          mode: checked ? 'html' : 'text'
-                        }
-                      })}
-                    />
+              {newCampaign.campaignComplexity === 'advanced' && (
+                <div className="grid gap-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Modo de Edição</Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {newCampaign.email.mode === 'text' ? '✉️ Texto simples' : '💻 HTML avançado'}
+                      </span>
+                      <Switch
+                        checked={newCampaign.email.mode === 'html'}
+                        onCheckedChange={(checked) => setNewCampaign({ 
+                          ...newCampaign, 
+                          email: { 
+                            ...newCampaign.email, 
+                            mode: checked ? 'html' : 'text'
+                          }
+                        })}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid gap-2">
                 <Label htmlFor="email-content">
-                  {newCampaign.email.mode === 'html' ? 'Conteúdo HTML *' : 'Conteúdo do E-mail *'}
+                  {newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' ? 'Conteúdo HTML *' : 'Conteúdo do E-mail *'}
                 </Label>
                 <Textarea
                   id="email-content"
@@ -1001,16 +1096,16 @@ export default function Campanhas() {
                     email: { ...newCampaign.email, content: e.target.value }
                   })}
                   placeholder={
-                    newCampaign.email.mode === 'html' 
+                    newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' 
                       ? 'Digite o HTML do e-mail...' 
                       : 'Digite o conteúdo do e-mail...'
                   }
                   rows={12}
-                  className={newCampaign.email.mode === 'html' ? 'font-mono text-sm' : ''}
+                  className={newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' ? 'font-mono text-sm' : ''}
                 />
               </div>
               
-              {newCampaign.email.mode === 'html' && newCampaign.email.content && (
+              {newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' && newCampaign.email.content && (
                 <div className="grid gap-2">
                   <Label>Preview</Label>
                   <div 
@@ -1036,9 +1131,11 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 5: Workflow Avançado */}
-          {((newCampaign.campaignType === 'dispatch' && currentStep === 4) || 
-            (newCampaign.campaignType !== 'dispatch' && currentStep === 5)) && (
+          {/* Workflow Step (only for advanced) */}
+          {newCampaign.campaignComplexity === 'advanced' && (
+            (newCampaign.campaignType === 'dispatch' && currentStep === 5) ||
+            (newCampaign.campaignType !== 'dispatch' && currentStep === 6)
+          ) && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
@@ -1068,9 +1165,12 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 6: Trackeamento e Envio */}
-          {((newCampaign.campaignType === 'dispatch' && currentStep === 5) || 
-            (newCampaign.campaignType !== 'dispatch' && currentStep === 6)) && (
+          {/* Tracking & Send Step */}
+          {(
+            (newCampaign.campaignComplexity === 'simple' && currentStep === 4) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 6) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 7)
+          ) && (
             <div className="space-y-6 py-4">
               <div className="p-3 bg-muted rounded-lg mb-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -1087,117 +1187,122 @@ export default function Campanhas() {
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <BarChart2 className="w-5 h-5 text-primary" />
-                  <span className="font-medium">Trackeamento e Envio</span>
+                  <span className="font-medium">{newCampaign.campaignComplexity === 'simple' ? 'Envio' : 'Trackeamento e Envio'}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Configure o rastreamento e escolha quando enviar sua campanha
+                  {newCampaign.campaignComplexity === 'simple' 
+                    ? 'Escolha quando enviar sua campanha' 
+                    : 'Configure o rastreamento e escolha quando enviar sua campanha'
+                  }
                 </p>
               </div>
 
-              <div className="grid gap-4">
-                <Label>Tipo de Trackeamento *</Label>
+              {newCampaign.campaignComplexity === 'advanced' && (
+                <div className="grid gap-4">
+                  <Label>Tipo de Trackeamento *</Label>
                 
-                <Card 
-                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                    newCampaign.tracking.type === 'utm' ? 'border-primary bg-primary/5' : ''
-                  }`}
-                  onClick={() => setNewCampaign({ 
-                    ...newCampaign, 
-                    tracking: { ...newCampaign.tracking, type: 'utm' }
-                  })}
-                >
-                  <div className="flex items-start gap-3">
-                    <Link2 className="w-5 h-5 text-blue-500 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-medium">Parâmetros UTM</p>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Adicione tags UTM aos seus links para rastreamento no Google Analytics
-                      </p>
-                      
-                      {newCampaign.tracking.type === 'utm' && (
-                        <div className="space-y-3 mt-3">
-                          <div className="grid gap-2">
-                            <Label htmlFor="utm-source">Origem (utm_source)</Label>
-                            <Input
-                              id="utm-source"
-                              value={newCampaign.tracking.utmSource}
-                              onChange={(e) => setNewCampaign({ 
-                                ...newCampaign, 
-                                tracking: { ...newCampaign.tracking, utmSource: e.target.value }
-                              })}
-                              placeholder="Ex: newsletter, whatsapp, sms"
-                            />
+                  <Card 
+                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.tracking.type === 'utm' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ 
+                      ...newCampaign, 
+                      tracking: { ...newCampaign.tracking, type: 'utm' }
+                    })}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Link2 className="w-5 h-5 text-blue-500 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-medium">Parâmetros UTM</p>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Adicione tags UTM aos seus links para rastreamento no Google Analytics
+                        </p>
+                        
+                        {newCampaign.tracking.type === 'utm' && (
+                          <div className="space-y-3 mt-3">
+                            <div className="grid gap-2">
+                              <Label htmlFor="utm-source">Origem (utm_source)</Label>
+                              <Input
+                                id="utm-source"
+                                value={newCampaign.tracking.utmSource}
+                                onChange={(e) => setNewCampaign({ 
+                                  ...newCampaign, 
+                                  tracking: { ...newCampaign.tracking, utmSource: e.target.value }
+                                })}
+                                placeholder="Ex: newsletter, whatsapp, sms"
+                              />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor="utm-medium">Mídia (utm_medium)</Label>
+                              <Input
+                                id="utm-medium"
+                                value={newCampaign.tracking.utmMedium}
+                                onChange={(e) => setNewCampaign({ 
+                                  ...newCampaign, 
+                                  tracking: { ...newCampaign.tracking, utmMedium: e.target.value }
+                                })}
+                                placeholder="Ex: email, social, paid"
+                              />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor="utm-campaign">Campanha (utm_campaign)</Label>
+                              <Input
+                                id="utm-campaign"
+                                value={newCampaign.tracking.utmCampaign}
+                                onChange={(e) => setNewCampaign({ 
+                                  ...newCampaign, 
+                                  tracking: { ...newCampaign.tracking, utmCampaign: e.target.value }
+                                })}
+                                placeholder="Ex: black-friday, lancamento"
+                              />
+                            </div>
                           </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="utm-medium">Mídia (utm_medium)</Label>
-                            <Input
-                              id="utm-medium"
-                              value={newCampaign.tracking.utmMedium}
-                              onChange={(e) => setNewCampaign({ 
-                                ...newCampaign, 
-                                tracking: { ...newCampaign.tracking, utmMedium: e.target.value }
-                              })}
-                              placeholder="Ex: email, social, paid"
-                            />
-                          </div>
-                          <div className="grid gap-2">
-                            <Label htmlFor="utm-campaign">Campanha (utm_campaign)</Label>
-                            <Input
-                              id="utm-campaign"
-                              value={newCampaign.tracking.utmCampaign}
-                              onChange={(e) => setNewCampaign({ 
-                                ...newCampaign, 
-                                tracking: { ...newCampaign.tracking, utmCampaign: e.target.value }
-                              })}
-                              placeholder="Ex: black-friday, lancamento"
-                            />
-                          </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
 
-                <Card 
-                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                    newCampaign.tracking.type === 'pixel' ? 'border-primary bg-primary/5' : ''
-                  }`}
-                  onClick={() => setNewCampaign({ 
-                    ...newCampaign, 
-                    tracking: { ...newCampaign.tracking, type: 'pixel' }
-                  })}
-                >
-                  <div className="flex items-start gap-3">
-                    <Eye className="w-5 h-5 text-purple-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Pixel de Conversão</p>
-                      <p className="text-sm text-muted-foreground">
-                        Rastreie conversões usando pixels do Facebook, Google ou outros
-                      </p>
+                  <Card 
+                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.tracking.type === 'pixel' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ 
+                      ...newCampaign, 
+                      tracking: { ...newCampaign.tracking, type: 'pixel' }
+                    })}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Eye className="w-5 h-5 text-purple-500 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Pixel de Conversão</p>
+                        <p className="text-sm text-muted-foreground">
+                          Rastreie conversões usando pixels do Facebook, Google ou outros
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
 
-                <Card 
-                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                    newCampaign.tracking.type === 'shortlink' ? 'border-primary bg-primary/5' : ''
-                  }`}
-                  onClick={() => setNewCampaign({ 
-                    ...newCampaign, 
-                    tracking: { ...newCampaign.tracking, type: 'shortlink' }
-                  })}
-                >
-                  <div className="flex items-start gap-3">
-                    <Link2 className="w-5 h-5 text-orange-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Link Curto Rastreável</p>
-                      <p className="text-sm text-muted-foreground">
-                        Crie links curtos personalizados com rastreamento de cliques
-                      </p>
+                  <Card 
+                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.tracking.type === 'shortlink' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ 
+                      ...newCampaign, 
+                      tracking: { ...newCampaign.tracking, type: 'shortlink' }
+                    })}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Link2 className="w-5 h-5 text-orange-500 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Link Curto Rastreável</p>
+                        <p className="text-sm text-muted-foreground">
+                          Crie links curtos personalizados com rastreamento de cliques
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </div>
+                  </Card>
+                </div>
+              )}
 
               <div className="grid gap-4 mt-6">
                 <Label>Quando enviar a campanha?</Label>
