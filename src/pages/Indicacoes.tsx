@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { 
   Share2, 
   DollarSign,
@@ -17,13 +18,60 @@ import {
   Star,
   Calendar,
   Percent,
-  Info
+  Info,
+  TrendingUp as TrendingUpIcon
 } from 'lucide-react';
 
 export default function Indicacoes() {
   const { toast } = useToast();
   const [commissionPercentage, setCommissionPercentage] = useState(50);
   const [referralLink, setReferralLink] = useState(`https://nucleo.com/ref/SEU-CODIGO-123?commission=${50}`);
+
+  // Histórico de ganhos dos últimos 6 meses (mock data)
+  const historicalEarnings = [
+    { month: 'Out/24', earnings: 320 },
+    { month: 'Nov/24', earnings: 380 },
+    { month: 'Dez/24', earnings: 420 },
+    { month: 'Jan/25', earnings: 456 },
+    { month: 'Fev/25', earnings: 490 },
+    { month: 'Mar/25', earnings: 540 },
+  ];
+
+  // Cálculo da previsão
+  const forecastData = useMemo(() => {
+    // Calcula a tendência dos últimos 3 meses
+    const last3Months = historicalEarnings.slice(-3);
+    const avgGrowth = (last3Months[2].earnings - last3Months[0].earnings) / 2;
+    const currentMonthEarnings = historicalEarnings[historicalEarnings.length - 1].earnings;
+
+    // Gera previsão para os próximos 6 meses
+    const forecast = [];
+    const monthNames = ['Abr/25', 'Mai/25', 'Jun/25', 'Jul/25', 'Ago/25', 'Set/25'];
+    
+    for (let i = 0; i < 6; i++) {
+      const projectedEarnings = currentMonthEarnings + (avgGrowth * (i + 1));
+      forecast.push({
+        month: monthNames[i],
+        earnings: Math.round(projectedEarnings),
+        isProjected: true
+      });
+    }
+
+    // Combina histórico com previsão
+    return [
+      ...historicalEarnings.map(item => ({ ...item, isProjected: false })),
+      ...forecast
+    ];
+  }, []);
+
+  // Cálculo de totais da previsão
+  const forecastSummary = useMemo(() => {
+    const projectedMonths = forecastData.filter(item => item.isProjected);
+    const total = projectedMonths.reduce((sum, item) => sum + item.earnings, 0);
+    const avgMonthly = Math.round(total / projectedMonths.length);
+    
+    return { total, avgMonthly };
+  }, [forecastData]);
   
   const stats = {
     totalReferrals: 12,
@@ -151,6 +199,106 @@ export default function Indicacoes() {
             </div>
           </Card>
         </div>
+
+        {/* Previsão de Ganhos */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
+                <TrendingUpIcon className="w-6 h-6 text-green-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Previsão de ganhos nos próximos 6 meses</h3>
+                <p className="text-sm text-muted-foreground">
+                  Baseado no seu histórico e indicações ativas
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <Card className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Total Estimado (6 meses)</p>
+                  <p className="text-3xl font-bold text-green-600">
+                    R$ {forecastSummary.total.toLocaleString('pt-BR')}
+                  </p>
+                </div>
+                <DollarSign className="w-10 h-10 text-green-500/30" />
+              </div>
+            </Card>
+
+            <Card className="p-4 bg-muted/30 border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Média Mensal Projetada</p>
+                  <p className="text-3xl font-bold text-foreground">
+                    R$ {forecastSummary.avgMonthly.toLocaleString('pt-BR')}
+                  </p>
+                </div>
+                <Calendar className="w-10 h-10 text-muted-foreground/30" />
+              </div>
+            </Card>
+          </div>
+
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={forecastData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="month" 
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <YAxis 
+                  className="text-xs"
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  tickFormatter={(value) => `R$${value}`}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    padding: '8px'
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  formatter={(value: number, name: string, props: any) => [
+                    `R$ ${value.toLocaleString('pt-BR')}`,
+                    props.payload.isProjected ? 'Projetado' : 'Real'
+                  ]}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="earnings" 
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={(props) => {
+                    const { cx, cy, payload } = props;
+                    return (
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r={4}
+                        fill={payload.isProjected ? 'hsl(var(--green-500))' : 'hsl(var(--primary))'}
+                        stroke="hsl(var(--background))"
+                        strokeWidth={2}
+                      />
+                    );
+                  }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              <Info className="w-3 h-3 inline mr-1" />
+              A previsão é baseada na média de crescimento dos últimos 3 meses e pode variar conforme novas indicações e cancelamentos.
+            </p>
+          </div>
+        </Card>
 
         {/* Referral Link */}
         <Card className="p-6">
