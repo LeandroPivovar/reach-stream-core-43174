@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Share2, 
   DollarSign,
@@ -13,11 +15,14 @@ import {
   Copy,
   Gift,
   Star,
-  Calendar
+  Calendar,
+  Percent
 } from 'lucide-react';
 
 export default function Indicacoes() {
-  const [referralLink, setReferralLink] = useState('https://nucleo.com/ref/SEU-CODIGO-123');
+  const { toast } = useToast();
+  const [commissionPercentage, setCommissionPercentage] = useState(50);
+  const [referralLink, setReferralLink] = useState(`https://nucleo.com/ref/SEU-CODIGO-123?commission=${50}`);
   
   const stats = {
     totalReferrals: 12,
@@ -65,9 +70,24 @@ export default function Indicacoes() {
     { plan: 'Enterprise', commission: '50%', amount: 'R$ 123,50' }
   ];
 
+  const handleCommissionChange = (value: number[]) => {
+    const newPercentage = value[0];
+    setCommissionPercentage(newPercentage);
+    setReferralLink(`https://nucleo.com/ref/SEU-CODIGO-123?commission=${newPercentage}`);
+  };
+
+  const handleCommissionInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+    setCommissionPercentage(value);
+    setReferralLink(`https://nucleo.com/ref/SEU-CODIGO-123?commission=${value}`);
+  };
+
   const copyReferralLink = () => {
     navigator.clipboard.writeText(referralLink);
-    // Could show a toast here
+    toast({
+      title: "Link copiado!",
+      description: "O link de indicação foi copiado para a área de transferência.",
+    });
   };
 
   return (
@@ -147,22 +167,73 @@ export default function Indicacoes() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg">
-            <div className="flex-1">
-              <Input 
-                value={referralLink} 
-                readOnly 
-                className="font-mono text-sm"
-              />
+          <div className="space-y-4">
+            {/* Commission Configuration */}
+            <div className="p-4 bg-muted/30 rounded-lg border border-border">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Percent className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <Label className="text-sm font-semibold">Comissão do Indicado</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Defina quanto o indicado ganhará de comissão pelas vendas dele
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1">
+                    <Slider
+                      value={[commissionPercentage]}
+                      onValueChange={handleCommissionChange}
+                      max={100}
+                      step={1}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={commissionPercentage}
+                      onChange={handleCommissionInputChange}
+                      className="w-20 text-center"
+                    />
+                    <span className="text-sm font-medium text-muted-foreground">%</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>0%</span>
+                  <span className="font-medium text-foreground">
+                    Comissão configurada: {commissionPercentage}%
+                  </span>
+                  <span>100%</span>
+                </div>
+              </div>
             </div>
-            <Button onClick={copyReferralLink}>
-              <Copy className="w-4 h-4 mr-2" />
-              Copiar
-            </Button>
-            <Button variant="outline">
-              <Share2 className="w-4 h-4 mr-2" />
-              Compartilhar
-            </Button>
+
+            {/* Referral Link Input */}
+            <div className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg">
+              <div className="flex-1">
+                <Input 
+                  value={referralLink} 
+                  readOnly 
+                  className="font-mono text-sm"
+                />
+              </div>
+              <Button onClick={copyReferralLink}>
+                <Copy className="w-4 h-4 mr-2" />
+                Copiar
+              </Button>
+              <Button variant="outline">
+                <Share2 className="w-4 h-4 mr-2" />
+                Compartilhar
+              </Button>
+            </div>
           </div>
 
           <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
