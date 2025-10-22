@@ -48,7 +48,10 @@ import {
   Snowflake,
   Settings,
   RotateCcw,
-  Save
+  Save,
+  Send,
+  X,
+  CheckSquare
 } from 'lucide-react';
 import {
   Sheet,
@@ -63,6 +66,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Purchase {
   id: number;
@@ -103,6 +107,9 @@ export default function Contatos() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const [tempWeights, setTempWeights] = useState(scoreConfig.weights);
+  const [selectedContacts, setSelectedContacts] = useState<Set<number>>(new Set());
+  const [isBulkCampaignOpen, setIsBulkCampaignOpen] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState('');
   const [newContact, setNewContact] = useState({
     name: '',
     phone: '',
@@ -214,6 +221,86 @@ export default function Contatos() {
   const [tags] = useState(['Black Friday', 'Newsletter', 'Promoção', 'Fidelidade', 'Carrinho Abandonado']);
   const [states] = useState(['SP', 'RJ', 'MG', 'RS', 'PR', 'SC', 'BA', 'GO', 'PE', 'CE']);
   const [statuses] = useState(['Ativo', 'Inativo', 'Bloqueado', 'Aguardando']);
+  const [campaigns] = useState(['Black Friday 2025', 'Newsletter Semanal', 'Campanha Fidelidade', 'Promoção Verão', 'Lançamento Produto']);
+
+  // Funções de seleção múltipla
+  const toggleContactSelection = (contactId: number) => {
+    const newSelection = new Set(selectedContacts);
+    if (newSelection.has(contactId)) {
+      newSelection.delete(contactId);
+    } else {
+      newSelection.add(contactId);
+    }
+    setSelectedContacts(newSelection);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedContacts.size === contacts.length) {
+      setSelectedContacts(new Set());
+    } else {
+      setSelectedContacts(new Set(contacts.map(c => c.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedContacts(new Set());
+  };
+
+  const handleBulkRemove = () => {
+    if (window.confirm(`Tem certeza que deseja remover ${selectedContacts.size} contatos?`)) {
+      setContacts(contacts.filter(c => !selectedContacts.has(c.id)));
+      clearSelection();
+      // TODO: Quando backend estiver ativo, fazer: DELETE /api/contacts/bulk
+    }
+  };
+
+  const handleBulkExport = () => {
+    const selectedContactsData = contacts.filter(c => selectedContacts.has(c.id));
+    const csvContent = [
+      ['Nome', 'Telefone', 'Email', 'Grupo', 'Status', 'Etiquetas', 'Estado', 'Cidade'].join(','),
+      ...selectedContactsData.map(c => [
+        c.name,
+        c.phone,
+        c.email,
+        c.group,
+        c.status,
+        c.tags.join(';'),
+        c.state,
+        c.city
+      ].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `contatos-selecionados-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    clearSelection();
+  };
+
+  const handleBulkAddToCampaign = () => {
+    if (!selectedCampaign) {
+      alert('Selecione uma campanha');
+      return;
+    }
+    
+    const selectedContactsData = contacts.filter(c => selectedContacts.has(c.id));
+    console.log('Enviando leads para campanha:', {
+      campaign: selectedCampaign,
+      lead_ids: Array.from(selectedContacts),
+      leads: selectedContactsData.map(c => ({ id: c.id, name: c.name, email: c.email }))
+    });
+    
+    // TODO: Quando backend estiver ativo, fazer:
+    // POST /campaigns/{selectedCampaign}/add-leads
+    // body: { lead_ids: Array.from(selectedContacts) }
+    
+    alert(`${selectedContacts.size} leads adicionados à campanha "${selectedCampaign}" com sucesso!`);
+    setIsBulkCampaignOpen(false);
+    setSelectedCampaign('');
+    clearSelection();
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -332,6 +419,64 @@ export default function Contatos() {
       showSearch
     >
       <div className="space-y-6">
+        {/* Barra de Ações em Massa */}
+        {selectedContacts.size > 0 && (
+          <Card className="p-4 bg-primary/10 border-primary/30 shadow-lg sticky top-4 z-10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-primary" />
+                  <span className="font-semibold text-primary">
+                    {selectedContacts.size} {selectedContacts.size === 1 ? 'contato selecionado' : 'contatos selecionados'}
+                  </span>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setIsBulkCampaignOpen(true)}
+                    className="gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    Enviar para Campanha
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkExport}
+                    className="gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Exportar Selecionados
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkRemove}
+                    className="gap-2 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Remover
+                  </Button>
+                </div>
+              </div>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSelection}
+                className="gap-2"
+              >
+                <X className="w-4 h-4" />
+                Limpar Seleção
+              </Button>
+            </div>
+          </Card>
+        )}
+
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card className="p-4">
@@ -436,6 +581,13 @@ export default function Contatos() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border">
+                      <th className="text-left py-3 px-2 font-medium text-muted-foreground w-10">
+                        <Checkbox
+                          checked={selectedContacts.size === contacts.length && contacts.length > 0}
+                          onCheckedChange={toggleSelectAll}
+                          aria-label="Selecionar todos"
+                        />
+                      </th>
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground">Nome</th>
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground">Score</th>
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground">Contato</th>
@@ -456,7 +608,14 @@ export default function Contatos() {
                       const ScoreIcon = scoreColors.icon;
                       
                       return (
-                        <tr key={contact.id} className="border-b border-border last:border-0">
+                        <tr key={contact.id} className="border-b border-border last:border-0 hover:bg-muted/50">
+                          <td className="py-4 px-2">
+                            <Checkbox
+                              checked={selectedContacts.has(contact.id)}
+                              onCheckedChange={() => toggleContactSelection(contact.id)}
+                              aria-label={`Selecionar ${contact.name}`}
+                            />
+                          </td>
                           <td className="py-4 px-2">
                             <div className="flex items-center gap-3">
                               <TooltipProvider>
@@ -1123,6 +1282,63 @@ export default function Contatos() {
             </Button>
             <Button>
               Importar Contatos
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Adicionar à Campanha */}
+      <Dialog open={isBulkCampaignOpen} onOpenChange={setIsBulkCampaignOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Leads à Campanha</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">Leads selecionados:</p>
+              <div className="flex flex-wrap gap-2">
+                {contacts
+                  .filter(c => selectedContacts.has(c.id))
+                  .map(contact => (
+                    <Badge key={contact.id} variant="secondary">
+                      {contact.name}
+                    </Badge>
+                  ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Total: {selectedContacts.size} {selectedContacts.size === 1 ? 'lead' : 'leads'}
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="campaign-select">Selecione a Campanha</Label>
+              <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
+                <SelectTrigger id="campaign-select">
+                  <SelectValue placeholder="Escolha uma campanha" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map((campaign) => (
+                    <SelectItem key={campaign} value={campaign}>
+                      {campaign}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                💡 Os leads selecionados serão adicionados à campanha escolhida e poderão receber mensagens conforme configuração da campanha.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsBulkCampaignOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleBulkAddToCampaign} disabled={!selectedCampaign}>
+              <Send className="w-4 h-4 mr-2" />
+              Adicionar à Campanha
             </Button>
           </div>
         </DialogContent>
