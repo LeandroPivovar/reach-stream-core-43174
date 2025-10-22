@@ -38,7 +38,10 @@ import {
   Target,
   ShoppingCart,
   TrendingUp,
-  Calendar
+  Calendar,
+  Mail,
+  MousePointerClick,
+  Clock
 } from 'lucide-react';
 import {
   Sheet,
@@ -61,11 +64,26 @@ interface Purchase {
   product: string;
 }
 
+interface HistoryEvent {
+  id: number;
+  type: 'purchase' | 'email_open' | 'link_click' | 'campaign_participation';
+  date: string;
+  description: string;
+  metadata?: {
+    value?: number;
+    product?: string;
+    campaign?: string;
+    subject?: string;
+    link?: string;
+  };
+}
+
 interface ContactDetail {
   paymentMethod: string;
   sourceCampaign: string;
   purchases: Purchase[];
   ltv: number;
+  history: HistoryEvent[];
 }
 
 export default function Contatos() {
@@ -93,7 +111,16 @@ export default function Contatos() {
         { id: 1, date: '2025-11-28', value: 199.00, product: 'Produto Premium' },
         { id: 2, date: '2025-12-15', value: 89.90, product: 'Produto Básico' },
       ],
-      ltv: 288.90
+      ltv: 288.90,
+      history: [
+        { id: 1, type: 'campaign_participation', date: '2025-11-20', description: 'Entrou na campanha', metadata: { campaign: 'Black Friday 2025' } },
+        { id: 2, type: 'email_open', date: '2025-11-22', description: 'Abriu e-mail', metadata: { subject: 'Super Ofertas Black Friday!' } },
+        { id: 3, type: 'link_click', date: '2025-11-25', description: 'Clicou em link', metadata: { link: 'Produto Premium' } },
+        { id: 4, type: 'purchase', date: '2025-11-28', description: 'Compra realizada', metadata: { value: 199.00, product: 'Produto Premium' } },
+        { id: 5, type: 'email_open', date: '2025-12-10', description: 'Abriu e-mail', metadata: { subject: 'Novidades de Dezembro' } },
+        { id: 6, type: 'link_click', date: '2025-12-12', description: 'Clicou em link', metadata: { link: 'Produto Básico' } },
+        { id: 7, type: 'purchase', date: '2025-12-15', description: 'Compra realizada', metadata: { value: 89.90, product: 'Produto Básico' } },
+      ]
     },
     2: {
       paymentMethod: 'PIX',
@@ -101,7 +128,13 @@ export default function Contatos() {
       purchases: [
         { id: 1, date: '2025-10-05', value: 149.00, product: 'Produto Standard' },
       ],
-      ltv: 149.00
+      ltv: 149.00,
+      history: [
+        { id: 1, type: 'campaign_participation', date: '2025-09-28', description: 'Inscreveu-se na newsletter', metadata: { campaign: 'Newsletter Semanal' } },
+        { id: 2, type: 'email_open', date: '2025-10-01', description: 'Abriu e-mail', metadata: { subject: 'Promoção da Semana' } },
+        { id: 3, type: 'link_click', date: '2025-10-03', description: 'Clicou em link', metadata: { link: 'Ver Produtos' } },
+        { id: 4, type: 'purchase', date: '2025-10-05', description: 'Compra realizada', metadata: { value: 149.00, product: 'Produto Standard' } },
+      ]
     },
     3: {
       paymentMethod: 'Boleto',
@@ -111,7 +144,18 @@ export default function Contatos() {
         { id: 2, date: '2025-11-20', value: 189.90, product: 'Upgrade Plus' },
         { id: 3, date: '2025-12-30', value: 99.90, product: 'Add-on Extra' },
       ],
-      ltv: 588.80
+      ltv: 588.80,
+      history: [
+        { id: 1, type: 'campaign_participation', date: '2025-09-01', description: 'Entrou no programa', metadata: { campaign: 'Campanha Fidelidade' } },
+        { id: 2, type: 'purchase', date: '2025-09-10', description: 'Compra realizada', metadata: { value: 299.00, product: 'Kit Premium' } },
+        { id: 3, type: 'email_open', date: '2025-10-15', description: 'Abriu e-mail', metadata: { subject: 'Pontos de Fidelidade' } },
+        { id: 4, type: 'email_open', date: '2025-11-10', description: 'Abriu e-mail', metadata: { subject: 'Benefícios Exclusivos' } },
+        { id: 5, type: 'link_click', date: '2025-11-18', description: 'Clicou em link', metadata: { link: 'Upgrade Plus' } },
+        { id: 6, type: 'purchase', date: '2025-11-20', description: 'Compra realizada', metadata: { value: 189.90, product: 'Upgrade Plus' } },
+        { id: 7, type: 'email_open', date: '2025-12-20', description: 'Abriu e-mail', metadata: { subject: 'Feliz Natal' } },
+        { id: 8, type: 'link_click', date: '2025-12-28', description: 'Clicou em link', metadata: { link: 'Add-on Extra' } },
+        { id: 9, type: 'purchase', date: '2025-12-30', description: 'Compra realizada', metadata: { value: 99.90, product: 'Add-on Extra' } },
+      ]
     }
   };
 
@@ -889,6 +933,117 @@ export default function Contatos() {
                             {contactDetails[selectedContactId].purchases.length}
                           </span>
                         </div>
+                      </div>
+                    </Card>
+
+                    {/* Histórico Completo - Timeline */}
+                    <Card className="p-4">
+                      <h3 className="font-semibold mb-4 flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        Histórico Completo
+                      </h3>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Linha do tempo com todas as interações do lead
+                      </p>
+                      <div className="relative space-y-4">
+                        {/* Timeline line */}
+                        <div className="absolute left-[15px] top-2 bottom-2 w-[2px] bg-border"></div>
+                        
+                        {contactDetails[selectedContactId].history
+                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                          .map((event) => {
+                            const getEventIcon = () => {
+                              switch (event.type) {
+                                case 'purchase':
+                                  return <ShoppingCart className="w-4 h-4 text-white" />;
+                                case 'email_open':
+                                  return <Mail className="w-4 h-4 text-white" />;
+                                case 'link_click':
+                                  return <MousePointerClick className="w-4 h-4 text-white" />;
+                                case 'campaign_participation':
+                                  return <Target className="w-4 h-4 text-white" />;
+                                default:
+                                  return <Activity className="w-4 h-4 text-white" />;
+                              }
+                            };
+
+                            const getEventColor = () => {
+                              switch (event.type) {
+                                case 'purchase':
+                                  return 'bg-green-500';
+                                case 'email_open':
+                                  return 'bg-blue-500';
+                                case 'link_click':
+                                  return 'bg-purple-500';
+                                case 'campaign_participation':
+                                  return 'bg-orange-500';
+                                default:
+                                  return 'bg-gray-500';
+                              }
+                            };
+
+                            const getEventLabel = () => {
+                              switch (event.type) {
+                                case 'purchase':
+                                  return 'Compra';
+                                case 'email_open':
+                                  return 'E-mail Aberto';
+                                case 'link_click':
+                                  return 'Link Clicado';
+                                case 'campaign_participation':
+                                  return 'Campanha';
+                                default:
+                                  return 'Atividade';
+                              }
+                            };
+
+                            return (
+                              <div key={event.id} className="relative flex gap-3 pl-1">
+                                {/* Icon circle */}
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-full ${getEventColor()} flex items-center justify-center shadow-md z-10`}>
+                                  {getEventIcon()}
+                                </div>
+                                
+                                {/* Event content */}
+                                <div className="flex-1 pb-4">
+                                  <div className="flex items-start justify-between mb-1">
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="text-xs">
+                                        {getEventLabel()}
+                                      </Badge>
+                                      <span className="text-xs text-muted-foreground">
+                                        {new Date(event.date).toLocaleDateString('pt-BR')}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="text-sm font-medium mb-1">
+                                    {event.description}
+                                  </div>
+                                  
+                                  {event.metadata && (
+                                    <div className="text-xs text-muted-foreground space-y-1">
+                                      {event.metadata.product && (
+                                        <div>Produto: <span className="font-medium">{event.metadata.product}</span></div>
+                                      )}
+                                      {event.metadata.value && (
+                                        <div>Valor: <span className="font-medium text-green-500">R$ {event.metadata.value.toFixed(2)}</span></div>
+                                      )}
+                                      {event.metadata.campaign && (
+                                        <div>Campanha: <span className="font-medium">{event.metadata.campaign}</span></div>
+                                      )}
+                                      {event.metadata.subject && (
+                                        <div>Assunto: <span className="font-medium">{event.metadata.subject}</span></div>
+                                      )}
+                                      {event.metadata.link && (
+                                        <div>Link: <span className="font-medium">{event.metadata.link}</span></div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                       </div>
                     </Card>
                   </>
