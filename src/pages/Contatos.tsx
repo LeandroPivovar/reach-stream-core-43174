@@ -47,6 +47,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface Purchase {
   id: number;
@@ -161,6 +167,18 @@ export default function Contatos() {
       case 'Aguardando': return 'bg-yellow-500';
       default: return 'bg-gray-500';
     }
+  };
+
+  const getLtvColor = (ltv: number) => {
+    if (ltv >= 400) return { bg: 'bg-green-500', text: 'text-green-500', border: 'border-green-500' };
+    if (ltv >= 200) return { bg: 'bg-yellow-500', text: 'text-yellow-500', border: 'border-yellow-500' };
+    return { bg: 'bg-red-500', text: 'text-red-500', border: 'border-red-500' };
+  };
+
+  const getLtvLabel = (ltv: number) => {
+    if (ltv >= 400) return 'Alto Valor';
+    if (ltv >= 200) return 'Médio Valor';
+    return 'Baixo Valor';
   };
 
   const handleSaveContact = () => {
@@ -312,91 +330,137 @@ export default function Contatos() {
                     </tr>
                   </thead>
                   <tbody>
-                    {contacts.map((contact) => (
-                      <tr key={contact.id} className="border-b border-border last:border-0">
-                        <td className="py-4 px-2">
-                          <div>
-                            <div className="font-medium">{contact.name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              Último contato: {new Date(contact.lastInteraction).toLocaleDateString('pt-BR')}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-2">
-                          <div>
-                            <div className="text-sm">{contact.phone}</div>
-                            <div className="text-sm text-muted-foreground">{contact.email}</div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-2">
-                          <Badge variant="outline">{contact.group}</Badge>
-                        </td>
-                        <td className="py-4 px-2">
-                          <div className="flex items-center space-x-2">
-                            <div className={`w-2 h-2 rounded-full ${getStatusColor(contact.status)}`}></div>
-                            <span className="text-sm">{contact.status}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-2">
-                          <div className="flex flex-wrap gap-1">
-                            {contact.tags.map((tag) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-4 px-2">
-                          <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                            <MapPin className="w-3 h-3" />
-                            <span>{contact.city}, {contact.state}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-2 text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => setSelectedContactId(contact.id)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Ações do Contato</DialogTitle>
-                                </DialogHeader>
-                                <div className="grid gap-2">
-                                  <Button 
-                                    variant="ghost" 
-                                    className="justify-start"
-                                    onClick={() => {
-                                      setSelectedContactId(contact.id);
-                                    }}
-                                  >
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    Visualizar Perfil
-                                  </Button>
-                                  <Button variant="ghost" className="justify-start">
-                                    <Edit className="w-4 h-4 mr-2" />
-                                    Editar Contato
-                                  </Button>
-                                  <Button variant="ghost" className="justify-start text-destructive">
-                                    <Trash2 className="w-4 h-4 mr-2" />
-                                    Excluir Contato
-                                  </Button>
+                    {contacts.map((contact) => {
+                      const contactLtv = contactDetails[contact.id]?.ltv || 0;
+                      const ltvColors = getLtvColor(contactLtv);
+                      
+                      return (
+                        <tr key={contact.id} className="border-b border-border last:border-0">
+                          <td className="py-4 px-2">
+                            <div className="flex items-center gap-3">
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex-shrink-0">
+                                      {contactLtv > 0 ? (
+                                        <div className={`w-8 h-8 rounded-full ${ltvColors.bg} flex items-center justify-center text-white text-xs font-bold shadow-md`}>
+                                          <TrendingUp className="w-4 h-4" />
+                                        </div>
+                                      ) : (
+                                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                                          <Users className="w-4 h-4" />
+                                        </div>
+                                      )}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="p-3">
+                                    {contactLtv > 0 ? (
+                                      <div className="space-y-1">
+                                        <p className="font-semibold">Total Comprado</p>
+                                        <p className="text-lg font-bold text-primary">
+                                          R$ {contactLtv.toFixed(2)}
+                                        </p>
+                                        <p className={`text-xs ${ltvColors.text}`}>
+                                          {getLtvLabel(contactLtv)}
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm">Nenhuma compra registrada</p>
+                                    )}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{contact.name}</span>
+                                  {contactLtv > 0 && (
+                                    <Badge variant="outline" className={`${ltvColors.border} ${ltvColors.text} text-xs px-2`}>
+                                      R$ {contactLtv.toFixed(2)}
+                                    </Badge>
+                                  )}
                                 </div>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </td>
+                                <div className="text-sm text-muted-foreground">
+                                  Último contato: {new Date(contact.lastInteraction).toLocaleDateString('pt-BR')}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-2">
+                            <div>
+                              <div className="text-sm">{contact.phone}</div>
+                              <div className="text-sm text-muted-foreground">{contact.email}</div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-2">
+                            <Badge variant="outline">{contact.group}</Badge>
+                          </td>
+                          <td className="py-4 px-2">
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-2 h-2 rounded-full ${getStatusColor(contact.status)}`}></div>
+                              <span className="text-sm">{contact.status}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-2">
+                            <div className="flex flex-wrap gap-1">
+                              {contact.tags.map((tag) => (
+                                <Badge key={tag} variant="secondary" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="py-4 px-2">
+                            <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                              <MapPin className="w-3 h-3" />
+                              <span>{contact.city}, {contact.state}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-2 text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => setSelectedContactId(contact.id)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Ações do Contato</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="grid gap-2">
+                                    <Button 
+                                      variant="ghost" 
+                                      className="justify-start"
+                                      onClick={() => {
+                                        setSelectedContactId(contact.id);
+                                      }}
+                                    >
+                                      <Eye className="w-4 h-4 mr-2" />
+                                      Visualizar Perfil
+                                    </Button>
+                                    <Button variant="ghost" className="justify-start">
+                                      <Edit className="w-4 h-4 mr-2" />
+                                      Editar Contato
+                                    </Button>
+                                    <Button variant="ghost" className="justify-start text-destructive">
+                                      <Trash2 className="w-4 h-4 mr-2" />
+                                      Excluir Contato
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </td>
                       </tr>
-                    ))}
+                    );
+                  })}
                   </tbody>
                 </table>
               </div>
