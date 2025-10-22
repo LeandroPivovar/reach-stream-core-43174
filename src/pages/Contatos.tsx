@@ -51,7 +51,10 @@ import {
   Save,
   Send,
   X,
-  CheckSquare
+  CheckSquare,
+  Filter,
+  Search,
+  SlidersHorizontal
 } from 'lucide-react';
 import {
   Sheet,
@@ -67,6 +70,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface Purchase {
   id: number;
@@ -110,6 +118,18 @@ export default function Contatos() {
   const [selectedContacts, setSelectedContacts] = useState<Set<number>>(new Set());
   const [isBulkCampaignOpen, setIsBulkCampaignOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState('');
+  
+  // Estados de Filtro
+  const [filters, setFilters] = useState({
+    name: '',
+    campaign: '',
+    scoreMin: 0,
+    scoreMax: 100,
+    ltvMin: 0,
+    ltvMax: 10000,
+  });
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
   const [newContact, setNewContact] = useState({
     name: '',
     phone: '',
@@ -222,6 +242,54 @@ export default function Contatos() {
   const [states] = useState(['SP', 'RJ', 'MG', 'RS', 'PR', 'SC', 'BA', 'GO', 'PE', 'CE']);
   const [statuses] = useState(['Ativo', 'Inativo', 'Bloqueado', 'Aguardando']);
   const [campaigns] = useState(['Black Friday 2025', 'Newsletter Semanal', 'Campanha Fidelidade', 'Promoção Verão', 'Lançamento Produto']);
+
+  // Aplicar filtros
+  const filteredContacts = contacts.filter(contact => {
+    const contactDetail = contactDetails[contact.id];
+    const score = contactDetail ? calculateScore(contactDetail) : 0;
+    const ltv = contactDetail?.ltv || 0;
+    const campaign = contactDetail?.sourceCampaign || '';
+
+    // Filtro por nome
+    if (filters.name && !contact.name.toLowerCase().includes(filters.name.toLowerCase())) {
+      return false;
+    }
+
+    // Filtro por campanha
+    if (filters.campaign && campaign !== filters.campaign) {
+      return false;
+    }
+
+    // Filtro por score
+    if (score < filters.scoreMin || score > filters.scoreMax) {
+      return false;
+    }
+
+    // Filtro por LTV
+    if (ltv < filters.ltvMin || ltv > filters.ltvMax) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const hasActiveFilters = filters.name !== '' || 
+    filters.campaign !== '' || 
+    filters.scoreMin > 0 || 
+    filters.scoreMax < 100 || 
+    filters.ltvMin > 0 || 
+    filters.ltvMax < 10000;
+
+  const clearFilters = () => {
+    setFilters({
+      name: '',
+      campaign: '',
+      scoreMin: 0,
+      scoreMax: 100,
+      ltvMin: 0,
+      ltvMax: 10000,
+    });
+  };
 
   // Funções de seleção múltipla
   const toggleContactSelection = (contactId: number) => {
@@ -399,8 +467,6 @@ export default function Contatos() {
 
   const actions = (
     <>
-      <HeaderActions.Filter onClick={() => console.log('Filter clicked')} />
-      <HeaderActions.Export onClick={() => setIsExportOpen(true)} />
       <Button variant="outline" onClick={() => setIsImportOpen(true)}>
         <Upload className="w-4 h-4 mr-2" />
         Importar
@@ -416,66 +482,296 @@ export default function Contatos() {
       title="Contatos" 
       subtitle="Gerencie sua base de leads e clientes"
       actions={actions}
-      showSearch
     >
       <div className="space-y-6">
-        {/* Barra de Ações em Massa */}
-        {selectedContacts.size > 0 && (
-          <Card className="p-4 bg-primary/10 border-primary/30 shadow-lg sticky top-4 z-10">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <CheckSquare className="w-5 h-5 text-primary" />
-                  <span className="font-semibold text-primary">
-                    {selectedContacts.size} {selectedContacts.size === 1 ? 'contato selecionado' : 'contatos selecionados'}
-                  </span>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => setIsBulkCampaignOpen(true)}
-                    className="gap-2"
-                  >
-                    <Send className="w-4 h-4" />
-                    Enviar para Campanha
-                  </Button>
+        {/* Barra de Ações em Massa e Filtros */}
+        <Card className={`p-4 ${selectedContacts.size > 0 ? 'bg-primary/10 border-primary/30' : 'bg-card'} shadow-sm sticky top-4 z-10`}>
+          <div className="flex items-center justify-between gap-4">
+            {/* Lado Esquerdo - Seleção e Ações */}
+            <div className="flex items-center gap-4 flex-1">
+              {selectedContacts.size > 0 ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <CheckSquare className="w-5 h-5 text-primary" />
+                    <span className="font-semibold text-primary">
+                      {selectedContacts.size} {selectedContacts.size === 1 ? 'contato' : 'contatos'}
+                    </span>
+                  </div>
                   
+                  <div className="flex gap-2">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => setIsBulkCampaignOpen(true)}
+                      className="gap-2"
+                    >
+                      <Send className="w-4 h-4" />
+                      Enviar para Campanha
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkExport}
+                      className="gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Exportar
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkRemove}
+                      className="gap-2 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Remover
+                    </Button>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSelection}
+                    className="gap-2 ml-auto"
+                  >
+                    <X className="w-4 h-4" />
+                    Limpar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Users className="w-5 h-5" />
+                    <span className="font-medium">{filteredContacts.length} contatos</span>
+                    {hasActiveFilters && (
+                      <Badge variant="secondary" className="ml-2">
+                        Filtros ativos
+                      </Badge>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Lado Direito - Filtros e Ações */}
+            <div className="flex items-center gap-2">
+              {selectedContacts.size === 0 && (
+                <>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleBulkExport}
+                    onClick={() => setIsExportOpen(true)}
                     className="gap-2"
                   >
                     <Download className="w-4 h-4" />
-                    Exportar Selecionados
+                    Exportar
                   </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBulkRemove}
-                    className="gap-2 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Remover
-                  </Button>
-                </div>
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearSelection}
-                className="gap-2"
-              >
-                <X className="w-4 h-4" />
-                Limpar Seleção
-              </Button>
+
+                  <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant={hasActiveFilters ? "default" : "outline"}
+                        size="sm"
+                        className="gap-2"
+                      >
+                        <SlidersHorizontal className="w-4 h-4" />
+                        Filtros
+                        {hasActiveFilters && (
+                          <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
+                            !
+                          </Badge>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80" align="end">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold text-sm flex items-center gap-2">
+                            <Filter className="w-4 h-4" />
+                            Filtrar Contatos
+                          </h4>
+                          {hasActiveFilters && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={clearFilters}
+                              className="h-8 text-xs"
+                            >
+                              Limpar
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="space-y-3">
+                          {/* Filtro por Nome */}
+                          <div className="space-y-2">
+                            <Label htmlFor="filter-name" className="text-xs font-medium">
+                              <Search className="w-3 h-3 inline mr-1" />
+                              Nome do Lead
+                            </Label>
+                            <Input
+                              id="filter-name"
+                              placeholder="Buscar por nome..."
+                              value={filters.name}
+                              onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                              className="h-9"
+                            />
+                          </div>
+
+                          {/* Filtro por Campanha */}
+                          <div className="space-y-2">
+                            <Label htmlFor="filter-campaign" className="text-xs font-medium">
+                              <Target className="w-3 h-3 inline mr-1" />
+                              Campanha de Origem
+                            </Label>
+                            <Select 
+                              value={filters.campaign} 
+                              onValueChange={(value) => setFilters({ ...filters, campaign: value })}
+                            >
+                              <SelectTrigger id="filter-campaign" className="h-9">
+                                <SelectValue placeholder="Todas as campanhas" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">Todas as campanhas</SelectItem>
+                                {campaigns.map((campaign) => (
+                                  <SelectItem key={campaign} value={campaign}>
+                                    {campaign}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Filtro por Score */}
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium">
+                              <Activity className="w-3 h-3 inline mr-1" />
+                              Score (Pontuação)
+                            </Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label htmlFor="score-min" className="text-xs text-muted-foreground">Mínimo</Label>
+                                <Input
+                                  id="score-min"
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={filters.scoreMin}
+                                  onChange={(e) => setFilters({ ...filters, scoreMin: parseInt(e.target.value) || 0 })}
+                                  className="h-9"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="score-max" className="text-xs text-muted-foreground">Máximo</Label>
+                                <Input
+                                  id="score-max"
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={filters.scoreMax}
+                                  onChange={(e) => setFilters({ ...filters, scoreMax: parseInt(e.target.value) || 100 })}
+                                  className="h-9"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-1 mt-1">
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs cursor-pointer hover:bg-muted"
+                                onClick={() => setFilters({ ...filters, scoreMin: 70, scoreMax: 100 })}
+                              >
+                                🟢 Quentes (70-100)
+                              </Badge>
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs cursor-pointer hover:bg-muted"
+                                onClick={() => setFilters({ ...filters, scoreMin: 40, scoreMax: 69 })}
+                              >
+                                🟡 Mornos (40-69)
+                              </Badge>
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs cursor-pointer hover:bg-muted"
+                                onClick={() => setFilters({ ...filters, scoreMin: 0, scoreMax: 39 })}
+                              >
+                                🔵 Frios (0-39)
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Filtro por LTV */}
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium">
+                              <TrendingUp className="w-3 h-3 inline mr-1" />
+                              LTV (Lifetime Value)
+                            </Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label htmlFor="ltv-min" className="text-xs text-muted-foreground">Mínimo (R$)</Label>
+                                <Input
+                                  id="ltv-min"
+                                  type="number"
+                                  min="0"
+                                  step="10"
+                                  value={filters.ltvMin}
+                                  onChange={(e) => setFilters({ ...filters, ltvMin: parseFloat(e.target.value) || 0 })}
+                                  className="h-9"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="ltv-max" className="text-xs text-muted-foreground">Máximo (R$)</Label>
+                                <Input
+                                  id="ltv-max"
+                                  type="number"
+                                  min="0"
+                                  step="10"
+                                  value={filters.ltvMax}
+                                  onChange={(e) => setFilters({ ...filters, ltvMax: parseFloat(e.target.value) || 10000 })}
+                                  className="h-9"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-1 mt-1">
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs cursor-pointer hover:bg-muted"
+                                onClick={() => setFilters({ ...filters, ltvMin: 400, ltvMax: 10000 })}
+                              >
+                                Alto (R$ 400+)
+                              </Badge>
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs cursor-pointer hover:bg-muted"
+                                onClick={() => setFilters({ ...filters, ltvMin: 200, ltvMax: 399 })}
+                              >
+                                Médio (R$ 200-399)
+                              </Badge>
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs cursor-pointer hover:bg-muted"
+                                onClick={() => setFilters({ ...filters, ltvMin: 0, ltvMax: 199 })}
+                              >
+                                Baixo (&lt; R$ 200)
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t">
+                          <p className="text-xs text-muted-foreground">
+                            {filteredContacts.length} de {contacts.length} contatos exibidos
+                          </p>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </>
+              )}
             </div>
-          </Card>
-        )}
+          </div>
+        </Card>
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -583,7 +879,7 @@ export default function Contatos() {
                     <tr className="border-b border-border">
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground w-10">
                         <Checkbox
-                          checked={selectedContacts.size === contacts.length && contacts.length > 0}
+                          checked={selectedContacts.size === filteredContacts.length && filteredContacts.length > 0}
                           onCheckedChange={toggleSelectAll}
                           aria-label="Selecionar todos"
                         />
@@ -599,7 +895,7 @@ export default function Contatos() {
                     </tr>
                   </thead>
                   <tbody>
-                    {contacts.map((contact) => {
+                    {filteredContacts.map((contact) => {
                       const contactLtv = contactDetails[contact.id]?.ltv || 0;
                       const ltvColors = getLtvColor(contactLtv);
                       const contactDetail = contactDetails[contact.id];
