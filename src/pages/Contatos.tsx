@@ -33,13 +33,40 @@ import {
   MapPin,
   Activity,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
+  CreditCard,
+  Target,
+  ShoppingCart,
+  TrendingUp,
+  Calendar
 } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+
+interface Purchase {
+  id: number;
+  date: string;
+  value: number;
+  product: string;
+}
+
+interface ContactDetail {
+  paymentMethod: string;
+  sourceCampaign: string;
+  purchases: Purchase[];
+  ltv: number;
+}
 
 export default function Contatos() {
   const [isNewContactOpen, setIsNewContactOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const [newContact, setNewContact] = useState({
     name: '',
     phone: '',
@@ -50,6 +77,37 @@ export default function Contatos() {
     state: '',
     city: ''
   });
+
+  // Mock data for contact details with LTV information
+  const contactDetails: Record<number, ContactDetail> = {
+    1: {
+      paymentMethod: 'Cartão de crédito',
+      sourceCampaign: 'Black Friday 2025',
+      purchases: [
+        { id: 1, date: '2025-11-28', value: 199.00, product: 'Produto Premium' },
+        { id: 2, date: '2025-12-15', value: 89.90, product: 'Produto Básico' },
+      ],
+      ltv: 288.90
+    },
+    2: {
+      paymentMethod: 'PIX',
+      sourceCampaign: 'Newsletter Semanal',
+      purchases: [
+        { id: 1, date: '2025-10-05', value: 149.00, product: 'Produto Standard' },
+      ],
+      ltv: 149.00
+    },
+    3: {
+      paymentMethod: 'Boleto',
+      sourceCampaign: 'Campanha Fidelidade',
+      purchases: [
+        { id: 1, date: '2025-09-10', value: 299.00, product: 'Kit Premium' },
+        { id: 2, date: '2025-11-20', value: 189.90, product: 'Upgrade Plus' },
+        { id: 3, date: '2025-12-30', value: 99.90, product: 'Add-on Extra' },
+      ],
+      ltv: 588.80
+    }
+  };
 
   const [contacts, setContacts] = useState([
     {
@@ -295,32 +353,47 @@ export default function Contatos() {
                           </div>
                         </td>
                         <td className="py-4 px-2 text-right">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Ações do Contato</DialogTitle>
-                              </DialogHeader>
-                              <div className="grid gap-2">
-                                <Button variant="ghost" className="justify-start">
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  Visualizar Perfil
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => setSelectedContactId(contact.id)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" className="justify-start">
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Editar Contato
-                                </Button>
-                                <Button variant="ghost" className="justify-start text-destructive">
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Excluir Contato
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Ações do Contato</DialogTitle>
+                                </DialogHeader>
+                                <div className="grid gap-2">
+                                  <Button 
+                                    variant="ghost" 
+                                    className="justify-start"
+                                    onClick={() => {
+                                      setSelectedContactId(contact.id);
+                                    }}
+                                  >
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    Visualizar Perfil
+                                  </Button>
+                                  <Button variant="ghost" className="justify-start">
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Editar Contato
+                                  </Button>
+                                  <Button variant="ghost" className="justify-start text-destructive">
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Excluir Contato
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -634,6 +707,142 @@ export default function Contatos() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Sheet Detalhes do Contato com LTV */}
+      <Sheet open={selectedContactId !== null} onOpenChange={(open) => !open && setSelectedContactId(null)}>
+        <SheetContent className="w-[500px] sm:max-w-[500px] overflow-y-auto">
+          {selectedContactId && (
+            <>
+              <SheetHeader>
+                <SheetTitle>Perfil Completo do Lead</SheetTitle>
+                <SheetDescription>
+                  {contacts.find(c => c.id === selectedContactId)?.name}
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="space-y-6 mt-6">
+                {/* Informações Básicas */}
+                <Card className="p-4">
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Informações de Contato
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Email:</span>
+                      <span className="font-medium">{contacts.find(c => c.id === selectedContactId)?.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Telefone:</span>
+                      <span className="font-medium">{contacts.find(c => c.id === selectedContactId)?.phone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Localização:</span>
+                      <span className="font-medium">
+                        {contacts.find(c => c.id === selectedContactId)?.city}, 
+                        {contacts.find(c => c.id === selectedContactId)?.state}
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* LTV Total */}
+                {contactDetails[selectedContactId] && (
+                  <>
+                    <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-primary" />
+                          LTV Total
+                        </h3>
+                        <Badge variant="default" className="text-lg px-3 py-1">
+                          R$ {contactDetails[selectedContactId].ltv.toFixed(2)}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Valor total gerado pelo cliente
+                      </p>
+                    </Card>
+
+                    {/* Forma de Pagamento */}
+                    <Card className="p-4">
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <CreditCard className="w-4 h-4" />
+                        Forma de Pagamento
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-sm">
+                          {contactDetails[selectedContactId].paymentMethod}
+                        </Badge>
+                      </div>
+                    </Card>
+
+                    {/* Campanha de Origem */}
+                    <Card className="p-4">
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <Target className="w-4 h-4" />
+                        Campanha de Origem
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-sm">
+                          {contactDetails[selectedContactId].sourceCampaign}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Primeira interação com a marca
+                      </p>
+                    </Card>
+
+                    {/* Histórico de Compras */}
+                    <Card className="p-4">
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <ShoppingCart className="w-4 h-4" />
+                        Histórico de Compras
+                      </h3>
+                      <div className="space-y-3">
+                        {contactDetails[selectedContactId].purchases.map((purchase) => (
+                          <div 
+                            key={purchase.id} 
+                            className="flex items-start justify-between p-3 bg-muted/50 rounded-lg"
+                          >
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{purchase.product}</div>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                <Calendar className="w-3 h-3" />
+                                {new Date(purchase.date).toLocaleDateString('pt-BR')}
+                              </div>
+                            </div>
+                            <div className="font-semibold text-sm text-primary">
+                              R$ {purchase.value.toFixed(2)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Total de Compras:</span>
+                          <span className="text-lg font-bold text-primary">
+                            {contactDetails[selectedContactId].purchases.length}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  </>
+                )}
+
+                {!contactDetails[selectedContactId] && (
+                  <Card className="p-6 text-center">
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                    <p className="text-muted-foreground text-sm">
+                      Nenhuma compra registrada ainda
+                    </p>
+                  </Card>
+                )}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </Layout>
   );
 }
