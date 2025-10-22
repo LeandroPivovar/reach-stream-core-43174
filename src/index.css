@@ -45,6 +45,24 @@ All colors MUST be HSL. Semantic tokens for consistent theming.
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 9%;
 
+    /* Score System Colors */
+    --score-hot: 142 71% 45%;      /* Verde suave para leads quentes */
+    --score-hot-bg: 142 71% 97%;
+    --score-warm: 45 93% 47%;      /* Amarelo suave para leads mornos */
+    --score-warm-bg: 45 93% 97%;
+    --score-cold: 217 91% 60%;     /* Azul suave para leads frios */
+    --score-cold-bg: 217 91% 97%;
+
+    /* LTV Colors */
+    --ltv: 217 91% 60%;            /* Azul claro para LTV */
+    --ltv-bg: 217 91% 97%;
+    --ltv-high: 142 71% 45%;       /* Verde para LTV alto */
+    --ltv-high-bg: 142 71% 97%;
+    --ltv-medium: 45 93% 47%;      /* Amarelo para LTV médio */
+    --ltv-medium-bg: 45 93% 97%;
+    --ltv-low: 217 91% 60%;        /* Azul para LTV baixo */
+    --ltv-low-bg: 217 91% 97%;
+
     /* Interface Elements */
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
@@ -56,12 +74,17 @@ All colors MUST be HSL. Semantic tokens for consistent theming.
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(251 91% 65%), hsl(251 91% 75%));
     --gradient-subtle: linear-gradient(135deg, hsl(0 0% 98%), hsl(0 0% 96%));
+    --gradient-score-hot: linear-gradient(135deg, hsl(142 71% 45% / 0.1), hsl(142 71% 45% / 0.05));
+    --gradient-score-warm: linear-gradient(135deg, hsl(45 93% 47% / 0.1), hsl(45 93% 47% / 0.05));
+    --gradient-score-cold: linear-gradient(135deg, hsl(217 91% 60% / 0.1), hsl(217 91% 60% / 0.05));
+    --gradient-ltv: linear-gradient(135deg, hsl(217 91% 60% / 0.1), hsl(217 91% 60% / 0.05));
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
     --shadow-brand: 0 4px 14px 0 hsl(251 91% 65% / 0.15);
+    --shadow-score: 0 2px 8px 0 hsl(0 0% 0% / 0.08);
 
     --sidebar-background: 0 0% 98%;
 
@@ -117,6 +140,24 @@ All colors MUST be HSL. Semantic tokens for consistent theming.
     --success-foreground: 0 0% 98%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 9%;
+
+    /* Score System Colors */
+    --score-hot: 142 71% 55%;
+    --score-hot-bg: 142 71% 15%;
+    --score-warm: 45 93% 57%;
+    --score-warm-bg: 45 93% 15%;
+    --score-cold: 217 91% 65%;
+    --score-cold-bg: 217 91% 15%;
+
+    /* LTV Colors */
+    --ltv: 217 91% 65%;
+    --ltv-bg: 217 91% 15%;
+    --ltv-high: 142 71% 55%;
+    --ltv-high-bg: 142 71% 15%;
+    --ltv-medium: 45 93% 57%;
+    --ltv-medium-bg: 45 93% 15%;
+    --ltv-low: 217 91% 65%;
+    --ltv-low-bg: 217 91% 15%;
 
     /* Interface Elements */
     --border: 0 0% 14.9%;

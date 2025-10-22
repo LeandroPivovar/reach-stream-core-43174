@@ -381,9 +381,24 @@ export default function Contatos() {
   };
 
   const getLtvColor = (ltv: number) => {
-    if (ltv >= 400) return { bg: 'bg-green-500', text: 'text-green-500', border: 'border-green-500' };
-    if (ltv >= 200) return { bg: 'bg-yellow-500', text: 'text-yellow-500', border: 'border-yellow-500' };
-    return { bg: 'bg-red-500', text: 'text-red-500', border: 'border-red-500' };
+    if (ltv >= 400) return { 
+      bg: 'bg-ltv-high', 
+      text: 'text-ltv-high', 
+      border: 'border-ltv-high',
+      bgLight: 'bg-ltv-high-bg'
+    };
+    if (ltv >= 200) return { 
+      bg: 'bg-ltv-medium', 
+      text: 'text-ltv-medium', 
+      border: 'border-ltv-medium',
+      bgLight: 'bg-ltv-medium-bg'
+    };
+    return { 
+      bg: 'bg-ltv-low', 
+      text: 'text-ltv-low', 
+      border: 'border-ltv-low',
+      bgLight: 'bg-ltv-low-bg'
+    };
   };
 
   const getLtvLabel = (ltv: number) => {
@@ -409,9 +424,30 @@ export default function Contatos() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 70) return { bg: 'bg-green-500', text: 'text-green-500', border: 'border-green-500', label: 'Lead Quente', icon: Flame };
-    if (score >= 40) return { bg: 'bg-yellow-500', text: 'text-yellow-500', border: 'border-yellow-500', label: 'Lead Morno', icon: Zap };
-    return { bg: 'bg-blue-500', text: 'text-blue-500', border: 'border-blue-500', label: 'Lead Frio', icon: Snowflake };
+    if (score >= 70) return { 
+      bg: 'bg-score-hot', 
+      text: 'text-score-hot', 
+      border: 'border-score-hot',
+      bgLight: 'bg-score-hot-bg',
+      label: 'Lead Quente', 
+      icon: Flame 
+    };
+    if (score >= 40) return { 
+      bg: 'bg-score-warm', 
+      text: 'text-score-warm', 
+      border: 'border-score-warm',
+      bgLight: 'bg-score-warm-bg',
+      label: 'Lead Morno', 
+      icon: Zap 
+    };
+    return { 
+      bg: 'bg-score-cold', 
+      text: 'text-score-cold', 
+      border: 'border-score-cold',
+      bgLight: 'bg-score-cold-bg',
+      label: 'Lead Frio', 
+      icon: Snowflake 
+    };
   };
 
   const handleSaveContact = () => {
@@ -775,7 +811,7 @@ export default function Contatos() {
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Card className="p-4">
+          <Card className="p-4 hover-lift animate-fade-in shadow-card border-l-4 border-l-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total de Contatos</p>
@@ -787,62 +823,62 @@ export default function Contatos() {
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-4 hover-lift animate-fade-in shadow-card border-l-4 border-l-score-hot" style={{ animationDelay: '0.1s' }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Leads Quentes</p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold text-score-hot">
                   {contacts.filter(c => {
                     const detail = contactDetails[c.id];
                     return detail && calculateScore(detail) >= 70;
                   }).length}
                 </p>
               </div>
-              <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
-                <Flame className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 bg-score-hot-bg rounded-lg flex items-center justify-center">
+                <Flame className="w-5 h-5 text-score-hot" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-4 hover-lift animate-fade-in shadow-card border-l-4 border-l-score-warm" style={{ animationDelay: '0.2s' }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Leads Mornos</p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold text-score-warm">
                   {contacts.filter(c => {
                     const detail = contactDetails[c.id];
                     return detail && calculateScore(detail) >= 40 && calculateScore(detail) < 70;
                   }).length}
                 </p>
               </div>
-              <div className="w-10 h-10 bg-yellow-500/10 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-yellow-500" />
+              <div className="w-10 h-10 bg-score-warm-bg rounded-lg flex items-center justify-center">
+                <Zap className="w-5 h-5 text-score-warm" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-4 hover-lift animate-fade-in shadow-card border-l-4 border-l-score-cold" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Leads Frios</p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold text-score-cold">
                   {contacts.filter(c => {
                     const detail = contactDetails[c.id];
                     return detail && calculateScore(detail) < 40;
                   }).length}
                 </p>
               </div>
-              <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                <Snowflake className="w-5 h-5 text-blue-500" />
+              <div className="w-10 h-10 bg-score-cold-bg rounded-lg flex items-center justify-center">
+                <Snowflake className="w-5 h-5 text-score-cold" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-4 hover-lift animate-fade-in shadow-card border-l-4 border-l-ltv" style={{ animationDelay: '0.4s' }}>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Score Médio</p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-2xl font-bold text-ltv">
                   {Math.round(
                     contacts
                       .filter(c => contactDetails[c.id])
@@ -851,8 +887,8 @@ export default function Contatos() {
                   )}
                 </p>
               </div>
-              <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                <Activity className="w-5 h-5 text-purple-500" />
+              <div className="w-10 h-10 bg-ltv-bg rounded-lg flex items-center justify-center">
+                <Activity className="w-5 h-5 text-ltv" />
               </div>
             </div>
           </Card>
@@ -872,7 +908,7 @@ export default function Contatos() {
           </TabsList>
 
           <TabsContent value="contacts">
-            <Card className="p-6">
+            <Card className="p-6 shadow-card animate-fade-in">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -919,9 +955,9 @@ export default function Contatos() {
                                   <TooltipTrigger asChild>
                                     <div className="flex-shrink-0">
                                       {contactLtv > 0 ? (
-                                        <div className={`w-8 h-8 rounded-full ${ltvColors.bg} flex items-center justify-center text-white text-xs font-bold shadow-md`}>
-                                          <TrendingUp className="w-4 h-4" />
-                                        </div>
+                                      <div className={`w-8 h-8 rounded-full ${ltvColors.bg} flex items-center justify-center text-white text-xs font-bold shadow-sm`}>
+                                        <TrendingUp className="w-4 h-4" />
+                                      </div>
                                       ) : (
                                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                                           <Users className="w-4 h-4" />
@@ -966,8 +1002,8 @@ export default function Contatos() {
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-2">
-                                      <div className={`w-12 h-12 rounded-lg ${scoreColors.bg} flex items-center justify-center text-white shadow-md`}>
+                                    <div className="flex items-center gap-2 cursor-pointer">
+                                      <div className={`w-12 h-12 rounded-lg ${scoreColors.bg} flex items-center justify-center text-white shadow-score transition-transform hover:scale-105`}>
                                         <ScoreIcon className="w-5 h-5" />
                                       </div>
                                       <div>
@@ -1681,61 +1717,67 @@ export default function Contatos() {
                 {/* Score e LTV */}
                 {contactDetails[selectedContactId] && (
                   <>
-                    {/* Score Card */}
-                    <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <Activity className="w-4 h-4 text-purple-500" />
-                          Score do Lead
-                        </h3>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-lg px-3 py-1 ${getScoreColor(calculateScore(contactDetails[selectedContactId])).border} ${getScoreColor(calculateScore(contactDetails[selectedContactId])).text}`}
-                        >
-                          {calculateScore(contactDetails[selectedContactId])}/100
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`w-16 h-16 rounded-xl ${getScoreColor(calculateScore(contactDetails[selectedContactId])).bg} flex items-center justify-center text-white shadow-lg`}>
-                          {React.createElement(getScoreColor(calculateScore(contactDetails[selectedContactId])).icon, { className: "w-8 h-8" })}
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold">
-                            {getScoreColor(calculateScore(contactDetails[selectedContactId])).label}
+                    {(() => {
+                      const currentScore = calculateScore(contactDetails[selectedContactId]);
+                      const scoreColors = getScoreColor(currentScore);
+                      
+                      return (
+                        <Card className={`p-4 ${scoreColors.bgLight} border-${scoreColors.border.replace('border-', '')} shadow-score animate-fade-in`}>
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-semibold flex items-center gap-2">
+                              <Activity className={`w-4 h-4 ${scoreColors.text}`} />
+                              Score do Lead
+                            </h3>
+                            <Badge 
+                              variant="outline" 
+                              className={`text-lg px-3 py-1 ${scoreColors.border} ${scoreColors.text} bg-white dark:bg-card`}
+                            >
+                              {currentScore}/100
+                            </Badge>
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            Classificação automática
-                          </p>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                          <span className="text-muted-foreground">📧 E-mails abertos × {scoreConfig.weights.emailOpens}pts</span>
-                          <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'email_open').length * scoreConfig.weights.emailOpens} pts</span>
-                        </div>
-                        <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                          <span className="text-muted-foreground">🔗 Cliques em links × {scoreConfig.weights.linkClicks}pts</span>
-                          <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'link_click').length * scoreConfig.weights.linkClicks} pts</span>
-                        </div>
-                        <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                          <span className="text-muted-foreground">🛍️ Compras × {scoreConfig.weights.purchases}pts</span>
-                          <span className="font-medium">{contactDetails[selectedContactId].purchases.length * scoreConfig.weights.purchases} pts</span>
-                        </div>
-                        <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                          <span className="text-muted-foreground">💰 LTV ÷ {scoreConfig.weights.ltvDivisor}</span>
-                          <span className="font-medium">{Math.round(contactDetails[selectedContactId].ltv / scoreConfig.weights.ltvDivisor)} pts</span>
-                        </div>
-                      </div>
-                    </Card>
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className={`w-16 h-16 rounded-xl ${scoreColors.bg} flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105`}>
+                              {React.createElement(scoreColors.icon, { className: "w-8 h-8" })}
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold">
+                                {scoreColors.label}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Classificação automática
+                              </p>
+                            </div>
+                          </div>
+                          <div className="space-y-2 text-xs">
+                            <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                              <span className="text-muted-foreground">📧 E-mails abertos × {scoreConfig.weights.emailOpens}pts</span>
+                              <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'email_open').length * scoreConfig.weights.emailOpens} pts</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                              <span className="text-muted-foreground">🔗 Cliques em links × {scoreConfig.weights.linkClicks}pts</span>
+                              <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'link_click').length * scoreConfig.weights.linkClicks} pts</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                              <span className="text-muted-foreground">🛍️ Compras × {scoreConfig.weights.purchases}pts</span>
+                              <span className="font-medium">{contactDetails[selectedContactId].purchases.length * scoreConfig.weights.purchases} pts</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                              <span className="text-muted-foreground">💰 LTV ÷ {scoreConfig.weights.ltvDivisor}</span>
+                              <span className="font-medium">{Math.round(contactDetails[selectedContactId].ltv / scoreConfig.weights.ltvDivisor)} pts</span>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })()}
 
                     {/* LTV Total */}
-                    <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                    <Card className="p-4 bg-ltv-bg border-ltv shadow-score animate-fade-in" style={{ animationDelay: '0.1s' }}>
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-primary" />
+                          <TrendingUp className="w-4 h-4 text-ltv" />
                           LTV Total
                         </h3>
-                        <Badge variant="default" className="text-lg px-3 py-1">
+                        <Badge variant="default" className="text-lg px-3 py-1 bg-ltv text-white">
                           R$ {contactDetails[selectedContactId].ltv.toFixed(2)}
                         </Badge>
                       </div>
