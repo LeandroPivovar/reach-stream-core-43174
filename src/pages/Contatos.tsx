@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useScoreConfig } from '@/hooks/use-score-config';
 import {
   Dialog,
   DialogContent,
@@ -44,7 +45,10 @@ import {
   Clock,
   Flame,
   Zap,
-  Snowflake
+  Snowflake,
+  Settings,
+  RotateCcw,
+  Save
 } from 'lucide-react';
 import {
   Sheet,
@@ -93,10 +97,12 @@ interface ContactDetail {
 }
 
 export default function Contatos() {
+  const { config: scoreConfig, updateWeights, resetToDefaults } = useScoreConfig();
   const [isNewContactOpen, setIsNewContactOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
+  const [tempWeights, setTempWeights] = useState(scoreConfig.weights);
   const [newContact, setNewContact] = useState({
     name: '',
     phone: '',
@@ -237,7 +243,14 @@ export default function Contatos() {
     const purchases = detail.purchases.length;
     const ltv = detail.ltv;
     
-    return Math.min(100, Math.round((emailOpens * 2) + (linkClicks * 3) + (purchases * 10) + (ltv / 10)));
+    const { emailOpens: emailWeight, linkClicks: clickWeight, purchases: purchaseWeight, ltvDivisor } = scoreConfig.weights;
+    
+    return Math.min(100, Math.round(
+      (emailOpens * emailWeight) + 
+      (linkClicks * clickWeight) + 
+      (purchases * purchaseWeight) + 
+      (ltv / ltvDivisor)
+    ));
   };
 
   const getScoreColor = (score: number) => {
@@ -411,6 +424,10 @@ export default function Contatos() {
             <TabsTrigger value="groups">Grupos</TabsTrigger>
             <TabsTrigger value="tags">Etiquetas</TabsTrigger>
             <TabsTrigger value="webhook">Webhook</TabsTrigger>
+            <TabsTrigger value="score-config">
+              <Settings className="w-4 h-4 mr-2" />
+              Config. Score
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="contacts">
@@ -510,10 +527,10 @@ export default function Contatos() {
                                     <div className="space-y-2">
                                       <p className="font-semibold">{scoreColors.label}</p>
                                       <div className="text-xs space-y-1">
-                                        <div>📧 E-mails abertos: {contactDetail.history.filter(e => e.type === 'email_open').length} × 2 pts</div>
-                                        <div>🔗 Cliques: {contactDetail.history.filter(e => e.type === 'link_click').length} × 3 pts</div>
-                                        <div>🛍️ Compras: {contactDetail.purchases.length} × 10 pts</div>
-                                        <div>💰 LTV: R$ {contactDetail.ltv.toFixed(2)} ÷ 10</div>
+                                        <div>📧 E-mails abertos: {contactDetail.history.filter(e => e.type === 'email_open').length} × {scoreConfig.weights.emailOpens} pts</div>
+                                        <div>🔗 Cliques: {contactDetail.history.filter(e => e.type === 'link_click').length} × {scoreConfig.weights.linkClicks} pts</div>
+                                        <div>🛍️ Compras: {contactDetail.purchases.length} × {scoreConfig.weights.purchases} pts</div>
+                                        <div>💰 LTV: R$ {contactDetail.ltv.toFixed(2)} ÷ {scoreConfig.weights.ltvDivisor}</div>
                                       </div>
                                       <div className="pt-2 border-t border-border">
                                         <div className="font-bold">Score Total: {score}/100</div>
@@ -686,6 +703,204 @@ export default function Contatos() {
   "tags": ["Landing Page", "Newsletter"]
 }`}
                   </pre>
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="score-config">
+            <Card className="p-6">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    Configuração do Sistema de Score
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Ajuste os pesos utilizados no cálculo automático do score dos leads. 
+                    A fórmula aplicada é: <code className="bg-muted px-2 py-1 rounded text-xs">
+                      Score = (E-mails × peso) + (Cliques × peso) + (Compras × peso) + (LTV ÷ divisor)
+                    </code>
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Configuração de Pesos */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <Activity className="w-4 h-4" />
+                      Pesos por Ação
+                    </h4>
+                    
+                    <div className="space-y-3">
+                      <div className="grid gap-2">
+                        <Label htmlFor="email-weight" className="text-sm">
+                          📧 E-mails Abertos (peso por abertura)
+                        </Label>
+                        <Input
+                          id="email-weight"
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          value={tempWeights.emailOpens}
+                          onChange={(e) => setTempWeights({ ...tempWeights, emailOpens: parseFloat(e.target.value) || 0 })}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Atual: {scoreConfig.weights.emailOpens} pontos por e-mail aberto
+                        </p>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="click-weight" className="text-sm">
+                          🔗 Cliques em Links (peso por clique)
+                        </Label>
+                        <Input
+                          id="click-weight"
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          value={tempWeights.linkClicks}
+                          onChange={(e) => setTempWeights({ ...tempWeights, linkClicks: parseFloat(e.target.value) || 0 })}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Atual: {scoreConfig.weights.linkClicks} pontos por clique
+                        </p>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="purchase-weight" className="text-sm">
+                          🛍️ Compras Realizadas (peso por compra)
+                        </Label>
+                        <Input
+                          id="purchase-weight"
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={tempWeights.purchases}
+                          onChange={(e) => setTempWeights({ ...tempWeights, purchases: parseFloat(e.target.value) || 0 })}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Atual: {scoreConfig.weights.purchases} pontos por compra
+                        </p>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="ltv-divisor" className="text-sm">
+                          💰 Divisor de LTV (valor total gasto)
+                        </Label>
+                        <Input
+                          id="ltv-divisor"
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={tempWeights.ltvDivisor}
+                          onChange={(e) => setTempWeights({ ...tempWeights, ltvDivisor: parseFloat(e.target.value) || 1 })}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Atual: LTV dividido por {scoreConfig.weights.ltvDivisor} = pontos
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Preview do Cálculo */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      Exemplo de Cálculo
+                    </h4>
+                    
+                    <Card className="p-4 bg-muted/50">
+                      <div className="space-y-3 text-sm">
+                        <div className="font-semibold border-b border-border pb-2">
+                          Lead Exemplo:
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>📧 5 e-mails abertos × {tempWeights.emailOpens}</span>
+                            <span className="font-medium">{5 * tempWeights.emailOpens} pts</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>🔗 3 cliques × {tempWeights.linkClicks}</span>
+                            <span className="font-medium">{3 * tempWeights.linkClicks} pts</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>🛍️ 2 compras × {tempWeights.purchases}</span>
+                            <span className="font-medium">{2 * tempWeights.purchases} pts</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>💰 R$ 500,00 ÷ {tempWeights.ltvDivisor}</span>
+                            <span className="font-medium">{Math.round(500 / tempWeights.ltvDivisor)} pts</span>
+                          </div>
+                        </div>
+                        <div className="border-t border-border pt-3 flex justify-between items-center">
+                          <span className="font-bold">Score Total:</span>
+                          <span className="text-2xl font-bold text-primary">
+                            {Math.min(100, Math.round(
+                              (5 * tempWeights.emailOpens) + 
+                              (3 * tempWeights.linkClicks) + 
+                              (2 * tempWeights.purchases) + 
+                              (500 / tempWeights.ltvDivisor)
+                            ))}/100
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                      <h5 className="font-semibold mb-2 text-sm">💡 Dica de Configuração</h5>
+                      <ul className="text-xs space-y-1 text-muted-foreground">
+                        <li>• Aumente o peso de compras para valorizar conversões</li>
+                        <li>• Aumente o peso de cliques para valorizar engajamento</li>
+                        <li>• Diminua o divisor de LTV para dar mais peso ao valor gasto</li>
+                        <li>• Score máximo sempre será limitado a 100 pontos</li>
+                      </ul>
+                    </div>
+
+                    {scoreConfig.lastUpdated && (
+                      <p className="text-xs text-muted-foreground">
+                        Última atualização: {new Date(scoreConfig.lastUpdated).toLocaleString('pt-BR')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Botões de Ação */}
+                <div className="flex justify-between items-center pt-4 border-t border-border">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      resetToDefaults();
+                      setTempWeights({ emailOpens: 2, linkClicks: 3, purchases: 10, ltvDivisor: 10 });
+                    }}
+                    className="gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Restaurar Padrões
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => {
+                      updateWeights(tempWeights);
+                      // Aqui seria feita a persistência no banco quando o backend estiver ativo
+                    }}
+                    className="gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    Salvar Configuração
+                  </Button>
+                </div>
+
+                {/* Aviso sobre persistência */}
+                <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                    ⚠️ <strong>Nota:</strong> As configurações estão sendo salvas localmente no navegador. 
+                    Para persistir no banco de dados e compartilhar entre usuários, conecte o Lovable Cloud.
+                  </p>
                 </div>
               </div>
             </Card>
@@ -983,20 +1198,20 @@ export default function Contatos() {
                       </div>
                       <div className="space-y-2 text-xs">
                         <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                          <span className="text-muted-foreground">📧 E-mails abertos × 2pts</span>
-                          <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'email_open').length * 2} pts</span>
+                          <span className="text-muted-foreground">📧 E-mails abertos × {scoreConfig.weights.emailOpens}pts</span>
+                          <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'email_open').length * scoreConfig.weights.emailOpens} pts</span>
                         </div>
                         <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                          <span className="text-muted-foreground">🔗 Cliques em links × 3pts</span>
-                          <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'link_click').length * 3} pts</span>
+                          <span className="text-muted-foreground">🔗 Cliques em links × {scoreConfig.weights.linkClicks}pts</span>
+                          <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'link_click').length * scoreConfig.weights.linkClicks} pts</span>
                         </div>
                         <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                          <span className="text-muted-foreground">🛍️ Compras × 10pts</span>
-                          <span className="font-medium">{contactDetails[selectedContactId].purchases.length * 10} pts</span>
+                          <span className="text-muted-foreground">🛍️ Compras × {scoreConfig.weights.purchases}pts</span>
+                          <span className="font-medium">{contactDetails[selectedContactId].purchases.length * scoreConfig.weights.purchases} pts</span>
                         </div>
                         <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                          <span className="text-muted-foreground">💰 LTV ÷ 10</span>
-                          <span className="font-medium">{Math.round(contactDetails[selectedContactId].ltv / 10)} pts</span>
+                          <span className="text-muted-foreground">💰 LTV ÷ {scoreConfig.weights.ltvDivisor}</span>
+                          <span className="font-medium">{Math.round(contactDetails[selectedContactId].ltv / scoreConfig.weights.ltvDivisor)} pts</span>
                         </div>
                       </div>
                     </Card>
