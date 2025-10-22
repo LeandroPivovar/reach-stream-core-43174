@@ -41,7 +41,10 @@ import {
   Calendar,
   Mail,
   MousePointerClick,
-  Clock
+  Clock,
+  Flame,
+  Zap,
+  Snowflake
 } from 'lucide-react';
 import {
   Sheet,
@@ -84,6 +87,9 @@ interface ContactDetail {
   purchases: Purchase[];
   ltv: number;
   history: HistoryEvent[];
+  score?: number;
+  emailOpens?: number;
+  linkClicks?: number;
 }
 
 export default function Contatos() {
@@ -225,6 +231,21 @@ export default function Contatos() {
     return 'Baixo Valor';
   };
 
+  const calculateScore = (detail: ContactDetail) => {
+    const emailOpens = detail.history.filter(e => e.type === 'email_open').length;
+    const linkClicks = detail.history.filter(e => e.type === 'link_click').length;
+    const purchases = detail.purchases.length;
+    const ltv = detail.ltv;
+    
+    return Math.min(100, Math.round((emailOpens * 2) + (linkClicks * 3) + (purchases * 10) + (ltv / 10)));
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 70) return { bg: 'bg-green-500', text: 'text-green-500', border: 'border-green-500', label: 'Lead Quente', icon: Flame };
+    if (score >= 40) return { bg: 'bg-yellow-500', text: 'text-yellow-500', border: 'border-yellow-500', label: 'Lead Morno', icon: Zap };
+    return { bg: 'bg-blue-500', text: 'text-blue-500', border: 'border-blue-500', label: 'Lead Frio', icon: Snowflake };
+  };
+
   const handleSaveContact = () => {
     const contactToAdd = {
       id: contacts.length + 1,
@@ -299,7 +320,7 @@ export default function Contatos() {
     >
       <div className="space-y-6">
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -315,11 +336,16 @@ export default function Contatos() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Contatos Ativos</p>
-                <p className="text-2xl font-bold text-foreground">6.834</p>
+                <p className="text-sm text-muted-foreground">Leads Quentes</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {contacts.filter(c => {
+                    const detail = contactDetails[c.id];
+                    return detail && calculateScore(detail) >= 70;
+                  }).length}
+                </p>
               </div>
               <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
-                <Activity className="w-5 h-5 text-green-500" />
+                <Flame className="w-5 h-5 text-green-500" />
               </div>
             </div>
           </Card>
@@ -327,11 +353,33 @@ export default function Contatos() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Novos (30 dias)</p>
-                <p className="text-2xl font-bold text-foreground">421</p>
+                <p className="text-sm text-muted-foreground">Leads Mornos</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {contacts.filter(c => {
+                    const detail = contactDetails[c.id];
+                    return detail && calculateScore(detail) >= 40 && calculateScore(detail) < 70;
+                  }).length}
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-yellow-500/10 rounded-lg flex items-center justify-center">
+                <Zap className="w-5 h-5 text-yellow-500" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Leads Frios</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {contacts.filter(c => {
+                    const detail = contactDetails[c.id];
+                    return detail && calculateScore(detail) < 40;
+                  }).length}
+                </p>
               </div>
               <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                <Users className="w-5 h-5 text-blue-500" />
+                <Snowflake className="w-5 h-5 text-blue-500" />
               </div>
             </div>
           </Card>
@@ -339,11 +387,18 @@ export default function Contatos() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Grupos</p>
-                <p className="text-2xl font-bold text-foreground">{groups.length}</p>
+                <p className="text-sm text-muted-foreground">Score Médio</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {Math.round(
+                    contacts
+                      .filter(c => contactDetails[c.id])
+                      .reduce((acc, c) => acc + calculateScore(contactDetails[c.id]), 0) /
+                    contacts.filter(c => contactDetails[c.id]).length
+                  )}
+                </p>
               </div>
-              <div className="w-10 h-10 bg-orange-500/10 rounded-lg flex items-center justify-center">
-                <Tag className="w-5 h-5 text-orange-500" />
+              <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                <Activity className="w-5 h-5 text-purple-500" />
               </div>
             </div>
           </Card>
@@ -365,6 +420,7 @@ export default function Contatos() {
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground">Nome</th>
+                      <th className="text-left py-3 px-2 font-medium text-muted-foreground">Score</th>
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground">Contato</th>
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground">Grupo</th>
                       <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
@@ -377,6 +433,10 @@ export default function Contatos() {
                     {contacts.map((contact) => {
                       const contactLtv = contactDetails[contact.id]?.ltv || 0;
                       const ltvColors = getLtvColor(contactLtv);
+                      const contactDetail = contactDetails[contact.id];
+                      const score = contactDetail ? calculateScore(contactDetail) : 0;
+                      const scoreColors = getScoreColor(score);
+                      const ScoreIcon = scoreColors.icon;
                       
                       return (
                         <tr key={contact.id} className="border-b border-border last:border-0">
@@ -428,6 +488,43 @@ export default function Contatos() {
                                 </div>
                               </div>
                             </div>
+                          </td>
+                          <td className="py-4 px-2">
+                            {contactDetail ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-center gap-2">
+                                      <div className={`w-12 h-12 rounded-lg ${scoreColors.bg} flex items-center justify-center text-white shadow-md`}>
+                                        <ScoreIcon className="w-5 h-5" />
+                                      </div>
+                                      <div>
+                                        <div className="text-2xl font-bold">{score}</div>
+                                        <div className={`text-xs ${scoreColors.text} font-medium`}>
+                                          {scoreColors.label.split(' ')[1]}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="p-3">
+                                    <div className="space-y-2">
+                                      <p className="font-semibold">{scoreColors.label}</p>
+                                      <div className="text-xs space-y-1">
+                                        <div>📧 E-mails abertos: {contactDetail.history.filter(e => e.type === 'email_open').length} × 2 pts</div>
+                                        <div>🔗 Cliques: {contactDetail.history.filter(e => e.type === 'link_click').length} × 3 pts</div>
+                                        <div>🛍️ Compras: {contactDetail.purchases.length} × 10 pts</div>
+                                        <div>💰 LTV: R$ {contactDetail.ltv.toFixed(2)} ÷ 10</div>
+                                      </div>
+                                      <div className="pt-2 border-t border-border">
+                                        <div className="font-bold">Score Total: {score}/100</div>
+                                      </div>
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <div className="text-muted-foreground text-sm">N/A</div>
+                            )}
                           </td>
                           <td className="py-4 px-2">
                             <div>
@@ -854,9 +951,57 @@ export default function Contatos() {
                   </div>
                 </Card>
 
-                {/* LTV Total */}
+                {/* Score e LTV */}
                 {contactDetails[selectedContactId] && (
                   <>
+                    {/* Score Card */}
+                    <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <Activity className="w-4 h-4 text-purple-500" />
+                          Score do Lead
+                        </h3>
+                        <Badge 
+                          variant="outline" 
+                          className={`text-lg px-3 py-1 ${getScoreColor(calculateScore(contactDetails[selectedContactId])).border} ${getScoreColor(calculateScore(contactDetails[selectedContactId])).text}`}
+                        >
+                          {calculateScore(contactDetails[selectedContactId])}/100
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-16 h-16 rounded-xl ${getScoreColor(calculateScore(contactDetails[selectedContactId])).bg} flex items-center justify-center text-white shadow-lg`}>
+                          {React.createElement(getScoreColor(calculateScore(contactDetails[selectedContactId])).icon, { className: "w-8 h-8" })}
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold">
+                            {getScoreColor(calculateScore(contactDetails[selectedContactId])).label}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Classificação automática
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                          <span className="text-muted-foreground">📧 E-mails abertos × 2pts</span>
+                          <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'email_open').length * 2} pts</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                          <span className="text-muted-foreground">🔗 Cliques em links × 3pts</span>
+                          <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'link_click').length * 3} pts</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                          <span className="text-muted-foreground">🛍️ Compras × 10pts</span>
+                          <span className="font-medium">{contactDetails[selectedContactId].purchases.length * 10} pts</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                          <span className="text-muted-foreground">💰 LTV ÷ 10</span>
+                          <span className="font-medium">{Math.round(contactDetails[selectedContactId].ltv / 10)} pts</span>
+                        </div>
+                      </div>
+                    </Card>
+
+                    {/* LTV Total */}
                     <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold flex items-center gap-2">
