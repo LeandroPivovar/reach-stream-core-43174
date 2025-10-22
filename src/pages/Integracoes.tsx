@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -49,7 +50,9 @@ export default function Integracoes() {
   const [webhookData, setWebhookData] = useState({
     name: '',
     url: '',
-    events: [] as string[]
+    events: [] as string[],
+    headers: '',
+    payloadExample: ''
   });
 
   const integrations = [
@@ -192,7 +195,7 @@ export default function Integracoes() {
     setEcommerceData({ apiKey: '', storeName: '', domain: '' });
     setTryData({ apiKey: '', secretKey: '', endpoint: '' });
     setVtexData({ accountName: '', appKey: '', appToken: '' });
-    setWebhookData({ name: '', url: '', events: [] });
+    setWebhookData({ name: '', url: '', events: [], headers: '', payloadExample: '' });
   };
 
   const handleCloseIntegration = () => {
@@ -202,7 +205,7 @@ export default function Integracoes() {
     setEcommerceData({ apiKey: '', storeName: '', domain: '' });
     setTryData({ apiKey: '', secretKey: '', endpoint: '' });
     setVtexData({ accountName: '', appKey: '', appToken: '' });
-    setWebhookData({ name: '', url: '', events: [] });
+    setWebhookData({ name: '', url: '', events: [], headers: '', payloadExample: '' });
   };
 
   const toggleEvent = (event: string) => {
@@ -848,9 +851,11 @@ export default function Integracoes() {
           {/* Configuração Webhook */}
           {integrationType === 'webhook' && (
             <div className="space-y-6 py-4">
-              <div className="bg-purple-500/10 p-3 rounded-lg">
+              <div className="bg-purple-500/10 p-4 rounded-lg">
+                <h4 className="text-sm font-semibold mb-2">O que são Webhooks?</h4>
                 <p className="text-sm text-muted-foreground">
-                  Configure um webhook para enviar dados de eventos do Núcleo
+                  Os webhooks permitem que seu sistema receba notificações automáticas sempre que um evento ocorrer no Núcleo. 
+                  Configure a URL do seu sistema que receberá os dados e escolha quais eventos deseja monitorar.
                 </p>
               </div>
 
@@ -861,8 +866,11 @@ export default function Integracoes() {
                     id="webhook-name"
                     value={webhookData.name}
                     onChange={(e) => setWebhookData({ ...webhookData, name: e.target.value })}
-                    placeholder="Ex: Sistema CRM, Zapier, Make"
+                    placeholder="Ex: Sistema CRM Principal, Zapier Vendas, Integração Make"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Escolha um nome que identifique facilmente esta integração
+                  </p>
                 </div>
 
                 <div className="grid gap-2">
@@ -871,45 +879,97 @@ export default function Integracoes() {
                     id="webhook-url"
                     value={webhookData.url}
                     onChange={(e) => setWebhookData({ ...webhookData, url: e.target.value })}
-                    placeholder="https://api.exemplo.com/webhook"
+                    placeholder="https://api.meusistema.com.br/webhook"
                   />
                   <p className="text-xs text-muted-foreground">
-                    URL que receberá os dados dos eventos
+                    URL que receberá as notificações (endereço completo incluindo https://)
                   </p>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label>Eventos para Disparar *</Label>
+                  <Label>Eventos de Disparo *</Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Selecione os eventos que devem acionar este webhook
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
-                    {['lead_captured', 'contact_created', 'campaign_sent', 'tag_added', 'form_submitted', 'purchase_completed'].map((event) => (
+                    {[
+                      { key: 'lead_captured', label: 'Lead capturado' },
+                      { key: 'contact_created', label: 'Contato criado' },
+                      { key: 'campaign_sent', label: 'Campanha enviada' },
+                      { key: 'tag_added', label: 'Tag adicionada' },
+                      { key: 'form_submitted', label: 'Formulário enviado' },
+                      { key: 'purchase_completed', label: 'Compra finalizada' }
+                    ].map((event) => (
                       <Card 
-                        key={event}
+                        key={event.key}
                         className={`p-3 cursor-pointer transition-colors ${
-                          webhookData.events.includes(event) ? 'border-primary bg-primary/5' : ''
+                          webhookData.events.includes(event.key) ? 'border-primary bg-primary/5' : ''
                         }`}
-                        onClick={() => toggleEvent(event)}
+                        onClick={() => toggleEvent(event.key)}
                       >
                         <div className="flex items-center gap-2">
                           <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                            webhookData.events.includes(event) ? 'border-primary bg-primary' : 'border-muted-foreground'
+                            webhookData.events.includes(event.key) ? 'border-primary bg-primary' : 'border-muted-foreground'
                           }`}>
-                            {webhookData.events.includes(event) && <Check className="w-3 h-3 text-white" />}
+                            {webhookData.events.includes(event.key) && <Check className="w-3 h-3 text-white" />}
                           </div>
-                          <span className="text-sm">{event.replace(/_/g, ' ')}</span>
+                          <span className="text-sm">{event.label}</span>
                         </div>
                       </Card>
                     ))}
                   </div>
                 </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="webhook-headers">Cabeçalhos Personalizados (Opcional)</Label>
+                  <Textarea
+                    id="webhook-headers"
+                    value={webhookData.headers}
+                    onChange={(e) => setWebhookData({ ...webhookData, headers: e.target.value })}
+                    placeholder='{"Authorization": "Bearer seu-token-aqui", "Content-Type": "application/json"}'
+                    rows={3}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Adicione cabeçalhos HTTP personalizados em formato JSON (ex: tokens de autenticação)
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="webhook-payload">Exemplo do Corpo da Requisição</Label>
+                  <div className="bg-muted p-3 rounded-lg">
+                    <p className="text-xs font-medium mb-2">O webhook enviará dados neste formato:</p>
+                    <pre className="text-xs overflow-x-auto">
+{`{
+  "event_type": "lead_captured",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "data": {
+    "lead_id": "12345",
+    "name": "João Silva",
+    "email": "joao@exemplo.com",
+    "phone": "(11) 98765-4321",
+    "source": "formulario_site"
+  }
+}`}
+                    </pre>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Os dados enviados variam de acordo com o tipo de evento
+                  </p>
+                </div>
               </div>
 
-              <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm font-medium mb-2">Como funciona:</p>
-                <ul className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
-                  <li>Quando um evento ocorrer no Núcleo</li>
-                  <li>Enviaremos uma requisição POST para sua URL</li>
-                  <li>Com os dados do evento em formato JSON</li>
-                </ul>
+              <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20">
+                <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <Webhook className="w-4 h-4" />
+                  Como funciona o Webhook
+                </h4>
+                <ol className="text-xs text-muted-foreground space-y-2 list-decimal list-inside">
+                  <li>Quando um dos eventos selecionados ocorrer no Núcleo</li>
+                  <li>Enviaremos automaticamente uma requisição POST para a URL configurada</li>
+                  <li>Com os dados do evento em formato JSON no corpo da requisição</li>
+                  <li>Seu sistema receberá e poderá processar essas informações em tempo real</li>
+                </ol>
               </div>
 
               <div className="flex justify-between">
