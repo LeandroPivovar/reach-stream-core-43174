@@ -33,35 +33,40 @@ export default function Dashboard() {
       value: '12.847',
       icon: Send,
       trend: { value: 12.5, isPositive: true },
-      description: 'Últimos 30 dias'
+      description: 'Últimos 30 dias',
+      colorClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
     },
     {
       title: 'Taxa de Abertura',
       value: '68.2%',
       icon: Eye,
       trend: { value: -2.1, isPositive: false },
-      description: 'Média geral'
+      description: 'Média geral',
+      colorClass: 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
     },
     {
       title: 'Cliques',
       value: '2.164',
       icon: MousePointer,
       trend: { value: 8.3, isPositive: true },
-      description: 'CTR de 16.8%'
+      description: 'CTR de 16.8%',
+      colorClass: 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
     },
     {
       title: 'Respostas',
       value: '534',
       icon: MessageCircle,
       trend: { value: 5.7, isPositive: true },
-      description: 'Taxa de resposta 4.2%'
+      description: 'Taxa de resposta 4.2%',
+      colorClass: 'bg-green-500/10 text-green-600 dark:text-green-400'
     },
     {
       title: 'Faturamento Geral',
       value: 'R$ 47.382',
       icon: DollarSign,
       trend: { value: 18.4, isPositive: true },
-      description: 'Últimos 30 dias'
+      description: 'Últimos 30 dias',
+      colorClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
     }
   ];
 

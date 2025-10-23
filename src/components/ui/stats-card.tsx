@@ -12,6 +12,7 @@ interface StatsCardProps {
     isPositive: boolean;
   };
   className?: string;
+  colorClass?: string;
 }
 
 export function StatsCard({ 
@@ -20,7 +21,8 @@ export function StatsCard({
   description, 
   icon: Icon, 
   trend, 
-  className 
+  className,
+  colorClass = "bg-primary/10 text-primary"
 }: StatsCardProps) {
   return (
     <div className={cn("card-stats", className)}>
@@ -57,8 +59,8 @@ export function StatsCard({
         </div>
         
         <div className="ml-4">
-          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-            <Icon className="w-6 h-6 text-primary" />
+          <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center", colorClass)}>
+            <Icon className="w-6 h-6" />
           </div>
         </div>
       </div>
