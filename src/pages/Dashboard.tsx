@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { StatsCard } from '@/components/ui/stats-card';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -15,8 +15,17 @@ import {
   Activity
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Dashboard() {
+  const [chartPeriod, setChartPeriod] = useState('semanal');
+
   const stats = [
     {
       title: 'Total de Envios',
@@ -75,15 +84,56 @@ export default function Dashboard() {
     }
   ];
 
-  const chartData = [
-    { dia: 'Seg', envios: 1850, aberturas: 1240, cliques: 320 },
-    { dia: 'Ter', envios: 2100, aberturas: 1450, cliques: 380 },
-    { dia: 'Qua', envios: 1920, aberturas: 1310, cliques: 340 },
-    { dia: 'Qui', envios: 2450, aberturas: 1680, cliques: 420 },
-    { dia: 'Sex', envios: 2280, aberturas: 1540, cliques: 390 },
-    { dia: 'Sáb', envios: 1540, aberturas: 1050, cliques: 280 },
-    { dia: 'Dom', envios: 1707, aberturas: 1170, cliques: 290 }
+  const chartDataDaily = [
+    { periodo: '01/12', envios: 1850, aberturas: 1240, cliques: 320 },
+    { periodo: '02/12', envios: 2100, aberturas: 1450, cliques: 380 },
+    { periodo: '03/12', envios: 1920, aberturas: 1310, cliques: 340 },
+    { periodo: '04/12', envios: 2450, aberturas: 1680, cliques: 420 },
+    { periodo: '05/12', envios: 2280, aberturas: 1540, cliques: 390 },
+    { periodo: '06/12', envios: 1540, aberturas: 1050, cliques: 280 },
+    { periodo: '07/12', envios: 1707, aberturas: 1170, cliques: 290 }
   ];
+
+  const chartDataWeekly = [
+    { periodo: 'Seg', envios: 1850, aberturas: 1240, cliques: 320 },
+    { periodo: 'Ter', envios: 2100, aberturas: 1450, cliques: 380 },
+    { periodo: 'Qua', envios: 1920, aberturas: 1310, cliques: 340 },
+    { periodo: 'Qui', envios: 2450, aberturas: 1680, cliques: 420 },
+    { periodo: 'Sex', envios: 2280, aberturas: 1540, cliques: 390 },
+    { periodo: 'Sáb', envios: 1540, aberturas: 1050, cliques: 280 },
+    { periodo: 'Dom', envios: 1707, aberturas: 1170, cliques: 290 }
+  ];
+
+  const chartDataMonthly = [
+    { periodo: 'Jan', envios: 45000, aberturas: 30500, cliques: 7800 },
+    { periodo: 'Fev', envios: 52000, aberturas: 35400, cliques: 9200 },
+    { periodo: 'Mar', envios: 48000, aberturas: 32800, cliques: 8500 },
+    { periodo: 'Abr', envios: 61000, aberturas: 41500, cliques: 10800 },
+    { periodo: 'Mai', envios: 58000, aberturas: 39400, cliques: 10200 },
+    { periodo: 'Jun', envios: 54000, aberturas: 36800, cliques: 9500 }
+  ];
+
+  const getChartData = () => {
+    switch (chartPeriod) {
+      case 'diario':
+        return chartDataDaily;
+      case 'mensal':
+        return chartDataMonthly;
+      default:
+        return chartDataWeekly;
+    }
+  };
+
+  const getPeriodLabel = () => {
+    switch (chartPeriod) {
+      case 'diario':
+        return 'Últimos 7 dias';
+      case 'mensal':
+        return 'Últimos 6 meses';
+      default:
+        return 'Última semana';
+    }
+  };
 
   return (
     <Layout 
@@ -102,17 +152,25 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Desempenho Semanal</CardTitle>
-              <Button variant="outline" size="sm">
-                <Calendar className="w-4 h-4 mr-2" />
-                Últimos 7 dias
-              </Button>
+              <CardTitle>Desempenho das Campanhas</CardTitle>
+              <Select value={chartPeriod} onValueChange={setChartPeriod}>
+                <SelectTrigger className="w-[180px]">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="diario">Diário</SelectItem>
+                  <SelectItem value="semanal">Semanal</SelectItem>
+                  <SelectItem value="mensal">Mensal</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            <p className="text-sm text-muted-foreground mt-2">{getPeriodLabel()}</p>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
+                <AreaChart data={getChartData()}>
                   <defs>
                     <linearGradient id="colorEnvios" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
@@ -129,7 +187,7 @@ export default function Dashboard() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
-                    dataKey="dia" 
+                    dataKey="periodo" 
                     stroke="hsl(var(--muted-foreground))"
                     style={{ fontSize: '12px' }}
                   />
