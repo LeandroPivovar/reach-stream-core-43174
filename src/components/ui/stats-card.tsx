@@ -25,7 +25,7 @@ export function StatsCard({
   colorClass = "bg-primary/10 text-primary"
 }: StatsCardProps) {
   return (
-    <div className={cn("card-stats", className)}>
+    <div className={cn("card-stats", colorClass, className)}>
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-muted-foreground mb-1">
@@ -59,7 +59,7 @@ export function StatsCard({
         </div>
         
         <div className="ml-4">
-          <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center", colorClass)}>
+          <div className="w-12 h-12 bg-white/20 dark:bg-black/20 rounded-lg flex items-center justify-center">
             <Icon className="w-6 h-6" />
           </div>
         </div>

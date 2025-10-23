@@ -34,7 +34,7 @@ export default function Dashboard() {
       icon: Send,
       trend: { value: 12.5, isPositive: true },
       description: 'Últimos 30 dias',
-      colorClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+      colorClass: 'bg-blue-500/20 text-blue-900 dark:text-blue-100 border-blue-500/30'
     },
     {
       title: 'Taxa de Abertura',
@@ -42,7 +42,7 @@ export default function Dashboard() {
       icon: Eye,
       trend: { value: -2.1, isPositive: false },
       description: 'Média geral',
-      colorClass: 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+      colorClass: 'bg-purple-500/20 text-purple-900 dark:text-purple-100 border-purple-500/30'
     },
     {
       title: 'Cliques',
@@ -50,7 +50,7 @@ export default function Dashboard() {
       icon: MousePointer,
       trend: { value: 8.3, isPositive: true },
       description: 'CTR de 16.8%',
-      colorClass: 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
+      colorClass: 'bg-orange-500/20 text-orange-900 dark:text-orange-100 border-orange-500/30'
     },
     {
       title: 'Respostas',
@@ -58,7 +58,7 @@ export default function Dashboard() {
       icon: MessageCircle,
       trend: { value: 5.7, isPositive: true },
       description: 'Taxa de resposta 4.2%',
-      colorClass: 'bg-green-500/10 text-green-600 dark:text-green-400'
+      colorClass: 'bg-green-500/20 text-green-900 dark:text-green-100 border-green-500/30'
     },
     {
       title: 'Faturamento Geral',
@@ -66,7 +66,7 @@ export default function Dashboard() {
       icon: DollarSign,
       trend: { value: 18.4, isPositive: true },
       description: 'Últimos 30 dias',
-      colorClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+      colorClass: 'bg-emerald-500/20 text-emerald-900 dark:text-emerald-100 border-emerald-500/30'
     }
   ];
 
