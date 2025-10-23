@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { StatsCard } from '@/components/ui/stats-card';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -14,6 +14,7 @@ import {
   Users,
   Activity
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function Dashboard() {
   const stats = [
@@ -74,6 +75,16 @@ export default function Dashboard() {
     }
   ];
 
+  const chartData = [
+    { dia: 'Seg', envios: 1850, aberturas: 1240, cliques: 320 },
+    { dia: 'Ter', envios: 2100, aberturas: 1450, cliques: 380 },
+    { dia: 'Qua', envios: 1920, aberturas: 1310, cliques: 340 },
+    { dia: 'Qui', envios: 2450, aberturas: 1680, cliques: 420 },
+    { dia: 'Sex', envios: 2280, aberturas: 1540, cliques: 390 },
+    { dia: 'Sáb', envios: 1540, aberturas: 1050, cliques: 280 },
+    { dia: 'Dom', envios: 1707, aberturas: 1170, cliques: 290 }
+  ];
+
   return (
     <Layout 
       title="Visão Geral" 
@@ -87,9 +98,89 @@ export default function Dashboard() {
           ))}
         </div>
 
+        {/* Performance Chart - Full Width */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Desempenho Semanal</CardTitle>
+              <Button variant="outline" size="sm">
+                <Calendar className="w-4 h-4 mr-2" />
+                Últimos 7 dias
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorEnvios" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorAberturas" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorCliques" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-3))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-3))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="dia" 
+                    stroke="hsl(var(--muted-foreground))"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--popover))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      color: 'hsl(var(--popover-foreground))'
+                    }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '12px' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="envios" 
+                    stroke="hsl(var(--primary))" 
+                    fill="url(#colorEnvios)"
+                    strokeWidth={2}
+                    name="Envios"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="aberturas" 
+                    stroke="hsl(var(--chart-2))" 
+                    fill="url(#colorAberturas)"
+                    strokeWidth={2}
+                    name="Aberturas"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="cliques" 
+                    stroke="hsl(var(--chart-3))" 
+                    fill="url(#colorCliques)"
+                    strokeWidth={2}
+                    name="Cliques"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Performance Chart */}
+          {/* Performance by Channel */}
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Desempenho por Canal</h3>
