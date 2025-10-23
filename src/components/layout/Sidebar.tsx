@@ -13,11 +13,13 @@ import {
   Share2,
   User,
   LogOut,
+  DollarSign,
 } from 'lucide-react';
 
 const menuItems = [
   { title: 'Visão Geral', href: '/', icon: BarChart3 },
   { title: 'Campanhas', href: '/campanhas', icon: MessageSquare },
+  { title: 'Vendas', href: '/vendas', icon: DollarSign },
   { title: 'Contatos', href: '/contatos', icon: Users },
   { title: 'Conexões', href: '/conexoes', icon: Plug },
   { title: 'Trackeamento', href: '/trackeamento', icon: Target },

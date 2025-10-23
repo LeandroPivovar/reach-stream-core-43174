@@ -8,6 +8,7 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Campanhas from "./pages/Campanhas";
+import Vendas from "./pages/Vendas";
 import Contatos from "./pages/Contatos";
 import Conexoes from "./pages/Conexoes";
 import Trackeamento from "./pages/Trackeamento";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/auth/register" element={<Register />} />
           <Route path="/auth/forgot-password" element={<ForgotPassword />} />
           <Route path="/campanhas" element={<Campanhas />} />
+          <Route path="/vendas" element={<Vendas />} />
           <Route path="/contatos" element={<Contatos />} />
           <Route path="/conexoes" element={<Conexoes />} />
           <Route path="/trackeamento" element={<Trackeamento />} />
