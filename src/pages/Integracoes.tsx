@@ -1053,10 +1053,9 @@ export default function Integracoes() {
             <Button 
               onClick={() => {
                 setIsShopifyInfoOpen(false);
-                toast({
-                  title: "Habilitando Shopify",
-                  description: "Clique no botão que aparecerá para conectar sua loja.",
-                });
+                setIntegrationType('ecommerce');
+                setSelectedEcommerce('Shopify');
+                setIsNewIntegrationOpen(true);
               }}
             >
               Continuar
