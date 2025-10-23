@@ -31,6 +31,7 @@ export default function Integracoes() {
   const [isNewIntegrationOpen, setIsNewIntegrationOpen] = useState(false);
   const [integrationType, setIntegrationType] = useState<'ecommerce' | 'webhook' | null>(null);
   const [selectedEcommerce, setSelectedEcommerce] = useState<string | null>(null);
+  const [isShopifyInfoOpen, setIsShopifyInfoOpen] = useState(false);
   const [ecommerceData, setEcommerceData] = useState({
     apiKey: '',
     storeName: '',
@@ -61,7 +62,7 @@ export default function Integracoes() {
       name: 'Shopify',
       description: 'Conecte sua loja Shopify para sincronizar produtos e pedidos',
       icon: ShoppingBag,
-      status: 'Conectado',
+      status: 'Disponível',
       color: 'bg-green-500',
       features: ['Sincronização de produtos', 'Carrinho abandonado', 'Pedidos em tempo real']
     },
@@ -322,7 +323,13 @@ export default function Integracoes() {
                       <Button 
                         size="sm" 
                         className="flex-1"
-                        onClick={handleOpenNewIntegration}
+                        onClick={() => {
+                          if (integration.name === 'Shopify') {
+                            setIsShopifyInfoOpen(true);
+                          } else {
+                            handleOpenNewIntegration();
+                          }
+                        }}
                       >
                         Conectar
                       </Button>
@@ -986,6 +993,75 @@ export default function Integracoes() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Informações Shopify */}
+      <Dialog open={isShopifyInfoOpen} onOpenChange={setIsShopifyInfoOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                <ShoppingBag className="w-5 h-5 text-white" />
+              </div>
+              Conectar Shopify
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="bg-primary/10 p-4 rounded-lg space-y-3">
+              <p className="text-sm font-medium">Como funciona:</p>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Crie uma loja sandbox para desenvolvimento <strong>grátis</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Desenvolva e teste sua loja quanto quiser</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Receba <strong>30 dias grátis</strong> ao reivindicar sua loja</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  <span>Assinatura paga necessária após o período de trial para começar a vender</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-muted p-4 rounded-lg">
+              <p className="text-sm font-medium mb-2">Recursos incluídos:</p>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Catálogo completo de produtos</li>
+                <li>Sistema de carrinho e checkout</li>
+                <li>Gestão de pedidos e inventário</li>
+                <li>Sincronização automática</li>
+              </ul>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Ao conectar, você poderá reivindicar sua loja mais tarde digitando "Claim Store" no chat.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsShopifyInfoOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                setIsShopifyInfoOpen(false);
+                toast({
+                  title: "Habilitando Shopify",
+                  description: "Clique no botão que aparecerá para conectar sua loja.",
+                });
+              }}
+            >
+              Continuar
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </Layout>
