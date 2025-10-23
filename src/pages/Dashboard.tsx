@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Calendar,
   Users,
-  Activity
+  Activity,
+  DollarSign
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import {
@@ -54,6 +55,13 @@ export default function Dashboard() {
       icon: MessageCircle,
       trend: { value: 5.7, isPositive: true },
       description: 'Taxa de resposta 4.2%'
+    },
+    {
+      title: 'Faturamento Geral',
+      value: 'R$ 47.382',
+      icon: DollarSign,
+      trend: { value: 18.4, isPositive: true },
+      description: 'Últimos 30 dias'
     }
   ];
 
@@ -142,7 +150,7 @@ export default function Dashboard() {
     >
       <div className="space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {stats.map((stat, index) => (
             <StatsCard key={index} {...stat} />
           ))}
