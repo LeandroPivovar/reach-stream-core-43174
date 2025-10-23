@@ -243,6 +243,87 @@ export default function Contatos() {
   const [statuses] = useState(['Ativo', 'Inativo', 'Bloqueado', 'Aguardando']);
   const [campaigns] = useState(['Black Friday 2025', 'Newsletter Semanal', 'Campanha Fidelidade', 'Promoção Verão', 'Lançamento Produto']);
 
+  // Funções de cálculo (devem vir antes de filteredContacts)
+  const calculateScore = (detail: ContactDetail) => {
+    const emailOpens = detail.history.filter(e => e.type === 'email_open').length;
+    const linkClicks = detail.history.filter(e => e.type === 'link_click').length;
+    const purchases = detail.purchases.length;
+    const ltv = detail.ltv;
+    
+    const { emailOpens: emailWeight, linkClicks: clickWeight, purchases: purchaseWeight, ltvDivisor } = scoreConfig.weights;
+    
+    return Math.min(100, Math.round(
+      (emailOpens * emailWeight) + 
+      (linkClicks * clickWeight) + 
+      (purchases * purchaseWeight) + 
+      (ltv / ltvDivisor)
+    ));
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 70) return { 
+      bg: 'bg-score-hot', 
+      text: 'text-score-hot', 
+      border: 'border-score-hot',
+      bgLight: 'bg-score-hot-bg',
+      label: 'Lead Quente', 
+      icon: Flame 
+    };
+    if (score >= 40) return { 
+      bg: 'bg-score-warm', 
+      text: 'text-score-warm', 
+      border: 'border-score-warm',
+      bgLight: 'bg-score-warm-bg',
+      label: 'Lead Morno', 
+      icon: Zap 
+    };
+    return { 
+      bg: 'bg-score-cold', 
+      text: 'text-score-cold', 
+      border: 'border-score-cold',
+      bgLight: 'bg-score-cold-bg',
+      label: 'Lead Frio', 
+      icon: Snowflake 
+    };
+  };
+
+  const getLtvColor = (ltv: number) => {
+    if (ltv >= 400) return { 
+      bg: 'bg-ltv-high', 
+      text: 'text-ltv-high', 
+      border: 'border-ltv-high',
+      bgLight: 'bg-ltv-high-bg'
+    };
+    if (ltv >= 200) return { 
+      bg: 'bg-ltv-medium', 
+      text: 'text-ltv-medium', 
+      border: 'border-ltv-medium',
+      bgLight: 'bg-ltv-medium-bg'
+    };
+    return { 
+      bg: 'bg-ltv-low', 
+      text: 'text-ltv-low', 
+      border: 'border-ltv-low',
+      bgLight: 'bg-ltv-low-bg'
+    };
+  };
+
+  const getLtvLabel = (ltv: number) => {
+    if (ltv >= 400) return 'Alto Valor';
+    if (ltv >= 200) return 'Médio Valor';
+    return 'Baixo Valor';
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Ativo': return 'bg-green-500';
+      case 'Inativo': return 'bg-gray-500';
+      case 'Bloqueado': return 'bg-red-500';
+      case 'Aguardando': return 'bg-yellow-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
   // Aplicar filtros
   const filteredContacts = contacts.filter(contact => {
     const contactDetail = contactDetails[contact.id];
@@ -303,10 +384,10 @@ export default function Contatos() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedContacts.size === contacts.length) {
+    if (selectedContacts.size === filteredContacts.length) {
       setSelectedContacts(new Set());
     } else {
-      setSelectedContacts(new Set(contacts.map(c => c.id)));
+      setSelectedContacts(new Set(filteredContacts.map(c => c.id)));
     }
   };
 
@@ -370,85 +451,6 @@ export default function Contatos() {
     clearSelection();
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Ativo': return 'bg-green-500';
-      case 'Inativo': return 'bg-gray-500';
-      case 'Bloqueado': return 'bg-red-500';
-      case 'Aguardando': return 'bg-yellow-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getLtvColor = (ltv: number) => {
-    if (ltv >= 400) return { 
-      bg: 'bg-ltv-high', 
-      text: 'text-ltv-high', 
-      border: 'border-ltv-high',
-      bgLight: 'bg-ltv-high-bg'
-    };
-    if (ltv >= 200) return { 
-      bg: 'bg-ltv-medium', 
-      text: 'text-ltv-medium', 
-      border: 'border-ltv-medium',
-      bgLight: 'bg-ltv-medium-bg'
-    };
-    return { 
-      bg: 'bg-ltv-low', 
-      text: 'text-ltv-low', 
-      border: 'border-ltv-low',
-      bgLight: 'bg-ltv-low-bg'
-    };
-  };
-
-  const getLtvLabel = (ltv: number) => {
-    if (ltv >= 400) return 'Alto Valor';
-    if (ltv >= 200) return 'Médio Valor';
-    return 'Baixo Valor';
-  };
-
-  const calculateScore = (detail: ContactDetail) => {
-    const emailOpens = detail.history.filter(e => e.type === 'email_open').length;
-    const linkClicks = detail.history.filter(e => e.type === 'link_click').length;
-    const purchases = detail.purchases.length;
-    const ltv = detail.ltv;
-    
-    const { emailOpens: emailWeight, linkClicks: clickWeight, purchases: purchaseWeight, ltvDivisor } = scoreConfig.weights;
-    
-    return Math.min(100, Math.round(
-      (emailOpens * emailWeight) + 
-      (linkClicks * clickWeight) + 
-      (purchases * purchaseWeight) + 
-      (ltv / ltvDivisor)
-    ));
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 70) return { 
-      bg: 'bg-score-hot', 
-      text: 'text-score-hot', 
-      border: 'border-score-hot',
-      bgLight: 'bg-score-hot-bg',
-      label: 'Lead Quente', 
-      icon: Flame 
-    };
-    if (score >= 40) return { 
-      bg: 'bg-score-warm', 
-      text: 'text-score-warm', 
-      border: 'border-score-warm',
-      bgLight: 'bg-score-warm-bg',
-      label: 'Lead Morno', 
-      icon: Zap 
-    };
-    return { 
-      bg: 'bg-score-cold', 
-      text: 'text-score-cold', 
-      border: 'border-score-cold',
-      bgLight: 'bg-score-cold-bg',
-      label: 'Lead Frio', 
-      icon: Snowflake 
-    };
-  };
 
   const handleSaveContact = () => {
     const contactToAdd = {
