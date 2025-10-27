@@ -332,22 +332,22 @@ export default function Contatos() {
     const campaign = contactDetail?.sourceCampaign || '';
 
     // Filtro por nome
-    if (filters.name && !contact.name.toLowerCase().includes(filters.name.toLowerCase())) {
+    if (filters.name.trim() && !contact.name.toLowerCase().includes(filters.name.toLowerCase().trim())) {
       return false;
     }
 
     // Filtro por campanha
-    if (filters.campaign && campaign !== filters.campaign) {
+    if (filters.campaign && filters.campaign.trim() && campaign !== filters.campaign) {
       return false;
     }
 
     // Filtro por score
-    if (score < filters.scoreMin || score > filters.scoreMax) {
+    if (contactDetail && (score < filters.scoreMin || score > filters.scoreMax)) {
       return false;
     }
 
     // Filtro por LTV
-    if (ltv < filters.ltvMin || ltv > filters.ltvMax) {
+    if (contactDetail && (ltv < filters.ltvMin || ltv > filters.ltvMax)) {
       return false;
     }
 
@@ -665,14 +665,14 @@ export default function Contatos() {
                               Campanha de Origem
                             </Label>
                             <Select 
-                              value={filters.campaign} 
-                              onValueChange={(value) => setFilters({ ...filters, campaign: value })}
+                              value={filters.campaign || "all"} 
+                              onValueChange={(value) => setFilters({ ...filters, campaign: value === "all" ? "" : value })}
                             >
                               <SelectTrigger id="filter-campaign" className="h-9">
                                 <SelectValue placeholder="Todas as campanhas" />
                               </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="">Todas as campanhas</SelectItem>
+                              <SelectContent className="bg-popover">
+                                <SelectItem value="all">Todas as campanhas</SelectItem>
                                 {campaigns.map((campaign) => (
                                   <SelectItem key={campaign} value={campaign}>
                                     {campaign}
