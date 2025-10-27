@@ -63,6 +63,7 @@ export default function Campanhas() {
     campaignComplexity: '' as 'simple' | 'advanced' | '',
     name: '',
     groups: [] as string[],
+    channel: '' as 'email' | 'sms' | 'whatsapp' | '',
     campaignType: '' as 'dispatch' | 'coupon' | 'giftback' | '',
     campaignConfig: {
       coupon: {
@@ -185,12 +186,12 @@ export default function Campanhas() {
 
   const getTotalSteps = () => {
     if (newCampaign.campaignComplexity === 'simple') {
-      // Simple: 1. Complexity + 2. Basic Data + 3. Email + 4. Tracking/Send
-      return 4;
+      // Simple: 1. Complexity + 2. Basic Data + 3. Channel + 4. Email/SMS/WhatsApp + 5. Tracking/Send
+      return 5;
     }
-    // Advanced: 1. Complexity + 2. Basic Data + 3. Type + 4. Config (if not dispatch) + 5. Email + 6. Workflow + 7. Tracking/Send
+    // Advanced: 1. Complexity + 2. Basic Data + 3. Channel + 4. Type + 5. Config (if not dispatch) + 6. Email/SMS/WhatsApp + 7. Workflow + 8. Tracking/Send
     const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
-    return 7 - (configStep === 0 ? 1 : 0);
+    return 8 - (configStep === 0 ? 1 : 0);
   };
 
   const handleNextStep = () => {
@@ -223,6 +224,7 @@ export default function Campanhas() {
       campaignComplexity: '',
       name: '',
       groups: [],
+      channel: '',
       campaignType: '',
       campaignConfig: {
         coupon: {
@@ -457,6 +459,7 @@ export default function Campanhas() {
             campaignComplexity: '',
             name: '',
             groups: [],
+            channel: '',
             campaignType: '',
             campaignConfig: {
               coupon: {
@@ -641,8 +644,95 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 3: Seleção de Tipo de Campanha (apenas para advanced) */}
-          {currentStep === 3 && newCampaign.campaignComplexity === 'advanced' && (
+          {/* Etapa 3: Seleção de Canal */}
+          {currentStep === 3 && (
+            <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Escolha o canal de comunicação para sua campanha
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Canal de Envio *</Label>
+                <div className="grid grid-cols-1 gap-4">
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.channel === 'email' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, channel: 'email' })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-6 h-6 text-blue-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">E-mail</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Envio de e-mails com suporte a HTML, imagens e links. Ideal para newsletters e comunicações detalhadas.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.channel === 'sms' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, channel: 'sms' })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Smartphone className="w-6 h-6 text-green-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">SMS</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Mensagens de texto diretas e imediatas. Perfeito para alertas urgentes e confirmações.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, channel: 'whatsapp' })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-green-600/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <MessageSquare className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">WhatsApp</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Mensagens via WhatsApp Business com suporte a mídia e botões interativos.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={!newCampaign.channel}
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 4: Seleção de Tipo de Campanha (apenas para advanced) */}
+          {currentStep === 4 && newCampaign.campaignComplexity === 'advanced' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -728,8 +818,8 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 4: Configurações Específicas do Tipo de Campanha (apenas para advanced) */}
-          {currentStep === 4 && newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && (
+          {/* Etapa 5: Configurações Específicas do Tipo de Campanha (apenas para advanced) */}
+          {currentStep === 5 && newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -1034,85 +1124,158 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Email Editor Step */}
+          {/* Email/SMS/WhatsApp Content Editor Step */}
           {(
-            (newCampaign.campaignComplexity === 'simple' && currentStep === 3) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 4) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 5)
+            (newCampaign.campaignComplexity === 'simple' && currentStep === 4) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 5) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 6)
           ) && (
             <div className="space-y-6 py-4">
-              <div className="bg-orange-500/10 p-4 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-5 h-5 text-orange-500" />
-                  <span className="font-medium">Configure o conteúdo do seu e-mail</span>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="email-subject">Assunto do E-mail *</Label>
-                <Input
-                  id="email-subject"
-                  value={newCampaign.email.subject}
-                  onChange={(e) => setNewCampaign({ 
-                    ...newCampaign, 
-                    email: { ...newCampaign.email, subject: e.target.value }
-                  })}
-                  placeholder="Ex: Aproveite 20% de desconto na Black Friday!"
-                />
-              </div>
-              
-              {newCampaign.campaignComplexity === 'advanced' && (
-                <div className="grid gap-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <Label>Modo de Edição</Label>
+              {newCampaign.channel === 'email' && (
+                <>
+                  <div className="bg-orange-500/10 p-4 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {newCampaign.email.mode === 'text' ? '✉️ Texto simples' : '💻 HTML avançado'}
-                      </span>
-                      <Switch
-                        checked={newCampaign.email.mode === 'html'}
-                        onCheckedChange={(checked) => setNewCampaign({ 
-                          ...newCampaign, 
-                          email: { 
-                            ...newCampaign.email, 
-                            mode: checked ? 'html' : 'text'
-                          }
-                        })}
-                      />
+                      <Mail className="w-5 h-5 text-orange-500" />
+                      <span className="font-medium">Configure o conteúdo do seu e-mail</span>
                     </div>
                   </div>
-                </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="email-subject">Assunto do E-mail *</Label>
+                    <Input
+                      id="email-subject"
+                      value={newCampaign.email.subject}
+                      onChange={(e) => setNewCampaign({ 
+                        ...newCampaign, 
+                        email: { ...newCampaign.email, subject: e.target.value }
+                      })}
+                      placeholder="Ex: Aproveite 20% de desconto na Black Friday!"
+                    />
+                  </div>
+                  
+                  {newCampaign.campaignComplexity === 'advanced' && (
+                    <div className="grid gap-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <Label>Modo de Edição</Label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {newCampaign.email.mode === 'text' ? '✉️ Texto simples' : '💻 HTML avançado'}
+                          </span>
+                          <Switch
+                            checked={newCampaign.email.mode === 'html'}
+                            onCheckedChange={(checked) => setNewCampaign({ 
+                              ...newCampaign, 
+                              email: { 
+                                ...newCampaign.email, 
+                                mode: checked ? 'html' : 'text'
+                              }
+                            })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="email-content">
+                      {newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' ? 'Conteúdo HTML *' : 'Conteúdo do E-mail *'}
+                    </Label>
+                    <Textarea
+                      id="email-content"
+                      value={newCampaign.email.content}
+                      onChange={(e) => setNewCampaign({ 
+                        ...newCampaign, 
+                        email: { ...newCampaign.email, content: e.target.value }
+                      })}
+                      placeholder={
+                        newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' 
+                          ? 'Digite o HTML do e-mail...' 
+                          : 'Digite o conteúdo do e-mail...'
+                      }
+                      rows={12}
+                      className={newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' ? 'font-mono text-sm' : ''}
+                    />
+                  </div>
+                  
+                  {newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' && newCampaign.email.content && (
+                    <div className="grid gap-2">
+                      <Label>Preview</Label>
+                      <div 
+                        className="border rounded-lg p-4 bg-card"
+                        dangerouslySetInnerHTML={{ __html: newCampaign.email.content }}
+                      />
+                    </div>
+                  )}
+                </>
               )}
 
-              <div className="grid gap-2">
-                <Label htmlFor="email-content">
-                  {newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' ? 'Conteúdo HTML *' : 'Conteúdo do E-mail *'}
-                </Label>
-                <Textarea
-                  id="email-content"
-                  value={newCampaign.email.content}
-                  onChange={(e) => setNewCampaign({ 
-                    ...newCampaign, 
-                    email: { ...newCampaign.email, content: e.target.value }
-                  })}
-                  placeholder={
-                    newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' 
-                      ? 'Digite o HTML do e-mail...' 
-                      : 'Digite o conteúdo do e-mail...'
-                  }
-                  rows={12}
-                  className={newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' ? 'font-mono text-sm' : ''}
-                />
-              </div>
-              
-              {newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' && newCampaign.email.content && (
-                <div className="grid gap-2">
-                  <Label>Preview</Label>
-                  <div 
-                    className="border rounded-lg p-4 bg-card"
-                    dangerouslySetInnerHTML={{ __html: newCampaign.email.content }}
-                  />
-                </div>
+              {newCampaign.channel === 'sms' && (
+                <>
+                  <div className="bg-green-500/10 p-4 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Smartphone className="w-5 h-5 text-green-500" />
+                      <span className="font-medium">Configure o conteúdo do SMS</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Limite de 160 caracteres por mensagem
+                    </p>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="sms-content">Mensagem SMS *</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {newCampaign.email.content.length}/160
+                      </span>
+                    </div>
+                    <Textarea
+                      id="sms-content"
+                      value={newCampaign.email.content}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 160) {
+                          setNewCampaign({ 
+                            ...newCampaign, 
+                            email: { ...newCampaign.email, content: e.target.value }
+                          });
+                        }
+                      }}
+                      placeholder="Digite a mensagem do SMS..."
+                      rows={4}
+                      maxLength={160}
+                    />
+                  </div>
+                </>
+              )}
+
+              {newCampaign.channel === 'whatsapp' && (
+                <>
+                  <div className="bg-green-600/10 p-4 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-green-600" />
+                      <span className="font-medium">Configure a mensagem do WhatsApp</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Suporta texto formatado, emojis e até 4096 caracteres
+                    </p>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="whatsapp-content">Mensagem WhatsApp *</Label>
+                    <Textarea
+                      id="whatsapp-content"
+                      value={newCampaign.email.content}
+                      onChange={(e) => setNewCampaign({ 
+                        ...newCampaign, 
+                        email: { ...newCampaign.email, content: e.target.value }
+                      })}
+                      placeholder="Digite a mensagem do WhatsApp..."
+                      rows={8}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use *negrito*, _itálico_, ~tachado~ para formatar o texto
+                    </p>
+                  </div>
+                </>
               )}
 
               <div className="flex justify-between">
@@ -1122,7 +1285,11 @@ export default function Campanhas() {
                 </Button>
                 <Button 
                   onClick={handleNextStep}
-                  disabled={!newCampaign.email.subject || !newCampaign.email.content}
+                  disabled={
+                    newCampaign.channel === 'email' 
+                      ? !newCampaign.email.subject || !newCampaign.email.content
+                      : !newCampaign.email.content
+                  }
                 >
                   Próximo
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -1133,8 +1300,8 @@ export default function Campanhas() {
 
           {/* Workflow Step (only for advanced) */}
           {newCampaign.campaignComplexity === 'advanced' && (
-            (newCampaign.campaignType === 'dispatch' && currentStep === 5) ||
-            (newCampaign.campaignType !== 'dispatch' && currentStep === 6)
+            (newCampaign.campaignType === 'dispatch' && currentStep === 6) ||
+            (newCampaign.campaignType !== 'dispatch' && currentStep === 7)
           ) && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
@@ -1167,9 +1334,9 @@ export default function Campanhas() {
 
           {/* Tracking & Send Step */}
           {(
-            (newCampaign.campaignComplexity === 'simple' && currentStep === 4) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 6) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 7)
+            (newCampaign.campaignComplexity === 'simple' && currentStep === 5) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 7) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 8)
           ) && (
             <div className="space-y-6 py-4">
               <div className="p-3 bg-muted rounded-lg mb-4">
