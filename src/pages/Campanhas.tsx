@@ -30,7 +30,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { WorkflowBuilder, WorkflowStep } from '@/components/workflow/WorkflowBuilder';
+import { WorkflowCanvas, WorkflowStep } from '@/components/workflow/WorkflowCanvas';
 import { 
   MessageSquare, 
   Mail, 
@@ -1307,14 +1307,14 @@ export default function Campanhas() {
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <BarChart2 className="w-5 h-5 text-primary" />
-                  <span className="font-medium">Editor de Workflow</span>
+                  <span className="font-medium">Editor de Workflow Visual</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Configure a automação da sua campanha com condições, delays e ações encadeadas
+                  Arraste e solte os blocos, conecte-os para criar sua automação personalizada
                 </p>
               </div>
 
-              <WorkflowBuilder
+              <WorkflowCanvas
                 workflow={newCampaign.workflow}
                 onChange={(workflow) => setNewCampaign({ ...newCampaign, workflow })}
               />
