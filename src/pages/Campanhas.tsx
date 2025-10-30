@@ -495,7 +495,7 @@ export default function Campanhas() {
           });
         }
       }}>
-        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[95vh] h-[95vh] overflow-y-auto">
+        <DialogContent className="!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] overflow-y-auto p-8">
           <DialogHeader>
             <DialogTitle>Nova Campanha - Etapa {currentStep} de {getTotalSteps()}</DialogTitle>
           </DialogHeader>
