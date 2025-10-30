@@ -495,7 +495,16 @@ export default function Campanhas() {
           });
         }
       }}>
-        <DialogContent className="!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] overflow-y-auto p-8">
+        <DialogContent className={cn(
+          "overflow-y-auto",
+          // Expandir apenas no passo do workflow
+          newCampaign.campaignComplexity === 'advanced' && (
+            (newCampaign.campaignType === 'dispatch' && currentStep === 6) ||
+            (newCampaign.campaignType !== 'dispatch' && currentStep === 7)
+          )
+            ? "!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] p-8"
+            : "max-w-3xl max-h-[90vh]"
+        )}>
           <DialogHeader>
             <DialogTitle>Nova Campanha - Etapa {currentStep} de {getTotalSteps()}</DialogTitle>
           </DialogHeader>
