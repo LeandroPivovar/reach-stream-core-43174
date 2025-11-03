@@ -23,11 +23,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert';
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -57,8 +52,7 @@ import {
   BarChart2,
   Zap,
   Tag,
-  Gift,
-  AlertCircle
+  Gift
 } from 'lucide-react';
 
 export default function Campanhas() {
@@ -110,8 +104,6 @@ export default function Campanhas() {
     { name: 'Novos', count: 523, description: 'Últimos 30 dias' },
     { name: 'Inativos', count: 1205, description: 'Sem compras há 90+ dias' }
   ];
-  
-  const inactiveClientsCount = contactGroups.find(g => g.name === 'Inativos')?.count || 0;
 
   const [campaigns, setCampaigns] = useState([
     {
@@ -296,16 +288,6 @@ export default function Campanhas() {
       showSearch
     >
       <div className="space-y-6">
-        {/* Alerta de Clientes Inativos */}
-        <Alert className="border-orange-500/50 bg-orange-500/10">
-          <AlertCircle className="h-4 w-4 text-orange-500" />
-          <AlertTitle className="text-orange-500 font-semibold">Atenção: Clientes Inativos</AlertTitle>
-          <AlertDescription className="text-muted-foreground">
-            Você tem <span className="font-bold text-foreground">{inactiveClientsCount.toLocaleString()}</span> clientes inativos (sem compras há mais de 90 dias). 
-            Considere criar uma campanha de reengajamento para recuperar esses clientes.
-          </AlertDescription>
-        </Alert>
-
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="p-4">

@@ -4,6 +4,11 @@ import { StatsCard } from '@/components/ui/stats-card';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
 import { 
   Send, 
   Eye, 
@@ -13,7 +18,8 @@ import {
   Calendar,
   Users,
   Activity,
-  DollarSign
+  DollarSign,
+  AlertCircle
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import {
@@ -154,6 +160,16 @@ export default function Dashboard() {
       subtitle="Acompanhe o desempenho das suas campanhas"
     >
       <div className="space-y-6">
+        {/* Alerta de Clientes Inativos */}
+        <Alert className="border-orange-500/50 bg-orange-500/10">
+          <AlertCircle className="h-4 w-4 text-orange-500" />
+          <AlertTitle className="text-orange-500 font-semibold">Atenção: Clientes Inativos</AlertTitle>
+          <AlertDescription className="text-muted-foreground">
+            Você tem <span className="font-bold text-foreground">1.205</span> clientes inativos (sem compras há mais de 90 dias). 
+            Considere criar uma campanha de reengajamento para recuperar esses clientes.
+          </AlertDescription>
+        </Alert>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {stats.map((stat, index) => (
