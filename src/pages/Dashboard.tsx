@@ -33,6 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CustomerMap } from '@/components/dashboard/CustomerMap';
+import { CustomerJourney } from '@/components/dashboard/CustomerJourney';
 
 export default function Dashboard() {
   const [chartPeriod, setChartPeriod] = useState('semanal');
@@ -66,6 +68,18 @@ export default function Dashboard() {
       trend: { value: -5, isPositive: false },
       colorClass: 'bg-red-500/20 text-red-900 dark:text-red-100 border-red-500/30'
     }
+  ];
+
+  // Dados de localização dos clientes para o mapa
+  const customerLocations = [
+    { id: '1', name: 'São Paulo', coordinates: [-46.6333, -23.5505] as [number, number], value: 847 },
+    { id: '2', name: 'Rio de Janeiro', coordinates: [-43.1729, -22.9068] as [number, number], value: 623 },
+    { id: '3', name: 'Belo Horizonte', coordinates: [-43.9378, -19.9167] as [number, number], value: 412 },
+    { id: '4', name: 'Brasília', coordinates: [-47.9292, -15.7801] as [number, number], value: 356 },
+    { id: '5', name: 'Curitiba', coordinates: [-49.2731, -25.4195] as [number, number], value: 298 },
+    { id: '6', name: 'Porto Alegre', coordinates: [-51.2177, -30.0346] as [number, number], value: 267 },
+    { id: '7', name: 'Salvador', coordinates: [-38.5014, -12.9777] as [number, number], value: 234 },
+    { id: '8', name: 'Recife', coordinates: [-34.8770, -8.0476] as [number, number], value: 189 },
   ];
 
   const stats = [
@@ -336,6 +350,26 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Jornada do Cliente */}
+        {hasIntegrations && (
+          <Card className="p-6">
+            <CustomerJourney />
+          </Card>
+        )}
+
+        {/* Mapa de Calor dos Clientes */}
+        {hasIntegrations && (
+          <Card className="p-6">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Distribuição Geográfica</h3>
+              <p className="text-sm text-muted-foreground">
+                Visualize onde seus clientes estão localizados
+              </p>
+            </div>
+            <CustomerMap customers={customerLocations} />
+          </Card>
+        )}
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
