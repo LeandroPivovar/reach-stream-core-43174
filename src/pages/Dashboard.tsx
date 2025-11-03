@@ -70,28 +70,17 @@ export default function Dashboard() {
     }
   ];
 
-  // Dados simulados de clientes para o mapa de calor da jornada
-  const generateCustomers = () => {
-    const customers = [];
-    const stages: ('leads' | 'engaged' | 'cart' | 'purchase' | 'loyal')[] = ['leads', 'engaged', 'cart', 'purchase', 'loyal'];
-    const counts = [847, 621, 342, 156, 89]; // Quantidade por estágio
-    
-    stages.forEach((stage, stageIndex) => {
-      for (let i = 0; i < counts[stageIndex]; i++) {
-        customers.push({
-          id: `${stage}-${i}`,
-          name: `Cliente ${i + 1}`,
-          email: `cliente${i + 1}@example.com`,
-          stage: stage,
-          value: Math.floor(Math.random() * 1000) + 100
-        });
-      }
-    });
-    
-    return customers;
-  };
-
-  const allCustomers = generateCustomers();
+  // Dados simulados de segmentos para o mapa de calor
+  const customerSegments = [
+    { name: 'Novos Leads', leads: 523, engaged: 312, cart: 145, purchase: 67, loyal: 23 },
+    { name: 'Engajados', leads: 198, engaged: 567, cart: 289, purchase: 134, loyal: 56 },
+    { name: 'Carrinho Ativo', leads: 45, engaged: 123, cart: 456, purchase: 234, loyal: 89 },
+    { name: 'Compradores', leads: 23, engaged: 89, cart: 167, purchase: 689, loyal: 312 },
+    { name: 'Clientes Fiéis', leads: 12, engaged: 34, cart: 78, purchase: 245, loyal: 823 },
+    { name: 'Inativos 30d', leads: 234, engaged: 156, cart: 89, purchase: 45, loyal: 12 },
+    { name: 'Inativos 60d', leads: 456, engaged: 234, cart: 112, purchase: 34, loyal: 8 },
+    { name: 'Recuperados', leads: 67, engaged: 145, cart: 234, purchase: 178, loyal: 98 },
+  ];
 
   const stats = [
     {
@@ -372,7 +361,7 @@ export default function Dashboard() {
         {/* Mapa de Calor dos Clientes na Jornada */}
         {hasIntegrations && (
           <Card className="p-6">
-            <CustomerHeatmap customers={allCustomers} />
+            <CustomerHeatmap segments={customerSegments} />
           </Card>
         )}
 

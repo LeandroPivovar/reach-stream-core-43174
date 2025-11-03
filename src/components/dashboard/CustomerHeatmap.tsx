@@ -2,39 +2,54 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-interface Customer {
-  id: string;
+interface CustomerSegment {
   name: string;
-  email: string;
-  stage: 'leads' | 'engaged' | 'cart' | 'purchase' | 'loyal';
-  value: number;
+  leads: number;
+  engaged: number;
+  cart: number;
+  purchase: number;
+  loyal: number;
 }
 
 interface CustomerHeatmapProps {
-  customers: Customer[];
+  segments: CustomerSegment[];
 }
 
-export function CustomerHeatmap({ customers }: CustomerHeatmapProps) {
+export function CustomerHeatmap({ segments }: CustomerHeatmapProps) {
   const stages = [
-    { id: 'leads', name: 'Leads', color: 'bg-blue-500' },
-    { id: 'engaged', name: 'Engajados', color: 'bg-purple-500' },
-    { id: 'cart', name: 'Carrinho', color: 'bg-orange-500' },
-    { id: 'purchase', name: 'Compradores', color: 'bg-green-500' },
-    { id: 'loyal', name: 'Fiéis', color: 'bg-pink-500' }
+    { key: 'leads', name: 'Leads' },
+    { key: 'engaged', name: 'Engajados' },
+    { key: 'cart', name: 'Carrinho' },
+    { key: 'purchase', name: 'Compradores' },
+    { key: 'loyal', name: 'Fiéis' }
   ];
 
-  // Group customers by stage
-  const customersByStage = stages.map(stage => ({
-    ...stage,
-    customers: customers.filter(c => c.stage === stage.id)
-  }));
+  // Encontrar o valor máximo para normalizar as cores
+  const allValues = segments.flatMap(seg => [
+    seg.leads, seg.engaged, seg.cart, seg.purchase, seg.loyal
+  ]);
+  const maxValue = Math.max(...allValues);
+  const minValue = Math.min(...allValues);
 
-  // Calculate max customers per stage for relative sizing
-  const maxCustomers = Math.max(...customersByStage.map(s => s.customers.length));
+  // Função para obter a cor baseada no valor (vermelho -> amarelo -> verde)
+  const getHeatColor = (value: number) => {
+    const normalized = (value - minValue) / (maxValue - minValue);
+    
+    if (normalized < 0.33) {
+      // Vermelho para valores baixos
+      return 'bg-red-500/80 text-white';
+    } else if (normalized < 0.66) {
+      // Amarelo para valores médios
+      return 'bg-yellow-500/80 text-black';
+    } else {
+      // Verde para valores altos
+      return 'bg-green-500/80 text-white';
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold">Mapa de Calor - Clientes na Jornada</h3>
           <p className="text-sm text-muted-foreground">
@@ -43,88 +58,66 @@ export function CustomerHeatmap({ customers }: CustomerHeatmapProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {customersByStage.map(stage => {
-          const intensity = stage.customers.length / maxCustomers;
-          const opacity = Math.max(0.3, intensity);
-          
-          return (
-            <Card key={stage.id} className="p-4 relative overflow-hidden">
-              <div 
-                className={cn(
-                  "absolute inset-0 transition-all",
-                  stage.color
-                )}
-                style={{ opacity: opacity * 0.2 }}
-              />
-              
-              <div className="relative z-10">
-                <h4 className="font-semibold mb-2">{stage.name}</h4>
-                <p className="text-3xl font-bold mb-2">
-                  {stage.customers.length}
-                </p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  {((stage.customers.length / customers.length) * 100).toFixed(1)}% do total
-                </p>
-                
-                {/* Heat indicator bars */}
-                <div className="space-y-1">
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        "h-1 rounded-full transition-all",
-                        i < Math.ceil(intensity * 5)
-                          ? stage.color
-                          : "bg-muted"
-                      )}
-                      style={{
-                        opacity: i < Math.ceil(intensity * 5) ? 1 : 0.3
-                      }}
-                    />
+      {/* Tabela com Grid de Calor */}
+      <div className="overflow-x-auto">
+        <div className="inline-block min-w-full align-middle">
+          <div className="overflow-hidden border border-border rounded-lg">
+            <table className="min-w-full divide-y divide-border">
+              <thead>
+                <tr className="bg-primary text-primary-foreground">
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    Segmento
+                  </th>
+                  {stages.map(stage => (
+                    <th key={stage.key} className="px-4 py-3 text-center text-sm font-semibold">
+                      {stage.name}
+                    </th>
                   ))}
-                </div>
-
-                {/* Top customers preview */}
-                <div className="mt-4 space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Principais clientes:
-                  </p>
-                  {stage.customers.slice(0, 3).map(customer => (
-                    <div
-                      key={customer.id}
-                      className="text-xs p-1.5 rounded bg-muted/50 truncate"
-                      title={customer.email}
-                    >
-                      {customer.name}
-                    </div>
-                  ))}
-                  {stage.customers.length > 3 && (
-                    <p className="text-xs text-muted-foreground italic">
-                      +{stage.customers.length - 3} mais...
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Card>
-          );
-        })}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border bg-background">
+                {segments.map((segment, idx) => (
+                  <tr key={idx} className="hover:bg-muted/50 transition-colors">
+                    <td className="px-4 py-3 text-sm font-medium bg-muted/50">
+                      {segment.name}
+                    </td>
+                    <td className={cn("px-4 py-3 text-center text-sm font-bold", getHeatColor(segment.leads))}>
+                      {segment.leads}
+                    </td>
+                    <td className={cn("px-4 py-3 text-center text-sm font-bold", getHeatColor(segment.engaged))}>
+                      {segment.engaged}
+                    </td>
+                    <td className={cn("px-4 py-3 text-center text-sm font-bold", getHeatColor(segment.cart))}>
+                      {segment.cart}
+                    </td>
+                    <td className={cn("px-4 py-3 text-center text-sm font-bold", getHeatColor(segment.purchase))}>
+                      {segment.purchase}
+                    </td>
+                    <td className={cn("px-4 py-3 text-center text-sm font-bold", getHeatColor(segment.loyal))}>
+                      {segment.loyal}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      {/* Legend */}
+      {/* Legenda */}
       <Card className="p-4 bg-muted/30">
         <div className="flex flex-wrap gap-6 items-center justify-center">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-blue-500" />
-            <span className="text-sm">Baixa densidade</span>
+            <div className="w-6 h-6 rounded bg-red-500/80" />
+            <span className="text-sm">Baixa densidade (0-33%)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-purple-500 opacity-60" />
-            <span className="text-sm">Média densidade</span>
+            <div className="w-6 h-6 rounded bg-yellow-500/80" />
+            <span className="text-sm">Média densidade (34-66%)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-green-500 opacity-90" />
-            <span className="text-sm">Alta densidade</span>
+            <div className="w-6 h-6 rounded bg-green-500/80" />
+            <span className="text-sm">Alta densidade (67-100%)</span>
           </div>
         </div>
       </Card>
