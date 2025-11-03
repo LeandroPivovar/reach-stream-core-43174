@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { CampaignFunnel } from '@/components/tracking/CampaignFunnel';
 import { CampaignMetrics } from '@/components/tracking/CampaignMetrics';
+import { ClicksBreakdown } from '@/components/tracking/ClicksBreakdown';
 
 export default function Trackeamento() {
   const { toast } = useToast();
@@ -209,6 +210,9 @@ export default function Trackeamento() {
             <div className="space-y-6">
               {/* Métricas e Rankings */}
               <CampaignMetrics />
+              
+              {/* Detalhamento dos Cliques */}
+              <ClicksBreakdown />
               
               {/* Funil de Conversão */}
               <CampaignFunnel />
