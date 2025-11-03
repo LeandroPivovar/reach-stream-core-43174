@@ -23,6 +23,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -52,7 +57,8 @@ import {
   BarChart2,
   Zap,
   Tag,
-  Gift
+  Gift,
+  AlertCircle
 } from 'lucide-react';
 
 export default function Campanhas() {
@@ -98,7 +104,14 @@ export default function Campanhas() {
     scheduleTime: ''
   });
 
-  const contactGroups = ['VIP', 'Regular', 'Novos', 'Inativos'];
+  const contactGroups = [
+    { name: 'VIP', count: 342, description: 'Clientes de alto valor' },
+    { name: 'Regular', count: 1847, description: 'Clientes ativos regulares' },
+    { name: 'Novos', count: 523, description: 'Últimos 30 dias' },
+    { name: 'Inativos', count: 1205, description: 'Sem compras há 90+ dias' }
+  ];
+  
+  const inactiveClientsCount = contactGroups.find(g => g.name === 'Inativos')?.count || 0;
 
   const [campaigns, setCampaigns] = useState([
     {
@@ -206,12 +219,12 @@ export default function Campanhas() {
     }
   };
 
-  const toggleGroup = (group: string) => {
+  const toggleGroup = (groupName: string) => {
     setNewCampaign(prev => ({
       ...prev,
-      groups: prev.groups.includes(group)
-        ? prev.groups.filter(g => g !== group)
-        : [...prev.groups, group]
+      groups: prev.groups.includes(groupName)
+        ? prev.groups.filter(g => g !== groupName)
+        : [...prev.groups, groupName]
     }));
   };
 
@@ -283,6 +296,16 @@ export default function Campanhas() {
       showSearch
     >
       <div className="space-y-6">
+        {/* Alerta de Clientes Inativos */}
+        <Alert className="border-orange-500/50 bg-orange-500/10">
+          <AlertCircle className="h-4 w-4 text-orange-500" />
+          <AlertTitle className="text-orange-500 font-semibold">Atenção: Clientes Inativos</AlertTitle>
+          <AlertDescription className="text-muted-foreground">
+            Você tem <span className="font-bold text-foreground">{inactiveClientsCount.toLocaleString()}</span> clientes inativos (sem compras há mais de 90 dias). 
+            Considere criar uma campanha de reengajamento para recuperar esses clientes.
+          </AlertDescription>
+        </Alert>
+
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="p-4">
@@ -608,33 +631,42 @@ export default function Campanhas() {
               </div>
 
               <div className="grid gap-2">
-                <Label>Grupos de Contatos * (selecione um ou mais)</Label>
+                <Label>Público-Alvo * (selecione um ou mais grupos)</Label>
                 <div className="grid grid-cols-2 gap-3">
                   {contactGroups.map((group) => (
                     <Card
-                      key={group}
+                      key={group.name}
                       className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                        newCampaign.groups.includes(group) ? 'border-primary bg-primary/5' : ''
+                        newCampaign.groups.includes(group.name) ? 'border-primary bg-primary/5' : ''
                       }`}
-                      onClick={() => toggleGroup(group)}
+                      onClick={() => toggleGroup(group.name)}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                          newCampaign.groups.includes(group) 
+                      <div className="flex items-start gap-3">
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 mt-0.5 ${
+                          newCampaign.groups.includes(group.name) 
                             ? 'bg-primary border-primary' 
                             : 'border-input'
                         }`}>
-                          {newCampaign.groups.includes(group) && (
+                          {newCampaign.groups.includes(group.name) && (
                             <Users className="w-3 h-3 text-primary-foreground" />
                           )}
                         </div>
                         <div className="flex-1">
-                          <span className="font-medium">{group}</span>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-semibold">{group.name}</span>
+                            <Badge variant="secondary" className="text-xs">
+                              {group.count.toLocaleString()}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{group.description}</p>
                         </div>
                       </div>
                     </Card>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Total selecionado: {contactGroups.filter(g => newCampaign.groups.includes(g.name)).reduce((acc, g) => acc + g.count, 0).toLocaleString()} contatos
+                </p>
               </div>
 
               <div className="flex justify-between">
