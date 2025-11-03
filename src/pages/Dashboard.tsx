@@ -33,8 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CustomerMap } from '@/components/dashboard/CustomerMap';
 import { CustomerJourney } from '@/components/dashboard/CustomerJourney';
+import { CustomerHeatmap } from '@/components/dashboard/CustomerHeatmap';
 
 export default function Dashboard() {
   const [chartPeriod, setChartPeriod] = useState('semanal');
@@ -70,17 +70,28 @@ export default function Dashboard() {
     }
   ];
 
-  // Dados de localização dos clientes para o mapa
-  const customerLocations = [
-    { id: '1', name: 'São Paulo', coordinates: [-46.6333, -23.5505] as [number, number], value: 847 },
-    { id: '2', name: 'Rio de Janeiro', coordinates: [-43.1729, -22.9068] as [number, number], value: 623 },
-    { id: '3', name: 'Belo Horizonte', coordinates: [-43.9378, -19.9167] as [number, number], value: 412 },
-    { id: '4', name: 'Brasília', coordinates: [-47.9292, -15.7801] as [number, number], value: 356 },
-    { id: '5', name: 'Curitiba', coordinates: [-49.2731, -25.4195] as [number, number], value: 298 },
-    { id: '6', name: 'Porto Alegre', coordinates: [-51.2177, -30.0346] as [number, number], value: 267 },
-    { id: '7', name: 'Salvador', coordinates: [-38.5014, -12.9777] as [number, number], value: 234 },
-    { id: '8', name: 'Recife', coordinates: [-34.8770, -8.0476] as [number, number], value: 189 },
-  ];
+  // Dados simulados de clientes para o mapa de calor da jornada
+  const generateCustomers = () => {
+    const customers = [];
+    const stages: ('leads' | 'engaged' | 'cart' | 'purchase' | 'loyal')[] = ['leads', 'engaged', 'cart', 'purchase', 'loyal'];
+    const counts = [847, 621, 342, 156, 89]; // Quantidade por estágio
+    
+    stages.forEach((stage, stageIndex) => {
+      for (let i = 0; i < counts[stageIndex]; i++) {
+        customers.push({
+          id: `${stage}-${i}`,
+          name: `Cliente ${i + 1}`,
+          email: `cliente${i + 1}@example.com`,
+          stage: stage,
+          value: Math.floor(Math.random() * 1000) + 100
+        });
+      }
+    });
+    
+    return customers;
+  };
+
+  const allCustomers = generateCustomers();
 
   const stats = [
     {
@@ -358,16 +369,10 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Mapa de Calor dos Clientes */}
+        {/* Mapa de Calor dos Clientes na Jornada */}
         {hasIntegrations && (
           <Card className="p-6">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">Distribuição Geográfica</h3>
-              <p className="text-sm text-muted-foreground">
-                Visualize onde seus clientes estão localizados
-              </p>
-            </div>
-            <CustomerMap customers={customerLocations} />
+            <CustomerHeatmap customers={allCustomers} />
           </Card>
         )}
 

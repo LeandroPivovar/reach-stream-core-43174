@@ -82,27 +82,24 @@ export function CustomerJourney() {
       </div>
 
       <div className="relative">
-        {/* Connection lines */}
-        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-border -translate-y-1/2 hidden lg:block" />
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 relative">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 relative">
           {journeyStages.map((stage, index) => {
             const Icon = stage.icon;
             return (
-              <React.Fragment key={stage.id}>
-                <Card className={cn("p-4 relative", stage.color)}>
-                  <div className="flex flex-col items-center text-center space-y-2">
-                    <div className="w-12 h-12 rounded-full bg-white/20 dark:bg-black/20 flex items-center justify-center">
-                      <Icon className="w-6 h-6" />
+              <div key={stage.id} className="relative">
+                <Card className={cn("p-6", stage.color)}>
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <div className="w-14 h-14 rounded-full bg-white/20 dark:bg-black/20 flex items-center justify-center">
+                      <Icon className="w-7 h-7" />
                     </div>
                     <div>
-                      <h4 className="font-semibold">{stage.name}</h4>
-                      <p className="text-xs text-muted-foreground">
+                      <h4 className="font-semibold text-base">{stage.name}</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
                         {stage.description}
                       </p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-2xl font-bold">
+                      <p className="text-3xl font-bold">
                         {stage.count.toLocaleString()}
                       </p>
                       <Badge variant="secondary" className="text-xs">
@@ -110,17 +107,15 @@ export function CustomerJourney() {
                       </Badge>
                     </div>
                   </div>
-                  
-                  {/* Arrow indicator */}
-                  {index < journeyStages.length - 1 && (
-                    <div className="absolute -right-2 top-1/2 -translate-y-1/2 hidden lg:block z-10">
-                      <div className="w-4 h-4 rounded-full bg-background border-2 border-border flex items-center justify-center">
-                        <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                      </div>
-                    </div>
-                  )}
                 </Card>
-              </React.Fragment>
+                
+                {/* Arrow between stages */}
+                {index < journeyStages.length - 1 && (
+                  <div className="absolute -right-3 top-1/2 -translate-y-1/2 hidden lg:block z-10">
+                    <ArrowRight className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
