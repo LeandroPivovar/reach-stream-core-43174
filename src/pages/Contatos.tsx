@@ -75,6 +75,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { LtvHistory } from '@/components/contacts/LtvHistory';
 
 interface Purchase {
   id: number;
@@ -1817,40 +1818,17 @@ export default function Contatos() {
                       </p>
                     </Card>
 
-                    {/* Histórico de Compras */}
-                    <Card className="p-4">
-                      <h3 className="font-semibold mb-3 flex items-center gap-2">
-                        <ShoppingCart className="w-4 h-4" />
-                        Histórico de Compras
+                    {/* Histórico de LTV */}
+                    <div className="space-y-4">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4" />
+                        Histórico de LTV
                       </h3>
-                      <div className="space-y-3">
-                        {contactDetails[selectedContactId].purchases.map((purchase) => (
-                          <div 
-                            key={purchase.id} 
-                            className="flex items-start justify-between p-3 bg-muted/50 rounded-lg"
-                          >
-                            <div className="flex-1">
-                              <div className="font-medium text-sm">{purchase.product}</div>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                                <Calendar className="w-3 h-3" />
-                                {new Date(purchase.date).toLocaleDateString('pt-BR')}
-                              </div>
-                            </div>
-                            <div className="font-semibold text-sm text-primary">
-                              R$ {purchase.value.toFixed(2)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-border">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-medium">Total de Compras:</span>
-                          <span className="text-lg font-bold text-primary">
-                            {contactDetails[selectedContactId].purchases.length}
-                          </span>
-                        </div>
-                      </div>
-                    </Card>
+                      <LtvHistory 
+                        purchases={contactDetails[selectedContactId].purchases}
+                        totalLtv={contactDetails[selectedContactId].ltv}
+                      />
+                    </div>
 
                     {/* Histórico Completo - Timeline */}
                     <Card className="p-4">
