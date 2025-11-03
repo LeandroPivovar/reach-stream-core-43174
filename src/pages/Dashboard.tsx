@@ -19,7 +19,11 @@ import {
   Users,
   Activity,
   DollarSign,
-  AlertCircle
+  AlertCircle,
+  ShoppingCart,
+  CheckCircle,
+  Clock,
+  Zap
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import {
@@ -32,6 +36,37 @@ import {
 
 export default function Dashboard() {
   const [chartPeriod, setChartPeriod] = useState('semanal');
+  
+  // Simulação de integração ativa - em produção, isso viria de uma API
+  const hasIntegrations = true; // Alterar para false para ver o estado sem integrações
+  
+  // Dados de segmentação automática quando há integrações
+  const leadSegmentation = [
+    {
+      title: 'Abandono de Carrinho',
+      value: 342,
+      description: 'Últimas 24 horas',
+      icon: ShoppingCart,
+      trend: { value: 23, isPositive: false },
+      colorClass: 'bg-orange-500/20 text-orange-900 dark:text-orange-100 border-orange-500/30'
+    },
+    {
+      title: 'Compraram Recentemente',
+      value: 156,
+      description: 'Últimos 7 dias',
+      icon: CheckCircle,
+      trend: { value: 12, isPositive: true },
+      colorClass: 'bg-green-500/20 text-green-900 dark:text-green-100 border-green-500/30'
+    },
+    {
+      title: 'Sem Compras - 60 dias',
+      value: 1205,
+      description: 'Potencial reengajamento',
+      icon: Clock,
+      trend: { value: -5, isPositive: false },
+      colorClass: 'bg-red-500/20 text-red-900 dark:text-red-100 border-red-500/30'
+    }
+  ];
 
   const stats = [
     {
@@ -160,15 +195,52 @@ export default function Dashboard() {
       subtitle="Acompanhe o desempenho das suas campanhas"
     >
       <div className="space-y-6">
-        {/* Alerta de Clientes Inativos */}
-        <Alert className="border-orange-500/50 bg-orange-500/10">
-          <AlertCircle className="h-4 w-4 text-orange-500" />
-          <AlertTitle className="text-orange-500 font-semibold">Atenção: Clientes Inativos</AlertTitle>
-          <AlertDescription className="text-muted-foreground">
-            Você tem <span className="font-bold text-foreground">1.205</span> clientes inativos (sem compras há mais de 90 dias). 
-            Considere criar uma campanha de reengajamento para recuperar esses clientes.
-          </AlertDescription>
-        </Alert>
+        {/* Segmentação Automática de Leads - Apenas com Integrações */}
+        {hasIntegrations ? (
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-primary" />
+                  Segmentação Automática de Leads
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Sua plataforma está analisando automaticamente o comportamento dos seus clientes
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {leadSegmentation.map((segment, index) => (
+                <StatsCard key={index} {...segment} />
+              ))}
+            </div>
+
+            {/* Alerta de Clientes Inativos */}
+            <Alert className="border-orange-500/50 bg-orange-500/10">
+              <AlertCircle className="h-4 w-4 text-orange-500" />
+              <AlertTitle className="text-orange-500 font-semibold">Atenção: Clientes Inativos</AlertTitle>
+              <AlertDescription className="text-muted-foreground">
+                Você tem <span className="font-bold text-foreground">1.205</span> clientes inativos (sem compras há mais de 90 dias). 
+                Considere criar uma campanha de reengajamento para recuperar esses clientes.
+              </AlertDescription>
+            </Alert>
+          </>
+        ) : (
+          <Alert className="border-primary/50 bg-primary/10">
+            <Zap className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-primary font-semibold">Ative Integrações para Segmentação Automática</AlertTitle>
+            <AlertDescription className="text-muted-foreground">
+              Conecte suas integrações (e-commerce, CRM) para que a plataforma faça a segmentação automática dos seus leads 
+              (abandono de carrinho, compraram recentemente, sem compras há 60 dias) e maximize seus resultados.
+              <div className="mt-3">
+                <Button size="sm" className="mt-2">
+                  Configurar Integrações
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
