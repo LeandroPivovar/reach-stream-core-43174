@@ -28,6 +28,8 @@ import {
 import { CampaignFunnel } from '@/components/tracking/CampaignFunnel';
 import { CampaignMetrics } from '@/components/tracking/CampaignMetrics';
 import { ClicksBreakdown } from '@/components/tracking/ClicksBreakdown';
+import { ConversionDetails } from '@/components/tracking/ConversionDetails';
+import { CampaignFilters } from '@/components/tracking/CampaignFilters';
 
 export default function Trackeamento() {
   const { toast } = useToast();
@@ -39,6 +41,21 @@ export default function Trackeamento() {
     name: '',
     pixelId: ''
   });
+  const [filters, setFilters] = useState({
+    campaigns: [],
+    period: 'geral',
+    dateRange: {}
+  });
+
+  const handleFilterChange = (newFilters: any) => {
+    setFilters(newFilters);
+    console.log('Filtros aplicados:', newFilters);
+    // Aqui você faria a chamada para API com os filtros
+    toast({
+      title: "Filtros aplicados!",
+      description: `Mostrando dados para ${newFilters.campaigns.length || 'todas'} campanha(s) no período: ${newFilters.period}`,
+    });
+  };
 
   const trackingCodes = [
     {
@@ -208,11 +225,17 @@ export default function Trackeamento() {
 
           <TabsContent value="overview">
             <div className="space-y-6">
+              {/* Filtros de Campanha e Período */}
+              <CampaignFilters onFilterChange={handleFilterChange} />
+              
               {/* Métricas e Rankings */}
               <CampaignMetrics />
               
               {/* Detalhamento dos Cliques */}
               <ClicksBreakdown />
+              
+              {/* Detalhamento da Taxa de Conversão */}
+              <ConversionDetails />
               
               {/* Funil de Conversão */}
               <CampaignFunnel />
