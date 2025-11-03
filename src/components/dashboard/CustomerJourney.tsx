@@ -86,10 +86,13 @@ export function CustomerJourney() {
           {journeyStages.map((stage, index) => {
             const Icon = stage.icon;
             return (
-              <div key={stage.id} className="relative">
-                <Card className={cn("p-6", stage.color)}>
+              <div key={stage.id} className="relative flex items-center">
+                <Card className="p-6 flex-1">
                   <div className="flex flex-col items-center text-center space-y-3">
-                    <div className="w-14 h-14 rounded-full bg-white/20 dark:bg-black/20 flex items-center justify-center">
+                    <div className={cn(
+                      "w-14 h-14 rounded-full flex items-center justify-center",
+                      stage.color.replace('/20', '/30')
+                    )}>
                       <Icon className="w-7 h-7" />
                     </div>
                     <div>
@@ -109,9 +112,9 @@ export function CustomerJourney() {
                   </div>
                 </Card>
                 
-                {/* Arrow between stages */}
+                {/* Arrow between stages - centered */}
                 {index < journeyStages.length - 1 && (
-                  <div className="absolute -right-3 top-1/2 -translate-y-1/2 hidden lg:block z-10">
+                  <div className="hidden lg:flex items-center justify-center px-2">
                     <ArrowRight className="w-6 h-6 text-muted-foreground" />
                   </div>
                 )}
