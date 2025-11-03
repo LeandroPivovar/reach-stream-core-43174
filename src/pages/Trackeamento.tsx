@@ -25,6 +25,8 @@ import {
   Users,
   Check
 } from 'lucide-react';
+import { CampaignFunnel } from '@/components/tracking/CampaignFunnel';
+import { CampaignMetrics } from '@/components/tracking/CampaignMetrics';
 
 export default function Trackeamento() {
   const { toast } = useToast();
@@ -195,12 +197,23 @@ export default function Trackeamento() {
           </Card>
         </div>
 
-        <Tabs defaultValue="pixels" className="space-y-6">
+        <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="pixels">Pixels</TabsTrigger>
             <TabsTrigger value="forms">Formulários</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="overview">
+            <div className="space-y-6">
+              {/* Métricas e Rankings */}
+              <CampaignMetrics />
+              
+              {/* Funil de Conversão */}
+              <CampaignFunnel />
+            </div>
+          </TabsContent>
 
           <TabsContent value="pixels">
             <div className="space-y-6">
