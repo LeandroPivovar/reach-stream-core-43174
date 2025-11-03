@@ -891,6 +891,68 @@ export default function Contatos() {
         </div>
 
         {/* Main Content */}
+        {/* Barra de Ações Flutuante - Aparece quando há contatos selecionados */}
+        {selectedContacts.size > 0 && (
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4">
+            <Card className="p-4 shadow-2xl border-2 border-primary/20 bg-background/95 backdrop-blur-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+                    {selectedContacts.size}
+                  </div>
+                  <span className="text-sm font-medium">
+                    {selectedContacts.size} {selectedContacts.size === 1 ? 'contato selecionado' : 'contatos selecionados'}
+                  </span>
+                </div>
+                
+                <div className="h-8 w-px bg-border" />
+                
+                <div className="flex gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setIsBulkCampaignOpen(true)}
+                    className="gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    Adicionar à Campanha
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkExport}
+                    className="gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Exportar
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBulkRemove}
+                    className="gap-2 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Remover
+                  </Button>
+                  
+                  <div className="h-8 w-px bg-border" />
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSelection}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
         <Tabs defaultValue="contacts" className="space-y-6">
           <TabsList>
             <TabsTrigger value="contacts">Contatos</TabsTrigger>
