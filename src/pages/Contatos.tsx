@@ -57,13 +57,6 @@ import {
   SlidersHorizontal
 } from 'lucide-react';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -1679,45 +1672,81 @@ export default function Contatos() {
         </DialogContent>
       </Dialog>
 
-      {/* Sheet Detalhes do Contato com LTV */}
-      <Sheet open={selectedContactId !== null} onOpenChange={(open) => !open && setSelectedContactId(null)}>
-        <SheetContent className="w-[500px] sm:max-w-[500px] overflow-y-auto">
+      {/* Dialog Detalhes do Contato com LTV */}
+      <Dialog open={selectedContactId !== null} onOpenChange={(open) => !open && setSelectedContactId(null)}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           {selectedContactId && (
             <>
-              <SheetHeader>
-                <SheetTitle>Perfil Completo do Lead</SheetTitle>
-                <SheetDescription>
+              <DialogHeader>
+                <DialogTitle>Perfil Completo do Lead</DialogTitle>
+                <p className="text-sm text-muted-foreground">
                   {contacts.find(c => c.id === selectedContactId)?.name}
-                </SheetDescription>
-              </SheetHeader>
+                </p>
+              </DialogHeader>
 
-              <div className="space-y-6 mt-6">
-                {/* Informações Básicas */}
-                <Card className="p-4">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    Informações de Contato
-                  </h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Email:</span>
-                      <span className="font-medium">{contacts.find(c => c.id === selectedContactId)?.email}</span>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                {/* Coluna 1: Informações Básicas, Pagamento e Campanha */}
+                <div className="space-y-6">
+                  {/* Informações Básicas */}
+                  <Card className="p-4">
+                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Informações de Contato
+                    </h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Email:</span>
+                        <span className="font-medium">{contacts.find(c => c.id === selectedContactId)?.email}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Telefone:</span>
+                        <span className="font-medium">{contacts.find(c => c.id === selectedContactId)?.phone}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Localização:</span>
+                        <span className="font-medium">
+                          {contacts.find(c => c.id === selectedContactId)?.city}, 
+                          {contacts.find(c => c.id === selectedContactId)?.state}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Telefone:</span>
-                      <span className="font-medium">{contacts.find(c => c.id === selectedContactId)?.phone}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Localização:</span>
-                      <span className="font-medium">
-                        {contacts.find(c => c.id === selectedContactId)?.city}, 
-                        {contacts.find(c => c.id === selectedContactId)?.state}
-                      </span>
-                    </div>
-                  </div>
-                </Card>
+                  </Card>
 
-                {/* Score e LTV */}
+                  {contactDetails[selectedContactId] && (
+                    <>
+                      {/* Forma de Pagamento */}
+                      <Card className="p-4">
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" />
+                          Forma de Pagamento
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-sm">
+                            {contactDetails[selectedContactId].paymentMethod}
+                          </Badge>
+                        </div>
+                      </Card>
+
+                      {/* Campanha de Origem */}
+                      <Card className="p-4">
+                        <h3 className="font-semibold mb-3 flex items-center gap-2">
+                          <Target className="w-4 h-4" />
+                          Campanha de Origem
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary" className="text-sm">
+                            {contactDetails[selectedContactId].sourceCampaign}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Primeira interação com a marca
+                        </p>
+                      </Card>
+                    </>
+                  )}
+                </div>
+
+                {/* Coluna 2: Score */}
                 {contactDetails[selectedContactId] && (
                   <>
                     {(() => {
@@ -1772,65 +1801,45 @@ export default function Contatos() {
                         </Card>
                       );
                     })()}
+                  </>
+                )}
 
-                    {/* LTV Total */}
-                    <Card className="p-4 bg-ltv-bg border-ltv shadow-score animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-ltv" />
-                          LTV Total
-                        </h3>
-                        <Badge variant="default" className="text-lg px-3 py-1 bg-ltv text-white">
-                          R$ {contactDetails[selectedContactId].ltv.toFixed(2)}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Valor total gerado pelo cliente
-                      </p>
-                    </Card>
-
-                    {/* Forma de Pagamento */}
-                    <Card className="p-4">
-                      <h3 className="font-semibold mb-3 flex items-center gap-2">
-                        <CreditCard className="w-4 h-4" />
-                        Forma de Pagamento
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-sm">
-                          {contactDetails[selectedContactId].paymentMethod}
-                        </Badge>
-                      </div>
-                    </Card>
-
-                    {/* Campanha de Origem */}
-                    <Card className="p-4">
-                      <h3 className="font-semibold mb-3 flex items-center gap-2">
-                        <Target className="w-4 h-4" />
-                        Campanha de Origem
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-sm">
-                          {contactDetails[selectedContactId].sourceCampaign}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Primeira interação com a marca
-                      </p>
-                    </Card>
-
-                    {/* Histórico de LTV */}
-                    <div className="space-y-4">
+                {/* Coluna 3: LTV Total */}
+                {contactDetails[selectedContactId] && (
+                  <Card className="p-4 bg-ltv-bg border-ltv shadow-score animate-fade-in">
+                    <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4" />
-                        Histórico de LTV
+                        <TrendingUp className="w-4 h-4 text-ltv" />
+                        LTV Total
                       </h3>
-                      <LtvHistory 
-                        purchases={contactDetails[selectedContactId].purchases}
-                        totalLtv={contactDetails[selectedContactId].ltv}
-                      />
+                      <Badge variant="default" className="text-lg px-3 py-1 bg-ltv text-white">
+                        R$ {contactDetails[selectedContactId].ltv.toFixed(2)}
+                      </Badge>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      Valor total gerado pelo cliente
+                    </p>
+                  </Card>
+                )}
+              </div>
 
-                    {/* Histórico Completo - Timeline */}
+              {/* Seção Completa: Histórico de LTV */}
+              {contactDetails[selectedContactId] && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    Histórico de LTV
+                  </h3>
+                  <LtvHistory 
+                    purchases={contactDetails[selectedContactId].purchases}
+                    totalLtv={contactDetails[selectedContactId].ltv}
+                  />
+                </div>
+              )}
+
+              {/* Histórico Completo - Timeline */}
+              {contactDetails[selectedContactId] && (
+                <div>
                     <Card className="p-4">
                       <h3 className="font-semibold mb-4 flex items-center gap-2">
                         <Clock className="w-4 h-4" />
@@ -1940,7 +1949,7 @@ export default function Contatos() {
                           })}
                       </div>
                     </Card>
-                  </>
+                  </div>
                 )}
 
                 {!contactDetails[selectedContactId] && (
@@ -1951,11 +1960,10 @@ export default function Contatos() {
                     </p>
                   </Card>
                 )}
-              </div>
             </>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
