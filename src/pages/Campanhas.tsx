@@ -1377,7 +1377,7 @@ export default function Campanhas() {
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <BarChart2 className="w-5 h-5 text-primary" />
-                  <span className="font-medium">{newCampaign.campaignComplexity === 'simple' ? 'Envio' : 'Trackeamento e Envio'}</span>
+                  <span className="font-medium">{newCampaign.campaignComplexity === 'simple' ? 'Envio' : 'Rastreamento e Envio'}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {newCampaign.campaignComplexity === 'simple' 
@@ -1389,7 +1389,7 @@ export default function Campanhas() {
 
               {newCampaign.campaignComplexity === 'advanced' && (
                 <div className="grid gap-4">
-                  <Label>Tipo de Trackeamento *</Label>
+                  <Label>Tipo de Rastreamento *</Label>
                 
                   <Card 
                     className={`p-4 cursor-pointer hover:border-primary transition-colors ${

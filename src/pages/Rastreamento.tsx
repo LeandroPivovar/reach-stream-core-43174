@@ -31,7 +31,7 @@ import { ClicksBreakdown } from '@/components/tracking/ClicksBreakdown';
 import { ConversionDetails } from '@/components/tracking/ConversionDetails';
 import { CampaignFilters } from '@/components/tracking/CampaignFilters';
 
-export default function Trackeamento() {
+export default function Rastreamento() {
   const { toast } = useToast();
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [isNewPixelOpen, setIsNewPixelOpen] = useState(false);
@@ -159,7 +159,7 @@ export default function Trackeamento() {
 
   return (
     <Layout 
-      title="Trackeamento" 
+      title="Rastreamento" 
       subtitle="Configure pixels e formulários para capturar leads"
       actions={actions}
     >

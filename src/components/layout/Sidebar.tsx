@@ -22,7 +22,7 @@ const menuItems = [
   { title: 'Vendas', href: '/vendas', icon: DollarSign },
   { title: 'Contatos', href: '/contatos', icon: Users },
   { title: 'Conexões', href: '/conexoes', icon: Plug },
-  { title: 'Trackeamento', href: '/trackeamento', icon: Target },
+  { title: 'Rastreamento', href: '/rastreamento', icon: Target },
   { title: 'Integrações', href: '/integracoes', icon: Puzzle },
   { title: 'Assinaturas', href: '/assinaturas', icon: CreditCard },
   { title: 'Indicações', href: '/indicacoes', icon: Share2 },
