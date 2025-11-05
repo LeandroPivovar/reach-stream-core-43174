@@ -1446,7 +1446,9 @@ export default function Campanhas() {
                       <div className="flex-1">
                         <p className="font-medium">Parâmetros UTM</p>
                         <p className="text-sm text-muted-foreground mb-3">
-                          Adicione tags UTM aos seus links para rastreamento no Google Analytics
+                          Adicione tags UTM aos seus links para rastreamento no Google Analytics. 
+                          UTM (Urchin Tracking Module) são códigos adicionados às URLs que permitem identificar a origem, 
+                          meio e campanha de onde vêm seus visitantes, facilitando a análise de performance.
                         </p>
                         
                         {newCampaign.tracking.type === 'utm' && (
