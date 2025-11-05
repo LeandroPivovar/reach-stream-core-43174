@@ -56,6 +56,16 @@ export default function Integracoes() {
     payloadExample: ''
   });
 
+  // Mapeamento de eventos técnicos para nomes amigáveis
+  const eventLabels: Record<string, string> = {
+    'lead_captured': 'Lead capturado',
+    'contact_created': 'Contato criado',
+    'campaign_sent': 'Campanha enviada',
+    'tag_added': 'Tag adicionada',
+    'form_submitted': 'Formulário enviado',
+    'purchase_completed': 'Compra finalizada'
+  };
+
   const integrations = [
     {
       id: 1,
@@ -386,7 +396,7 @@ export default function Integracoes() {
                       <div className="flex flex-wrap gap-1">
                         {webhook.events.map((event) => (
                           <Badge key={event} variant="outline" className="text-xs">
-                            {event}
+                            {eventLabels[event] || event}
                           </Badge>
                         ))}
                       </div>
