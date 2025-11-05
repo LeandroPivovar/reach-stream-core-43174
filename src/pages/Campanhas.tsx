@@ -52,7 +52,8 @@ import {
   BarChart2,
   Zap,
   Tag,
-  Gift
+  Gift,
+  DollarSign
 } from 'lucide-react';
 
 export default function Campanhas() {
@@ -116,6 +117,7 @@ export default function Campanhas() {
       opens: 1943,
       clicks: 312,
       responses: 89,
+      revenue: 45890.50,
       createdAt: '2024-03-15',
       scheduledAt: '2024-03-20 09:00'
     },
@@ -129,6 +131,7 @@ export default function Campanhas() {
       opens: 834,
       clicks: 127,
       responses: 23,
+      revenue: 12340.00,
       createdAt: '2024-03-10',
       scheduledAt: null
     },
@@ -142,6 +145,7 @@ export default function Campanhas() {
       opens: 0,
       clicks: 0,
       responses: 0,
+      revenue: 0,
       createdAt: '2024-03-18',
       scheduledAt: '2024-03-25 14:00'
     },
@@ -155,6 +159,7 @@ export default function Campanhas() {
       opens: 2156,
       clicks: 445,
       responses: 67,
+      revenue: 28750.80,
       createdAt: '2024-03-12',
       scheduledAt: null
     }
@@ -289,7 +294,7 @@ export default function Campanhas() {
     >
       <div className="space-y-6">
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -329,6 +334,25 @@ export default function Campanhas() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-sm text-muted-foreground">Faturamento Total</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  }).format(campaigns.reduce((acc, c) => acc + c.revenue, 0))}
+                </p>
+              </div>
+              <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-green-500" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
                 <p className="text-sm text-muted-foreground">Agendadas</p>
                 <p className="text-2xl font-bold text-foreground">2</p>
               </div>
@@ -352,6 +376,7 @@ export default function Campanhas() {
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Enviados</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Aberturas</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Cliques</th>
+                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Faturamento</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Ações</th>
                 </tr>
               </thead>
@@ -407,6 +432,22 @@ export default function Campanhas() {
                       <div className="text-xs text-muted-foreground">
                         {campaign.opens > 0 ? ((campaign.clicks / campaign.opens) * 100).toFixed(1) : 0}%
                       </div>
+                    </td>
+                    <td className="py-4 px-2 text-right">
+                      <div className="font-medium text-green-600">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(campaign.revenue)}
+                      </div>
+                      {campaign.sent > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                          }).format(campaign.revenue / campaign.sent)} / envio
+                        </div>
+                      )}
                     </td>
                     <td className="py-4 px-2 text-right">
                       <Dialog>
