@@ -233,9 +233,8 @@ export default function Campanhas() {
       // Simple: 1. Complexity + 2. Segmentation + 3. Basic Data + 4. Channel + 5. Email/SMS/WhatsApp + 6. Tracking/Send
       return 6;
     }
-    // Advanced: 1. Complexity + 2. Segmentation + 3. Basic Data + 4. Channel + 5. Type + 6. Config (if not dispatch) + 7. Email/SMS/WhatsApp + 8. Workflow + 9. Tracking/Send
-    const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
-    return 9 - (configStep === 0 ? 1 : 0);
+    // Advanced: 1. Complexity + 2. Segmentation + 3. Workflow (tudo configurado lá)
+    return 3;
   };
 
   const handleNextStep = () => {
@@ -582,10 +581,7 @@ export default function Campanhas() {
         <DialogContent className={cn(
           "overflow-y-auto",
           // Expandir apenas no passo do workflow
-          newCampaign.campaignComplexity === 'advanced' && (
-            (newCampaign.campaignType === 'dispatch' && currentStep === 7) ||
-            (newCampaign.campaignType !== 'dispatch' && currentStep === 8)
-          )
+          newCampaign.campaignComplexity === 'advanced' && currentStep === 3
             ? "!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] p-8"
             : "max-w-3xl max-h-[90vh]"
         )}>
@@ -696,8 +692,169 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 3: Dados Básicos */}
-          {currentStep === 3 && (
+          {/* Etapa 3: Dados Básicos (apenas para simple) */}
+          {currentStep === 3 && newCampaign.campaignComplexity === 'simple' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Comece definindo o nome e o público-alvo da sua campanha
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="campaign-name">Nome da Campanha *</Label>
+                <Input
+                  id="campaign-name"
+                  value={newCampaign.name}
+                  onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
+                  placeholder="Ex: Promoção Black Friday 2025"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Público-Alvo * (selecione um ou mais grupos)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {contactGroups.map((group) => (
+                    <Card
+                      key={group.name}
+                      className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                        newCampaign.groups.includes(group.name) ? 'border-primary bg-primary/5' : ''
+                      }`}
+                      onClick={() => toggleGroup(group.name)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 mt-0.5 ${
+                          newCampaign.groups.includes(group.name) 
+                            ? 'bg-primary border-primary' 
+                            : 'border-input'
+                        }`}>
+                          {newCampaign.groups.includes(group.name) && (
+                            <Users className="w-3 h-3 text-primary-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-semibold">{group.name}</span>
+                            <Badge variant="secondary" className="text-xs">
+                              {group.count.toLocaleString()}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{group.description}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Total selecionado: {contactGroups.filter(g => newCampaign.groups.includes(g.name)).reduce((acc, g) => acc + g.count, 0).toLocaleString()} contatos
+                </p>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={!newCampaign.name || newCampaign.groups.length === 0}
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 4: Seleção de Canal (apenas para simple) */}
+          {currentStep === 4 && newCampaign.campaignComplexity === 'simple' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Escolha o canal de comunicação para sua campanha
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Canal de Envio *</Label>
+                <div className="grid grid-cols-1 gap-4">
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.channel === 'email' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, channel: 'email' })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Mail className="w-6 h-6 text-blue-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">E-mail</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Envio de e-mails com suporte a HTML, imagens e links. Ideal para newsletters e comunicações detalhadas.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.channel === 'sms' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, channel: 'sms' })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Smartphone className="w-6 h-6 text-green-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">SMS</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Mensagens de texto diretas e imediatas. Perfeito para alertas urgentes e confirmações.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card 
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
+                      newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setNewCampaign({ ...newCampaign, channel: 'whatsapp' })}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-green-600/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <MessageSquare className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">WhatsApp</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Mensagens via WhatsApp Business com suporte a mídia e botões interativos.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={!newCampaign.channel}
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 5: Conteúdo Email/SMS/WhatsApp (apenas para simple) */}
+          {newCampaign.campaignComplexity === 'simple' && currentStep === 5 && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -857,405 +1014,10 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 5: Seleção de Tipo de Campanha (apenas para advanced) */}
-          {currentStep === 5 && newCampaign.campaignComplexity === 'advanced' && (
-            <div className="space-y-6 py-4">
-              <div className="bg-primary/10 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Escolha o tipo de campanha que melhor se adequa ao seu objetivo
-                </p>
-              </div>
 
-              <div className="grid gap-2">
-                <Label>Tipo de Campanha *</Label>
-                <div className="grid grid-cols-1 gap-4">
-                  <Card 
-                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.campaignType === 'dispatch' ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => setNewCampaign({ ...newCampaign, campaignType: 'dispatch' })}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Zap className="w-6 h-6 text-blue-500" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-1">Apenas Disparo</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Envio simples de mensagens, emails ou SMS para seus contatos. Ideal para comunicações diretas, newsletters e avisos.
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
 
-                  <Card 
-                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.campaignType === 'coupon' ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => setNewCampaign({ ...newCampaign, campaignType: 'coupon' })}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-orange-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Tag className="w-6 h-6 text-orange-500" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-1">Cupons de Desconto</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Crie e distribua cupons promocionais personalizados. Perfeito para campanhas de vendas, promoções sazonais e incentivos.
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card 
-                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.campaignType === 'giftback' ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => setNewCampaign({ ...newCampaign, campaignType: 'giftback' })}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Gift className="w-6 h-6 text-green-500" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-1">Gift Back / Cash Back</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Configure programas de recompensa e cashback para seus clientes. Estimule a fidelização e o retorno de compras.
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              </div>
-
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={handlePrevStep}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-                <Button 
-                  onClick={handleNextStep}
-                  disabled={!newCampaign.campaignType}
-                >
-                  Próximo
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Etapa 6: Configurações Específicas do Tipo de Campanha (apenas para advanced) */}
-          {currentStep === 6 && newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && (
-            <div className="space-y-6 py-4">
-              <div className="bg-primary/10 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Configure os parâmetros específicos desta campanha
-                </p>
-              </div>
-
-              {/* Cupom de Desconto */}
-              {newCampaign.campaignType === 'coupon' && (
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="discount-percentage">Porcentagem do Desconto (%)*</Label>
-                    <Input
-                      id="discount-percentage"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={newCampaign.campaignConfig.coupon.discountPercentage}
-                      onChange={(e) => setNewCampaign({
-                        ...newCampaign,
-                        campaignConfig: {
-                          ...newCampaign.campaignConfig,
-                          coupon: {
-                            ...newCampaign.campaignConfig.coupon,
-                            discountPercentage: e.target.value
-                          }
-                        }
-                      })}
-                      placeholder="Ex: 20"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label>Válido de *</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "justify-start text-left font-normal",
-                              !newCampaign.campaignConfig.coupon.validityStart && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {newCampaign.campaignConfig.coupon.validityStart ? (
-                              format(newCampaign.campaignConfig.coupon.validityStart, "dd/MM/yyyy")
-                            ) : (
-                              <span>Selecione a data</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={newCampaign.campaignConfig.coupon.validityStart}
-                            onSelect={(date) => setNewCampaign({
-                              ...newCampaign,
-                              campaignConfig: {
-                                ...newCampaign.campaignConfig,
-                                coupon: {
-                                  ...newCampaign.campaignConfig.coupon,
-                                  validityStart: date
-                                }
-                              }
-                            })}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label>Válido até *</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "justify-start text-left font-normal",
-                              !newCampaign.campaignConfig.coupon.validityEnd && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {newCampaign.campaignConfig.coupon.validityEnd ? (
-                              format(newCampaign.campaignConfig.coupon.validityEnd, "dd/MM/yyyy")
-                            ) : (
-                              <span>Selecione a data</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={newCampaign.campaignConfig.coupon.validityEnd}
-                            onSelect={(date) => setNewCampaign({
-                              ...newCampaign,
-                              campaignConfig: {
-                                ...newCampaign.campaignConfig,
-                                coupon: {
-                                  ...newCampaign.campaignConfig.coupon,
-                                  validityEnd: date
-                                }
-                              }
-                            })}
-                            disabled={(date) => 
-                              newCampaign.campaignConfig.coupon.validityStart 
-                                ? date < newCampaign.campaignConfig.coupon.validityStart 
-                                : false
-                            }
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Cash Back */}
-              {newCampaign.campaignType === 'giftback' && (
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="return-percentage">Percentual de Retorno (%)*</Label>
-                    <Input
-                      id="return-percentage"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={newCampaign.campaignConfig.cashback.returnPercentage}
-                      onChange={(e) => setNewCampaign({
-                        ...newCampaign,
-                        campaignConfig: {
-                          ...newCampaign.campaignConfig,
-                          cashback: {
-                            ...newCampaign.campaignConfig.cashback,
-                            returnPercentage: e.target.value
-                          }
-                        }
-                      })}
-                      placeholder="Ex: 10"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label>Válido de *</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "justify-start text-left font-normal",
-                              !newCampaign.campaignConfig.cashback.validityStart && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {newCampaign.campaignConfig.cashback.validityStart ? (
-                              format(newCampaign.campaignConfig.cashback.validityStart, "dd/MM/yyyy")
-                            ) : (
-                              <span>Selecione a data</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={newCampaign.campaignConfig.cashback.validityStart}
-                            onSelect={(date) => setNewCampaign({
-                              ...newCampaign,
-                              campaignConfig: {
-                                ...newCampaign.campaignConfig,
-                                cashback: {
-                                  ...newCampaign.campaignConfig.cashback,
-                                  validityStart: date
-                                }
-                              }
-                            })}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label>Válido até *</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "justify-start text-left font-normal",
-                              !newCampaign.campaignConfig.cashback.validityEnd && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {newCampaign.campaignConfig.cashback.validityEnd ? (
-                              format(newCampaign.campaignConfig.cashback.validityEnd, "dd/MM/yyyy")
-                            ) : (
-                              <span>Selecione a data</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={newCampaign.campaignConfig.cashback.validityEnd}
-                            onSelect={(date) => setNewCampaign({
-                              ...newCampaign,
-                              campaignConfig: {
-                                ...newCampaign.campaignConfig,
-                                cashback: {
-                                  ...newCampaign.campaignConfig.cashback,
-                                  validityEnd: date
-                                }
-                              }
-                            })}
-                            disabled={(date) => 
-                              newCampaign.campaignConfig.cashback.validityStart 
-                                ? date < newCampaign.campaignConfig.cashback.validityStart 
-                                : false
-                            }
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="gift-value">Valor do Brinde *</Label>
-                    <Input
-                      id="gift-value"
-                      value={newCampaign.campaignConfig.giftback.giftValue}
-                      onChange={(e) => setNewCampaign({
-                        ...newCampaign,
-                        campaignConfig: {
-                          ...newCampaign.campaignConfig,
-                          giftback: {
-                            ...newCampaign.campaignConfig.giftback,
-                            giftValue: e.target.value
-                          }
-                        }
-                      })}
-                      placeholder="Ex: R$ 50,00 ou Brinde Premium"
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="max-redemptions">Quantidade Máxima de Resgates *</Label>
-                    <Input
-                      id="max-redemptions"
-                      type="number"
-                      min="1"
-                      value={newCampaign.campaignConfig.giftback.maxRedemptions}
-                      onChange={(e) => setNewCampaign({
-                        ...newCampaign,
-                        campaignConfig: {
-                          ...newCampaign.campaignConfig,
-                          giftback: {
-                            ...newCampaign.campaignConfig.giftback,
-                            maxRedemptions: e.target.value
-                          }
-                        }
-                      })}
-                      placeholder="Ex: 100"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={handlePrevStep}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-                <Button 
-                  onClick={handleNextStep}
-                  disabled={
-                    (newCampaign.campaignType === 'coupon' && (
-                      !newCampaign.campaignConfig.coupon.discountPercentage ||
-                      !newCampaign.campaignConfig.coupon.validityStart ||
-                      !newCampaign.campaignConfig.coupon.validityEnd
-                    )) ||
-                    (newCampaign.campaignType === 'giftback' && (
-                      !newCampaign.campaignConfig.cashback.returnPercentage ||
-                      !newCampaign.campaignConfig.cashback.validityStart ||
-                      !newCampaign.campaignConfig.cashback.validityEnd ||
-                      !newCampaign.campaignConfig.giftback.giftValue ||
-                      !newCampaign.campaignConfig.giftback.maxRedemptions
-                    ))
-                  }
-                >
-                  Próximo
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Email/SMS/WhatsApp Content Editor Step */}
-          {(
-            (newCampaign.campaignComplexity === 'simple' && currentStep === 5) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 6) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 7)
-          ) && (
+          {/* Email/SMS/WhatsApp Content Editor Step (apenas para simple) */}
+          {newCampaign.campaignComplexity === 'simple' && currentStep === 5 && (
             <div className="space-y-6 py-4">
               {newCampaign.channel === 'email' && (
                 <>
@@ -1279,33 +1041,8 @@ export default function Campanhas() {
                     />
                   </div>
                   
-                  {newCampaign.campaignComplexity === 'advanced' && (
-                    <div className="grid gap-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <Label>Modo de Edição</Label>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            {newCampaign.email.mode === 'text' ? '✉️ Texto simples' : '💻 HTML avançado'}
-                          </span>
-                          <Switch
-                            checked={newCampaign.email.mode === 'html'}
-                            onCheckedChange={(checked) => setNewCampaign({ 
-                              ...newCampaign, 
-                              email: { 
-                                ...newCampaign.email, 
-                                mode: checked ? 'html' : 'text'
-                              }
-                            })}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   <div className="grid gap-2">
-                    <Label htmlFor="email-content">
-                      {newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' ? 'Conteúdo HTML *' : 'Conteúdo do E-mail *'}
-                    </Label>
+                    <Label htmlFor="email-content">Conteúdo do E-mail *</Label>
                     <Textarea
                       id="email-content"
                       value={newCampaign.email.content}
@@ -1313,13 +1050,8 @@ export default function Campanhas() {
                         ...newCampaign, 
                         email: { ...newCampaign.email, content: e.target.value }
                       })}
-                      placeholder={
-                        newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' 
-                          ? 'Digite o HTML do e-mail...' 
-                          : 'Digite o conteúdo do e-mail...'
-                      }
+                      placeholder="Digite o conteúdo do e-mail..."
                       rows={12}
-                      className={newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' ? 'font-mono text-sm' : ''}
                     />
                   </div>
 
@@ -1371,16 +1103,6 @@ export default function Campanhas() {
                       )}
                     </div>
                   </div>
-                  
-                  {newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' && newCampaign.email.content && (
-                    <div className="grid gap-2">
-                      <Label>Preview</Label>
-                      <div 
-                        className="border rounded-lg p-4 bg-card"
-                        dangerouslySetInnerHTML={{ __html: newCampaign.email.content }}
-                      />
-                    </div>
-                  )}
                 </>
               )}
 
@@ -1523,10 +1245,7 @@ export default function Campanhas() {
           )}
 
           {/* Workflow Step (only for advanced) */}
-          {newCampaign.campaignComplexity === 'advanced' && (
-            (newCampaign.campaignType === 'dispatch' && currentStep === 7) ||
-            (newCampaign.campaignType !== 'dispatch' && currentStep === 8)
-          ) && (
+          {newCampaign.campaignComplexity === 'advanced' && currentStep === 3 && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
@@ -1534,7 +1253,8 @@ export default function Campanhas() {
                   <span className="font-medium">Editor de Workflow Visual</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Arraste e solte os blocos, conecte-os para criar sua automação personalizada
+                  Configure sua automação completa: adicione nós de e-mail, SMS, WhatsApp, condições, delays e muito mais. 
+                  Clique nos nós para configurar o conteúdo das mensagens, agendamento e outras opções.
                 </p>
               </div>
 
@@ -1548,20 +1268,16 @@ export default function Campanhas() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button onClick={handleNextStep}>
-                  Próximo
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                <Button onClick={handleCreateCampaign}>
+                  Criar Campanha
+                  <Send className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </div>
           )}
 
-          {/* Tracking & Send Step */}
-          {(
-            (newCampaign.campaignComplexity === 'simple' && currentStep === 6) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 8) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 9)
-          ) && (
+          {/* Tracking & Send Step (apenas para simple) */}
+          {newCampaign.campaignComplexity === 'simple' && currentStep === 6 && (
             <div className="space-y-6 py-4">
               <div className="p-3 bg-muted rounded-lg mb-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -1578,124 +1294,12 @@ export default function Campanhas() {
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <BarChart2 className="w-5 h-5 text-primary" />
-                  <span className="font-medium">{newCampaign.campaignComplexity === 'simple' ? 'Envio' : 'Rastreamento e Envio'}</span>
+                  <span className="font-medium">Envio</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {newCampaign.campaignComplexity === 'simple' 
-                    ? 'Escolha quando enviar sua campanha' 
-                    : 'Configure o rastreamento e escolha quando enviar sua campanha'
-                  }
+                  Escolha quando enviar sua campanha
                 </p>
               </div>
-
-              {newCampaign.campaignComplexity === 'advanced' && (
-                <div className="grid gap-4">
-                  <Label>Tipo de Rastreamento *</Label>
-                
-                  <Card 
-                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.tracking.type === 'utm' ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => setNewCampaign({ 
-                      ...newCampaign, 
-                      tracking: { ...newCampaign.tracking, type: 'utm' }
-                    })}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Link2 className="w-5 h-5 text-blue-500 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="font-medium">Parâmetros UTM</p>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          Adicione tags UTM aos seus links para rastreamento no Google Analytics. 
-                          UTM (Urchin Tracking Module) são códigos adicionados às URLs que permitem identificar a origem, 
-                          meio e campanha de onde vêm seus visitantes, facilitando a análise de performance.
-                        </p>
-                        
-                        {newCampaign.tracking.type === 'utm' && (
-                          <div className="space-y-3 mt-3">
-                            <div className="grid gap-2">
-                              <Label htmlFor="utm-source">Origem (utm_source)</Label>
-                              <Input
-                                id="utm-source"
-                                value={newCampaign.tracking.utmSource}
-                                onChange={(e) => setNewCampaign({ 
-                                  ...newCampaign, 
-                                  tracking: { ...newCampaign.tracking, utmSource: e.target.value }
-                                })}
-                                placeholder="Ex: newsletter, whatsapp, sms"
-                              />
-                            </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor="utm-medium">Mídia (utm_medium)</Label>
-                              <Input
-                                id="utm-medium"
-                                value={newCampaign.tracking.utmMedium}
-                                onChange={(e) => setNewCampaign({ 
-                                  ...newCampaign, 
-                                  tracking: { ...newCampaign.tracking, utmMedium: e.target.value }
-                                })}
-                                placeholder="Ex: email, social, paid"
-                              />
-                            </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor="utm-campaign">Campanha (utm_campaign)</Label>
-                              <Input
-                                id="utm-campaign"
-                                value={newCampaign.tracking.utmCampaign}
-                                onChange={(e) => setNewCampaign({ 
-                                  ...newCampaign, 
-                                  tracking: { ...newCampaign.tracking, utmCampaign: e.target.value }
-                                })}
-                                placeholder="Ex: black-friday, lancamento"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card 
-                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.tracking.type === 'pixel' ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => setNewCampaign({ 
-                      ...newCampaign, 
-                      tracking: { ...newCampaign.tracking, type: 'pixel' }
-                    })}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Eye className="w-5 h-5 text-purple-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium">Pixel de Conversão</p>
-                        <p className="text-sm text-muted-foreground">
-                          Rastreie conversões usando pixels do Facebook, Google ou outros
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card 
-                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.tracking.type === 'shortlink' ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => setNewCampaign({ 
-                      ...newCampaign, 
-                      tracking: { ...newCampaign.tracking, type: 'shortlink' }
-                    })}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Link2 className="w-5 h-5 text-orange-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium">Link Curto Rastreável</p>
-                        <p className="text-sm text-muted-foreground">
-                          Crie links curtos personalizados com rastreamento de cliques
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              )}
 
               <div className="grid gap-4 mt-6">
                 <Label>Quando enviar a campanha?</Label>
