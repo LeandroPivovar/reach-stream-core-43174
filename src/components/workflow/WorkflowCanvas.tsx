@@ -16,22 +16,26 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, MessageSquare, Phone, Clock, GitBranch, Plus } from 'lucide-react';
+import { Mail, MessageSquare, Phone, Clock, GitBranch, Send, Calendar } from 'lucide-react';
 import { EmailNode } from './nodes/EmailNode';
 import { SmsNode } from './nodes/SmsNode';
 import { WhatsappNode } from './nodes/WhatsappNode';
 import { DelayNode } from './nodes/DelayNode';
 import { ConditionNode } from './nodes/ConditionNode';
+import { SendNowNode } from './nodes/SendNowNode';
+import { ScheduleNode } from './nodes/ScheduleNode';
 
 export interface WorkflowStep {
   id: string;
-  type: 'email' | 'sms' | 'whatsapp' | 'delay' | 'condition';
+  type: 'email' | 'sms' | 'whatsapp' | 'delay' | 'condition' | 'sendnow' | 'schedule';
   action?: 'send';
   delay?: number;
   delayUnit?: 'minutes' | 'hours' | 'days';
   rule?: 'opened_email' | 'clicked_link' | 'purchased' | 'not_opened';
   subject?: string;
   content?: string;
+  scheduleDate?: Date;
+  scheduleTime?: string;
   trueSteps?: WorkflowStep[];
   falseSteps?: WorkflowStep[];
 }
@@ -47,6 +51,8 @@ const nodeTypes: NodeTypes = {
   whatsapp: WhatsappNode,
   delay: DelayNode,
   condition: ConditionNode,
+  sendnow: SendNowNode,
+  schedule: ScheduleNode,
 };
 
 export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
@@ -97,53 +103,79 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
     <div className="flex flex-col gap-4 h-[600px]">
       {/* Toolbar */}
       <Card className="p-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-semibold mr-2">Adicionar Bloco:</span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => addNode('email')}
-            className="gap-2"
-          >
-            <Mail className="w-4 h-4 text-orange-500" />
-            E-mail
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => addNode('sms')}
-            className="gap-2"
-          >
-            <MessageSquare className="w-4 h-4 text-blue-500" />
-            SMS
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => addNode('whatsapp')}
-            className="gap-2"
-          >
-            <Phone className="w-4 h-4 text-green-500" />
-            WhatsApp
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => addNode('delay')}
-            className="gap-2"
-          >
-            <Clock className="w-4 h-4 text-purple-500" />
-            Aguardar
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => addNode('condition')}
-            className="gap-2"
-          >
-            <GitBranch className="w-4 h-4 text-amber-500" />
-            Condição
-          </Button>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold mr-2">Início:</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addNode('sendnow')}
+              className="gap-2"
+            >
+              <Send className="w-4 h-4 text-green-500" />
+              Enviar Agora
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addNode('schedule')}
+              className="gap-2"
+            >
+              <Calendar className="w-4 h-4 text-blue-500" />
+              Agendar
+            </Button>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold mr-2">Mensagens:</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addNode('email')}
+              className="gap-2"
+            >
+              <Mail className="w-4 h-4 text-orange-500" />
+              E-mail
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addNode('sms')}
+              className="gap-2"
+            >
+              <MessageSquare className="w-4 h-4 text-blue-500" />
+              SMS
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addNode('whatsapp')}
+              className="gap-2"
+            >
+              <Phone className="w-4 h-4 text-green-500" />
+              WhatsApp
+            </Button>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold mr-2">Fluxo:</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addNode('delay')}
+              className="gap-2"
+            >
+              <Clock className="w-4 h-4 text-purple-500" />
+              Aguardar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addNode('condition')}
+              className="gap-2"
+            >
+              <GitBranch className="w-4 h-4 text-amber-500" />
+              Condição
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -174,6 +206,10 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                   return '#a855f7';
                 case 'condition':
                   return '#f59e0b';
+                case 'sendnow':
+                  return '#22c55e';
+                case 'schedule':
+                  return '#3b82f6';
                 default:
                   return '#7255F7';
               }
