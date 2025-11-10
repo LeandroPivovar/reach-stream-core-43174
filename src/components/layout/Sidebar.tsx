@@ -14,6 +14,7 @@ import {
   User,
   LogOut,
   DollarSign,
+  Package,
 } from 'lucide-react';
 
 const menuItems = [
@@ -21,6 +22,7 @@ const menuItems = [
   { title: 'Campanhas', href: '/campanhas', icon: MessageSquare },
   { title: 'Vendas', href: '/vendas', icon: DollarSign },
   { title: 'Contatos', href: '/contatos', icon: Users },
+  { title: 'Produtos', href: '/produtos', icon: Package },
   { title: 'Conexões', href: '/conexoes', icon: Plug },
   { title: 'Rastreamento', href: '/rastreamento', icon: Target },
   { title: 'Integrações', href: '/integracoes', icon: Puzzle },

@@ -16,6 +16,7 @@ import Integracoes from "./pages/Integracoes";
 import Assinaturas from "./pages/Assinaturas";
 import Indicacoes from "./pages/Indicacoes";
 import MinhaConta from "./pages/MinhaConta";
+import Produtos from "./pages/Produtos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/campanhas" element={<Campanhas />} />
           <Route path="/vendas" element={<Vendas />} />
           <Route path="/contatos" element={<Contatos />} />
+          <Route path="/produtos" element={<Produtos />} />
           <Route path="/conexoes" element={<Conexoes />} />
           <Route path="/rastreamento" element={<Rastreamento />} />
           <Route path="/integracoes" element={<Integracoes />} />
