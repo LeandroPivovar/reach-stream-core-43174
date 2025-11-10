@@ -164,57 +164,6 @@ export default function Rastreamento() {
       actions={actions}
     >
       <div className="space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pixels Ativos</p>
-                <p className="text-2xl font-bold text-foreground">3</p>
-              </div>
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Target className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total de Eventos</p>
-                <p className="text-2xl font-bold text-foreground">5.560</p>
-              </div>
-              <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                <Eye className="w-5 h-5 text-blue-500" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Conversões</p>
-                <p className="text-2xl font-bold text-foreground">479</p>
-              </div>
-              <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
-                <MousePointer className="w-5 h-5 text-green-500" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Taxa Conversão</p>
-                <p className="text-2xl font-bold text-foreground">8.6%</p>
-              </div>
-              <div className="w-10 h-10 bg-orange-500/10 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-orange-500" />
-              </div>
-            </div>
-          </Card>
-        </div>
-
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
