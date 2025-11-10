@@ -209,61 +209,14 @@ export default function Dashboard() {
       subtitle="Acompanhe o desempenho das suas campanhas"
     >
       <div className="space-y-6">
-        {/* Segmentação Automática de Leads - Apenas com Integrações */}
-        {hasIntegrations ? (
-          <>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-primary" />
-                  Segmentação Automática de Leads
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Sua plataforma está analisando automaticamente o comportamento dos seus clientes
-                </p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {leadSegmentation.map((segment, index) => (
-                <StatsCard key={index} {...segment} />
-              ))}
-            </div>
-
-            {/* Alerta de Clientes Inativos */}
-            <Alert className="border-orange-500/50 bg-orange-500/10">
-              <AlertCircle className="h-4 w-4 text-orange-500" />
-              <AlertTitle className="text-orange-500 font-semibold">Atenção: Clientes Inativos</AlertTitle>
-              <AlertDescription className="text-muted-foreground">
-                Você tem <span className="font-bold text-foreground">1.205</span> clientes inativos (sem compras há mais de 90 dias). 
-                Considere criar uma campanha de reengajamento para recuperar esses clientes.
-              </AlertDescription>
-            </Alert>
-          </>
-        ) : (
-          <Alert className="border-primary/50 bg-primary/10">
-            <Zap className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-primary font-semibold">Ative Integrações para Segmentação Automática</AlertTitle>
-            <AlertDescription className="text-muted-foreground">
-              Conecte suas integrações (e-commerce, CRM) para que a plataforma faça a segmentação automática dos seus leads 
-              (abandono de carrinho, compraram recentemente, sem compras há 60 dias) e maximize seus resultados.
-              <div className="mt-3">
-                <Button size="sm" className="mt-2">
-                  Configurar Integrações
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Stats Cards */}
+        {/* Stats Cards - Primeira Linha */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {stats.map((stat, index) => (
             <StatsCard key={index} {...stat} />
           ))}
         </div>
 
-        {/* Performance Chart - Full Width */}
+        {/* Performance Chart - Segunda Linha */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -350,6 +303,31 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Segmentação Automática de Leads - Terceira Linha */}
+        {hasIntegrations ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {leadSegmentation.map((segment, index) => (
+                <StatsCard key={index} {...segment} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <Alert className="border-primary/50 bg-primary/10">
+            <Zap className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-primary font-semibold">Ative Integrações para Segmentação Automática</AlertTitle>
+            <AlertDescription className="text-muted-foreground">
+              Conecte suas integrações (e-commerce, CRM) para que a plataforma faça a segmentação automática dos seus leads 
+              (abandono de carrinho, compraram recentemente, sem compras há 60 dias) e maximize seus resultados.
+              <div className="mt-3">
+                <Button size="sm" className="mt-2">
+                  Configurar Integrações
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Jornada do Cliente */}
         {hasIntegrations && (
