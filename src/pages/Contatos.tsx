@@ -55,7 +55,14 @@ import {
   CheckSquare,
   Filter,
   Search,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Cake,
+  UserX,
+  Ticket,
+  DollarSign,
+  MousePointer,
+  Undo2,
+  User2
 } from 'lucide-react';
 import {
   Tooltip,
@@ -122,6 +129,17 @@ export default function Contatos() {
     scoreMax: 100,
     ltvMin: 0,
     ltvMax: 10000,
+    purchaseCount: 'all', // por número de compras
+    birthday: false, // aniversariantes
+    inactive: false, // clientes inativos
+    hasCoupon: false, // com cupom ativo
+    highTicket: false, // maior ticket médio
+    purchaseValueMin: 0, // valor de compra mínimo
+    leadCaptured: false, // lead capturado por formulário
+    cartRecovered: false, // carrinho recuperado
+    daysWithoutPurchase: 0, // dias sem comprar
+    gender: 'all', // masculino, feminino, todos
+    state: 'all', // estado
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
@@ -346,6 +364,97 @@ export default function Contatos() {
       return false;
     }
 
+    // Filtro por número de compras
+    if (filters.purchaseCount !== 'all' && contactDetail) {
+      const purchaseCount = contactDetail.purchases.length;
+      switch (filters.purchaseCount) {
+        case '0':
+          if (purchaseCount !== 0) return false;
+          break;
+        case '1':
+          if (purchaseCount !== 1) return false;
+          break;
+        case '2-5':
+          if (purchaseCount < 2 || purchaseCount > 5) return false;
+          break;
+        case '6-10':
+          if (purchaseCount < 6 || purchaseCount > 10) return false;
+          break;
+        case '10+':
+          if (purchaseCount <= 10) return false;
+          break;
+      }
+    }
+
+    // Filtro por aniversariantes (mock - verifica se o mês do nome coincide com mês atual)
+    if (filters.birthday) {
+      // Em produção, você teria uma data de nascimento para verificar
+      // Para demonstração, vamos considerar contatos com 'a' no nome como aniversariantes
+      const currentMonth = new Date().getMonth();
+      // Mock: considera alguns contatos como aniversariantes
+      if (!contact.name.toLowerCase().includes('a')) return false;
+    }
+
+    // Filtro por clientes inativos
+    if (filters.inactive && contact.status !== 'Inativo') {
+      return false;
+    }
+
+    // Filtro por cupom ativo (mock - em produção viria do backend)
+    if (filters.hasCoupon) {
+      // Mock: considera contatos do grupo VIP como tendo cupons
+      if (contact.group !== 'VIP') return false;
+    }
+
+    // Filtro por maior ticket médio (mock)
+    if (filters.highTicket && contactDetail) {
+      const ticketMedio = ltv / (contactDetail.purchases.length || 1);
+      if (ticketMedio < 150) return false; // Considera ticket alto acima de R$ 150
+    }
+
+    // Filtro por valor mínimo de compra
+    if (filters.purchaseValueMin > 0 && contactDetail) {
+      const maxPurchaseValue = Math.max(...contactDetail.purchases.map(p => p.value), 0);
+      if (maxPurchaseValue < filters.purchaseValueMin) return false;
+    }
+
+    // Filtro por lead capturado (mock)
+    if (filters.leadCaptured) {
+      // Mock: considera contatos com tag Newsletter como leads capturados
+      if (!contact.tags.includes('Newsletter')) return false;
+    }
+
+    // Filtro por carrinho recuperado (mock)
+    if (filters.cartRecovered) {
+      // Mock: considera contatos com tag 'Carrinho Abandonado' como recuperados
+      if (!contact.tags.includes('Carrinho Abandonado')) return false;
+    }
+
+    // Filtro por dias sem comprar
+    if (filters.daysWithoutPurchase > 0 && contactDetail) {
+      const lastPurchaseDate = contactDetail.purchases.length > 0 
+        ? new Date(contactDetail.purchases[contactDetail.purchases.length - 1].date)
+        : null;
+      
+      if (lastPurchaseDate) {
+        const daysSinceLastPurchase = Math.floor((new Date().getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysSinceLastPurchase < filters.daysWithoutPurchase) return false;
+      }
+    }
+
+    // Filtro por sexo (mock - em produção viria do backend)
+    if (filters.gender !== 'all') {
+      // Mock: nomes terminados em 'a' são femininos, outros masculinos
+      const isFemale = contact.name.endsWith('a');
+      if (filters.gender === 'female' && !isFemale) return false;
+      if (filters.gender === 'male' && isFemale) return false;
+    }
+
+    // Filtro por estado
+    if (filters.state !== 'all' && contact.state !== filters.state) {
+      return false;
+    }
+
     return true;
   });
 
@@ -354,7 +463,18 @@ export default function Contatos() {
     filters.scoreMin > 0 || 
     filters.scoreMax < 100 || 
     filters.ltvMin > 0 || 
-    filters.ltvMax < 10000;
+    filters.ltvMax < 10000 ||
+    filters.purchaseCount !== 'all' ||
+    filters.birthday ||
+    filters.inactive ||
+    filters.hasCoupon ||
+    filters.highTicket ||
+    filters.purchaseValueMin > 0 ||
+    filters.leadCaptured ||
+    filters.cartRecovered ||
+    filters.daysWithoutPurchase > 0 ||
+    filters.gender !== 'all' ||
+    filters.state !== 'all';
 
   const clearFilters = () => {
     setFilters({
@@ -364,6 +484,17 @@ export default function Contatos() {
       scoreMax: 100,
       ltvMin: 0,
       ltvMax: 10000,
+      purchaseCount: 'all',
+      birthday: false,
+      inactive: false,
+      hasCoupon: false,
+      highTicket: false,
+      purchaseValueMin: 0,
+      leadCaptured: false,
+      cartRecovered: false,
+      daysWithoutPurchase: 0,
+      gender: 'all',
+      state: 'all',
     });
   };
 
@@ -618,7 +749,7 @@ export default function Contatos() {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80" align="end">
+                    <PopoverContent className="w-80 max-h-[600px] overflow-y-auto" align="end">
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <h4 className="font-semibold text-sm flex items-center gap-2">
@@ -788,6 +919,193 @@ export default function Contatos() {
                               >
                                 Baixo (&lt; R$ 200)
                               </Badge>
+                            </div>
+                          </div>
+
+                          {/* Segmentação de Clientes */}
+                          <div className="pt-3 border-t space-y-3">
+                            <h5 className="font-semibold text-sm">Segmentação de Clientes</h5>
+                            
+                            {/* Número de Compras */}
+                            <div className="space-y-2">
+                              <Label htmlFor="filter-purchase-count" className="text-xs font-medium">
+                                <ShoppingCart className="w-3 h-3 inline mr-1" />
+                                Por Número de Compras
+                              </Label>
+                              <Select 
+                                value={filters.purchaseCount} 
+                                onValueChange={(value) => setFilters({ ...filters, purchaseCount: value })}
+                              >
+                                <SelectTrigger id="filter-purchase-count" className="h-9">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-popover">
+                                  <SelectItem value="all">Todos</SelectItem>
+                                  <SelectItem value="0">Nenhuma compra</SelectItem>
+                                  <SelectItem value="1">1 compra</SelectItem>
+                                  <SelectItem value="2-5">2-5 compras</SelectItem>
+                                  <SelectItem value="6-10">6-10 compras</SelectItem>
+                                  <SelectItem value="10+">Mais de 10 compras</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {/* Aniversariantes */}
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="filter-birthday"
+                                checked={filters.birthday}
+                                onCheckedChange={(checked) => setFilters({ ...filters, birthday: checked as boolean })}
+                              />
+                              <Label htmlFor="filter-birthday" className="text-xs font-medium cursor-pointer">
+                                <Cake className="w-3 h-3 inline mr-1" />
+                                Aniversariantes do mês
+                              </Label>
+                            </div>
+
+                            {/* Clientes Inativos */}
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="filter-inactive"
+                                checked={filters.inactive}
+                                onCheckedChange={(checked) => setFilters({ ...filters, inactive: checked as boolean })}
+                              />
+                              <Label htmlFor="filter-inactive" className="text-xs font-medium cursor-pointer">
+                                <UserX className="w-3 h-3 inline mr-1" />
+                                Clientes inativos
+                              </Label>
+                            </div>
+
+                            {/* Com Cupom Ativo */}
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="filter-coupon"
+                                checked={filters.hasCoupon}
+                                onCheckedChange={(checked) => setFilters({ ...filters, hasCoupon: checked as boolean })}
+                              />
+                              <Label htmlFor="filter-coupon" className="text-xs font-medium cursor-pointer">
+                                <Ticket className="w-3 h-3 inline mr-1" />
+                                Com cupom ativo
+                              </Label>
+                            </div>
+
+                            {/* Maior Ticket Médio */}
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="filter-high-ticket"
+                                checked={filters.highTicket}
+                                onCheckedChange={(checked) => setFilters({ ...filters, highTicket: checked as boolean })}
+                              />
+                              <Label htmlFor="filter-high-ticket" className="text-xs font-medium cursor-pointer">
+                                <TrendingUp className="w-3 h-3 inline mr-1" />
+                                Maior ticket médio
+                              </Label>
+                            </div>
+
+                            {/* Valor Mínimo de Compra */}
+                            <div className="space-y-2">
+                              <Label htmlFor="filter-purchase-value" className="text-xs font-medium">
+                                <DollarSign className="w-3 h-3 inline mr-1" />
+                                Valor Mínimo de Compra (R$)
+                              </Label>
+                              <Input
+                                id="filter-purchase-value"
+                                type="number"
+                                min="0"
+                                step="10"
+                                value={filters.purchaseValueMin}
+                                onChange={(e) => setFilters({ ...filters, purchaseValueMin: parseFloat(e.target.value) || 0 })}
+                                className="h-9"
+                                placeholder="0"
+                              />
+                            </div>
+
+                            {/* Lead Capturado */}
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="filter-lead-captured"
+                                checked={filters.leadCaptured}
+                                onCheckedChange={(checked) => setFilters({ ...filters, leadCaptured: checked as boolean })}
+                              />
+                              <Label htmlFor="filter-lead-captured" className="text-xs font-medium cursor-pointer">
+                                <MousePointer className="w-3 h-3 inline mr-1" />
+                                Lead capturado (formulário)
+                              </Label>
+                            </div>
+
+                            {/* Carrinho Recuperado */}
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="filter-cart-recovered"
+                                checked={filters.cartRecovered}
+                                onCheckedChange={(checked) => setFilters({ ...filters, cartRecovered: checked as boolean })}
+                              />
+                              <Label htmlFor="filter-cart-recovered" className="text-xs font-medium cursor-pointer">
+                                <Undo2 className="w-3 h-3 inline mr-1" />
+                                Carrinho recuperado
+                              </Label>
+                            </div>
+
+                            {/* Dias sem Comprar */}
+                            <div className="space-y-2">
+                              <Label htmlFor="filter-days-without-purchase" className="text-xs font-medium">
+                                <Clock className="w-3 h-3 inline mr-1" />
+                                Sem compras há (dias)
+                              </Label>
+                              <Input
+                                id="filter-days-without-purchase"
+                                type="number"
+                                min="0"
+                                value={filters.daysWithoutPurchase}
+                                onChange={(e) => setFilters({ ...filters, daysWithoutPurchase: parseInt(e.target.value) || 0 })}
+                                className="h-9"
+                                placeholder="0"
+                              />
+                            </div>
+
+                            {/* Sexo */}
+                            <div className="space-y-2">
+                              <Label htmlFor="filter-gender" className="text-xs font-medium">
+                                <User2 className="w-3 h-3 inline mr-1" />
+                                Sexo
+                              </Label>
+                              <Select 
+                                value={filters.gender} 
+                                onValueChange={(value) => setFilters({ ...filters, gender: value })}
+                              >
+                                <SelectTrigger id="filter-gender" className="h-9">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-popover">
+                                  <SelectItem value="all">Todos</SelectItem>
+                                  <SelectItem value="male">Masculino</SelectItem>
+                                  <SelectItem value="female">Feminino</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {/* Estado */}
+                            <div className="space-y-2">
+                              <Label htmlFor="filter-state" className="text-xs font-medium">
+                                <MapPin className="w-3 h-3 inline mr-1" />
+                                Estado
+                              </Label>
+                              <Select 
+                                value={filters.state} 
+                                onValueChange={(value) => setFilters({ ...filters, state: value })}
+                              >
+                                <SelectTrigger id="filter-state" className="h-9">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-popover">
+                                  <SelectItem value="all">Todos os estados</SelectItem>
+                                  {states.map((state) => (
+                                    <SelectItem key={state} value={state}>
+                                      {state}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </div>
                           </div>
                         </div>
