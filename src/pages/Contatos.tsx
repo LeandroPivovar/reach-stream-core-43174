@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
 import { 
   MoreHorizontal,
   Eye,
@@ -958,6 +959,10 @@ export default function Contatos() {
             <TabsTrigger value="contacts">Contatos</TabsTrigger>
             <TabsTrigger value="groups">Grupos</TabsTrigger>
             <TabsTrigger value="tags">Etiquetas</TabsTrigger>
+            <TabsTrigger value="segmentations">
+              <Filter className="w-4 h-4 mr-2" />
+              Segmentações
+            </TabsTrigger>
             <TabsTrigger value="webhook">Webhook</TabsTrigger>
             <TabsTrigger value="score-config">
               <Settings className="w-4 h-4 mr-2" />
@@ -1221,6 +1226,15 @@ export default function Contatos() {
                   </Badge>
                 ))}
               </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="segmentations">
+            <Card className="p-6">
+              <SegmentationPicker
+                selectedSegments={[]}
+                onSegmentsChange={(segments) => console.log('Segmentações:', segments)}
+              />
             </Card>
           </TabsContent>
 

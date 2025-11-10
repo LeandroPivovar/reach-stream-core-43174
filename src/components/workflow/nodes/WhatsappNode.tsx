@@ -9,20 +9,38 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Phone, Settings, Trash2 } from 'lucide-react';
+import { Phone, Settings, Trash2, Upload, X } from 'lucide-react';
 
 interface WhatsappNodeData {
   content?: string;
-  onUpdate: (data: { content: string }) => void;
+  media?: { url: string; type: 'image' | 'video'; name: string }[];
+  onUpdate: (data: { content: string; media?: { url: string; type: 'image' | 'video'; name: string }[] }) => void;
   onDelete: () => void;
 }
 
 export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState((data as any)?.content || '');
+  const [media, setMedia] = useState<{ url: string; type: 'image' | 'video'; name: string }[]>((data as any)?.media || []);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newMedia = Array.from(files).map(file => ({
+        url: URL.createObjectURL(file),
+        type: (file.type.startsWith('video/') ? 'video' : 'image') as 'image' | 'video',
+        name: file.name
+      }));
+      setMedia([...media, ...newMedia]);
+    }
+  };
+
+  const removeMedia = (index: number) => {
+    setMedia(media.filter((_, i) => i !== index));
+  };
 
   const handleSave = () => {
-    (data as any).onUpdate({ content });
+    (data as any).onUpdate({ content, media });
     setIsEditing(false);
   };
 
@@ -82,6 +100,54 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                 rows={6}
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
+            </div>
+            <div className="grid gap-2">
+              <Label>Anexar Imagem ou Vídeo</Label>
+              <div className="flex flex-col gap-3">
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="whatsapp-media-upload"
+                  />
+                  <label htmlFor="whatsapp-media-upload">
+                    <Button type="button" variant="outline" className="w-full" asChild>
+                      <div className="cursor-pointer">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload de Mídia
+                      </div>
+                    </Button>
+                  </label>
+                </div>
+                {media.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {media.map((item, index) => (
+                      <div key={index} className="relative group border rounded-md p-2">
+                        <div className="flex items-center gap-2">
+                          {item.type === 'image' ? (
+                            <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                          ) : (
+                            <video src={item.url} className="w-12 h-12 object-cover rounded" />
+                          )}
+                          <span className="text-xs truncate flex-1">{item.name}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => removeMedia(index)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsEditing(false)}>

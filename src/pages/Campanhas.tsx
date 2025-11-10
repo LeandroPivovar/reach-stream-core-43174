@@ -31,6 +31,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { WorkflowCanvas, WorkflowStep } from '@/components/workflow/WorkflowCanvas';
+import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
 import { 
   MessageSquare, 
   Mail, 
@@ -64,6 +65,7 @@ export default function Campanhas() {
     campaignComplexity: '' as 'simple' | 'advanced' | '',
     name: '',
     groups: [] as string[],
+    segmentations: [] as string[],
     channel: '' as 'email' | 'sms' | 'whatsapp' | '',
     campaignType: '' as 'dispatch' | 'coupon' | 'giftback' | '',
     campaignConfig: {
@@ -196,12 +198,12 @@ export default function Campanhas() {
 
   const getTotalSteps = () => {
     if (newCampaign.campaignComplexity === 'simple') {
-      // Simple: 1. Complexity + 2. Basic Data + 3. Channel + 4. Email/SMS/WhatsApp + 5. Tracking/Send
-      return 5;
+      // Simple: 1. Complexity + 2. Segmentation + 3. Basic Data + 4. Channel + 5. Email/SMS/WhatsApp + 6. Tracking/Send
+      return 6;
     }
-    // Advanced: 1. Complexity + 2. Basic Data + 3. Channel + 4. Type + 5. Config (if not dispatch) + 6. Email/SMS/WhatsApp + 7. Workflow + 8. Tracking/Send
+    // Advanced: 1. Complexity + 2. Segmentation + 3. Basic Data + 4. Channel + 5. Type + 6. Config (if not dispatch) + 7. Email/SMS/WhatsApp + 8. Workflow + 9. Tracking/Send
     const configStep = newCampaign.campaignType !== 'dispatch' ? 1 : 0;
-    return 8 - (configStep === 0 ? 1 : 0);
+    return 9 - (configStep === 0 ? 1 : 0);
   };
 
   const handleNextStep = () => {
@@ -234,6 +236,7 @@ export default function Campanhas() {
       campaignComplexity: '',
       name: '',
       groups: [],
+      segmentations: [],
       channel: '',
       campaignType: '',
       campaignConfig: {
@@ -505,6 +508,7 @@ export default function Campanhas() {
             campaignComplexity: '',
             name: '',
             groups: [],
+            segmentations: [],
             channel: '',
             campaignType: '',
             campaignConfig: {
@@ -545,8 +549,8 @@ export default function Campanhas() {
           "overflow-y-auto",
           // Expandir apenas no passo do workflow
           newCampaign.campaignComplexity === 'advanced' && (
-            (newCampaign.campaignType === 'dispatch' && currentStep === 6) ||
-            (newCampaign.campaignType !== 'dispatch' && currentStep === 7)
+            (newCampaign.campaignType === 'dispatch' && currentStep === 7) ||
+            (newCampaign.campaignType !== 'dispatch' && currentStep === 8)
           )
             ? "!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] p-8"
             : "max-w-3xl max-h-[90vh]"
@@ -634,8 +638,32 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 2: Dados Básicos */}
+          {/* Etapa 2: Segmentação de Clientes */}
           {currentStep === 2 && (
+            <div className="space-y-6 py-4">
+              <SegmentationPicker
+                selectedSegments={newCampaign.segmentations}
+                onSegmentsChange={(segments) => setNewCampaign({ ...newCampaign, segmentations: segments })}
+              />
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={newCampaign.segmentations.length === 0}
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 3: Dados Básicos */}
+          {currentStep === 3 && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -708,8 +736,8 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 3: Seleção de Canal */}
-          {currentStep === 3 && (
+          {/* Etapa 4: Seleção de Canal */}
+          {currentStep === 4 && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -795,8 +823,8 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 4: Seleção de Tipo de Campanha (apenas para advanced) */}
-          {currentStep === 4 && newCampaign.campaignComplexity === 'advanced' && (
+          {/* Etapa 5: Seleção de Tipo de Campanha (apenas para advanced) */}
+          {currentStep === 5 && newCampaign.campaignComplexity === 'advanced' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -882,8 +910,8 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 5: Configurações Específicas do Tipo de Campanha (apenas para advanced) */}
-          {currentStep === 5 && newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && (
+          {/* Etapa 6: Configurações Específicas do Tipo de Campanha (apenas para advanced) */}
+          {currentStep === 6 && newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -1190,9 +1218,9 @@ export default function Campanhas() {
 
           {/* Email/SMS/WhatsApp Content Editor Step */}
           {(
-            (newCampaign.campaignComplexity === 'simple' && currentStep === 4) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 5) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 6)
+            (newCampaign.campaignComplexity === 'simple' && currentStep === 5) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 6) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 7)
           ) && (
             <div className="space-y-6 py-4">
               {newCampaign.channel === 'email' && (
@@ -1364,8 +1392,8 @@ export default function Campanhas() {
 
           {/* Workflow Step (only for advanced) */}
           {newCampaign.campaignComplexity === 'advanced' && (
-            (newCampaign.campaignType === 'dispatch' && currentStep === 6) ||
-            (newCampaign.campaignType !== 'dispatch' && currentStep === 7)
+            (newCampaign.campaignType === 'dispatch' && currentStep === 7) ||
+            (newCampaign.campaignType !== 'dispatch' && currentStep === 8)
           ) && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
@@ -1398,9 +1426,9 @@ export default function Campanhas() {
 
           {/* Tracking & Send Step */}
           {(
-            (newCampaign.campaignComplexity === 'simple' && currentStep === 5) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 7) ||
-            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 8)
+            (newCampaign.campaignComplexity === 'simple' && currentStep === 6) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType === 'dispatch' && currentStep === 8) ||
+            (newCampaign.campaignComplexity === 'advanced' && newCampaign.campaignType !== 'dispatch' && currentStep === 9)
           ) && (
             <div className="space-y-6 py-4">
               <div className="p-3 bg-muted rounded-lg mb-4">
