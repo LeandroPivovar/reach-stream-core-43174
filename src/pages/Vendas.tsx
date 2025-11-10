@@ -11,7 +11,9 @@ import {
   ChevronRight,
   Lightbulb,
   Package,
-  X
+  X,
+  CreditCard,
+  Clock
 } from 'lucide-react';
 import {
   Select,
@@ -345,6 +347,120 @@ export default function Vendas() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Produtos Mais Vendidos e Meios de Pagamento */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Produtos Mais Vendidos */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Produtos Mais Vendidos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[
+                  { nome: 'Notebook Dell', vendas: 145, faturamento: 217500 },
+                  { nome: 'Mouse Logitech', vendas: 289, faturamento: 14450 },
+                  { nome: 'Teclado Mecânico', vendas: 234, faturamento: 70200 },
+                  { nome: 'Monitor Samsung', vendas: 89, faturamento: 53400 },
+                  { nome: 'Webcam HD', vendas: 156, faturamento: 46800 }
+                ].map((produto, index) => {
+                  const ticketMedio = produto.faturamento / produto.vendas;
+                  return (
+                    <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{produto.nome}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {produto.vendas} unidades vendidas
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-success">
+                          R$ {produto.faturamento.toLocaleString('pt-BR')}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /un
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Meios de Pagamento Utilizados */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Meios de Pagamento Utilizados</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-5">
+                {[
+                  { 
+                    metodo: 'PIX', 
+                    percentual: 48.9, 
+                    transacoes: 234, 
+                    tempoMedio: '2 min',
+                    color: 'bg-teal-500'
+                  },
+                  { 
+                    metodo: 'Cartão de Crédito', 
+                    percentual: 32.6, 
+                    transacoes: 156, 
+                    tempoMedio: '5 min',
+                    color: 'bg-blue-500'
+                  },
+                  { 
+                    metodo: 'Boleto', 
+                    percentual: 14.0, 
+                    transacoes: 67, 
+                    tempoMedio: '8 min',
+                    color: 'bg-orange-500'
+                  },
+                  { 
+                    metodo: 'Cartão de Débito', 
+                    percentual: 4.5, 
+                    transacoes: 22, 
+                    tempoMedio: '3 min',
+                    color: 'bg-purple-500'
+                  }
+                ].map((pagamento, index) => (
+                  <div key={index} className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <CreditCard className="w-5 h-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium">{pagamento.metodo}</p>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span>{pagamento.transacoes} transações</span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              Tempo médio: {pagamento.tempoMedio}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">{pagamento.percentual}%</p>
+                      </div>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full ${pagamento.color}`}
+                        style={{ width: `${pagamento.percentual}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Dialog de Detalhes da Campanha */}
