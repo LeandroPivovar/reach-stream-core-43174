@@ -54,7 +54,10 @@ import {
   Zap,
   Tag,
   Gift,
-  DollarSign
+  DollarSign,
+  Upload,
+  X,
+  Image
 } from 'lucide-react';
 
 export default function Campanhas() {
@@ -87,7 +90,8 @@ export default function Campanhas() {
     email: { 
       subject: '', 
       content: '', 
-      mode: 'text' as 'text' | 'html' 
+      mode: 'text' as 'text' | 'html',
+      media: [] as { url: string; type: 'image' | 'video'; name: string }[]
     },
     workflow: [] as WorkflowStep[],
     tracking: {
@@ -100,6 +104,34 @@ export default function Campanhas() {
     scheduleDate: '',
     scheduleTime: ''
   });
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newMedia = Array.from(files).map(file => ({
+        url: URL.createObjectURL(file),
+        type: (file.type.startsWith('video/') ? 'video' : 'image') as 'image' | 'video',
+        name: file.name
+      }));
+      setNewCampaign({
+        ...newCampaign,
+        email: {
+          ...newCampaign.email,
+          media: [...newCampaign.email.media, ...newMedia]
+        }
+      });
+    }
+  };
+
+  const removeMedia = (index: number) => {
+    setNewCampaign({
+      ...newCampaign,
+      email: {
+        ...newCampaign.email,
+        media: newCampaign.email.media.filter((_, i) => i !== index)
+      }
+    });
+  };
 
   const contactGroups = [
     { name: 'VIP', count: 342, description: 'Clientes de alto valor' },
@@ -258,7 +290,8 @@ export default function Campanhas() {
       email: { 
         subject: '', 
         content: '', 
-        mode: 'text' 
+        mode: 'text',
+        media: []
       },
       workflow: [],
       tracking: {
@@ -530,7 +563,8 @@ export default function Campanhas() {
             email: { 
               subject: '', 
               content: '', 
-              mode: 'text' 
+              mode: 'text',
+              media: []
             },
             workflow: [],
             tracking: {
@@ -1288,6 +1322,55 @@ export default function Campanhas() {
                       className={newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' ? 'font-mono text-sm' : ''}
                     />
                   </div>
+
+                  <div className="grid gap-2">
+                    <Label>Anexar Imagem ou Vídeo</Label>
+                    <div className="flex flex-col gap-3">
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          multiple
+                          onChange={handleFileUpload}
+                          className="hidden"
+                          id="email-media-upload"
+                        />
+                        <label htmlFor="email-media-upload">
+                          <Button type="button" variant="outline" className="w-full" asChild>
+                            <div className="cursor-pointer">
+                              <Upload className="w-4 h-4 mr-2" />
+                              Upload de Mídia
+                            </div>
+                          </Button>
+                        </label>
+                      </div>
+                      {newCampaign.email.media.length > 0 && (
+                        <div className="grid grid-cols-2 gap-2">
+                          {newCampaign.email.media.map((item, index) => (
+                            <div key={index} className="relative group border rounded-md p-2">
+                              <div className="flex items-center gap-2">
+                                {item.type === 'image' ? (
+                                  <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                                ) : (
+                                  <video src={item.url} className="w-12 h-12 object-cover rounded" />
+                                )}
+                                <span className="text-xs truncate flex-1">{item.name}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => removeMedia(index)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   
                   {newCampaign.campaignComplexity === 'advanced' && newCampaign.email.mode === 'html' && newCampaign.email.content && (
                     <div className="grid gap-2">
@@ -1366,6 +1449,55 @@ export default function Campanhas() {
                     <p className="text-xs text-muted-foreground">
                       Use *negrito*, _itálico_, ~tachado~ para formatar o texto
                     </p>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Anexar Imagem ou Vídeo</Label>
+                    <div className="flex flex-col gap-3">
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          multiple
+                          onChange={handleFileUpload}
+                          className="hidden"
+                          id="whatsapp-media-upload"
+                        />
+                        <label htmlFor="whatsapp-media-upload">
+                          <Button type="button" variant="outline" className="w-full" asChild>
+                            <div className="cursor-pointer">
+                              <Upload className="w-4 h-4 mr-2" />
+                              Upload de Mídia
+                            </div>
+                          </Button>
+                        </label>
+                      </div>
+                      {newCampaign.email.media.length > 0 && (
+                        <div className="grid grid-cols-2 gap-2">
+                          {newCampaign.email.media.map((item, index) => (
+                            <div key={index} className="relative group border rounded-md p-2">
+                              <div className="flex items-center gap-2">
+                                {item.type === 'image' ? (
+                                  <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                                ) : (
+                                  <video src={item.url} className="w-12 h-12 object-cover rounded" />
+                                )}
+                                <span className="text-xs truncate flex-1">{item.name}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => removeMedia(index)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </>
               )}
