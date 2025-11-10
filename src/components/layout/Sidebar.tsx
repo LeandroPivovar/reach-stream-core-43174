@@ -20,11 +20,11 @@ import {
 const menuItems = [
   { title: 'Visão Geral', href: '/', icon: BarChart3 },
   { title: 'Campanhas', href: '/campanhas', icon: MessageSquare },
+  { title: 'Rastreamento', href: '/rastreamento', icon: Target },
   { title: 'Vendas', href: '/vendas', icon: DollarSign },
   { title: 'Contatos', href: '/contatos', icon: Users },
   { title: 'Produtos', href: '/produtos', icon: Package },
   { title: 'Conexões', href: '/conexoes', icon: Plug },
-  { title: 'Rastreamento', href: '/rastreamento', icon: Target },
   { title: 'Integrações', href: '/integracoes', icon: Puzzle },
   { title: 'Assinaturas', href: '/assinaturas', icon: CreditCard },
   { title: 'Indicações', href: '/indicacoes', icon: Share2 },
