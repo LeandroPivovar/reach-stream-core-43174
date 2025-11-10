@@ -16,7 +16,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, MessageSquare, Phone, Clock, GitBranch, Send, Calendar } from 'lucide-react';
+import { Mail, MessageSquare, Phone, Clock, GitBranch, Send, Calendar, Tag, Gift } from 'lucide-react';
 import { EmailNode } from './nodes/EmailNode';
 import { SmsNode } from './nodes/SmsNode';
 import { WhatsappNode } from './nodes/WhatsappNode';
@@ -24,10 +24,12 @@ import { DelayNode } from './nodes/DelayNode';
 import { ConditionNode } from './nodes/ConditionNode';
 import { SendNowNode } from './nodes/SendNowNode';
 import { ScheduleNode } from './nodes/ScheduleNode';
+import { CouponNode } from './nodes/CouponNode';
+import { GiftbackNode } from './nodes/GiftbackNode';
 
 export interface WorkflowStep {
   id: string;
-  type: 'email' | 'sms' | 'whatsapp' | 'delay' | 'condition' | 'sendnow' | 'schedule';
+  type: 'email' | 'sms' | 'whatsapp' | 'delay' | 'condition' | 'sendnow' | 'schedule' | 'coupon' | 'giftback';
   action?: 'send';
   delay?: number;
   delayUnit?: 'minutes' | 'hours' | 'days';
@@ -36,6 +38,11 @@ export interface WorkflowStep {
   content?: string;
   scheduleDate?: Date;
   scheduleTime?: string;
+  discountType?: 'fixed' | 'percentage';
+  discountValue?: string;
+  giftbackValue?: string;
+  minPurchaseValue?: string;
+  expirationDays?: string;
   trueSteps?: WorkflowStep[];
   falseSteps?: WorkflowStep[];
 }
@@ -53,6 +60,8 @@ const nodeTypes: NodeTypes = {
   condition: ConditionNode,
   sendnow: SendNowNode,
   schedule: ScheduleNode,
+  coupon: CouponNode,
+  giftback: GiftbackNode,
 };
 
 export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
@@ -156,6 +165,27 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
             </Button>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-semibold mr-2">Ações:</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addNode('coupon')}
+              className="gap-2"
+            >
+              <Tag className="w-4 h-4 text-orange-500" />
+              Cupom
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addNode('giftback')}
+              className="gap-2"
+            >
+              <Gift className="w-4 h-4 text-green-500" />
+              Giftback
+            </Button>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="text-sm font-semibold mr-2">Fluxo:</span>
             <Button
               variant="outline"
@@ -210,6 +240,10 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                   return '#22c55e';
                 case 'schedule':
                   return '#3b82f6';
+                case 'coupon':
+                  return '#f97316';
+                case 'giftback':
+                  return '#22c55e';
                 default:
                   return '#7255F7';
               }
