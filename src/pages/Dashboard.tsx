@@ -336,6 +336,18 @@ export default function Dashboard() {
           </Card>
         )}
 
+        {/* Alerta de Clientes Inativos */}
+        {hasIntegrations && (
+          <Alert className="border-orange-500/50 bg-orange-500/10">
+            <AlertCircle className="h-4 w-4 text-orange-500" />
+            <AlertTitle className="text-orange-500 font-semibold">Atenção: Clientes Inativos</AlertTitle>
+            <AlertDescription className="text-muted-foreground">
+              Você tem <span className="font-bold text-foreground">1.205</span> clientes inativos (sem compras há mais de 90 dias). 
+              Considere criar uma campanha de reengajamento para recuperar esses clientes.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Mapa de Calor dos Clientes na Jornada */}
         {hasIntegrations && (
           <Card className="p-6">
