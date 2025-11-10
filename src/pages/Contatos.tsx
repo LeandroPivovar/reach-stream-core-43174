@@ -151,7 +151,8 @@ export default function Contatos() {
     status: 'Ativo',
     tags: [] as string[],
     state: '',
-    city: ''
+    city: '',
+    segmentations: [] as string[]
   });
 
   // Mock data for contact details with LTV information
@@ -222,6 +223,7 @@ export default function Contatos() {
       tags: ['Black Friday', 'Newsletter'],
       state: 'SP',
       city: 'São Paulo',
+      segmentations: ['high_ticket', 'by_purchase_count'],
       lastInteraction: '2024-03-20'
     },
     {
@@ -234,6 +236,7 @@ export default function Contatos() {
       tags: ['Promoção'],
       state: 'RJ',
       city: 'Rio de Janeiro',
+      segmentations: ['inactive_customers'],
       lastInteraction: '2024-03-15'
     },
     {
@@ -246,6 +249,7 @@ export default function Contatos() {
       tags: ['Newsletter', 'Fidelidade'],
       state: 'MG',
       city: 'Belo Horizonte',
+      segmentations: ['active_coupon', 'lead_captured'],
       lastInteraction: '2024-03-22'
     }
   ]);
@@ -589,6 +593,7 @@ export default function Contatos() {
       tags: newContact.tags,
       state: newContact.state,
       city: newContact.city,
+      segmentations: newContact.segmentations,
       lastInteraction: new Date().toISOString().split('T')[0]
     };
     setContacts([...contacts, contactToAdd]);
@@ -601,7 +606,8 @@ export default function Contatos() {
       status: 'Ativo',
       tags: [],
       state: '',
-      city: ''
+      city: '',
+      segmentations: []
     });
   };
 
@@ -1927,6 +1933,14 @@ export default function Contatos() {
                   placeholder="Digite a cidade"
                 />
               </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Segmentações</Label>
+              <SegmentationPicker
+                selectedSegments={newContact.segmentations}
+                onSegmentsChange={(segments) => setNewContact({ ...newContact, segmentations: segments })}
+              />
             </div>
           </div>
           <div className="flex justify-end gap-3">
