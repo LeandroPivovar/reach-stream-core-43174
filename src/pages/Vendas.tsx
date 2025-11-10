@@ -7,7 +7,11 @@ import {
   DollarSign, 
   ShoppingCart, 
   TrendingUp,
-  Calendar
+  Calendar,
+  ChevronRight,
+  Lightbulb,
+  Package,
+  X
 } from 'lucide-react';
 import {
   Select,
@@ -16,9 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Vendas() {
   const [period, setPeriod] = useState('15');
+  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
 
   // Dados mock - em produção viriam de uma API
   const salesData = {
@@ -111,6 +123,86 @@ export default function Vendas() {
     }
   };
 
+  // Dados detalhados das campanhas (mock)
+  const campaignDetails: Record<string, any> = {
+    'Promoção Black Friday': {
+      produtos: [
+        { nome: 'Notebook Dell', quantidade: 45, faturamento: 67500, ticketMedio: 1500 },
+        { nome: 'Mouse Logitech', quantidade: 89, faturamento: 4450, ticketMedio: 50 },
+        { nome: 'Teclado Mecânico', quantidade: 67, faturamento: 20100, ticketMedio: 300 },
+        { nome: 'Monitor Samsung', quantidade: 17, faturamento: 10200, ticketMedio: 600 }
+      ],
+      evolucao: [
+        { dia: 'Dia 1', vendas: 8, faturamento: 2800 },
+        { dia: 'Dia 2', vendas: 15, faturamento: 5100 },
+        { dia: 'Dia 3', vendas: 22, faturamento: 7800 },
+        { dia: 'Dia 4', vendas: 31, faturamento: 10900 },
+        { dia: 'Dia 5', vendas: 36, faturamento: 12600 }
+      ],
+      insights: [
+        'Taxa de conversão 23% acima da média - considere estender a campanha',
+        'Horário de pico: 19h-21h - programe envios neste período',
+        'Produtos com desconto acima de 30% tiveram melhor performance'
+      ]
+    },
+    'E-mail Marketing Semanal': {
+      produtos: [
+        { nome: 'Curso Online', quantidade: 124, faturamento: 18600, ticketMedio: 150 },
+        { nome: 'E-book Premium', quantidade: 89, faturamento: 4450, ticketMedio: 50 },
+        { nome: 'Consultoria', quantidade: 12, faturamento: 12000, ticketMedio: 1000 }
+      ],
+      evolucao: [
+        { dia: 'Sem 1', vendas: 12, faturamento: 1800 },
+        { dia: 'Sem 2', vendas: 18, faturamento: 2700 },
+        { dia: 'Sem 3', vendas: 25, faturamento: 3800 },
+        { dia: 'Sem 4', vendas: 26, faturamento: 3900 }
+      ],
+      insights: [
+        'Taxa de abertura de 32% - teste linhas de assunto mais criativas',
+        'Segmente por interesse para aumentar conversão',
+        'CTR maior em terças e quintas-feiras'
+      ]
+    },
+    'Recuperação de Carrinho': {
+      produtos: [
+        { nome: 'Tênis Esportivo', quantidade: 78, faturamento: 23400, ticketMedio: 300 },
+        { nome: 'Camisa Premium', quantidade: 134, faturamento: 13400, ticketMedio: 100 },
+        { nome: 'Jaqueta', quantidade: 45, faturamento: 13500, ticketMedio: 300 }
+      ],
+      evolucao: [
+        { dia: 'Sem 1', vendas: 15, faturamento: 4500 },
+        { dia: 'Sem 2', vendas: 18, faturamento: 5400 },
+        { dia: 'Sem 3', vendas: 21, faturamento: 6300 },
+        { dia: 'Sem 4', vendas: 24, faturamento: 7200 }
+      ],
+      insights: [
+        'Envie lembrete após 1h de abandono - maior taxa de retorno',
+        'Ofereça cupom de 10% no segundo e-mail',
+        'Taxa de recuperação de 18% - acima da média do setor'
+      ]
+    },
+    'SMS Flash Sale': {
+      produtos: [
+        { nome: 'Smartphone', quantidade: 34, faturamento: 51000, ticketMedio: 1500 },
+        { nome: 'Fone Bluetooth', quantidade: 89, faturamento: 8900, ticketMedio: 100 },
+        { nome: 'Carregador Rápido', quantidade: 67, faturamento: 3350, ticketMedio: 50 }
+      ],
+      evolucao: [
+        { dia: '0-2h', vendas: 8, faturamento: 2400 },
+        { dia: '2-4h', vendas: 12, faturamento: 3600 },
+        { dia: '4-6h', vendas: 9, faturamento: 2700 },
+        { dia: '6-8h', vendas: 8, faturamento: 2400 }
+      ],
+      insights: [
+        'Conversão imediata alta - ideal para ofertas urgentes',
+        'Limite o número de caracteres para melhor entrega',
+        'Taxa de resposta de 15% nos primeiros 30 minutos'
+      ]
+    }
+  };
+
+  const currentCampaignDetails = selectedCampaign ? campaignDetails[selectedCampaign] : null;
+
   return (
     <Layout 
       title="Vendas" 
@@ -165,9 +257,16 @@ export default function Vendas() {
                   {currentData.campanhas.map((campanha, index) => {
                     const ticketMedio = campanha.faturamento / campanha.vendas;
                     return (
-                      <tr key={index} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <tr 
+                        key={index} 
+                        className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                        onClick={() => setSelectedCampaign(campanha.nome)}
+                      >
                         <td className="py-4 px-2">
-                          <div className="font-medium">{campanha.nome}</div>
+                          <div className="flex items-center justify-between">
+                            <div className="font-medium">{campanha.nome}</div>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          </div>
                         </td>
                         <td className="py-4 px-2">
                           <div className="flex items-center gap-2">
@@ -247,6 +346,109 @@ export default function Vendas() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog de Detalhes da Campanha */}
+      <Dialog open={!!selectedCampaign} onOpenChange={(open) => !open && setSelectedCampaign(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{selectedCampaign}</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {currentCampaignDetails && (
+            <div className="space-y-6 mt-4">
+              {/* Produtos Vendidos */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Package className="w-5 h-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Produtos Vendidos</h3>
+                </div>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left py-3 px-4 font-medium text-sm">Produto</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm">Quantidade</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm">Faturamento</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm">Ticket Médio</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentCampaignDetails.produtos.map((produto: any, idx: number) => (
+                        <tr key={idx} className="border-t border-border">
+                          <td className="py-3 px-4 font-medium">{produto.nome}</td>
+                          <td className="py-3 px-4 text-right">{produto.quantidade}</td>
+                          <td className="py-3 px-4 text-right text-success font-semibold">
+                            R$ {produto.faturamento.toLocaleString('pt-BR')}
+                          </td>
+                          <td className="py-3 px-4 text-right text-muted-foreground">
+                            R$ {produto.ticketMedio.toLocaleString('pt-BR')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Gráfico de Evolução */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Evolução de Vendas</h3>
+                <div className="border rounded-lg p-4">
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={currentCampaignDetails.evolucao}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="dia" 
+                        className="text-xs"
+                        stroke="hsl(var(--muted-foreground))"
+                      />
+                      <YAxis 
+                        className="text-xs"
+                        stroke="hsl(var(--muted-foreground))"
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                        formatter={(value: any) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Faturamento']}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="faturamento" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Insights e Dicas */}
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Lightbulb className="w-5 h-5 text-yellow-500" />
+                  <h3 className="text-lg font-semibold">Insights e Recomendações</h3>
+                </div>
+                <div className="space-y-3">
+                  {currentCampaignDetails.insights.map((insight: string, idx: number) => (
+                    <div key={idx} className="flex gap-3 p-4 rounded-lg bg-muted/50 border border-border">
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
+                        {idx + 1}
+                      </div>
+                      <p className="text-sm leading-relaxed">{insight}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
