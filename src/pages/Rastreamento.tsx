@@ -248,37 +248,6 @@ export default function Rastreamento() {
                   </table>
                 </div>
               </Card>
-
-              {/* New Pixel Setup */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Configurar Novo Pixel</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button 
-                    variant="outline" 
-                    className="h-20 flex-col space-y-2"
-                    onClick={() => setIsNewPixelOpen(true)}
-                  >
-                    <div className="w-8 h-8 bg-blue-500 rounded"></div>
-                    <span>Facebook Pixel</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-20 flex-col space-y-2"
-                    onClick={() => setIsNewPixelOpen(true)}
-                  >
-                    <div className="w-8 h-8 bg-red-500 rounded"></div>
-                    <span>Google Analytics</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-20 flex-col space-y-2"
-                    onClick={() => setIsNewPixelOpen(true)}
-                  >
-                    <div className="w-8 h-8 bg-gray-500 rounded"></div>
-                    <span>Pixel Customizado</span>
-                  </Button>
-                </div>
-              </Card>
             </div>
           </TabsContent>
 
