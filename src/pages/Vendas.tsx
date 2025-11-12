@@ -3,11 +3,12 @@ import { Layout } from '@/components/layout/Layout';
 import { StatsCard } from '@/components/ui/stats-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   DollarSign, 
   ShoppingCart, 
   TrendingUp,
-  Calendar,
+  Calendar as CalendarIcon,
   ChevronRight,
   Lightbulb,
   Package,
@@ -28,13 +29,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 
 export default function Vendas() {
   const [period, setPeriod] = useState('15');
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
-  const [comparePeriod1, setComparePeriod1] = useState('15');
-  const [comparePeriod2, setComparePeriod2] = useState('30');
+  
+  // Datas de comparação
+  const [compareStartDate1, setCompareStartDate1] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 15)));
+  const [compareEndDate1, setCompareEndDate1] = useState<Date>(new Date());
+  const [compareStartDate2, setCompareStartDate2] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 30)));
+  const [compareEndDate2, setCompareEndDate2] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 15)));
 
   // Dados mock - em produção viriam de uma API
   const salesData = {
@@ -207,28 +221,25 @@ export default function Vendas() {
 
   const currentCampaignDetails = selectedCampaign ? campaignDetails[selectedCampaign] : null;
 
-  // Dados para comparação de períodos
-  const getComparisonData = () => {
-    const data1 = salesData[comparePeriod1 as keyof typeof salesData];
-    const data2 = salesData[comparePeriod2 as keyof typeof salesData];
+  // Dados para comparação de períodos no formato de funil
+  const getComparisonFunnelData = () => {
+    // Simulando dados de funil para os dois períodos
+    const funnelStages = ['Leads Gerados', 'Abriram Campanha', 'Clicaram Link', 'Adicionaram Carrinho', 'Finalizaram Compra'];
     
-    return [
-      {
-        name: `${comparePeriod1} dias`,
-        faturamento: data1.faturamento,
-        vendas: data1.vendas,
-        ticketMedio: data1.ticketMedio
-      },
-      {
-        name: `${comparePeriod2} dias`,
-        faturamento: data2.faturamento,
-        vendas: data2.vendas,
-        ticketMedio: data2.ticketMedio
-      }
-    ];
+    // Período 1: dados mock baseados nas datas
+    const period1Data = [1000, 650, 420, 315, 284];
+    
+    // Período 2: dados mock diferentes para comparação
+    const period2Data = [950, 600, 380, 280, 250];
+    
+    return funnelStages.map((stage, index) => ({
+      stage,
+      periodo1: period1Data[index],
+      periodo2: period2Data[index],
+    }));
   };
 
-  const comparisonData = getComparisonData();
+  const comparisonFunnelData = getComparisonFunnelData();
 
   // Dados do funil de vendas
   const funnelData = [
@@ -282,7 +293,7 @@ export default function Vendas() {
         <div className="flex items-center gap-3">
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[180px]">
-              <Calendar className="w-4 h-4 mr-2" />
+              <CalendarIcon className="w-4 h-4 mr-2" />
               <SelectValue placeholder="Selecione o período" />
             </SelectTrigger>
             <SelectContent>
@@ -302,215 +313,219 @@ export default function Vendas() {
           ))}
         </div>
 
-        {/* Comparison Chart */}
+        {/* Comparison Funnel Chart */}
         <Card>
           <CardHeader>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <CardTitle>Comparação de Vendas entre Períodos</CardTitle>
-              <div className="flex items-center gap-3">
-                <Select value={comparePeriod1} onValueChange={setComparePeriod1}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">7 dias</SelectItem>
-                    <SelectItem value="15">15 dias</SelectItem>
-                    <SelectItem value="30">30 dias</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-muted-foreground text-sm">vs</span>
-                <Select value={comparePeriod2} onValueChange={setComparePeriod2}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">7 dias</SelectItem>
-                    <SelectItem value="15">15 dias</SelectItem>
-                    <SelectItem value="30">30 dias</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="flex flex-col gap-4">
+              <CardTitle>Comparação de Funil entre Períodos</CardTitle>
+              
+              {/* Seletores de Data */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Período 1 */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Período 1</p>
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "justify-start text-left font-normal flex-1",
+                            !compareStartDate1 && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {compareStartDate1 ? format(compareStartDate1, "dd/MM/yyyy", { locale: ptBR }) : "Início"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={compareStartDate1}
+                          onSelect={(date) => date && setCompareStartDate1(date)}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-muted-foreground">até</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "justify-start text-left font-normal flex-1",
+                            !compareEndDate1 && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {compareEndDate1 ? format(compareEndDate1, "dd/MM/yyyy", { locale: ptBR }) : "Fim"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={compareEndDate1}
+                          onSelect={(date) => date && setCompareEndDate1(date)}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+
+                {/* Período 2 */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Período 2</p>
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "justify-start text-left font-normal flex-1",
+                            !compareStartDate2 && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {compareStartDate2 ? format(compareStartDate2, "dd/MM/yyyy", { locale: ptBR }) : "Início"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={compareStartDate2}
+                          onSelect={(date) => date && setCompareStartDate2(date)}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-muted-foreground">até</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "justify-start text-left font-normal flex-1",
+                            !compareEndDate2 && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {compareEndDate2 ? format(compareEndDate2, "dd/MM/yyyy", { locale: ptBR }) : "Fim"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={compareEndDate2}
+                          onSelect={(date) => date && setCompareEndDate2(date)}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Gráfico de Faturamento */}
-              <div>
-                <h4 className="text-sm font-medium mb-4">Faturamento</h4>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={comparisonData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="name" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                      formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Faturamento']}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="faturamento" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={3}
-                      dot={{ fill: 'hsl(var(--primary))', r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              {/* Gráfico de Funil Comparativo */}
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart 
+                  data={comparisonFunnelData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="stage" 
+                    className="text-xs"
+                    angle={-15}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis className="text-xs" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                    formatter={(value: number) => [value, '']}
+                  />
+                  <Legend 
+                    formatter={(value) => {
+                      if (value === 'periodo1') {
+                        return `Período 1: ${format(compareStartDate1, "dd/MM", { locale: ptBR })} - ${format(compareEndDate1, "dd/MM", { locale: ptBR })}`;
+                      }
+                      return `Período 2: ${format(compareStartDate2, "dd/MM", { locale: ptBR })} - ${format(compareEndDate2, "dd/MM", { locale: ptBR })}`;
+                    }}
+                  />
+                  <Bar 
+                    dataKey="periodo1" 
+                    fill="hsl(var(--primary))" 
+                    radius={[8, 8, 0, 0]}
+                  />
+                  <Bar 
+                    dataKey="periodo2" 
+                    fill="hsl(var(--chart-2))" 
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+
+              {/* Tabela de Comparação */}
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left py-3 px-4 font-medium text-sm">Etapa do Funil</th>
+                      <th className="text-right py-3 px-4 font-medium text-sm">Período 1</th>
+                      <th className="text-right py-3 px-4 font-medium text-sm">Período 2</th>
+                      <th className="text-right py-3 px-4 font-medium text-sm">Diferença</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparisonFunnelData.map((stage, index) => {
+                      const diff = stage.periodo1 - stage.periodo2;
+                      const diffPercent = ((diff / stage.periodo2) * 100).toFixed(1);
+                      const isPositive = diff > 0;
+                      
+                      return (
+                        <tr key={index} className="border-t border-border">
+                          <td className="py-3 px-4 font-medium">{stage.stage}</td>
+                          <td className="py-3 px-4 text-right">{stage.periodo1.toLocaleString('pt-BR')}</td>
+                          <td className="py-3 px-4 text-right">{stage.periodo2.toLocaleString('pt-BR')}</td>
+                          <td className="py-3 px-4 text-right">
+                            <span className={cn(
+                              "font-semibold",
+                              isPositive ? "text-green-600" : "text-red-600"
+                            )}>
+                              {isPositive ? '+' : ''}{diff.toLocaleString('pt-BR')} ({isPositive ? '+' : ''}{diffPercent}%)
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
 
-              {/* Gráfico de Vendas */}
-              <div>
-                <h4 className="text-sm font-medium mb-4">Número de Vendas</h4>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={comparisonData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="name" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                      formatter={(value: number) => [value, 'Vendas']}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="vendas" 
-                      stroke="hsl(var(--chart-2))" 
-                      strokeWidth={3}
-                      dot={{ fill: 'hsl(var(--chart-2))', r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Gráfico de Ticket Médio */}
-              <div>
-                <h4 className="text-sm font-medium mb-4">Ticket Médio</h4>
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={comparisonData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="name" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                      formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Ticket Médio']}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="ticketMedio" 
-                      stroke="hsl(var(--chart-3))" 
-                      strokeWidth={3}
-                      dot={{ fill: 'hsl(var(--chart-3))', r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Gráfico de Funil */}
-              <div className="pt-6 border-t border-border">
-                <h4 className="text-lg font-semibold mb-6">Gráfico de Funil de Vendas</h4>
-                
-                {/* Cards de Métricas do Funil */}
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                  {funnelData.map((stage, index) => (
-                    <div 
-                      key={index}
-                      className="p-4 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: stage.color }}
-                        />
-                        <p className="text-xs font-medium text-muted-foreground">
-                          {stage.stage}
-                        </p>
-                      </div>
-                      <p className="text-xl font-bold mb-1">
-                        {stage.quantidade}
-                      </p>
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">
-                          Quantidade: <span className="font-medium">{stage.quantidade} leads</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Tempo médio: <span className="font-medium">{stage.tempoMedio}</span>
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Gráfico de Área do Funil */}
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart 
-                    data={funnelData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="funnelGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis 
-                      dataKey="stage" 
-                      className="text-xs"
-                      angle={-15}
-                      textAnchor="end"
-                      height={80}
-                    />
-                    <YAxis className="text-xs" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
-                      }}
-                      formatter={(value: number) => [value, 'Quantidade']}
-                      labelFormatter={(label) => `Etapa: ${label}`}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
-                      fill="url(#funnelGradient)"
-                      label={{
-                        position: 'top',
-                        formatter: (value: number, entry: any, index: number) => {
-                          const percentage = funnelData[index]?.percentage;
-                          return percentage ? `${percentage.toFixed(1)}%` : '';
-                        },
-                        className: 'fill-foreground text-xs font-medium'
-                      }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-
-                {/* Insights do Funil */}
-                <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border">
-                  <div className="flex items-start gap-3">
-                    <Lightbulb className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h5 className="font-medium mb-2">Insights do Funil</h5>
-                      <ul className="space-y-1 text-sm text-muted-foreground">
-                        <li>• Taxa de conversão geral: {((currentData.vendas / 1000) * 100).toFixed(1)}%</li>
-                        <li>• Maior perda entre "Clicaram Link" e "Adicionaram Carrinho" (10.5%)</li>
-                        <li>• Otimize a experiência da página de produto para aumentar conversões</li>
-                        <li>• Considere remarketing para os 315 leads com carrinho abandonado</li>
-                      </ul>
-                    </div>
+              {/* Insights da Comparação */}
+              <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                <div className="flex items-start gap-3">
+                  <Lightbulb className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h5 className="font-medium mb-2">Insights da Comparação</h5>
+                    <ul className="space-y-1 text-sm text-muted-foreground">
+                      <li>• O Período 1 teve {comparisonFunnelData[0].periodo1 > comparisonFunnelData[0].periodo2 ? 'mais' : 'menos'} leads gerados que o Período 2</li>
+                      <li>• A taxa de conversão final do Período 1 foi {((comparisonFunnelData[4].periodo1 / comparisonFunnelData[0].periodo1) * 100).toFixed(1)}%</li>
+                      <li>• A taxa de conversão final do Período 2 foi {((comparisonFunnelData[4].periodo2 / comparisonFunnelData[0].periodo2) * 100).toFixed(1)}%</li>
+                      <li>• Compare as etapas onde há maior diferença para identificar oportunidades de melhoria</li>
+                    </ul>
                   </div>
                 </div>
               </div>
