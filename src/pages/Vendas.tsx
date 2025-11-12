@@ -488,7 +488,10 @@ export default function Vendas() {
                       fill="url(#funnelGradient)"
                       label={{
                         position: 'top',
-                        formatter: (value: number, entry: any) => `${entry.percentage.toFixed(1)}%`,
+                        formatter: (value: number, entry: any, index: number) => {
+                          const percentage = funnelData[index]?.percentage;
+                          return percentage ? `${percentage.toFixed(1)}%` : '';
+                        },
                         className: 'fill-foreground text-xs font-medium'
                       }}
                     />
