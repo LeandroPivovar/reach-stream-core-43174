@@ -45,10 +45,8 @@ export default function Vendas() {
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   
   // Datas de comparação
-  const [compareStartDate1, setCompareStartDate1] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 15)));
-  const [compareEndDate1, setCompareEndDate1] = useState<Date>(new Date());
-  const [compareStartDate2, setCompareStartDate2] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 30)));
-  const [compareEndDate2, setCompareEndDate2] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 15)));
+  const [compareStartDate, setCompareStartDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 15)));
+  const [compareEndDate, setCompareEndDate] = useState<Date>(new Date());
 
   // Dados mock - em produção viriam de uma API
   const salesData = {
@@ -221,21 +219,17 @@ export default function Vendas() {
 
   const currentCampaignDetails = selectedCampaign ? campaignDetails[selectedCampaign] : null;
 
-  // Dados para comparação de períodos no formato de funil
+  // Dados para o funil do período selecionado
   const getComparisonFunnelData = () => {
-    // Simulando dados de funil para os dois períodos
     const funnelStages = ['Leads Gerados', 'Abriram Campanha', 'Clicaram Link', 'Adicionaram Carrinho', 'Finalizaram Compra'];
     
-    // Período 1: dados mock baseados nas datas
-    const period1Data = [1000, 650, 420, 315, 284];
-    
-    // Período 2: dados mock diferentes para comparação
-    const period2Data = [950, 600, 380, 280, 250];
+    // Dados mock baseados no período selecionado
+    const periodData = [1000, 650, 420, 315, 284];
     
     return funnelStages.map((stage, index) => ({
       stage,
-      periodo1: period1Data[index],
-      periodo2: period2Data[index],
+      value: periodData[index],
+      percentage: (periodData[index] / periodData[0]) * 100
     }));
   };
 
@@ -320,120 +314,63 @@ export default function Vendas() {
               <CardTitle>Comparação de Funil entre Períodos</CardTitle>
               
               {/* Seletores de Data */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {/* Período 1 */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Período 1</p>
-                  <div className="flex items-center gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "justify-start text-left font-normal flex-1",
-                            !compareStartDate1 && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {compareStartDate1 ? format(compareStartDate1, "dd/MM/yyyy", { locale: ptBR }) : "Início"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={compareStartDate1}
-                          onSelect={(date) => date && setCompareStartDate1(date)}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <span className="text-muted-foreground">até</span>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "justify-start text-left font-normal flex-1",
-                            !compareEndDate1 && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {compareEndDate1 ? format(compareEndDate1, "dd/MM/yyyy", { locale: ptBR }) : "Fim"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={compareEndDate1}
-                          onSelect={(date) => date && setCompareEndDate1(date)}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </div>
-
-                {/* Período 2 */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Período 2</p>
-                  <div className="flex items-center gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "justify-start text-left font-normal flex-1",
-                            !compareStartDate2 && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {compareStartDate2 ? format(compareStartDate2, "dd/MM/yyyy", { locale: ptBR }) : "Início"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={compareStartDate2}
-                          onSelect={(date) => date && setCompareStartDate2(date)}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <span className="text-muted-foreground">até</span>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "justify-start text-left font-normal flex-1",
-                            !compareEndDate2 && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {compareEndDate2 ? format(compareEndDate2, "dd/MM/yyyy", { locale: ptBR }) : "Fim"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={compareEndDate2}
-                          onSelect={(date) => date && setCompareEndDate2(date)}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Selecione o período para análise</p>
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "justify-start text-left font-normal flex-1",
+                          !compareStartDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {compareStartDate ? format(compareStartDate, "dd/MM/yyyy", { locale: ptBR }) : "Data de início"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={compareStartDate}
+                        onSelect={(date) => date && setCompareStartDate(date)}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-muted-foreground">até</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "justify-start text-left font-normal flex-1",
+                          !compareEndDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {compareEndDate ? format(compareEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Data de fim"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={compareEndDate}
+                        onSelect={(date) => date && setCompareEndDate(date)}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Gráfico de Funil Comparativo */}
+              {/* Gráfico de Funil */}
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart 
                   data={comparisonFunnelData}
@@ -456,75 +393,51 @@ export default function Vendas() {
                     }}
                     formatter={(value: number) => [value, '']}
                   />
-                  <Legend 
-                    formatter={(value) => {
-                      if (value === 'periodo1') {
-                        return `Período 1: ${format(compareStartDate1, "dd/MM", { locale: ptBR })} - ${format(compareEndDate1, "dd/MM", { locale: ptBR })}`;
-                      }
-                      return `Período 2: ${format(compareStartDate2, "dd/MM", { locale: ptBR })} - ${format(compareEndDate2, "dd/MM", { locale: ptBR })}`;
-                    }}
-                  />
                   <Bar 
-                    dataKey="periodo1" 
+                    dataKey="value" 
                     fill="hsl(var(--primary))" 
-                    radius={[8, 8, 0, 0]}
-                  />
-                  <Bar 
-                    dataKey="periodo2" 
-                    fill="hsl(var(--chart-2))" 
                     radius={[8, 8, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
 
-              {/* Tabela de Comparação */}
+              {/* Detalhes do Funil */}
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-muted/50">
                     <tr>
                       <th className="text-left py-3 px-4 font-medium text-sm">Etapa do Funil</th>
-                      <th className="text-right py-3 px-4 font-medium text-sm">Período 1</th>
-                      <th className="text-right py-3 px-4 font-medium text-sm">Período 2</th>
-                      <th className="text-right py-3 px-4 font-medium text-sm">Diferença</th>
+                      <th className="text-right py-3 px-4 font-medium text-sm">Quantidade</th>
+                      <th className="text-right py-3 px-4 font-medium text-sm">Taxa de Conversão</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {comparisonFunnelData.map((stage, index) => {
-                      const diff = stage.periodo1 - stage.periodo2;
-                      const diffPercent = ((diff / stage.periodo2) * 100).toFixed(1);
-                      const isPositive = diff > 0;
-                      
-                      return (
-                        <tr key={index} className="border-t border-border">
-                          <td className="py-3 px-4 font-medium">{stage.stage}</td>
-                          <td className="py-3 px-4 text-right">{stage.periodo1.toLocaleString('pt-BR')}</td>
-                          <td className="py-3 px-4 text-right">{stage.periodo2.toLocaleString('pt-BR')}</td>
-                          <td className="py-3 px-4 text-right">
-                            <span className={cn(
-                              "font-semibold",
-                              isPositive ? "text-green-600" : "text-red-600"
-                            )}>
-                              {isPositive ? '+' : ''}{diff.toLocaleString('pt-BR')} ({isPositive ? '+' : ''}{diffPercent}%)
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {comparisonFunnelData.map((stage, index) => (
+                      <tr key={index} className="border-t border-border">
+                        <td className="py-3 px-4 font-medium">{stage.stage}</td>
+                        <td className="py-3 px-4 text-right">{stage.value.toLocaleString('pt-BR')}</td>
+                        <td className="py-3 px-4 text-right">
+                          <span className="font-semibold text-primary">
+                            {stage.percentage.toFixed(1)}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
 
-              {/* Insights da Comparação */}
+              {/* Insights do Período */}
               <div className="p-4 bg-muted/30 rounded-lg border border-border">
                 <div className="flex items-start gap-3">
                   <Lightbulb className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <h5 className="font-medium mb-2">Insights da Comparação</h5>
+                    <h5 className="font-medium mb-2">Insights do Período</h5>
                     <ul className="space-y-1 text-sm text-muted-foreground">
-                      <li>• O Período 1 teve {comparisonFunnelData[0].periodo1 > comparisonFunnelData[0].periodo2 ? 'mais' : 'menos'} leads gerados que o Período 2</li>
-                      <li>• A taxa de conversão final do Período 1 foi {((comparisonFunnelData[4].periodo1 / comparisonFunnelData[0].periodo1) * 100).toFixed(1)}%</li>
-                      <li>• A taxa de conversão final do Período 2 foi {((comparisonFunnelData[4].periodo2 / comparisonFunnelData[0].periodo2) * 100).toFixed(1)}%</li>
-                      <li>• Compare as etapas onde há maior diferença para identificar oportunidades de melhoria</li>
+                      <li>• Total de {comparisonFunnelData[0].value} leads gerados no período selecionado</li>
+                      <li>• Taxa de conversão final de {comparisonFunnelData[4].percentage.toFixed(1)}% (leads para compras)</li>
+                      <li>• Maior queda entre "{comparisonFunnelData[1].stage}" e "{comparisonFunnelData[2].stage}"</li>
+                      <li>• Ajuste o período para comparar diferentes intervalos de tempo</li>
                     </ul>
                   </div>
                 </div>
