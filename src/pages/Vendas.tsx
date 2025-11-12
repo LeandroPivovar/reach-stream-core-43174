@@ -33,6 +33,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function Vendas() {
   const [period, setPeriod] = useState('15');
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
+  const [comparePeriod1, setComparePeriod1] = useState('15');
+  const [comparePeriod2, setComparePeriod2] = useState('30');
 
   // Dados mock - em produção viriam de uma API
   const salesData = {
@@ -205,6 +207,29 @@ export default function Vendas() {
 
   const currentCampaignDetails = selectedCampaign ? campaignDetails[selectedCampaign] : null;
 
+  // Dados para comparação de períodos
+  const getComparisonData = () => {
+    const data1 = salesData[comparePeriod1 as keyof typeof salesData];
+    const data2 = salesData[comparePeriod2 as keyof typeof salesData];
+    
+    return [
+      {
+        name: `${comparePeriod1} dias`,
+        faturamento: data1.faturamento,
+        vendas: data1.vendas,
+        ticketMedio: data1.ticketMedio
+      },
+      {
+        name: `${comparePeriod2} dias`,
+        faturamento: data2.faturamento,
+        vendas: data2.vendas,
+        ticketMedio: data2.ticketMedio
+      }
+    ];
+  };
+
+  const comparisonData = getComparisonData();
+
   return (
     <Layout 
       title="Vendas" 
@@ -232,6 +257,122 @@ export default function Vendas() {
             <StatsCard key={index} {...stat} />
           ))}
         </div>
+
+        {/* Comparison Chart */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <CardTitle>Comparação de Vendas entre Períodos</CardTitle>
+              <div className="flex items-center gap-3">
+                <Select value={comparePeriod1} onValueChange={setComparePeriod1}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 dias</SelectItem>
+                    <SelectItem value="15">15 dias</SelectItem>
+                    <SelectItem value="30">30 dias</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-muted-foreground text-sm">vs</span>
+                <Select value={comparePeriod2} onValueChange={setComparePeriod2}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 dias</SelectItem>
+                    <SelectItem value="15">15 dias</SelectItem>
+                    <SelectItem value="30">30 dias</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Gráfico de Faturamento */}
+              <div>
+                <h4 className="text-sm font-medium mb-4">Faturamento</h4>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={comparisonData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Faturamento']}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="faturamento" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={3}
+                      dot={{ fill: 'hsl(var(--primary))', r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Gráfico de Vendas */}
+              <div>
+                <h4 className="text-sm font-medium mb-4">Número de Vendas</h4>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={comparisonData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number) => [value, 'Vendas']}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="vendas" 
+                      stroke="hsl(var(--chart-2))" 
+                      strokeWidth={3}
+                      dot={{ fill: 'hsl(var(--chart-2))', r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Gráfico de Ticket Médio */}
+              <div>
+                <h4 className="text-sm font-medium mb-4">Ticket Médio</h4>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={comparisonData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Ticket Médio']}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="ticketMedio" 
+                      stroke="hsl(var(--chart-3))" 
+                      strokeWidth={3}
+                      dot={{ fill: 'hsl(var(--chart-3))', r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Sales by Campaign */}
         <Card>
