@@ -28,7 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 export default function Vendas() {
   const [period, setPeriod] = useState('15');
@@ -230,6 +230,50 @@ export default function Vendas() {
 
   const comparisonData = getComparisonData();
 
+  // Dados do funil de vendas
+  const funnelData = [
+    {
+      stage: 'Leads Gerados',
+      value: 1000,
+      percentage: 100,
+      quantidade: 1000,
+      tempoMedio: '0 dias',
+      color: 'hsl(var(--chart-1))'
+    },
+    {
+      stage: 'Abriram Campanha',
+      value: 650,
+      percentage: 65,
+      quantidade: 650,
+      tempoMedio: '2 horas',
+      color: 'hsl(var(--chart-2))'
+    },
+    {
+      stage: 'Clicaram Link',
+      value: 420,
+      percentage: 42,
+      quantidade: 420,
+      tempoMedio: '1 dia',
+      color: 'hsl(var(--chart-3))'
+    },
+    {
+      stage: 'Adicionaram Carrinho',
+      value: 315,
+      percentage: 31.5,
+      quantidade: 315,
+      tempoMedio: '3 dias',
+      color: 'hsl(var(--chart-4))'
+    },
+    {
+      stage: 'Finalizaram Compra',
+      value: currentData.vendas,
+      percentage: (currentData.vendas / 1000) * 100,
+      quantidade: currentData.vendas,
+      tempoMedio: '5 dias',
+      color: 'hsl(var(--primary))'
+    }
+  ];
+
   return (
     <Layout 
       title="Vendas" 
@@ -369,6 +413,103 @@ export default function Vendas() {
                     />
                   </LineChart>
                 </ResponsiveContainer>
+              </div>
+
+              {/* Gráfico de Funil */}
+              <div className="pt-6 border-t border-border">
+                <h4 className="text-lg font-semibold mb-6">Gráfico de Funil de Vendas</h4>
+                
+                {/* Cards de Métricas do Funil */}
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                  {funnelData.map((stage, index) => (
+                    <div 
+                      key={index}
+                      className="p-4 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: stage.color }}
+                        />
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {stage.stage}
+                        </p>
+                      </div>
+                      <p className="text-xl font-bold mb-1">
+                        {stage.quantidade}
+                      </p>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">
+                          Quantidade: <span className="font-medium">{stage.quantidade} leads</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Tempo médio: <span className="font-medium">{stage.tempoMedio}</span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Gráfico de Área do Funil */}
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart 
+                    data={funnelData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="funnelGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="stage" 
+                      className="text-xs"
+                      angle={-15}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px'
+                      }}
+                      formatter={(value: number) => [value, 'Quantidade']}
+                      labelFormatter={(label) => `Etapa: ${label}`}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      fill="url(#funnelGradient)"
+                      label={{
+                        position: 'top',
+                        formatter: (value: number, entry: any) => `${entry.percentage.toFixed(1)}%`,
+                        className: 'fill-foreground text-xs font-medium'
+                      }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+
+                {/* Insights do Funil */}
+                <div className="mt-6 p-4 bg-muted/30 rounded-lg border border-border">
+                  <div className="flex items-start gap-3">
+                    <Lightbulb className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h5 className="font-medium mb-2">Insights do Funil</h5>
+                      <ul className="space-y-1 text-sm text-muted-foreground">
+                        <li>• Taxa de conversão geral: {((currentData.vendas / 1000) * 100).toFixed(1)}%</li>
+                        <li>• Maior perda entre "Clicaram Link" e "Adicionaram Carrinho" (10.5%)</li>
+                        <li>• Otimize a experiência da página de produto para aumentar conversões</li>
+                        <li>• Considere remarketing para os 315 leads com carrinho abandonado</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
