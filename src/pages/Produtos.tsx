@@ -32,6 +32,8 @@ import {
   ShoppingCart,
   Upload,
   X,
+  History,
+  User,
 } from 'lucide-react';
 
 interface Product {
@@ -49,9 +51,20 @@ interface Product {
   createdAt: string;
 }
 
+interface PurchaseHistory {
+  id: number;
+  customerName: string;
+  customerEmail: string;
+  quantity: number;
+  totalValue: number;
+  purchaseDate: string;
+  status: 'completed' | 'processing' | 'cancelled';
+}
+
 export default function Produtos() {
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
+  const [isPurchaseHistoryOpen, setIsPurchaseHistoryOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [newProduct, setNewProduct] = useState({
@@ -64,6 +77,27 @@ export default function Produtos() {
     sku: '',
     image: '',
   });
+
+  // Mock data for purchase history
+  const purchaseHistoryData: Record<number, PurchaseHistory[]> = {
+    1: [
+      { id: 1, customerName: 'Maria Silva', customerEmail: 'maria@email.com', quantity: 2, totalValue: 179.80, purchaseDate: '2024-03-15 14:30', status: 'completed' },
+      { id: 2, customerName: 'João Santos', customerEmail: 'joao@email.com', quantity: 1, totalValue: 89.90, purchaseDate: '2024-03-14 10:20', status: 'completed' },
+      { id: 3, customerName: 'Ana Costa', customerEmail: 'ana@email.com', quantity: 3, totalValue: 269.70, purchaseDate: '2024-03-13 16:45', status: 'processing' },
+      { id: 4, customerName: 'Pedro Oliveira', customerEmail: 'pedro@email.com', quantity: 1, totalValue: 89.90, purchaseDate: '2024-03-12 09:15', status: 'completed' },
+    ],
+    2: [
+      { id: 5, customerName: 'Carlos Mendes', customerEmail: 'carlos@email.com', quantity: 1, totalValue: 299.90, purchaseDate: '2024-03-10 11:30', status: 'completed' },
+      { id: 6, customerName: 'Lucia Ferreira', customerEmail: 'lucia@email.com', quantity: 2, totalValue: 599.80, purchaseDate: '2024-03-08 15:20', status: 'completed' },
+    ],
+    3: [
+      { id: 7, customerName: 'Roberto Lima', customerEmail: 'roberto@email.com', quantity: 1, totalValue: 599.90, purchaseDate: '2024-03-05 13:45', status: 'completed' },
+    ],
+    4: [
+      { id: 8, customerName: 'Fernanda Alves', customerEmail: 'fernanda@email.com', quantity: 1, totalValue: 179.90, purchaseDate: '2024-03-11 10:00', status: 'completed' },
+      { id: 9, customerName: 'Ricardo Souza', customerEmail: 'ricardo@email.com', quantity: 2, totalValue: 359.80, purchaseDate: '2024-03-09 14:30', status: 'completed' },
+    ],
+  };
 
   const [products, setProducts] = useState<Product[]>([
     {
@@ -192,6 +226,29 @@ export default function Produtos() {
       case 'out_of_stock': return 'destructive';
       default: return 'secondary';
     }
+  };
+
+  const getPurchaseStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed': return 'Concluída';
+      case 'processing': return 'Processando';
+      case 'cancelled': return 'Cancelada';
+      default: return status;
+    }
+  };
+
+  const getPurchaseStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (status) {
+      case 'completed': return 'default';
+      case 'processing': return 'secondary';
+      case 'cancelled': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
+  const handleViewPurchaseHistory = (product: Product) => {
+    setSelectedProduct(product);
+    setIsPurchaseHistoryOpen(true);
   };
 
   const totalProducts = products.length;
@@ -377,6 +434,14 @@ export default function Produtos() {
                               <DialogTitle>Ações do Produto</DialogTitle>
                             </DialogHeader>
                             <div className="grid gap-2">
+                              <Button
+                                variant="ghost"
+                                className="justify-start"
+                                onClick={() => handleViewPurchaseHistory(product)}
+                              >
+                                <History className="w-4 h-4 mr-2" />
+                                Ver Histórico de Compras
+                              </Button>
                               <Button
                                 variant="ghost"
                                 className="justify-start"
@@ -583,6 +648,110 @@ export default function Produtos() {
               Criar Produto
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Purchase History Modal */}
+      <Dialog open={isPurchaseHistoryOpen} onOpenChange={setIsPurchaseHistoryOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Histórico de Compras - {selectedProduct?.name}</DialogTitle>
+          </DialogHeader>
+
+          {selectedProduct && (
+            <>
+              <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                <div className="w-16 h-16 bg-background rounded flex items-center justify-center flex-shrink-0">
+                  {selectedProduct.image ? (
+                    <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover rounded" />
+                  ) : (
+                    <Package className="w-8 h-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{selectedProduct.name}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedProduct.description}</p>
+                  <div className="flex gap-4 mt-2">
+                    <span className="text-sm">
+                      <span className="text-muted-foreground">SKU:</span> <span className="font-mono font-medium">{selectedProduct.sku}</span>
+                    </span>
+                    <span className="text-sm">
+                      <span className="text-muted-foreground">Vendas Totais:</span> <span className="font-medium">{selectedProduct.sales}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4" />
+                  Compras Realizadas
+                </h4>
+
+                {purchaseHistoryData[selectedProduct.id] && purchaseHistoryData[selectedProduct.id].length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-2 font-medium text-muted-foreground">Cliente</th>
+                          <th className="text-left py-3 px-2 font-medium text-muted-foreground">E-mail</th>
+                          <th className="text-right py-3 px-2 font-medium text-muted-foreground">Qtd</th>
+                          <th className="text-right py-3 px-2 font-medium text-muted-foreground">Valor Total</th>
+                          <th className="text-left py-3 px-2 font-medium text-muted-foreground">Data</th>
+                          <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {purchaseHistoryData[selectedProduct.id].map((purchase) => (
+                          <tr key={purchase.id} className="border-b border-border last:border-0">
+                            <td className="py-3 px-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                                  <User className="w-4 h-4 text-primary" />
+                                </div>
+                                <span className="font-medium">{purchase.customerName}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-2 text-sm text-muted-foreground">
+                              {purchase.customerEmail}
+                            </td>
+                            <td className="py-3 px-2 text-right font-medium">
+                              {purchase.quantity}
+                            </td>
+                            <td className="py-3 px-2 text-right font-medium">
+                              {new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              }).format(purchase.totalValue)}
+                            </td>
+                            <td className="py-3 px-2 text-sm">
+                              {new Date(purchase.purchaseDate).toLocaleString('pt-BR')}
+                            </td>
+                            <td className="py-3 px-2">
+                              <Badge variant={getPurchaseStatusVariant(purchase.status)}>
+                                {getPurchaseStatusLabel(purchase.status)}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>Nenhuma compra registrada para este produto</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsPurchaseHistoryOpen(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </Layout>
