@@ -218,7 +218,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
-          fitView
+          defaultViewport={{ x: 50, y: 50, zoom: 0.65 }}
+          minZoom={0.2}
+          maxZoom={2}
           className="bg-muted/30"
         >
           <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
