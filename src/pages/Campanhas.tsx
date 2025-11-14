@@ -697,7 +697,7 @@ export default function Campanhas() {
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  Comece definindo o nome e o público-alvo da sua campanha
+                  Defina o nome da sua campanha
                 </p>
               </div>
 
@@ -711,45 +711,6 @@ export default function Campanhas() {
                 />
               </div>
 
-              <div className="grid gap-2">
-                <Label>Público-Alvo * (selecione um ou mais grupos)</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {contactGroups.map((group) => (
-                    <Card
-                      key={group.name}
-                      className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                        newCampaign.groups.includes(group.name) ? 'border-primary bg-primary/5' : ''
-                      }`}
-                      onClick={() => toggleGroup(group.name)}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 mt-0.5 ${
-                          newCampaign.groups.includes(group.name) 
-                            ? 'bg-primary border-primary' 
-                            : 'border-input'
-                        }`}>
-                          {newCampaign.groups.includes(group.name) && (
-                            <Users className="w-3 h-3 text-primary-foreground" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-semibold">{group.name}</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {group.count.toLocaleString()}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{group.description}</p>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Total selecionado: {contactGroups.filter(g => newCampaign.groups.includes(g.name)).reduce((acc, g) => acc + g.count, 0).toLocaleString()} contatos
-                </p>
-              </div>
-
               <div className="flex justify-between">
                 <Button variant="outline" onClick={handlePrevStep}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
@@ -757,7 +718,7 @@ export default function Campanhas() {
                 </Button>
                 <Button 
                   onClick={handleNextStep}
-                  disabled={!newCampaign.name || newCampaign.groups.length === 0}
+                  disabled={!newCampaign.name}
                 >
                   Próximo
                   <ArrowRight className="w-4 h-4 ml-2" />
