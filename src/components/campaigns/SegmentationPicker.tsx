@@ -9,6 +9,7 @@ interface SegmentationOption {
   id: string;
   label: string;
   description: string;
+  affectedCount: number;
 }
 
 interface SegmentationPickerProps {
@@ -17,18 +18,18 @@ interface SegmentationPickerProps {
 }
 
 const audienceFilters: SegmentationOption[] = [
-  { id: 'by_purchase_count', label: 'Clientes por número de compras', description: 'Segmentar por quantidade de compras' },
-  { id: 'birthday', label: 'Aniversário', description: 'Clientes que fazem aniversário' },
-  { id: 'inactive_customers', label: 'Clientes inativos', description: 'Sem compras por período prolongado' },
-  { id: 'active_coupon', label: 'Clientes com cupom ativo', description: 'Possuem cupons válidos não utilizados' },
-  { id: 'high_ticket', label: 'Clientes com maior ticket médio', description: 'Alto valor por compra' },
-  { id: 'purchase_value_x', label: 'Valor de compra X', description: 'Compras acima de valor específico' },
-  { id: 'lead_captured', label: 'Lead capturado', description: 'Lead obtido por formulário' },
-  { id: 'cart_recovered_customer', label: 'Carrinho recuperado', description: 'Cliente que recuperou carrinho' },
-  { id: 'no_purchase_x_days', label: 'Clientes que não compram há X dias', description: 'Inativos por período específico' },
-  { id: 'gender_male', label: 'Sexo: Masculino', description: 'Clientes do sexo masculino' },
-  { id: 'gender_female', label: 'Sexo: Feminino', description: 'Clientes do sexo feminino' },
-  { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica' },
+  { id: 'by_purchase_count', label: 'Clientes por número de compras', description: 'Segmentar por quantidade de compras', affectedCount: 2847 },
+  { id: 'birthday', label: 'Aniversário', description: 'Clientes que fazem aniversário', affectedCount: 142 },
+  { id: 'inactive_customers', label: 'Clientes inativos', description: 'Sem compras por período prolongado', affectedCount: 1523 },
+  { id: 'active_coupon', label: 'Clientes com cupom ativo', description: 'Possuem cupons válidos não utilizados', affectedCount: 634 },
+  { id: 'high_ticket', label: 'Clientes com maior ticket médio', description: 'Alto valor por compra', affectedCount: 458 },
+  { id: 'purchase_value_x', label: 'Valor de compra X', description: 'Compras acima de valor específico', affectedCount: 891 },
+  { id: 'lead_captured', label: 'Lead capturado', description: 'Lead obtido por formulário', affectedCount: 3241 },
+  { id: 'cart_recovered_customer', label: 'Carrinho recuperado', description: 'Cliente que recuperou carrinho', affectedCount: 287 },
+  { id: 'no_purchase_x_days', label: 'Clientes que não compram há X dias', description: 'Inativos por período específico', affectedCount: 1876 },
+  { id: 'gender_male', label: 'Sexo: Masculino', description: 'Clientes do sexo masculino', affectedCount: 4562 },
+  { id: 'gender_female', label: 'Sexo: Feminino', description: 'Clientes do sexo feminino', affectedCount: 5123 },
+  { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: 9685 },
 ];
 
 export function SegmentationPicker({ selectedSegments, onSegmentsChange }: SegmentationPickerProps) {
@@ -63,7 +64,12 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange }: Segme
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm mb-1">{segment.label}</div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="font-medium text-sm">{segment.label}</div>
+                  <Badge variant="secondary" className="text-xs">
+                    {segment.affectedCount.toLocaleString('pt-BR')} pessoas
+                  </Badge>
+                </div>
                 <p className="text-xs text-muted-foreground">{segment.description}</p>
               </div>
             </div>
