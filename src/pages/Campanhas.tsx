@@ -33,6 +33,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { WorkflowCanvas, WorkflowStep } from '@/components/workflow/WorkflowCanvas';
 import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
+import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
 import { 
   MessageSquare, 
   Mail, 
@@ -587,6 +588,8 @@ export default function Campanhas() {
           // Expandir apenas no passo do workflow
           newCampaign.campaignComplexity === 'advanced' && currentStep === 3
             ? "!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] p-8"
+            : newCampaign.campaignComplexity === 'simple' && currentStep === 5 && newCampaign.channel === 'whatsapp'
+            ? "max-w-6xl max-h-[90vh]"
             : "max-w-3xl max-h-[90vh]"
         )}>
           <DialogHeader>
@@ -822,9 +825,98 @@ export default function Campanhas() {
           {/* Email/SMS/WhatsApp Content Editor Step (apenas para simple) */}
           {newCampaign.campaignComplexity === 'simple' && currentStep === 5 && (
             <div className="space-y-6 py-4">
-              {newCampaign.channel === 'email' && (
+              {newCampaign.channel === 'whatsapp' ? (
+                <div className="flex gap-6">
+                  {/* Form Content */}
+                  <div className="flex-1 space-y-6">
+                    <div className="bg-green-600/10 p-4 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="w-5 h-5 text-green-600" />
+                        <span className="font-medium">Configure a mensagem do WhatsApp</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Suporta texto formatado, emojis e até 4096 caracteres
+                      </p>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="whatsapp-content">Mensagem WhatsApp *</Label>
+                      <Textarea
+                        id="whatsapp-content"
+                        value={newCampaign.email.content}
+                        onChange={(e) => setNewCampaign({ 
+                          ...newCampaign, 
+                          email: { ...newCampaign.email, content: e.target.value }
+                        })}
+                        placeholder="Digite a mensagem do WhatsApp..."
+                        rows={8}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Use *negrito*, _itálico_, ~tachado~ para formatar o texto
+                      </p>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>Anexar Imagem ou Vídeo</Label>
+                      <div className="flex flex-col gap-3">
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="image/*,video/*"
+                            multiple
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            id="whatsapp-media-upload"
+                          />
+                          <label htmlFor="whatsapp-media-upload">
+                            <Button type="button" variant="outline" className="w-full" asChild>
+                              <div className="cursor-pointer">
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload de Mídia
+                              </div>
+                            </Button>
+                          </label>
+                        </div>
+                        {newCampaign.email.media.length > 0 && (
+                          <div className="grid grid-cols-2 gap-2">
+                            {newCampaign.email.media.map((item, index) => (
+                              <div key={index} className="relative group border rounded-md p-2">
+                                <div className="flex items-center gap-2">
+                                  {item.type === 'image' ? (
+                                    <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                                  ) : (
+                                    <video src={item.url} className="w-12 h-12 object-cover rounded" />
+                                  )}
+                                  <span className="text-xs truncate flex-1">{item.name}</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => removeMedia(index)}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* WhatsApp Preview */}
+                  <WhatsappPreview 
+                    content={newCampaign.email.content} 
+                    media={newCampaign.email.media}
+                  />
+                </div>
+              ) : (
                 <>
-                  <div className="bg-orange-500/10 p-4 rounded-lg">
+                  {newCampaign.channel === 'email' && (
+                    <>
+                      <div className="bg-orange-500/10 p-4 rounded-lg">
                     <div className="flex items-center gap-2">
                       <Mail className="w-5 h-5 text-orange-500" />
                       <span className="font-medium">Configure o conteúdo do seu e-mail</span>
@@ -947,87 +1039,10 @@ export default function Campanhas() {
                 </>
               )}
 
-              {newCampaign.channel === 'whatsapp' && (
-                <>
-                  <div className="bg-green-600/10 p-4 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-green-600" />
-                      <span className="font-medium">Configure a mensagem do WhatsApp</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Suporta texto formatado, emojis e até 4096 caracteres
-                    </p>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="whatsapp-content">Mensagem WhatsApp *</Label>
-                    <Textarea
-                      id="whatsapp-content"
-                      value={newCampaign.email.content}
-                      onChange={(e) => setNewCampaign({ 
-                        ...newCampaign, 
-                        email: { ...newCampaign.email, content: e.target.value }
-                      })}
-                      placeholder="Digite a mensagem do WhatsApp..."
-                      rows={8}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Use *negrito*, _itálico_, ~tachado~ para formatar o texto
-                    </p>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label>Anexar Imagem ou Vídeo</Label>
-                    <div className="flex flex-col gap-3">
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="image/*,video/*"
-                          multiple
-                          onChange={handleFileUpload}
-                          className="hidden"
-                          id="whatsapp-media-upload"
-                        />
-                        <label htmlFor="whatsapp-media-upload">
-                          <Button type="button" variant="outline" className="w-full" asChild>
-                            <div className="cursor-pointer">
-                              <Upload className="w-4 h-4 mr-2" />
-                              Upload de Mídia
-                            </div>
-                          </Button>
-                        </label>
-                      </div>
-                      {newCampaign.email.media.length > 0 && (
-                        <div className="grid grid-cols-2 gap-2">
-                          {newCampaign.email.media.map((item, index) => (
-                            <div key={index} className="relative group border rounded-md p-2">
-                              <div className="flex items-center gap-2">
-                                {item.type === 'image' ? (
-                                  <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
-                                ) : (
-                                  <video src={item.url} className="w-12 h-12 object-cover rounded" />
-                                )}
-                                <span className="text-xs truncate flex-1">{item.name}</span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => removeMedia(index)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
+              </>
               )}
 
-              <div className="flex justify-between">
+              <div className="flex justify-between pt-4">
                 <Button variant="outline" onClick={handlePrevStep}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
