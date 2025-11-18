@@ -1081,6 +1081,111 @@ export default function Campanhas() {
                 onChange={(workflow) => setNewCampaign({ ...newCampaign, workflow })}
               />
 
+              {/* Resumo da Campanha */}
+              <div className="grid grid-cols-3 gap-4 mt-6">
+                <Card className="p-4 border-primary/20 bg-primary/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-5 h-5 text-primary" />
+                    <span className="text-sm font-medium text-muted-foreground">Pessoas Afetadas</span>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {(() => {
+                      // Calcular total de afetados baseado nas segmentações
+                      const mockAffectedCounts: Record<string, number> = {
+                        'by_purchase_count': 2847,
+                        'birthday': 142,
+                        'inactive_customers': 1523,
+                        'active_coupon': 634,
+                        'high_ticket': 458,
+                        'purchase_value_x': 891,
+                        'lead_captured': 3241,
+                        'cart_recovered_customer': 287,
+                        'no_purchase_x_days': 1876,
+                        'gender_male': 4562,
+                        'gender_female': 5123,
+                        'by_state': 9685,
+                        'all': 9685
+                      };
+                      
+                      const total = newCampaign.segmentations.reduce((sum, seg) => {
+                        return sum + (mockAffectedCounts[seg] || 0);
+                      }, 0);
+                      
+                      return total.toLocaleString('pt-BR');
+                    })()}
+                  </p>
+                </Card>
+
+                <Card className="p-4 border-blue-500/20 bg-blue-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap className="w-5 h-5 text-blue-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Créditos</span>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {(() => {
+                      const mockAffectedCounts: Record<string, number> = {
+                        'by_purchase_count': 2847,
+                        'birthday': 142,
+                        'inactive_customers': 1523,
+                        'active_coupon': 634,
+                        'high_ticket': 458,
+                        'purchase_value_x': 891,
+                        'lead_captured': 3241,
+                        'cart_recovered_customer': 287,
+                        'no_purchase_x_days': 1876,
+                        'gender_male': 4562,
+                        'gender_female': 5123,
+                        'by_state': 9685,
+                        'all': 9685
+                      };
+                      
+                      const total = newCampaign.segmentations.reduce((sum, seg) => {
+                        return sum + (mockAffectedCounts[seg] || 0);
+                      }, 0);
+                      
+                      const credits = Math.ceil(total / 100); // 1 crédito a cada 100 pessoas
+                      return credits.toLocaleString('pt-BR');
+                    })()}
+                  </p>
+                </Card>
+
+                <Card className="p-4 border-green-500/20 bg-green-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-5 h-5 text-green-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Valor Total</span>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {(() => {
+                      const mockAffectedCounts: Record<string, number> = {
+                        'by_purchase_count': 2847,
+                        'birthday': 142,
+                        'inactive_customers': 1523,
+                        'active_coupon': 634,
+                        'high_ticket': 458,
+                        'purchase_value_x': 891,
+                        'lead_captured': 3241,
+                        'cart_recovered_customer': 287,
+                        'no_purchase_x_days': 1876,
+                        'gender_male': 4562,
+                        'gender_female': 5123,
+                        'by_state': 9685,
+                        'all': 9685
+                      };
+                      
+                      const total = newCampaign.segmentations.reduce((sum, seg) => {
+                        return sum + (mockAffectedCounts[seg] || 0);
+                      }, 0);
+                      
+                      const credits = Math.ceil(total / 100);
+                      const valorPorCredito = 0.10;
+                      const valorTotal = credits * valorPorCredito;
+                      
+                      return `R$ ${valorTotal.toFixed(2)}`;
+                    })()}
+                  </p>
+                </Card>
+              </div>
+
               <div className="flex justify-between">
                 <Button variant="outline" onClick={handlePrevStep}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
@@ -1407,10 +1512,115 @@ export default function Campanhas() {
                 </p>
               </div>
 
+              {/* Resumo da Campanha */}
+              <div className="grid grid-cols-3 gap-4 mt-6">
+                <Card className="p-4 border-primary/20 bg-primary/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-5 h-5 text-primary" />
+                    <span className="text-sm font-medium text-muted-foreground">Pessoas Afetadas</span>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {(() => {
+                      // Calcular total de afetados baseado nas segmentações
+                      const mockAffectedCounts: Record<string, number> = {
+                        'by_purchase_count': 2847,
+                        'birthday': 142,
+                        'inactive_customers': 1523,
+                        'active_coupon': 634,
+                        'high_ticket': 458,
+                        'purchase_value_x': 891,
+                        'lead_captured': 3241,
+                        'cart_recovered_customer': 287,
+                        'no_purchase_x_days': 1876,
+                        'gender_male': 4562,
+                        'gender_female': 5123,
+                        'by_state': 9685,
+                        'all': 9685
+                      };
+                      
+                      const total = newCampaign.segmentations.reduce((sum, seg) => {
+                        return sum + (mockAffectedCounts[seg] || 0);
+                      }, 0);
+                      
+                      return total.toLocaleString('pt-BR');
+                    })()}
+                  </p>
+                </Card>
+
+                <Card className="p-4 border-blue-500/20 bg-blue-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap className="w-5 h-5 text-blue-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Créditos</span>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {(() => {
+                      const mockAffectedCounts: Record<string, number> = {
+                        'by_purchase_count': 2847,
+                        'birthday': 142,
+                        'inactive_customers': 1523,
+                        'active_coupon': 634,
+                        'high_ticket': 458,
+                        'purchase_value_x': 891,
+                        'lead_captured': 3241,
+                        'cart_recovered_customer': 287,
+                        'no_purchase_x_days': 1876,
+                        'gender_male': 4562,
+                        'gender_female': 5123,
+                        'by_state': 9685,
+                        'all': 9685
+                      };
+                      
+                      const total = newCampaign.segmentations.reduce((sum, seg) => {
+                        return sum + (mockAffectedCounts[seg] || 0);
+                      }, 0);
+                      
+                      const credits = Math.ceil(total / 100); // 1 crédito a cada 100 pessoas
+                      return credits.toLocaleString('pt-BR');
+                    })()}
+                  </p>
+                </Card>
+
+                <Card className="p-4 border-green-500/20 bg-green-500/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-5 h-5 text-green-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Valor Total</span>
+                  </div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {(() => {
+                      const mockAffectedCounts: Record<string, number> = {
+                        'by_purchase_count': 2847,
+                        'birthday': 142,
+                        'inactive_customers': 1523,
+                        'active_coupon': 634,
+                        'high_ticket': 458,
+                        'purchase_value_x': 891,
+                        'lead_captured': 3241,
+                        'cart_recovered_customer': 287,
+                        'no_purchase_x_days': 1876,
+                        'gender_male': 4562,
+                        'gender_female': 5123,
+                        'by_state': 9685,
+                        'all': 9685
+                      };
+                      
+                      const total = newCampaign.segmentations.reduce((sum, seg) => {
+                        return sum + (mockAffectedCounts[seg] || 0);
+                      }, 0);
+                      
+                      const credits = Math.ceil(total / 100);
+                      const valorPorCredito = 0.10;
+                      const valorTotal = credits * valorPorCredito;
+                      
+                      return `R$ ${valorTotal.toFixed(2)}`;
+                    })()}
+                  </p>
+                </Card>
+              </div>
+
               <div className="grid gap-4 mt-6">
                 <Label>Quando enviar a campanha?</Label>
                 
-                <Card 
+                <Card
                   className={`p-4 cursor-pointer hover:border-primary transition-colors ${
                     newCampaign.scheduleType === 'now' ? 'border-primary bg-primary/5' : ''
                   }`}
