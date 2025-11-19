@@ -1086,7 +1086,7 @@ export default function Campanhas() {
                 <Card className="p-4 border-primary/20 bg-primary/5">
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="w-5 h-5 text-primary" />
-                    <span className="text-sm font-medium text-muted-foreground">Pessoas Afetadas</span>
+                    <span className="text-sm font-medium text-muted-foreground">Contatos impactados</span>
                   </div>
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
@@ -1517,7 +1517,7 @@ export default function Campanhas() {
                 <Card className="p-4 border-primary/20 bg-primary/5">
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="w-5 h-5 text-primary" />
-                    <span className="text-sm font-medium text-muted-foreground">Pessoas Afetadas</span>
+                    <span className="text-sm font-medium text-muted-foreground">Contatos impactados</span>
                   </div>
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
