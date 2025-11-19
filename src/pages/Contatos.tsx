@@ -77,6 +77,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { LtvHistory } from '@/components/contacts/LtvHistory';
+import { ManualSaleDialog } from '@/components/contacts/ManualSaleDialog';
 
 interface Purchase {
   id: number;
@@ -120,6 +121,8 @@ export default function Contatos() {
   const [selectedContacts, setSelectedContacts] = useState<Set<number>>(new Set());
   const [isBulkCampaignOpen, setIsBulkCampaignOpen] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState('');
+  const [isManualSaleOpen, setIsManualSaleOpen] = useState(false);
+  const [selectedContactForSale, setSelectedContactForSale] = useState<{ id: number; name: string } | null>(null);
   
   // Estados de Filtro
   const [filters, setFilters] = useState({
@@ -1485,6 +1488,17 @@ export default function Contatos() {
                                       <Edit className="w-4 h-4 mr-2" />
                                       Editar Contato
                                     </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      className="justify-start"
+                                      onClick={() => {
+                                        setSelectedContactForSale({ id: contact.id, name: contact.name });
+                                        setIsManualSaleOpen(true);
+                                      }}
+                                    >
+                                      <ShoppingCart className="w-4 h-4 mr-2" />
+                                      Cadastrar Venda
+                                    </Button>
                                     <Button variant="ghost" className="justify-start text-destructive">
                                       <Trash2 className="w-4 h-4 mr-2" />
                                       Excluir Contato
@@ -2372,6 +2386,14 @@ export default function Contatos() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Manual Sale Dialog */}
+      <ManualSaleDialog
+        open={isManualSaleOpen}
+        onOpenChange={setIsManualSaleOpen}
+        contactName={selectedContactForSale?.name || ''}
+        contactId={selectedContactForSale?.id || 0}
+      />
     </Layout>
   );
 }
