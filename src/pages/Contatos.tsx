@@ -1463,6 +1463,16 @@ export default function Contatos() {
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedContactForSale({ id: contact.id, name: contact.name });
+                                  setIsManualSaleOpen(true);
+                                }}
+                              >
+                                <ShoppingCart className="w-4 h-4" />
+                              </Button>
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button variant="ghost" size="icon">
