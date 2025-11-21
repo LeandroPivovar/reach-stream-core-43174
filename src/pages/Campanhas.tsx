@@ -94,19 +94,16 @@ export default function Campanhas() {
     campaignType: '' as 'dispatch' | 'coupon' | 'giftback' | '',
     campaignConfig: {
       enableCoupon: false,
-      enableCashback: false,
+      enableGiftback: false,
       coupon: {
         discountType: 'percentage' as 'percentage' | 'fixed',
         discountValue: '',
         validityDate: undefined as Date | undefined
       },
-      cashback: {
-        returnPercentage: '',
-        validityDate: undefined as Date | undefined
-      },
       giftback: {
         giftValue: '',
-        maxRedemptions: ''
+        maxRedemptions: '',
+        validityDate: undefined as Date | undefined
       }
     },
     email: { 
@@ -252,7 +249,7 @@ export default function Campanhas() {
 
   const getTotalSteps = () => {
     if (newCampaign.campaignComplexity === 'simple') {
-      // Simple: 1. Complexity + 2. Segmentation + 3. Basic Data + 4. Channel + 5. Email/SMS/WhatsApp + 6. Coupon/Cashback + 7. Tracking/Send
+      // Simple: 1. Complexity + 2. Segmentation + 3. Basic Data + 4. Channel + 5. Email/SMS/WhatsApp + 6. Coupon/Giftback + 7. Tracking/Send
       return 7;
     }
     // Advanced: 1. Complexity + 2. Segmentation + 3. Name + 4. Workflow (tudo configurado lá)
@@ -331,19 +328,16 @@ export default function Campanhas() {
       campaignType: '',
       campaignConfig: {
         enableCoupon: false,
-        enableCashback: false,
+        enableGiftback: false,
         coupon: {
           discountType: 'percentage',
           discountValue: '',
           validityDate: undefined
         },
-        cashback: {
-          returnPercentage: '',
-          validityDate: undefined
-        },
         giftback: {
           giftValue: '',
-          maxRedemptions: ''
+          maxRedemptions: '',
+          validityDate: undefined
         }
       },
       email: { 
@@ -606,19 +600,16 @@ export default function Campanhas() {
             campaignType: '',
             campaignConfig: {
               enableCoupon: false,
-              enableCashback: false,
+              enableGiftback: false,
               coupon: {
                 discountType: 'percentage',
                 discountValue: '',
                 validityDate: undefined
               },
-              cashback: {
-                returnPercentage: '',
-                validityDate: undefined
-              },
               giftback: {
                 giftValue: '',
-                maxRedemptions: ''
+                maxRedemptions: '',
+                validityDate: undefined
               }
             },
             email: { 
@@ -709,7 +700,7 @@ export default function Campanhas() {
                           Controle total com automações, cupons e análises detalhadas
                         </p>
                         <ul className="text-xs text-muted-foreground space-y-1">
-                          <li>• Cupons de desconto e gift back / cashback</li>
+                          <li>• Cupons de desconto e giftback</li>
                           <li>• Editor HTML avançado para e-mails</li>
                           <li>• Workflow de automação personalizado</li>
                           <li>• Projeção de resultados e tracking completo</li>
@@ -1364,7 +1355,7 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 6: Cupom e Cashback (apenas para simple) */}
+          {/* Etapa 6: Cupom e Giftback (apenas para simple) */}
           {newCampaign.campaignComplexity === 'simple' && currentStep === 6 && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
@@ -1399,18 +1390,18 @@ export default function Campanhas() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox 
-                      id="enable-cashback"
-                      checked={newCampaign.campaignConfig.enableCashback}
+                      id="enable-giftback"
+                      checked={newCampaign.campaignConfig.enableGiftback}
                       onCheckedChange={(checked) => setNewCampaign({
                         ...newCampaign,
                         campaignConfig: {
                           ...newCampaign.campaignConfig,
-                          enableCashback: checked as boolean
+                          enableGiftback: checked as boolean
                         }
                       })}
                     />
-                    <label htmlFor="enable-cashback" className="text-sm font-medium cursor-pointer">
-                      Cashback
+                    <label htmlFor="enable-giftback" className="text-sm font-medium cursor-pointer">
+                      Giftback
                     </label>
                   </div>
                 </div>
@@ -1557,38 +1548,59 @@ export default function Campanhas() {
                 </Card>
               )}
 
-              {/* Cashback */}
-              {newCampaign.campaignConfig.enableCashback && (
+              {/* Giftback */}
+              {newCampaign.campaignConfig.enableGiftback && (
                 <Card className="p-4">
                   <div className="flex items-start gap-3 mb-4">
                     <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <DollarSign className="w-5 h-5 text-green-500" />
+                      <Gift className="w-5 h-5 text-green-500" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-1">Cashback</h3>
+                      <h3 className="font-semibold text-lg mb-1">Giftback</h3>
                       <p className="text-sm text-muted-foreground">
-                        Configure o cashback que será devolvido aos clientes
+                        Configure o giftback que será oferecido aos clientes
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="cashback-percentage">Percentual de Cashback (%)</Label>
+                      <Label htmlFor="giftback-value">Valor do Giftback (R$)</Label>
                       <Input
-                        id="cashback-percentage"
+                        id="giftback-value"
                         type="number"
                         min="0"
-                        max="100"
-                        placeholder="Ex: 5"
-                        value={newCampaign.campaignConfig.cashback.returnPercentage}
+                        step="0.01"
+                        placeholder="Ex: 50.00"
+                        value={newCampaign.campaignConfig.giftback.giftValue}
                         onChange={(e) => setNewCampaign({
                           ...newCampaign,
                           campaignConfig: {
                             ...newCampaign.campaignConfig,
-                            cashback: {
-                              ...newCampaign.campaignConfig.cashback,
-                              returnPercentage: e.target.value
+                            giftback: {
+                              ...newCampaign.campaignConfig.giftback,
+                              giftValue: e.target.value
+                            }
+                          }
+                        })}
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="max-redemptions">Número Máximo de Resgates</Label>
+                      <Input
+                        id="max-redemptions"
+                        type="number"
+                        min="1"
+                        placeholder="Ex: 100"
+                        value={newCampaign.campaignConfig.giftback.maxRedemptions}
+                        onChange={(e) => setNewCampaign({
+                          ...newCampaign,
+                          campaignConfig: {
+                            ...newCampaign.campaignConfig,
+                            giftback: {
+                              ...newCampaign.campaignConfig.giftback,
+                              maxRedemptions: e.target.value
                             }
                           }
                         })}
@@ -1597,19 +1609,19 @@ export default function Campanhas() {
 
                     {/* Data de Validade */}
                     <div className="grid gap-2">
-                      <Label>Data de Validade do Cashback</Label>
+                      <Label>Data de Validade do Giftback</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             className={cn(
                               "justify-start text-left font-normal",
-                              !newCampaign.campaignConfig.cashback.validityDate && "text-muted-foreground"
+                              !newCampaign.campaignConfig.giftback.validityDate && "text-muted-foreground"
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {newCampaign.campaignConfig.cashback.validityDate ? (
-                              format(newCampaign.campaignConfig.cashback.validityDate, "dd/MM/yyyy")
+                            {newCampaign.campaignConfig.giftback.validityDate ? (
+                              format(newCampaign.campaignConfig.giftback.validityDate, "dd/MM/yyyy")
                             ) : (
                               <span>Selecione a data de validade</span>
                             )}
@@ -1618,13 +1630,13 @@ export default function Campanhas() {
                         <PopoverContent className="w-auto p-0 bg-background" align="start">
                           <Calendar
                             mode="single"
-                            selected={newCampaign.campaignConfig.cashback.validityDate}
+                            selected={newCampaign.campaignConfig.giftback.validityDate}
                             onSelect={(date) => setNewCampaign({
                               ...newCampaign,
                               campaignConfig: {
                                 ...newCampaign.campaignConfig,
-                                cashback: {
-                                  ...newCampaign.campaignConfig.cashback,
+                                giftback: {
+                                  ...newCampaign.campaignConfig.giftback,
                                   validityDate: date
                                 }
                               }
