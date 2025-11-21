@@ -34,6 +34,23 @@ import { cn } from '@/lib/utils';
 import { WorkflowCanvas, WorkflowStep } from '@/components/workflow/WorkflowCanvas';
 import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
 import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { 
   MessageSquare, 
   Mail, 
@@ -66,6 +83,8 @@ export default function Campanhas() {
   const [isNewCampaignOpen, setIsNewCampaignOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const contactsPerPage = 10;
   const [newCampaign, setNewCampaign] = useState({
     campaignComplexity: '' as 'simple' | 'advanced' | '',
     name: '',
@@ -236,9 +255,46 @@ export default function Campanhas() {
       // Simple: 1. Complexity + 2. Segmentation + 3. Basic Data + 4. Channel + 5. Email/SMS/WhatsApp + 6. Coupon/Cashback + 7. Tracking/Send
       return 7;
     }
-    // Advanced: 1. Complexity + 2. Segmentation + 3. Workflow (tudo configurado lá)
-    return 3;
+    // Advanced: 1. Complexity + 2. Segmentation + 3. Name + 4. Workflow (tudo configurado lá)
+    return 4;
   };
+
+  // Mock contacts data
+  const mockContacts = [
+    { id: 1, name: 'João Silva', email: 'joao@email.com', phone: '(11) 98765-4321', segment: 'VIP' },
+    { id: 2, name: 'Maria Santos', email: 'maria@email.com', phone: '(11) 97654-3210', segment: 'Regular' },
+    { id: 3, name: 'Pedro Oliveira', email: 'pedro@email.com', phone: '(11) 96543-2109', segment: 'VIP' },
+    { id: 4, name: 'Ana Costa', email: 'ana@email.com', phone: '(11) 95432-1098', segment: 'Novos' },
+    { id: 5, name: 'Carlos Souza', email: 'carlos@email.com', phone: '(11) 94321-0987', segment: 'Regular' },
+    { id: 6, name: 'Fernanda Lima', email: 'fernanda@email.com', phone: '(11) 93210-9876', segment: 'VIP' },
+    { id: 7, name: 'Ricardo Alves', email: 'ricardo@email.com', phone: '(11) 92109-8765', segment: 'Inativos' },
+    { id: 8, name: 'Juliana Rocha', email: 'juliana@email.com', phone: '(11) 91098-7654', segment: 'Regular' },
+    { id: 9, name: 'Bruno Martins', email: 'bruno@email.com', phone: '(11) 90987-6543', segment: 'Novos' },
+    { id: 10, name: 'Patricia Dias', email: 'patricia@email.com', phone: '(11) 89876-5432', segment: 'VIP' },
+    { id: 11, name: 'Lucas Ferreira', email: 'lucas@email.com', phone: '(11) 88765-4321', segment: 'Regular' },
+    { id: 12, name: 'Amanda Ribeiro', email: 'amanda@email.com', phone: '(11) 87654-3210', segment: 'Inativos' },
+    { id: 13, name: 'Rafael Gomes', email: 'rafael@email.com', phone: '(11) 86543-2109', segment: 'VIP' },
+    { id: 14, name: 'Camila Cardoso', email: 'camila@email.com', phone: '(11) 85432-1098', segment: 'Novos' },
+    { id: 15, name: 'Thiago Mendes', email: 'thiago@email.com', phone: '(11) 84321-0987', segment: 'Regular' },
+    { id: 16, name: 'Beatriz Castro', email: 'beatriz@email.com', phone: '(11) 83210-9876', segment: 'VIP' },
+    { id: 17, name: 'Gustavo Pinto', email: 'gustavo@email.com', phone: '(11) 82109-8765', segment: 'Regular' },
+    { id: 18, name: 'Larissa Barros', email: 'larissa@email.com', phone: '(11) 81098-7654', segment: 'Inativos' },
+    { id: 19, name: 'Rodrigo Teixeira', email: 'rodrigo@email.com', phone: '(11) 80987-6543', segment: 'Novos' },
+    { id: 20, name: 'Vanessa Moura', email: 'vanessa@email.com', phone: '(11) 79876-5432', segment: 'VIP' },
+  ];
+
+  const getFilteredContacts = () => {
+    if (newCampaign.segmentations.length === 0) return [];
+    // In a real app, this would filter based on actual segmentation rules
+    return mockContacts;
+  };
+
+  const filteredContacts = getFilteredContacts();
+  const totalPages = Math.ceil(filteredContacts.length / contactsPerPage);
+  const paginatedContacts = filteredContacts.slice(
+    (currentPage - 1) * contactsPerPage,
+    currentPage * contactsPerPage
+  );
 
   const handleNextStep = () => {
     if (currentStep < getTotalSteps()) {
@@ -540,6 +596,7 @@ export default function Campanhas() {
         setIsNewCampaignOpen(open);
         if (!open) {
           setCurrentStep(1);
+          setCurrentPage(1);
           setNewCampaign({
             campaignComplexity: '',
             name: '',
@@ -586,7 +643,7 @@ export default function Campanhas() {
         <DialogContent className={cn(
           "overflow-y-auto",
           // Expandir apenas no passo do workflow
-          newCampaign.campaignComplexity === 'advanced' && currentStep === 3
+          newCampaign.campaignComplexity === 'advanced' && currentStep === 4
             ? "!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] p-8"
             : newCampaign.campaignComplexity === 'simple' && currentStep === 5 && newCampaign.channel === 'whatsapp'
             ? "max-w-6xl max-h-[90vh]"
@@ -680,8 +737,81 @@ export default function Campanhas() {
             <div className="space-y-6 py-4">
               <SegmentationPicker
                 selectedSegments={newCampaign.segmentations}
-                onSegmentsChange={(segments) => setNewCampaign({ ...newCampaign, segmentations: segments })}
+                onSegmentsChange={(segments) => {
+                  setNewCampaign({ ...newCampaign, segmentations: segments });
+                  setCurrentPage(1); // Reset pagination when segmentation changes
+                }}
               />
+
+              {/* Tabela de Contatos Impactados */}
+              {newCampaign.segmentations.length > 0 && filteredContacts.length > 0 && (
+                <Card className="p-6">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-1">Contatos que receberão a campanha</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {filteredContacts.length} contato(s) impactado(s)
+                    </p>
+                  </div>
+                  
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>E-mail</TableHead>
+                          <TableHead>Telefone</TableHead>
+                          <TableHead>Segmento</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedContacts.map((contact) => (
+                          <TableRow key={contact.id}>
+                            <TableCell className="font-medium">{contact.name}</TableCell>
+                            <TableCell>{contact.email}</TableCell>
+                            <TableCell>{contact.phone}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{contact.segment}</Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Paginação */}
+                  {totalPages > 1 && (
+                    <div className="mt-4">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious 
+                              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                onClick={() => setCurrentPage(page)}
+                                isActive={currentPage === page}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext 
+                              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                </Card>
+              )}
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={handlePrevStep}>
@@ -1062,8 +1192,43 @@ export default function Campanhas() {
             </div>
           )}
 
+          {/* Etapa 3: Nome da Campanha (apenas para advanced) */}
+          {currentStep === 3 && newCampaign.campaignComplexity === 'advanced' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Defina o nome da sua campanha avançada
+                </p>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="campaign-name-advanced">Nome da Campanha *</Label>
+                <Input
+                  id="campaign-name-advanced"
+                  value={newCampaign.name}
+                  onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
+                  placeholder="Ex: Campanha de Reengajamento Q1 2025"
+                />
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleNextStep}
+                  disabled={!newCampaign.name}
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Workflow Step (only for advanced) */}
-          {newCampaign.campaignComplexity === 'advanced' && currentStep === 3 && (
+          {newCampaign.campaignComplexity === 'advanced' && currentStep === 4 && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
