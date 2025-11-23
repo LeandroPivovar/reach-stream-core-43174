@@ -143,6 +143,7 @@ export default function Contatos() {
     daysWithoutPurchase: 0, // dias sem comprar
     gender: 'all', // masculino, feminino, todos
     state: 'all', // estado
+    segmentations: [] as string[], // segmentações
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
@@ -462,6 +463,14 @@ export default function Contatos() {
       return false;
     }
 
+    // Filtro por segmentações
+    if (filters.segmentations.length > 0) {
+      const hasMatchingSegmentation = filters.segmentations.some(seg => 
+        contact.segmentations.includes(seg)
+      );
+      if (!hasMatchingSegmentation) return false;
+    }
+
     return true;
   });
 
@@ -481,7 +490,8 @@ export default function Contatos() {
     filters.cartRecovered ||
     filters.daysWithoutPurchase > 0 ||
     filters.gender !== 'all' ||
-    filters.state !== 'all';
+    filters.state !== 'all' ||
+    filters.segmentations.length > 0;
 
   const clearFilters = () => {
     setFilters({
@@ -502,6 +512,7 @@ export default function Contatos() {
       daysWithoutPurchase: 0,
       gender: 'all',
       state: 'all',
+      segmentations: [],
     });
   };
 
@@ -1115,6 +1126,72 @@ export default function Contatos() {
                                   ))}
                                 </SelectContent>
                               </Select>
+                            </div>
+
+                            {/* Segmentações */}
+                            <div className="space-y-2">
+                              <Label className="text-xs font-medium">
+                                <Target className="w-3 h-3 inline mr-1" />
+                                Segmentações
+                              </Label>
+                              <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
+                                {[
+                                  { id: 'by_purchase_count', label: 'Por número de compras' },
+                                  { id: 'birthday', label: 'Aniversariantes' },
+                                  { id: 'inactive_customers', label: 'Clientes inativos' },
+                                  { id: 'active_coupon', label: 'Com cupom ativo' },
+                                  { id: 'high_ticket', label: 'Maior ticket médio' },
+                                  { id: 'purchase_value_x', label: 'Valor de compra X' },
+                                  { id: 'lead_captured', label: 'Lead capturado' },
+                                  { id: 'cart_recovered_customer', label: 'Carrinho recuperado' },
+                                  { id: 'no_purchase_x_days', label: 'Sem compra há X dias' },
+                                  { id: 'gender_male', label: 'Sexo: Masculino' },
+                                  { id: 'gender_female', label: 'Sexo: Feminino' },
+                                  { id: 'by_state', label: 'Por estado' },
+                                ].map((seg) => (
+                                  <div key={seg.id} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={`seg-${seg.id}`}
+                                      checked={filters.segmentations.includes(seg.id)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          setFilters({ ...filters, segmentations: [...filters.segmentations, seg.id] });
+                                        } else {
+                                          setFilters({ ...filters, segmentations: filters.segmentations.filter(s => s !== seg.id) });
+                                        }
+                                      }}
+                                    />
+                                    <Label htmlFor={`seg-${seg.id}`} className="text-xs cursor-pointer">
+                                      {seg.label}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
+                              {filters.segmentations.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {filters.segmentations.map((segId) => {
+                                    const seg = [
+                                      { id: 'by_purchase_count', label: 'Por número de compras' },
+                                      { id: 'birthday', label: 'Aniversariantes' },
+                                      { id: 'inactive_customers', label: 'Clientes inativos' },
+                                      { id: 'active_coupon', label: 'Com cupom ativo' },
+                                      { id: 'high_ticket', label: 'Maior ticket médio' },
+                                      { id: 'purchase_value_x', label: 'Valor de compra X' },
+                                      { id: 'lead_captured', label: 'Lead capturado' },
+                                      { id: 'cart_recovered_customer', label: 'Carrinho recuperado' },
+                                      { id: 'no_purchase_x_days', label: 'Sem compra há X dias' },
+                                      { id: 'gender_male', label: 'Sexo: Masculino' },
+                                      { id: 'gender_female', label: 'Sexo: Feminino' },
+                                      { id: 'by_state', label: 'Por estado' },
+                                    ].find(s => s.id === segId);
+                                    return seg ? (
+                                      <Badge key={segId} variant="secondary" className="text-xs">
+                                        {seg.label}
+                                      </Badge>
+                                    ) : null;
+                                  })}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
