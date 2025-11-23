@@ -123,6 +123,7 @@ export default function Contatos() {
   const [selectedCampaign, setSelectedCampaign] = useState('');
   const [isManualSaleOpen, setIsManualSaleOpen] = useState(false);
   const [selectedContactForSale, setSelectedContactForSale] = useState<{ id: number; name: string } | null>(null);
+  const [selectedSegmentationView, setSelectedSegmentationView] = useState<string | null>(null);
   
   // Estados de Filtro
   const [filters, setFilters] = useState({
@@ -1656,10 +1657,169 @@ export default function Contatos() {
 
           <TabsContent value="segmentations">
             <Card className="p-6">
-              <SegmentationPicker
-                selectedSegments={[]}
-                onSegmentsChange={(segments) => console.log('Segmentações:', segments)}
-              />
+              <div className="space-y-6">
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Clique em uma segmentação para visualizar os contatos que pertencem a ela.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {[
+                    { id: 'by_purchase_count', label: 'Clientes por número de compras', description: 'Segmentar por quantidade de compras' },
+                    { id: 'birthday', label: 'Aniversário', description: 'Clientes que fazem aniversário' },
+                    { id: 'inactive_customers', label: 'Clientes inativos', description: 'Sem compras por período prolongado' },
+                    { id: 'active_coupon', label: 'Clientes com cupom ativo', description: 'Possuem cupons válidos não utilizados' },
+                    { id: 'high_ticket', label: 'Clientes com maior ticket médio', description: 'Alto valor por compra' },
+                    { id: 'purchase_value_x', label: 'Valor de compra X', description: 'Compras acima de valor específico' },
+                    { id: 'lead_captured', label: 'Lead capturado', description: 'Lead obtido por formulário' },
+                    { id: 'cart_recovered_customer', label: 'Carrinho recuperado', description: 'Cliente que recuperou carrinho' },
+                    { id: 'no_purchase_x_days', label: 'Clientes que não compram há X dias', description: 'Inativos por período específico' },
+                    { id: 'gender_male', label: 'Sexo: Masculino', description: 'Clientes do sexo masculino' },
+                    { id: 'gender_female', label: 'Sexo: Feminino', description: 'Clientes do sexo feminino' },
+                    { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica' },
+                  ].map((segment) => {
+                    const contactsInSegment = contacts.filter(c => c.segmentations.includes(segment.id));
+                    const isSelected = selectedSegmentationView === segment.id;
+                    
+                    return (
+                      <Card
+                        key={segment.id}
+                        className={`p-4 cursor-pointer hover:border-primary transition-all ${
+                          isSelected ? 'border-primary bg-primary/5 shadow-md' : ''
+                        }`}
+                        onClick={() => setSelectedSegmentationView(isSelected ? null : segment.id)}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-sm">{segment.label}</h4>
+                            <Badge variant={isSelected ? "default" : "secondary"} className="text-xs">
+                              {contactsInSegment.length}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{segment.description}</p>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                {/* Lista de Contatos da Segmentação Selecionada */}
+                {selectedSegmentationView && (
+                  <Card className="p-6 animate-fade-in">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            {[
+                              { id: 'by_purchase_count', label: 'Clientes por número de compras' },
+                              { id: 'birthday', label: 'Aniversariantes' },
+                              { id: 'inactive_customers', label: 'Clientes inativos' },
+                              { id: 'active_coupon', label: 'Com cupom ativo' },
+                              { id: 'high_ticket', label: 'Maior ticket médio' },
+                              { id: 'purchase_value_x', label: 'Valor de compra X' },
+                              { id: 'lead_captured', label: 'Lead capturado' },
+                              { id: 'cart_recovered_customer', label: 'Carrinho recuperado' },
+                              { id: 'no_purchase_x_days', label: 'Sem compra há X dias' },
+                              { id: 'gender_male', label: 'Sexo: Masculino' },
+                              { id: 'gender_female', label: 'Sexo: Feminino' },
+                              { id: 'by_state', label: 'Por estado' },
+                            ].find(s => s.id === selectedSegmentationView)?.label}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {contacts.filter(c => c.segmentations.includes(selectedSegmentationView)).length} contatos
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedSegmentationView(null)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="text-left py-3 px-2 font-semibold text-sm">Nome</th>
+                              <th className="text-left py-3 px-2 font-semibold text-sm">Email</th>
+                              <th className="text-left py-3 px-2 font-semibold text-sm">Telefone</th>
+                              <th className="text-left py-3 px-2 font-semibold text-sm">Grupo</th>
+                              <th className="text-left py-3 px-2 font-semibold text-sm">Status</th>
+                              <th className="text-left py-3 px-2 font-semibold text-sm">Localização</th>
+                              <th className="text-right py-3 px-2 font-semibold text-sm">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {contacts
+                              .filter(c => c.segmentations.includes(selectedSegmentationView))
+                              .map((contact) => {
+                                const detail = contactDetails[contact.id];
+                                const score = detail ? calculateScore(detail) : 0;
+                                const scoreInfo = getScoreColor(score);
+
+                                return (
+                                  <tr key={contact.id} className="border-b hover:bg-muted/50">
+                                    <td className="py-4 px-2">
+                                      <div className="font-medium">{contact.name}</div>
+                                    </td>
+                                    <td className="py-4 px-2">
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <Mail className="w-3 h-3" />
+                                        {contact.email}
+                                      </div>
+                                    </td>
+                                    <td className="py-4 px-2 text-sm text-muted-foreground">
+                                      {contact.phone}
+                                    </td>
+                                    <td className="py-4 px-2">
+                                      <Badge variant="outline">{contact.group}</Badge>
+                                    </td>
+                                    <td className="py-4 px-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className={`w-2 h-2 rounded-full ${getStatusColor(contact.status)}`} />
+                                        <span className="text-sm">{contact.status}</span>
+                                      </div>
+                                    </td>
+                                    <td className="py-4 px-2">
+                                      <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                                        <MapPin className="w-3 h-3" />
+                                        <span>{contact.city}, {contact.state}</span>
+                                      </div>
+                                    </td>
+                                    <td className="py-4 px-2 text-right">
+                                      <div className="flex justify-end gap-2">
+                                        <Button 
+                                          variant="ghost" 
+                                          size="icon"
+                                          onClick={() => setSelectedContactId(contact.id)}
+                                        >
+                                          <Eye className="w-4 h-4" />
+                                        </Button>
+                                        <Button 
+                                          variant="ghost" 
+                                          size="icon"
+                                          onClick={() => {
+                                            setSelectedContactForSale({ id: contact.id, name: contact.name });
+                                            setIsManualSaleOpen(true);
+                                          }}
+                                        >
+                                          <ShoppingCart className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+              </div>
             </Card>
           </TabsContent>
 
