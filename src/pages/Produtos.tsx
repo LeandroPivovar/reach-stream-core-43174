@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -7,11 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { SuccessModal } from '@/components/ui/success-modal';
+import { useToast } from '@/hooks/use-toast';
+import { api, Product as ApiProduct, Sale } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
@@ -21,6 +26,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Package,
   MoreHorizontal,
@@ -34,171 +44,232 @@ import {
   X,
   History,
   User,
+  Filter,
 } from 'lucide-react';
 
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  cost: number;
-  stock: number;
-  category: string;
-  status: 'active' | 'inactive' | 'out_of_stock';
-  image?: string;
-  sku: string;
-  sales: number;
-  createdAt: string;
-}
-
-interface PurchaseHistory {
-  id: number;
-  customerName: string;
-  customerEmail: string;
-  quantity: number;
-  totalValue: number;
-  purchaseDate: string;
-  status: 'completed' | 'processing' | 'cancelled';
+interface Product extends ApiProduct {
+  status?: 'active' | 'inactive' | 'out_of_stock';
+  sales?: number;
 }
 
 export default function Produtos() {
+  const { toast } = useToast();
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
   const [isPurchaseHistoryOpen, setIsPurchaseHistoryOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<number | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
+  const [isLoadingSales, setIsLoadingSales] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successModalContent, setSuccessModalContent] = useState({
+    title: '',
+    description: '',
+  });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]); // Todos os produtos (sem filtros)
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [filters, setFilters] = useState({
+    category: 'all',
+    minPrice: '',
+    maxPrice: '',
+    stockFilter: 'all', // 'all', 'with_stock', 'without_stock'
+  });
   const [newProduct, setNewProduct] = useState({
     name: '',
     description: '',
     price: '',
-    cost: '',
-    stock: '',
+    stock: '0',
     category: '',
     sku: '',
-    image: '',
+    active: true,
+  });
+  const [editProduct, setEditProduct] = useState({
+    name: '',
+    description: '',
+    price: '',
+    stock: '0',
+    category: '',
+    sku: '',
+    active: true,
   });
 
-  // Mock data for purchase history
-  const purchaseHistoryData: Record<number, PurchaseHistory[]> = {
-    1: [
-      { id: 1, customerName: 'Maria Silva', customerEmail: 'maria@email.com', quantity: 2, totalValue: 179.80, purchaseDate: '2024-03-15 14:30', status: 'completed' },
-      { id: 2, customerName: 'João Santos', customerEmail: 'joao@email.com', quantity: 1, totalValue: 89.90, purchaseDate: '2024-03-14 10:20', status: 'completed' },
-      { id: 3, customerName: 'Ana Costa', customerEmail: 'ana@email.com', quantity: 3, totalValue: 269.70, purchaseDate: '2024-03-13 16:45', status: 'processing' },
-      { id: 4, customerName: 'Pedro Oliveira', customerEmail: 'pedro@email.com', quantity: 1, totalValue: 89.90, purchaseDate: '2024-03-12 09:15', status: 'completed' },
-    ],
-    2: [
-      { id: 5, customerName: 'Carlos Mendes', customerEmail: 'carlos@email.com', quantity: 1, totalValue: 299.90, purchaseDate: '2024-03-10 11:30', status: 'completed' },
-      { id: 6, customerName: 'Lucia Ferreira', customerEmail: 'lucia@email.com', quantity: 2, totalValue: 599.80, purchaseDate: '2024-03-08 15:20', status: 'completed' },
-    ],
-    3: [
-      { id: 7, customerName: 'Roberto Lima', customerEmail: 'roberto@email.com', quantity: 1, totalValue: 599.90, purchaseDate: '2024-03-05 13:45', status: 'completed' },
-    ],
-    4: [
-      { id: 8, customerName: 'Fernanda Alves', customerEmail: 'fernanda@email.com', quantity: 1, totalValue: 179.90, purchaseDate: '2024-03-11 10:00', status: 'completed' },
-      { id: 9, customerName: 'Ricardo Souza', customerEmail: 'ricardo@email.com', quantity: 2, totalValue: 359.80, purchaseDate: '2024-03-09 14:30', status: 'completed' },
-    ],
-  };
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: 1,
-      name: 'Camiseta Premium',
-      description: 'Camiseta 100% algodão com estampa exclusiva',
-      price: 89.90,
-      cost: 35.00,
-      stock: 150,
-      category: 'Vestuário',
-      status: 'active',
-      sku: 'CAM-001',
-      sales: 342,
-      createdAt: '2024-01-15',
-    },
-    {
-      id: 2,
-      name: 'Tênis Esportivo',
-      description: 'Tênis confortável para corrida e caminhada',
-      price: 299.90,
-      cost: 150.00,
-      stock: 45,
-      category: 'Calçados',
-      status: 'active',
-      sku: 'TEN-002',
-      sales: 128,
-      createdAt: '2024-02-10',
-    },
-    {
-      id: 3,
-      name: 'Relógio Digital',
-      description: 'Relógio smartwatch com múltiplas funções',
-      price: 599.90,
-      cost: 280.00,
-      stock: 0,
-      category: 'Eletrônicos',
-      status: 'out_of_stock',
-      sku: 'REL-003',
-      sales: 89,
-      createdAt: '2024-03-05',
-    },
-    {
-      id: 4,
-      name: 'Mochila Executiva',
-      description: 'Mochila com compartimento para notebook',
-      price: 179.90,
-      cost: 80.00,
-      stock: 12,
-      category: 'Acessórios',
-      status: 'active',
-      sku: 'MOC-004',
-      sales: 256,
-      createdAt: '2024-01-20',
-    },
-  ]);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-        setNewProduct({ ...newProduct, image: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+  const loadProducts = async () => {
+    try {
+      setIsLoading(true);
+      const data = await api.getProducts();
+      // Adicionar status calculado baseado em active e stock
+      const productsWithStatus = data.map(p => {
+        const stock = typeof p.stock === 'string' ? parseInt(p.stock, 10) : (typeof p.stock === 'number' ? p.stock : 0);
+        const active = p.active === true || p.active === 1;
+        return {
+          ...p,
+          stock: stock,
+          active: active,
+          status: !active ? 'inactive' : (stock === 0 ? 'out_of_stock' : 'active'),
+          sales: p.sales || 0, // Placeholder, pode ser implementado depois
+        };
+      });
+      setAllProducts(productsWithStatus);
+      // Aplicar filtros após carregar produtos
+      applyFilters(productsWithStatus, searchTerm, filters);
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error);
+      toast({
+        title: 'Erro ao carregar produtos',
+        description: error instanceof Error ? error.message : 'Não foi possível carregar os produtos',
+        variant: 'destructive',
+      });
+      // Garantir que products seja sempre um array
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleCreateProduct = () => {
-    const product: Product = {
-      id: products.length + 1,
-      name: newProduct.name,
-      description: newProduct.description,
-      price: parseFloat(newProduct.price),
-      cost: parseFloat(newProduct.cost),
-      stock: parseInt(newProduct.stock),
-      category: newProduct.category,
-      status: 'active',
-      sku: newProduct.sku,
-      image: newProduct.image,
-      sales: 0,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
 
-    setProducts([...products, product]);
-    setIsNewProductOpen(false);
-    setNewProduct({
-      name: '',
-      description: '',
-      price: '',
-      cost: '',
-      stock: '',
-      category: '',
-      sku: '',
-      image: '',
-    });
-    setImagePreview('');
+  const handleCreateProduct = async () => {
+    if (!newProduct.name || !newProduct.price) {
+      toast({
+        title: 'Atenção',
+        description: 'Preencha pelo menos o nome e o preço do produto',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await api.createProduct({
+        name: newProduct.name,
+        description: newProduct.description || undefined,
+        price: parseFloat(newProduct.price),
+        stock: parseInt(newProduct.stock) || 0,
+        category: newProduct.category || undefined,
+        sku: newProduct.sku || undefined,
+        active: newProduct.active,
+      });
+
+      setSuccessModalContent({
+        title: 'Produto Criado com Sucesso!',
+        description: 'O produto foi adicionado ao seu catálogo.',
+      });
+      setShowSuccessModal(true);
+      
+      setIsNewProductOpen(false);
+      setNewProduct({
+        name: '',
+        description: '',
+        price: '',
+        stock: '0',
+        category: '',
+        sku: '',
+        active: true,
+      });
+      
+      await loadProducts();
+    } catch (error) {
+      toast({
+        title: 'Erro ao criar produto',
+        description: error instanceof Error ? error.message : 'Não foi possível criar o produto',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDeleteProduct = (id: number) => {
-    setProducts(products.filter(p => p.id !== id));
+  const handleEditProduct = async () => {
+    if (!selectedProduct || !editProduct.name || !editProduct.price) {
+      toast({
+        title: 'Atenção',
+        description: 'Preencha pelo menos o nome e o preço do produto',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await api.updateProduct(selectedProduct.id, {
+        name: editProduct.name,
+        description: editProduct.description || undefined,
+        price: parseFloat(editProduct.price),
+        stock: parseInt(editProduct.stock) || 0,
+        category: editProduct.category || undefined,
+        sku: editProduct.sku || undefined,
+        active: editProduct.active,
+      });
+
+      setSuccessModalContent({
+        title: 'Produto Atualizado com Sucesso!',
+        description: 'As alterações foram salvas.',
+      });
+      setShowSuccessModal(true);
+      
+      setIsEditProductOpen(false);
+      setSelectedProduct(null);
+      
+      await loadProducts();
+    } catch (error) {
+      toast({
+        title: 'Erro ao atualizar produto',
+        description: error instanceof Error ? error.message : 'Não foi possível atualizar o produto',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteClick = (id: number) => {
+    setProductToDelete(id);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return;
+
+    try {
+      await api.deleteProduct(productToDelete);
+      toast({
+        title: 'Produto excluído',
+        description: 'O produto foi removido com sucesso',
+      });
+      setIsDeleteConfirmOpen(false);
+      setProductToDelete(null);
+      await loadProducts();
+    } catch (error) {
+      toast({
+        title: 'Erro ao excluir produto',
+        description: error instanceof Error ? error.message : 'Não foi possível excluir o produto',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleOpenEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setEditProduct({
+      name: product.name,
+      description: product.description || '',
+      price: product.price.toString(),
+      stock: product.stock.toString(),
+      category: product.category || '',
+      sku: product.sku || '',
+      active: product.active,
+    });
+    setIsEditProductOpen(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -246,21 +317,401 @@ export default function Produtos() {
     }
   };
 
-  const handleViewPurchaseHistory = (product: Product) => {
+  const handleViewPurchaseHistory = async (product: Product) => {
     setSelectedProduct(product);
     setIsPurchaseHistoryOpen(true);
+    await loadSalesHistory(product.id);
+  };
+
+  // Função para aplicar filtros e busca
+  const applyFilters = (productsList: Product[], search: string, filterOptions: typeof filters) => {
+    let filtered = [...productsList];
+
+    // Aplicar busca
+    if (search.trim()) {
+      const searchLower = search.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(searchLower) ||
+        p.description?.toLowerCase().includes(searchLower) ||
+        p.sku?.toLowerCase().includes(searchLower) ||
+        p.category?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Aplicar filtro de categoria
+    if (filterOptions.category && filterOptions.category !== 'all') {
+      filtered = filtered.filter(p => p.category === filterOptions.category);
+    }
+
+    // Aplicar filtro de preço
+    if (filterOptions.minPrice) {
+      const minPrice = parseFloat(filterOptions.minPrice);
+      filtered = filtered.filter(p => {
+        const price = typeof p.price === 'string' ? parseFloat(p.price) : (typeof p.price === 'number' ? p.price : 0);
+        return price >= minPrice;
+      });
+    }
+
+    if (filterOptions.maxPrice) {
+      const maxPrice = parseFloat(filterOptions.maxPrice);
+      filtered = filtered.filter(p => {
+        const price = typeof p.price === 'string' ? parseFloat(p.price) : (typeof p.price === 'number' ? p.price : 0);
+        return price <= maxPrice;
+      });
+    }
+
+    // Aplicar filtro de estoque
+    if (filterOptions.stockFilter === 'with_stock') {
+      filtered = filtered.filter(p => {
+        const stock = typeof p.stock === 'string' ? parseInt(p.stock, 10) : (typeof p.stock === 'number' ? p.stock : 0);
+        return stock > 0;
+      });
+    } else if (filterOptions.stockFilter === 'without_stock') {
+      filtered = filtered.filter(p => {
+        const stock = typeof p.stock === 'string' ? parseInt(p.stock, 10) : (typeof p.stock === 'number' ? p.stock : 0);
+        return stock === 0;
+      });
+    }
+
+    setProducts(filtered);
+  };
+
+  // Efeito para aplicar filtros quando mudarem
+  useEffect(() => {
+    applyFilters(allProducts, searchTerm, filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, filters.category, filters.minPrice, filters.maxPrice, filters.stockFilter]);
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleFilterChange = (newFilters: Partial<typeof filters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      category: 'all',
+      minPrice: '',
+      maxPrice: '',
+      stockFilter: 'all',
+    });
+    setSearchTerm('');
+  };
+
+  // Funções de exportação
+  const exportToCSV = () => {
+    const headers = ['Nome', 'Descrição', 'SKU', 'Categoria', 'Preço', 'Estoque', 'Status', 'Ativo'];
+    const rows = products.map(p => [
+      p.name,
+      p.description || '',
+      p.sku || '',
+      p.category || '',
+      typeof p.price === 'string' ? parseFloat(p.price) : p.price,
+      typeof p.stock === 'string' ? parseInt(p.stock, 10) : p.stock,
+      p.status || 'active',
+      p.active ? 'Sim' : 'Não',
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `produtos_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToXLSX = async () => {
+    try {
+      // Criar conteúdo TSV (tab-separated) que Excel pode abrir
+      const headers = ['Nome', 'Descrição', 'SKU', 'Categoria', 'Preço', 'Estoque', 'Status', 'Ativo'];
+      const rows = products.map(p => [
+        p.name,
+        p.description || '',
+        p.sku || '',
+        p.category || '',
+        typeof p.price === 'string' ? parseFloat(p.price) : p.price,
+        typeof p.stock === 'string' ? parseInt(p.stock, 10) : p.stock,
+        p.status || 'active',
+        p.active ? 'Sim' : 'Não',
+      ]);
+
+      const tsvContent = [
+        headers.join('\t'),
+        ...rows.map(row => row.map(cell => String(cell)).join('\t'))
+      ].join('\n');
+
+      const blob = new Blob(['\ufeff' + tsvContent], { type: 'application/vnd.ms-excel' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `produtos_${new Date().toISOString().split('T')[0]}.xlsx`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Erro ao exportar XLSX:', error);
+      toast({
+        title: 'Erro ao exportar',
+        description: 'Não foi possível exportar para XLSX',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const exportToPDF = () => {
+    // Criar conteúdo HTML para PDF
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Lista de Produtos</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #333; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+          </style>
+        </head>
+        <body>
+          <h1>Lista de Produtos</h1>
+          <p>Data de exportação: ${new Date().toLocaleDateString('pt-BR')}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>SKU</th>
+                <th>Categoria</th>
+                <th>Preço</th>
+                <th>Estoque</th>
+                <th>Status</th>
+                <th>Ativo</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${products.map(p => `
+                <tr>
+                  <td>${p.name}</td>
+                  <td>${p.description || '-'}</td>
+                  <td>${p.sku || '-'}</td>
+                  <td>${p.category || '-'}</td>
+                  <td>${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(typeof p.price === 'string' ? parseFloat(p.price) : p.price)}</td>
+                  <td>${typeof p.stock === 'string' ? parseInt(p.stock, 10) : p.stock}</td>
+                  <td>${p.status === 'active' ? 'Ativo' : p.status === 'inactive' ? 'Inativo' : 'Sem Estoque'}</td>
+                  <td>${p.active ? 'Sim' : 'Não'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    // Abrir em nova janela para impressão/PDF
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
+  };
+
+  const handleExport = async (format: 'pdf' | 'xlsx' | 'csv') => {
+    if (products.length === 0) {
+      toast({
+        title: 'Atenção',
+        description: 'Não há produtos para exportar',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      
+      switch (format) {
+        case 'csv':
+          exportToCSV();
+          break;
+        case 'xlsx':
+          await exportToXLSX();
+          break;
+        case 'pdf':
+          exportToPDF();
+          break;
+      }
+
+      toast({
+        title: 'Exportação realizada',
+        description: `Produtos exportados com sucesso em formato ${format.toUpperCase()}`,
+      });
+      
+      setIsExportModalOpen(false);
+    } catch (error) {
+      toast({
+        title: 'Erro ao exportar',
+        description: error instanceof Error ? error.message : 'Não foi possível exportar os produtos',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const loadSalesHistory = async (productId: number) => {
+    try {
+      setIsLoadingSales(true);
+      const sales = await api.getSalesByProduct(productId);
+      setSalesHistory(sales);
+    } catch (error) {
+      console.error('Erro ao carregar histórico de vendas:', error);
+      toast({
+        title: 'Erro ao carregar histórico',
+        description: error instanceof Error ? error.message : 'Não foi possível carregar o histórico de vendas',
+        variant: 'destructive',
+      });
+      setSalesHistory([]);
+    } finally {
+      setIsLoadingSales(false);
+    }
   };
 
   const totalProducts = products.length;
   const activeProducts = products.filter(p => p.status === 'active').length;
   const outOfStock = products.filter(p => p.status === 'out_of_stock').length;
-  const totalValue = products.reduce((acc, p) => acc + (p.price * p.stock), 0);
-  const totalSales = products.reduce((acc, p) => acc + p.sales, 0);
+  // Calcular valor total apenas dos produtos ativos (status 'active' e active === true)
+  const activeProductsForValue = products.filter(p => {
+    // Produto deve estar ativo E ter status 'active' (não inativo e não sem estoque)
+    return p.active === true && p.status === 'active';
+  });
+  
+  const totalValue = activeProductsForValue.reduce((acc, p) => {
+    // Converter para número, tratando strings e valores decimais do MySQL
+    const price = p.price ? (typeof p.price === 'string' ? parseFloat(p.price) : (typeof p.price === 'number' ? p.price : 0)) : 0;
+    const stock = p.stock ? (typeof p.stock === 'string' ? parseInt(p.stock, 10) : (typeof p.stock === 'number' ? p.stock : 0)) : 0;
+    const productValue = price * stock;
+    return acc + productValue;
+  }, 0);
+  const totalSales = products.reduce((acc, p) => {
+    const sales = typeof p.sales === 'number' ? p.sales : 0;
+    return acc + sales;
+  }, 0);
+
+  // Obter categorias únicas dos produtos
+  const categories = Array.from(new Set(allProducts.map(p => p.category).filter(Boolean)));
 
   const actions = (
     <>
-      <HeaderActions.Filter onClick={() => console.log('Filter clicked')} />
-      <HeaderActions.Export onClick={() => console.log('Export clicked')} />
+      <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline">
+            <Filter className="w-4 h-4 mr-2" />
+            Filtros
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80" align="end">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold">Filtros</h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                className="h-8 text-xs"
+              >
+                Limpar
+              </Button>
+            </div>
+
+            {/* Filtro de Categoria */}
+            <div className="space-y-2">
+              <Label>Categoria</Label>
+              <Select
+                value={filters.category}
+                onValueChange={(value) => handleFilterChange({ category: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as categorias" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Filtro de Preço */}
+            <div className="space-y-2">
+              <Label>Faixa de Preço</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="minPrice" className="text-xs text-muted-foreground">Mínimo</Label>
+                  <Input
+                    id="minPrice"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="R$ 0,00"
+                    value={filters.minPrice}
+                    onChange={(e) => handleFilterChange({ minPrice: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="maxPrice" className="text-xs text-muted-foreground">Máximo</Label>
+                  <Input
+                    id="maxPrice"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="R$ 0,00"
+                    value={filters.maxPrice}
+                    onChange={(e) => handleFilterChange({ maxPrice: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Filtro de Estoque */}
+            <div className="space-y-2">
+              <Label>Estoque</Label>
+              <Select
+                value={filters.stockFilter}
+                onValueChange={(value) => handleFilterChange({ stockFilter: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="with_stock">Com estoque</SelectItem>
+                  <SelectItem value="without_stock">Sem estoque</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+      <HeaderActions.Export onClick={() => setIsExportModalOpen(true)} />
       <HeaderActions.Add onClick={() => setIsNewProductOpen(true)}>
         Novo Produto
       </HeaderActions.Add>
@@ -273,6 +724,8 @@ export default function Produtos() {
       subtitle="Gerencie seu catálogo de produtos"
       actions={actions}
       showSearch
+      onSearchChange={handleSearchChange}
+      searchValue={searchTerm}
     >
       <div className="space-y-6">
         {/* Overview Cards */}
@@ -355,41 +808,50 @@ export default function Produtos() {
                   <th className="text-left py-3 px-2 font-medium text-muted-foreground">SKU</th>
                   <th className="text-left py-3 px-2 font-medium text-muted-foreground">Categoria</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Preço</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Custo</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Margem</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Estoque</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Vendas</th>
                   <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => {
-                  const margin = ((product.price - product.cost) / product.price * 100).toFixed(1);
-                  return (
-                    <tr key={product.id} className="border-b border-border last:border-0">
-                      <td className="py-4 px-2">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
-                            {product.image ? (
-                              <img src={product.image} alt={product.name} className="w-full h-full object-cover rounded" />
-                            ) : (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                      Carregando produtos...
+                    </td>
+                  </tr>
+                ) : products.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                      Nenhum produto cadastrado. Clique em "Novo Produto" para começar.
+                    </td>
+                  </tr>
+                ) : (
+                  products.map((product) => {
+                    return (
+                      <tr key={product.id} className="border-b border-border last:border-0">
+                        <td className="py-4 px-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
                               <Package className="w-5 h-5 text-muted-foreground" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-medium">{product.name}</div>
-                            <div className="text-sm text-muted-foreground truncate max-w-[200px]">
-                              {product.description}
+                            </div>
+                            <div>
+                              <div className="font-medium">{product.name}</div>
+                              <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+                                {product.description || '-'}
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </td>
+                      <td className="py-4 px-2">
+                        <span className="text-sm font-mono">{product.sku || '-'}</span>
                       </td>
                       <td className="py-4 px-2">
-                        <span className="text-sm font-mono">{product.sku}</span>
-                      </td>
-                      <td className="py-4 px-2">
-                        <Badge variant="outline">{product.category}</Badge>
+                        {product.category ? (
+                          <Badge variant="outline">{product.category}</Badge>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
                       </td>
                       <td className="py-4 px-2 text-right font-medium">
                         {new Intl.NumberFormat('pt-BR', {
@@ -397,29 +859,15 @@ export default function Produtos() {
                           currency: 'BRL'
                         }).format(product.price)}
                       </td>
-                      <td className="py-4 px-2 text-right text-muted-foreground">
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL'
-                        }).format(product.cost)}
-                      </td>
-                      <td className="py-4 px-2 text-right">
-                        <span className={`font-medium ${parseFloat(margin) > 30 ? 'text-green-600' : 'text-orange-600'}`}>
-                          {margin}%
-                        </span>
-                      </td>
                       <td className="py-4 px-2 text-right">
                         <span className={`font-medium ${product.stock < 20 ? 'text-red-600' : ''}`}>
                           {product.stock}
                         </span>
                       </td>
-                      <td className="py-4 px-2 text-right font-medium">
-                        {product.sales}
-                      </td>
                       <td className="py-4 px-2">
-                        <Badge variant={getStatusVariant(product.status)}>
-                          <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor(product.status)}`}></div>
-                          {getStatusLabel(product.status)}
+                        <Badge variant={getStatusVariant(product.status || 'active')}>
+                          <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor(product.status || 'active')}`}></div>
+                          {getStatusLabel(product.status || 'active')}
                         </Badge>
                       </td>
                       <td className="py-4 px-2 text-right">
@@ -445,10 +893,7 @@ export default function Produtos() {
                               <Button
                                 variant="ghost"
                                 className="justify-start"
-                                onClick={() => {
-                                  setSelectedProduct(product);
-                                  setIsEditProductOpen(true);
-                                }}
+                                onClick={() => handleOpenEdit(product)}
                               >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Editar Produto
@@ -456,7 +901,7 @@ export default function Produtos() {
                               <Button
                                 variant="ghost"
                                 className="justify-start text-destructive"
-                                onClick={() => handleDeleteProduct(product.id)}
+                                onClick={() => handleDeleteClick(product.id)}
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
                                 Excluir Produto
@@ -467,7 +912,8 @@ export default function Produtos() {
                       </td>
                     </tr>
                   );
-                })}
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -482,46 +928,6 @@ export default function Produtos() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="product-image">Imagem do Produto</Label>
-              <div className="flex flex-col gap-3">
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    id="product-image-upload"
-                  />
-                  <label htmlFor="product-image-upload">
-                    <Button type="button" variant="outline" className="w-full" asChild>
-                      <div className="cursor-pointer">
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload de Imagem
-                      </div>
-                    </Button>
-                  </label>
-                </div>
-                {imagePreview && (
-                  <div className="relative w-32 h-32 border rounded-md">
-                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-1 right-1 h-6 w-6 bg-background"
-                      onClick={() => {
-                        setImagePreview('');
-                        setNewProduct({ ...newProduct, image: '' });
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="product-name">Nome do Produto *</Label>
@@ -534,12 +940,12 @@ export default function Produtos() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="product-sku">SKU *</Label>
+                <Label htmlFor="product-sku">SKU</Label>
                 <Input
                   id="product-sku"
                   value={newProduct.sku}
                   onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
-                  placeholder="Ex: CAM-001"
+                  placeholder="Ex: CAM-001 (opcional)"
                 />
               </div>
             </div>
@@ -556,10 +962,10 @@ export default function Produtos() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="product-category">Categoria *</Label>
+              <Label htmlFor="product-category">Categoria</Label>
               <Select value={newProduct.category} onValueChange={(value) => setNewProduct({ ...newProduct, category: value })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria" />
+                  <SelectValue placeholder="Selecione uma categoria (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Vestuário">Vestuário</SelectItem>
@@ -572,7 +978,7 @@ export default function Produtos() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="product-price">Preço de Venda (R$) *</Label>
                 <Input
@@ -587,20 +993,7 @@ export default function Produtos() {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="product-cost">Custo (R$) *</Label>
-                <Input
-                  id="product-cost"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={newProduct.cost}
-                  onChange={(e) => setNewProduct({ ...newProduct, cost: e.target.value })}
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="product-stock">Estoque Inicial *</Label>
+                <Label htmlFor="product-stock">Estoque Inicial</Label>
                 <Input
                   id="product-stock"
                   type="number"
@@ -612,16 +1005,16 @@ export default function Produtos() {
               </div>
             </div>
 
-            {newProduct.price && newProduct.cost && (
-              <div className="p-3 bg-muted rounded-md">
-                <p className="text-sm">
-                  <span className="text-muted-foreground">Margem de Lucro: </span>
-                  <span className="font-medium">
-                    {((parseFloat(newProduct.price) - parseFloat(newProduct.cost)) / parseFloat(newProduct.price) * 100).toFixed(1)}%
-                  </span>
-                </p>
-              </div>
-            )}
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="new-product-active"
+                checked={newProduct.active}
+                onCheckedChange={(checked) => setNewProduct({ ...newProduct, active: checked })}
+              />
+              <Label htmlFor="new-product-active" className="cursor-pointer">
+                Produto ativo
+              </Label>
+            </div>
           </div>
 
           <div className="flex justify-end gap-2">
@@ -631,21 +1024,19 @@ export default function Produtos() {
                 name: '',
                 description: '',
                 price: '',
-                cost: '',
-                stock: '',
+                stock: '0',
                 category: '',
                 sku: '',
-                image: '',
+                active: true,
               });
-              setImagePreview('');
             }}>
               Cancelar
             </Button>
             <Button
               onClick={handleCreateProduct}
-              disabled={!newProduct.name || !newProduct.sku || !newProduct.price || !newProduct.cost || !newProduct.stock || !newProduct.category}
+              disabled={!newProduct.name || !newProduct.price || isSaving}
             >
-              Criar Produto
+              {isSaving ? 'Criando...' : 'Criar Produto'}
             </Button>
           </div>
         </DialogContent>
@@ -662,11 +1053,7 @@ export default function Produtos() {
             <>
               <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
                 <div className="w-16 h-16 bg-background rounded flex items-center justify-center flex-shrink-0">
-                  {selectedProduct.image ? (
-                    <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover rounded" />
-                  ) : (
-                    <Package className="w-8 h-8 text-muted-foreground" />
-                  )}
+                  <Package className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{selectedProduct.name}</h3>
@@ -676,7 +1063,7 @@ export default function Produtos() {
                       <span className="text-muted-foreground">SKU:</span> <span className="font-mono font-medium">{selectedProduct.sku}</span>
                     </span>
                     <span className="text-sm">
-                      <span className="text-muted-foreground">Vendas Totais:</span> <span className="font-medium">{selectedProduct.sales}</span>
+                      <span className="text-muted-foreground">Vendas Totais:</span> <span className="font-medium">{salesHistory.length}</span>
                     </span>
                   </div>
                 </div>
@@ -688,7 +1075,12 @@ export default function Produtos() {
                   Compras Realizadas
                 </h4>
 
-                {purchaseHistoryData[selectedProduct.id] && purchaseHistoryData[selectedProduct.id].length > 0 ? (
+                {isLoadingSales ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+                    <p>Carregando histórico de vendas...</p>
+                  </div>
+                ) : salesHistory.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
@@ -696,40 +1088,47 @@ export default function Produtos() {
                           <th className="text-left py-3 px-2 font-medium text-muted-foreground">Cliente</th>
                           <th className="text-left py-3 px-2 font-medium text-muted-foreground">E-mail</th>
                           <th className="text-right py-3 px-2 font-medium text-muted-foreground">Qtd</th>
+                          <th className="text-right py-3 px-2 font-medium text-muted-foreground">Preço Unit.</th>
                           <th className="text-right py-3 px-2 font-medium text-muted-foreground">Valor Total</th>
                           <th className="text-left py-3 px-2 font-medium text-muted-foreground">Data</th>
                           <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {purchaseHistoryData[selectedProduct.id].map((purchase) => (
-                          <tr key={purchase.id} className="border-b border-border last:border-0">
+                        {salesHistory.map((sale) => (
+                          <tr key={sale.id} className="border-b border-border last:border-0">
                             <td className="py-3 px-2">
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                                   <User className="w-4 h-4 text-primary" />
                                 </div>
-                                <span className="font-medium">{purchase.customerName}</span>
+                                <span className="font-medium">{sale.customerName || 'Cliente não informado'}</span>
                               </div>
                             </td>
                             <td className="py-3 px-2 text-sm text-muted-foreground">
-                              {purchase.customerEmail}
+                              {sale.customerEmail || '-'}
                             </td>
                             <td className="py-3 px-2 text-right font-medium">
-                              {purchase.quantity}
+                              {sale.quantity}
+                            </td>
+                            <td className="py-3 px-2 text-right text-sm text-muted-foreground">
+                              {new Intl.NumberFormat('pt-BR', {
+                                style: 'currency',
+                                currency: 'BRL'
+                              }).format(Number(sale.unitPrice))}
                             </td>
                             <td className="py-3 px-2 text-right font-medium">
                               {new Intl.NumberFormat('pt-BR', {
                                 style: 'currency',
                                 currency: 'BRL'
-                              }).format(purchase.totalValue)}
+                              }).format(Number(sale.totalValue))}
                             </td>
                             <td className="py-3 px-2 text-sm">
-                              {new Date(purchase.purchaseDate).toLocaleString('pt-BR')}
+                              {new Date(sale.createdAt).toLocaleString('pt-BR')}
                             </td>
                             <td className="py-3 px-2">
-                              <Badge variant={getPurchaseStatusVariant(purchase.status)}>
-                                {getPurchaseStatusLabel(purchase.status)}
+                              <Badge variant={getPurchaseStatusVariant(sale.status)}>
+                                {getPurchaseStatusLabel(sale.status)}
                               </Badge>
                             </td>
                           </tr>
@@ -740,7 +1139,7 @@ export default function Produtos() {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                    <p>Nenhuma compra registrada para este produto</p>
+                    <p>Nenhuma venda registrada para este produto</p>
                   </div>
                 )}
               </div>
@@ -754,6 +1153,240 @@ export default function Produtos() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Product Modal */}
+      <Dialog open={isEditProductOpen} onOpenChange={(open) => {
+        setIsEditProductOpen(open);
+        if (!open) {
+          setSelectedProduct(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Produto</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-product-name">Nome do Produto *</Label>
+                <Input
+                  id="edit-product-name"
+                  value={editProduct.name}
+                  onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })}
+                  placeholder="Ex: Camiseta Premium"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-product-sku">SKU</Label>
+                <Input
+                  id="edit-product-sku"
+                  value={editProduct.sku}
+                  onChange={(e) => setEditProduct({ ...editProduct, sku: e.target.value })}
+                  placeholder="Ex: CAM-001 (opcional)"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-product-description">Descrição</Label>
+              <Textarea
+                id="edit-product-description"
+                value={editProduct.description}
+                onChange={(e) => setEditProduct({ ...editProduct, description: e.target.value })}
+                placeholder="Descreva o produto..."
+                rows={3}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit-product-category">Categoria</Label>
+              <Select value={editProduct.category} onValueChange={(value) => setEditProduct({ ...editProduct, category: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Vestuário">Vestuário</SelectItem>
+                  <SelectItem value="Calçados">Calçados</SelectItem>
+                  <SelectItem value="Acessórios">Acessórios</SelectItem>
+                  <SelectItem value="Eletrônicos">Eletrônicos</SelectItem>
+                  <SelectItem value="Casa">Casa</SelectItem>
+                  <SelectItem value="Esporte">Esporte</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-product-price">Preço de Venda (R$) *</Label>
+                <Input
+                  id="edit-product-price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editProduct.price}
+                  onChange={(e) => setEditProduct({ ...editProduct, price: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-product-stock">Estoque</Label>
+                <Input
+                  id="edit-product-stock"
+                  type="number"
+                  min="0"
+                  value={editProduct.stock}
+                  onChange={(e) => setEditProduct({ ...editProduct, stock: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="edit-product-active"
+                checked={editProduct.active}
+                onCheckedChange={(checked) => setEditProduct({ ...editProduct, active: checked })}
+              />
+              <Label htmlFor="edit-product-active" className="cursor-pointer">
+                Produto ativo
+              </Label>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => {
+              setIsEditProductOpen(false);
+              setSelectedProduct(null);
+            }}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleEditProduct}
+              disabled={!editProduct.name || !editProduct.price || isSaving}
+            >
+              {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteConfirmOpen(false);
+                setProductToDelete(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteProduct}
+            >
+              Excluir
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Modal */}
+      <Dialog open={isExportModalOpen} onOpenChange={setIsExportModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Exportar Produtos</DialogTitle>
+            <DialogDescription>
+              Selecione o formato para exportar a lista de produtos
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <Button
+              variant="outline"
+              className="w-full justify-start h-auto py-3"
+              onClick={() => handleExport('csv')}
+              disabled={isExporting || products.length === 0}
+            >
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded flex items-center justify-center flex-shrink-0">
+                  <span className="text-green-600 dark:text-green-400 font-bold text-sm">CSV</span>
+                </div>
+                <div className="text-left flex-1">
+                  <div className="font-medium">CSV</div>
+                  <div className="text-xs text-muted-foreground">Arquivo de texto separado por vírgulas</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="w-full justify-start h-auto py-3"
+              onClick={() => handleExport('xlsx')}
+              disabled={isExporting || products.length === 0}
+            >
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded flex items-center justify-center flex-shrink-0">
+                  <span className="text-green-600 dark:text-green-400 font-bold text-sm">XLSX</span>
+                </div>
+                <div className="text-left flex-1">
+                  <div className="font-medium">Excel (XLSX)</div>
+                  <div className="text-xs text-muted-foreground">Planilha do Microsoft Excel</div>
+                </div>
+              </div>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="w-full justify-start h-auto py-3"
+              onClick={() => handleExport('pdf')}
+              disabled={isExporting || products.length === 0}
+            >
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-10 h-10 bg-red-100 dark:bg-red-900 rounded flex items-center justify-center flex-shrink-0">
+                  <span className="text-red-600 dark:text-red-400 font-bold text-sm">PDF</span>
+                </div>
+                <div className="text-left flex-1">
+                  <div className="font-medium">PDF</div>
+                  <div className="text-xs text-muted-foreground">Documento para impressão</div>
+                </div>
+              </div>
+            </Button>
+          </div>
+          {products.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              Nenhum produto para exportar
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsExportModalOpen(false)}
+              disabled={isExporting}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Modal */}
+      <SuccessModal
+        open={showSuccessModal}
+        onOpenChange={setShowSuccessModal}
+        title={successModalContent.title}
+        description={successModalContent.description}
+      />
     </Layout>
   );
 }

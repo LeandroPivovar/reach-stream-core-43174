@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
+import { api, Contact as ApiContact } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +15,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
@@ -62,7 +65,8 @@ import {
   DollarSign,
   MousePointer,
   Undo2,
-  User2
+  User2,
+  Loader2
 } from 'lucide-react';
 import {
   Tooltip,
@@ -78,6 +82,21 @@ import {
 } from '@/components/ui/popover';
 import { LtvHistory } from '@/components/contacts/LtvHistory';
 import { ManualSaleDialog } from '@/components/contacts/ManualSaleDialog';
+
+// Interface para compatibilidade com a estrutura existente do frontend
+interface ContactFrontend {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+  group: string;
+  status: string;
+  tags: string[];
+  state: string;
+  city: string;
+  segmentations: string[];
+  lastInteraction: string;
+}
 
 interface Purchase {
   id: number;
@@ -112,10 +131,13 @@ interface ContactDetail {
 }
 
 export default function Contatos() {
-  const { config: scoreConfig, updateWeights, resetToDefaults } = useScoreConfig();
+  const { config: scoreConfig, updateWeights, resetToDefaults, isLoading: isLoadingScoreConfig } = useScoreConfig();
+  const { toast } = useToast();
   const [isNewContactOpen, setIsNewContactOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const [tempWeights, setTempWeights] = useState(scoreConfig.weights);
   const [selectedContacts, setSelectedContacts] = useState<Set<number>>(new Set());
@@ -124,6 +146,23 @@ export default function Contatos() {
   const [isManualSaleOpen, setIsManualSaleOpen] = useState(false);
   const [selectedContactForSale, setSelectedContactForSale] = useState<{ id: number; name: string } | null>(null);
   const [selectedSegmentationView, setSelectedSegmentationView] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<number | null>(null);
+  const [isNewGroupOpen, setIsNewGroupOpen] = useState(false);
+  const [isEditGroupOpen, setIsEditGroupOpen] = useState(false);
+  const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
+  const [newGroup, setNewGroup] = useState({
+    name: '',
+    description: '',
+    color: '#667eea',
+  });
+  const [isNewTagOpen, setIsNewTagOpen] = useState(false);
+  const [isEditTagOpen, setIsEditTagOpen] = useState(false);
+  const [editingTagId, setEditingTagId] = useState<number | null>(null);
+  const [newTag, setNewTag] = useState({
+    name: '',
+    color: '#667eea',
+  });
   
   // Estados de Filtro
   const [filters, setFilters] = useState({
@@ -152,9 +191,11 @@ export default function Contatos() {
     name: '',
     phone: '',
     email: '',
-    group: '',
+    group: '', // Nome do grupo (para exibição)
+    groupId: null as number | null, // ID do grupo (para envio)
     status: 'Ativo',
-    tags: [] as string[],
+    tags: [] as string[], // Nomes das tags (para exibição)
+    tagIds: [] as number[], // IDs das tags (para envio)
     state: '',
     city: '',
     segmentations: [] as string[]
@@ -217,69 +258,163 @@ export default function Contatos() {
     }
   };
 
-  const [contacts, setContacts] = useState([
-    {
-      id: 1,
-      name: 'Ana Silva',
-      phone: '(11) 99999-9999',
-      email: 'ana.silva@email.com',
-      group: 'VIP',
-      status: 'Ativo',
-      tags: ['Black Friday', 'Newsletter'],
-      state: 'SP',
-      city: 'São Paulo',
-      segmentations: ['high_ticket', 'by_purchase_count'],
-      lastInteraction: '2024-03-20'
-    },
-    {
-      id: 2,
-      name: 'Carlos Santos',
-      phone: '(21) 88888-8888',
-      email: 'carlos.santos@email.com',
-      group: 'Regular',
-      status: 'Inativo',
-      tags: ['Promoção'],
-      state: 'RJ',
-      city: 'Rio de Janeiro',
-      segmentations: ['inactive_customers'],
-      lastInteraction: '2024-03-15'
-    },
-    {
-      id: 3,
-      name: 'Mariana Costa',
-      phone: '(31) 77777-7777',
-      email: 'mariana.costa@email.com',
-      group: 'VIP',
-      status: 'Ativo',
-      tags: ['Newsletter', 'Fidelidade'],
-      state: 'MG',
-      city: 'Belo Horizonte',
-      segmentations: ['active_coupon', 'lead_captured'],
-      lastInteraction: '2024-03-22'
-    }
-  ]);
+  const [contacts, setContacts] = useState<ContactFrontend[]>([]);
 
-  const [groups] = useState(['VIP', 'Regular', 'Novos', 'Inativos']);
-  const [tags] = useState(['Black Friday', 'Newsletter', 'Promoção', 'Fidelidade', 'Carrinho Abandonado']);
+  // Converter contato da API para formato do frontend
+  const convertApiContactToFrontend = useCallback((apiContact: ApiContact): ContactFrontend => {
+    return {
+      id: apiContact.id,
+      name: apiContact.name,
+      phone: apiContact.phone || '',
+      email: apiContact.email || '',
+      group: apiContact.group?.name || apiContact.company || 'Regular',
+      status: apiContact.status || 'Ativo',
+      tags: apiContact.contactTags?.map(ct => ct.tag.name) || [],
+      state: apiContact.state || '',
+      city: apiContact.city || '',
+      segmentations: apiContact.contactSegmentations?.map(cs => cs.segmentationId) || [],
+      lastInteraction: apiContact.updatedAt || apiContact.createdAt
+    };
+  }, []);
+
+  // Carregar contatos do backend
+  useEffect(() => {
+    const loadContacts = async () => {
+      setIsLoading(true);
+      try {
+        const apiContacts = await api.getContacts();
+        const frontendContacts = apiContacts.map(convertApiContactToFrontend);
+        setContacts(frontendContacts);
+      } catch (error) {
+        console.error('Erro ao carregar contatos:', error);
+        toast({
+          title: 'Erro ao carregar contatos',
+          description: error instanceof Error ? error.message : 'Não foi possível carregar os contatos',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadContacts();
+  }, [toast]);
+
+  const [groups, setGroups] = useState<Array<{ id: number; name: string; description?: string; color?: string }>>([]);
+
+  // Carregar grupos do backend
+  useEffect(() => {
+    const loadGroups = async () => {
+      try {
+        const apiGroups = await api.getGroups();
+        setGroups(apiGroups);
+      } catch (error) {
+        console.error('Erro ao carregar grupos:', error);
+        toast({
+          title: 'Erro ao carregar grupos',
+          description: error instanceof Error ? error.message : 'Não foi possível carregar os grupos',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    loadGroups();
+  }, [toast]);
+
+  const [tags, setTags] = useState<Array<{ id: number; name: string; color?: string }>>([]);
+
+  // Carregar etiquetas do backend
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const apiTags = await api.getTags();
+        setTags(apiTags);
+      } catch (error) {
+        console.error('Erro ao carregar etiquetas:', error);
+        toast({
+          title: 'Erro ao carregar etiquetas',
+          description: error instanceof Error ? error.message : 'Não foi possível carregar as etiquetas',
+          variant: 'destructive',
+        });
+      }
+    };
+
+    loadTags();
+  }, [toast]);
+
+  // Sincronizar tempWeights quando a configuração for carregada do backend
+  useEffect(() => {
+    if (!isLoadingScoreConfig && scoreConfig.weights) {
+      setTempWeights(scoreConfig.weights);
+    }
+  }, [scoreConfig.weights, isLoadingScoreConfig]);
+
   const [states] = useState(['SP', 'RJ', 'MG', 'RS', 'PR', 'SC', 'BA', 'GO', 'PE', 'CE']);
   const [statuses] = useState(['Ativo', 'Inativo', 'Bloqueado', 'Aguardando']);
   const [campaigns] = useState(['Black Friday 2025', 'Newsletter Semanal', 'Campanha Fidelidade', 'Promoção Verão', 'Lançamento Produto']);
 
+  // Estado para armazenar compras e LTV dos contatos
+  const [contactPurchases, setContactPurchases] = useState<Record<number, { purchases: Purchase[]; ltv: number }>>({});
+
+  // Carregar compras de todos os contatos
+  useEffect(() => {
+    const loadPurchases = async () => {
+      try {
+        const allPurchases = await api.getContactPurchases();
+        
+        // Agrupar compras por contato e calcular LTV
+        const purchasesByContact: Record<number, { purchases: Purchase[]; ltv: number }> = {};
+        
+        allPurchases.forEach((purchase) => {
+          const contactId = purchase.contactId;
+          if (!purchasesByContact[contactId]) {
+            purchasesByContact[contactId] = { purchases: [], ltv: 0 };
+          }
+          
+          const purchaseValue = typeof purchase.value === 'string' 
+            ? parseFloat(purchase.value) 
+            : purchase.value;
+          
+          purchasesByContact[contactId].purchases.push({
+            id: purchase.id,
+            date: purchase.purchaseDate,
+            value: purchaseValue,
+            product: purchase.productName || purchase.product?.name || 'Produto',
+          });
+          
+          purchasesByContact[contactId].ltv += purchaseValue;
+        });
+        
+        setContactPurchases(purchasesByContact);
+      } catch (error) {
+        console.error('Erro ao carregar compras:', error);
+      }
+    };
+
+    if (contacts.length > 0) {
+      loadPurchases();
+    }
+  }, [contacts]);
+
   // Funções de cálculo (devem vir antes de filteredContacts)
-  const calculateScore = (detail: ContactDetail) => {
-    const emailOpens = detail.history.filter(e => e.type === 'email_open').length;
-    const linkClicks = detail.history.filter(e => e.type === 'link_click').length;
-    const purchases = detail.purchases.length;
-    const ltv = detail.ltv;
+  const calculateScore = (contactId: number) => {
+    const purchaseData = contactPurchases[contactId];
+    if (!purchaseData) return 0;
     
-    const { emailOpens: emailWeight, linkClicks: clickWeight, purchases: purchaseWeight, ltvDivisor } = scoreConfig.weights;
+    // Por enquanto, considerar apenas vendas (compras e LTV)
+    const purchases = purchaseData.purchases.length || 0;
+    const ltv = purchaseData.ltv || 0;
     
-    return Math.min(100, Math.round(
-      (emailOpens * emailWeight) + 
-      (linkClicks * clickWeight) + 
-      (purchases * purchaseWeight) + 
-      (ltv / ltvDivisor)
+    const { purchases: purchaseWeight, ltvDivisor } = scoreConfig.weights;
+    
+    const ltvDivisorValue = ltvDivisor || 10; // Evitar divisão por zero
+    
+    const calculatedScore = Math.min(100, Math.round(
+      (purchases * (purchaseWeight || 0)) + 
+      (ltv / ltvDivisorValue)
     ));
+    
+    return isNaN(calculatedScore) ? 0 : calculatedScore;
   };
 
   const getScoreColor = (score: number) => {
@@ -348,10 +483,11 @@ export default function Contatos() {
 
   // Aplicar filtros
   const filteredContacts = contacts.filter(contact => {
-    const contactDetail = contactDetails[contact.id];
-    const score = contactDetail ? calculateScore(contactDetail) : 0;
-    const ltv = contactDetail?.ltv || 0;
-    const campaign = contactDetail?.sourceCampaign || '';
+    const score = calculateScore(contact.id);
+    const safeScore = isNaN(score) ? 0 : score;
+    const ltv = contactPurchases[contact.id]?.ltv || 0;
+    const purchaseData = contactPurchases[contact.id];
+    const campaign = ''; // Campanha não está disponível ainda
 
     // Filtro por nome
     if (filters.name.trim() && !contact.name.toLowerCase().includes(filters.name.toLowerCase().trim())) {
@@ -364,18 +500,18 @@ export default function Contatos() {
     }
 
     // Filtro por score
-    if (contactDetail && (score < filters.scoreMin || score > filters.scoreMax)) {
+    if (purchaseData && (safeScore < filters.scoreMin || safeScore > filters.scoreMax)) {
       return false;
     }
 
     // Filtro por LTV
-    if (contactDetail && (ltv < filters.ltvMin || ltv > filters.ltvMax)) {
+    if (purchaseData && (ltv < filters.ltvMin || ltv > filters.ltvMax)) {
       return false;
     }
 
     // Filtro por número de compras
-    if (filters.purchaseCount !== 'all' && contactDetail) {
-      const purchaseCount = contactDetail.purchases.length;
+    if (filters.purchaseCount !== 'all' && purchaseData) {
+      const purchaseCount = purchaseData.purchases.length;
       switch (filters.purchaseCount) {
         case '0':
           if (purchaseCount !== 0) return false;
@@ -415,15 +551,15 @@ export default function Contatos() {
       if (contact.group !== 'VIP') return false;
     }
 
-    // Filtro por maior ticket médio (mock)
-    if (filters.highTicket && contactDetail) {
-      const ticketMedio = ltv / (contactDetail.purchases.length || 1);
+    // Filtro por maior ticket médio
+    if (filters.highTicket && purchaseData) {
+      const ticketMedio = ltv / (purchaseData.purchases.length || 1);
       if (ticketMedio < 150) return false; // Considera ticket alto acima de R$ 150
     }
 
     // Filtro por valor mínimo de compra
-    if (filters.purchaseValueMin > 0 && contactDetail) {
-      const maxPurchaseValue = Math.max(...contactDetail.purchases.map(p => p.value), 0);
+    if (filters.purchaseValueMin > 0 && purchaseData) {
+      const maxPurchaseValue = Math.max(...purchaseData.purchases.map(p => p.value), 0);
       if (maxPurchaseValue < filters.purchaseValueMin) return false;
     }
 
@@ -440,9 +576,9 @@ export default function Contatos() {
     }
 
     // Filtro por dias sem comprar
-    if (filters.daysWithoutPurchase > 0 && contactDetail) {
-      const lastPurchaseDate = contactDetail.purchases.length > 0 
-        ? new Date(contactDetail.purchases[contactDetail.purchases.length - 1].date)
+    if (filters.daysWithoutPurchase > 0 && purchaseData) {
+      const lastPurchaseDate = purchaseData.purchases.length > 0 
+        ? new Date(purchaseData.purchases[purchaseData.purchases.length - 1].date)
         : null;
       
       if (lastPurchaseDate) {
@@ -540,11 +676,30 @@ export default function Contatos() {
     setSelectedContacts(new Set());
   };
 
-  const handleBulkRemove = () => {
-    if (window.confirm(`Tem certeza que deseja remover ${selectedContacts.size} contatos?`)) {
+  const handleBulkRemove = async () => {
+    if (!window.confirm(`Tem certeza que deseja remover ${selectedContacts.size} contatos?`)) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const deletePromises = Array.from(selectedContacts).map(id => api.deleteContact(id));
+      await Promise.all(deletePromises);
       setContacts(contacts.filter(c => !selectedContacts.has(c.id)));
       clearSelection();
-      // TODO: Quando backend estiver ativo, fazer: DELETE /api/contacts/bulk
+      toast({
+        title: 'Contatos excluídos!',
+        description: `${selectedContacts.size} contato(s) foram excluídos com sucesso`,
+      });
+    } catch (error) {
+      console.error('Erro ao excluir contatos:', error);
+      toast({
+        title: 'Erro ao excluir contatos',
+        description: error instanceof Error ? error.message : 'Não foi possível excluir os contatos',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -597,33 +752,330 @@ export default function Contatos() {
   };
 
 
-  const handleSaveContact = () => {
-    const contactToAdd = {
-      id: contacts.length + 1,
-      name: newContact.name,
-      phone: newContact.phone,
-      email: newContact.email,
-      group: newContact.group,
-      status: newContact.status,
-      tags: newContact.tags,
-      state: newContact.state,
-      city: newContact.city,
-      segmentations: newContact.segmentations,
-      lastInteraction: new Date().toISOString().split('T')[0]
-    };
-    setContacts([...contacts, contactToAdd]);
-    setIsNewContactOpen(false);
+  const handleSaveContact = async () => {
+    if (!newContact.name.trim()) {
+      toast({
+        title: 'Nome obrigatório',
+        description: 'Por favor, preencha o nome do contato',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Converter nome do grupo para groupId
+      const selectedGroup = groups.find(g => g.name === newContact.group);
+      const groupId = selectedGroup ? selectedGroup.id : (newContact.groupId || undefined);
+
+      // Converter nomes das tags para tagIds
+      const tagIds = newContact.tags && newContact.tags.length > 0
+        ? newContact.tags
+            .map(tagName => tags.find(t => t.name === tagName)?.id)
+            .filter((id): id is number => id !== undefined)
+        : (newContact.tagIds && newContact.tagIds.length > 0 ? newContact.tagIds : []);
+
+      if (editingContactId) {
+        // Editar contato existente
+        const apiContact = await api.updateContact(editingContactId, {
+          name: newContact.name,
+          lastName: newContact.name.split(' ').slice(1).join(' ') || undefined,
+          email: newContact.email || undefined,
+          phone: newContact.phone || undefined,
+          status: newContact.status || undefined,
+          state: newContact.state || undefined,
+          city: newContact.city || undefined,
+          groupId: groupId || null,
+          tagIds: tagIds.length > 0 ? tagIds : [],
+          segmentationIds: newContact.segmentations && newContact.segmentations.length > 0 ? newContact.segmentations : [],
+        });
+        const updatedContact = convertApiContactToFrontend(apiContact);
+        setContacts(contacts.map(c => c.id === editingContactId ? updatedContact : c));
+        toast({
+          title: 'Contato atualizado!',
+          description: 'O contato foi atualizado com sucesso',
+        });
+        setEditingContactId(null);
+      } else {
+        // Criar novo contato
+        const apiContact = await api.createContact({
+          name: newContact.name,
+          lastName: newContact.name.split(' ').slice(1).join(' ') || undefined,
+          email: newContact.email || undefined,
+          phone: newContact.phone || undefined,
+          status: newContact.status || undefined,
+          state: newContact.state || undefined,
+          city: newContact.city || undefined,
+          groupId: groupId,
+          tagIds: tagIds.length > 0 ? tagIds : undefined,
+          segmentationIds: newContact.segmentations && newContact.segmentations.length > 0 ? newContact.segmentations : undefined,
+        });
+        const newContactFrontend = convertApiContactToFrontend(apiContact);
+        setContacts([...contacts, newContactFrontend]);
+        toast({
+          title: 'Contato criado!',
+          description: 'O contato foi criado com sucesso',
+        });
+      }
+      
+      setIsNewContactOpen(false);
+      setNewContact({
+        name: '',
+        phone: '',
+        email: '',
+        group: '',
+        groupId: null,
+        status: 'Ativo',
+        tags: [],
+        tagIds: [],
+        state: '',
+        city: '',
+        segmentations: []
+      });
+    } catch (error) {
+      console.error('Erro ao salvar contato:', error);
+      toast({
+        title: 'Erro ao salvar contato',
+        description: error instanceof Error ? error.message : 'Não foi possível salvar o contato',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteContact = async (contactId: number, contactName: string) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o contato "${contactName}"?`)) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await api.deleteContact(contactId);
+      setContacts(contacts.filter(c => c.id !== contactId));
+      toast({
+        title: 'Contato excluído!',
+        description: 'O contato foi excluído com sucesso',
+      });
+    } catch (error) {
+      console.error('Erro ao excluir contato:', error);
+      toast({
+        title: 'Erro ao excluir contato',
+        description: error instanceof Error ? error.message : 'Não foi possível excluir o contato',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditContact = (contact: ContactFrontend) => {
+    setEditingContactId(contact.id);
+    // Encontrar o ID do grupo pelo nome
+    const groupId = groups.find(g => g.name === contact.group)?.id || null;
+    // Encontrar os IDs das tags pelos nomes
+    const tagIds = contact.tags
+      .map(tagName => tags.find(t => t.name === tagName)?.id)
+      .filter((id): id is number => id !== undefined);
+    
     setNewContact({
-      name: '',
-      phone: '',
-      email: '',
-      group: '',
-      status: 'Ativo',
-      tags: [],
-      state: '',
-      city: '',
-      segmentations: []
+      name: contact.name,
+      phone: contact.phone,
+      email: contact.email,
+      group: contact.group,
+      groupId: groupId,
+      status: contact.status,
+      tags: contact.tags,
+      tagIds: tagIds,
+      state: contact.state,
+      city: contact.city,
+      segmentations: contact.segmentations
     });
+    setIsNewContactOpen(true);
+  };
+
+  // Funções para gerenciar grupos
+  const handleSaveGroup = async () => {
+    if (!newGroup.name.trim()) {
+      toast({
+        title: 'Nome obrigatório',
+        description: 'Por favor, preencha o nome do grupo',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (editingGroupId) {
+        // Editar grupo existente
+        const updatedGroup = await api.updateGroup(editingGroupId, {
+          name: newGroup.name,
+          description: newGroup.description || undefined,
+          color: newGroup.color || undefined,
+        });
+        setGroups(groups.map(g => g.id === editingGroupId ? updatedGroup : g));
+        toast({
+          title: 'Grupo atualizado!',
+          description: 'O grupo foi atualizado com sucesso',
+        });
+        setEditingGroupId(null);
+      } else {
+        // Criar novo grupo
+        const createdGroup = await api.createGroup({
+          name: newGroup.name,
+          description: newGroup.description || undefined,
+          color: newGroup.color || undefined,
+        });
+        setGroups([...groups, createdGroup]);
+        toast({
+          title: 'Grupo criado!',
+          description: 'O grupo foi criado com sucesso',
+        });
+      }
+      
+      setIsNewGroupOpen(false);
+      setIsEditGroupOpen(false);
+      setNewGroup({
+        name: '',
+        description: '',
+        color: '#667eea',
+      });
+    } catch (error) {
+      console.error('Erro ao salvar grupo:', error);
+      toast({
+        title: 'Erro ao salvar grupo',
+        description: error instanceof Error ? error.message : 'Não foi possível salvar o grupo',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: number, groupName: string) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o grupo "${groupName}"?`)) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await api.deleteGroup(groupId);
+      setGroups(groups.filter(g => g.id !== groupId));
+      toast({
+        title: 'Grupo excluído!',
+        description: 'O grupo foi excluído com sucesso',
+      });
+    } catch (error) {
+      console.error('Erro ao excluir grupo:', error);
+      toast({
+        title: 'Erro ao excluir grupo',
+        description: error instanceof Error ? error.message : 'Não foi possível excluir o grupo',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditGroup = (group: { id: number; name: string; description?: string; color?: string }) => {
+    setEditingGroupId(group.id);
+    setNewGroup({
+      name: group.name,
+      description: group.description || '',
+      color: group.color || '#667eea',
+    });
+    setIsEditGroupOpen(true);
+  };
+
+  // Funções para gerenciar etiquetas
+  const handleSaveTag = async () => {
+    if (!newTag.name.trim()) {
+      toast({
+        title: 'Nome obrigatório',
+        description: 'Por favor, preencha o nome da etiqueta',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (editingTagId) {
+        // Editar etiqueta existente
+        const updatedTag = await api.updateTag(editingTagId, {
+          name: newTag.name,
+          color: newTag.color || undefined,
+        });
+        setTags(tags.map(t => t.id === editingTagId ? updatedTag : t));
+        toast({
+          title: 'Etiqueta atualizada!',
+          description: 'A etiqueta foi atualizada com sucesso',
+        });
+        setEditingTagId(null);
+      } else {
+        // Criar nova etiqueta
+        const createdTag = await api.createTag({
+          name: newTag.name,
+          color: newTag.color || undefined,
+        });
+        setTags([...tags, createdTag]);
+        toast({
+          title: 'Etiqueta criada!',
+          description: 'A etiqueta foi criada com sucesso',
+        });
+      }
+      
+      setIsNewTagOpen(false);
+      setIsEditTagOpen(false);
+      setNewTag({
+        name: '',
+        color: '#667eea',
+      });
+    } catch (error) {
+      console.error('Erro ao salvar etiqueta:', error);
+      toast({
+        title: 'Erro ao salvar etiqueta',
+        description: error instanceof Error ? error.message : 'Não foi possível salvar a etiqueta',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteTag = async (tagId: number, tagName: string) => {
+    if (!window.confirm(`Tem certeza que deseja excluir a etiqueta "${tagName}"?`)) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await api.deleteTag(tagId);
+      setTags(tags.filter(t => t.id !== tagId));
+      toast({
+        title: 'Etiqueta excluída!',
+        description: 'A etiqueta foi excluída com sucesso',
+      });
+    } catch (error) {
+      console.error('Erro ao excluir etiqueta:', error);
+      toast({
+        title: 'Erro ao excluir etiqueta',
+        description: error instanceof Error ? error.message : 'Não foi possível excluir a etiqueta',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditTag = (tag: { id: number; name: string; color?: string }) => {
+    setEditingTagId(tag.id);
+    setNewTag({
+      name: tag.name,
+      color: tag.color || '#667eea',
+    });
+    setIsEditTagOpen(true);
   };
 
   const handleExport = () => {
@@ -1217,7 +1669,7 @@ export default function Contatos() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total de Contatos</p>
-                <p className="text-2xl font-bold text-foreground">8.247</p>
+                <p className="text-2xl font-bold text-foreground">{contacts.length}</p>
               </div>
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Users className="w-5 h-5 text-primary" />
@@ -1230,10 +1682,7 @@ export default function Contatos() {
               <div>
                 <p className="text-sm text-muted-foreground">Leads Quentes</p>
                 <p className="text-2xl font-bold text-score-hot">
-                  {contacts.filter(c => {
-                    const detail = contactDetails[c.id];
-                    return detail && calculateScore(detail) >= 70;
-                  }).length}
+                  {contacts.filter(c => calculateScore(c.id) >= 70).length}
                 </p>
               </div>
               <div className="w-10 h-10 bg-score-hot-bg rounded-lg flex items-center justify-center">
@@ -1248,8 +1697,8 @@ export default function Contatos() {
                 <p className="text-sm text-muted-foreground">Leads Mornos</p>
                 <p className="text-2xl font-bold text-score-warm">
                   {contacts.filter(c => {
-                    const detail = contactDetails[c.id];
-                    return detail && calculateScore(detail) >= 40 && calculateScore(detail) < 70;
+                    const score = calculateScore(c.id);
+                    return score >= 40 && score < 70;
                   }).length}
                 </p>
               </div>
@@ -1264,10 +1713,7 @@ export default function Contatos() {
               <div>
                 <p className="text-sm text-muted-foreground">Leads Frios</p>
                 <p className="text-2xl font-bold text-score-cold">
-                  {contacts.filter(c => {
-                    const detail = contactDetails[c.id];
-                    return detail && calculateScore(detail) < 40;
-                  }).length}
+                  {contacts.filter(c => calculateScore(c.id) < 40).length}
                 </p>
               </div>
               <div className="w-10 h-10 bg-score-cold-bg rounded-lg flex items-center justify-center">
@@ -1281,12 +1727,12 @@ export default function Contatos() {
               <div>
                 <p className="text-sm text-muted-foreground">Score Médio</p>
                 <p className="text-2xl font-bold text-ltv">
-                  {Math.round(
-                    contacts
-                      .filter(c => contactDetails[c.id])
-                      .reduce((acc, c) => acc + calculateScore(contactDetails[c.id]), 0) /
-                    contacts.filter(c => contactDetails[c.id]).length
-                  )}
+                  {(() => {
+                    const contactsWithPurchases = contacts.filter(c => contactPurchases[c.id]);
+                    if (contactsWithPurchases.length === 0) return 0;
+                    const avgScore = contactsWithPurchases.reduce((acc, c) => acc + calculateScore(c.id), 0) / contactsWithPurchases.length;
+                    return Math.round(avgScore) || 0;
+                  })()}
                 </p>
               </div>
               <div className="w-10 h-10 bg-ltv-bg rounded-lg flex items-center justify-center">
@@ -1400,11 +1846,11 @@ export default function Contatos() {
                   </thead>
                   <tbody>
                     {filteredContacts.map((contact) => {
-                      const contactLtv = contactDetails[contact.id]?.ltv || 0;
+                      const contactLtv = contactPurchases[contact.id]?.ltv || 0;
                       const ltvColors = getLtvColor(contactLtv);
-                      const contactDetail = contactDetails[contact.id];
-                      const score = contactDetail ? calculateScore(contactDetail) : 0;
-                      const scoreColors = getScoreColor(score);
+                      const score = calculateScore(contact.id);
+                      const safeScore = isNaN(score) ? 0 : score;
+                      const scoreColors = getScoreColor(safeScore);
                       const ScoreIcon = scoreColors.icon;
                       
                       return (
@@ -1466,7 +1912,7 @@ export default function Contatos() {
                             </div>
                           </td>
                           <td className="py-4 px-2">
-                            {contactDetail ? (
+                            {contactPurchases[contact.id] ? (
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -1475,7 +1921,7 @@ export default function Contatos() {
                                         <ScoreIcon className="w-5 h-5" />
                                       </div>
                                       <div>
-                                        <div className="text-2xl font-bold">{score}</div>
+                                        <div className="text-2xl font-bold">{safeScore}</div>
                                         <div className={`text-xs ${scoreColors.text} font-medium`}>
                                           {scoreColors.label.split(' ')[1]}
                                         </div>
@@ -1486,13 +1932,11 @@ export default function Contatos() {
                                     <div className="space-y-2">
                                       <p className="font-semibold">{scoreColors.label}</p>
                                       <div className="text-xs space-y-1">
-                                        <div>📧 E-mails abertos: {contactDetail.history.filter(e => e.type === 'email_open').length} × {scoreConfig.weights.emailOpens} pts</div>
-                                        <div>🔗 Cliques: {contactDetail.history.filter(e => e.type === 'link_click').length} × {scoreConfig.weights.linkClicks} pts</div>
-                                        <div>🛍️ Compras: {contactDetail.purchases.length} × {scoreConfig.weights.purchases} pts</div>
-                                        <div>💰 LTV: R$ {contactDetail.ltv.toFixed(2)} ÷ {scoreConfig.weights.ltvDivisor}</div>
+                                        <div>🛍️ Compras: {contactPurchases[contact.id].purchases.length || 0} × {scoreConfig.weights.purchases || 0} pts</div>
+                                        <div>💰 LTV: R$ {(contactPurchases[contact.id].ltv || 0).toFixed(2)} ÷ {scoreConfig.weights.ltvDivisor || 10}</div>
                                       </div>
                                       <div className="pt-2 border-t border-border">
-                                        <div className="font-bold">Score Total: {score}/100</div>
+                                        <div className="font-bold">Score Total: {safeScore}/100</div>
                                       </div>
                                     </div>
                                   </TooltipContent>
@@ -1528,8 +1972,14 @@ export default function Contatos() {
                           </td>
                           <td className="py-4 px-2">
                             <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                              <MapPin className="w-3 h-3" />
-                              <span>{contact.city}, {contact.state}</span>
+                              {contact.city && contact.state ? (
+                                <>
+                                  <MapPin className="w-3 h-3" />
+                                  <span>{contact.city}, {contact.state}</span>
+                                </>
+                              ) : (
+                                <span className="text-muted-foreground/50">Não informado</span>
+                              )}
                             </div>
                           </td>
                           <td className="py-4 px-2 text-right">
@@ -1563,7 +2013,7 @@ export default function Contatos() {
                                   </DialogHeader>
                                   <div className="grid gap-2">
                                     <Button 
-                                      variant="ghost" 
+                                      variant="ghost"
                                       className="justify-start"
                                       onClick={() => {
                                         setSelectedContactId(contact.id);
@@ -1572,7 +2022,12 @@ export default function Contatos() {
                                       <Eye className="w-4 h-4 mr-2" />
                                       Visualizar Perfil
                                     </Button>
-                                    <Button variant="ghost" className="justify-start">
+                                    <Button 
+                                      variant="ghost"
+                                      className="justify-start"
+                                      onClick={() => handleEditContact(contact)}
+                                      disabled={isLoading}
+                                    >
                                       <Edit className="w-4 h-4 mr-2" />
                                       Editar Contato
                                     </Button>
@@ -1587,7 +2042,12 @@ export default function Contatos() {
                                       <ShoppingCart className="w-4 h-4 mr-2" />
                                       Cadastrar Venda
                                     </Button>
-                                    <Button variant="ghost" className="justify-start text-destructive">
+                                    <Button 
+                                      variant="ghost" 
+                                      className="justify-start text-destructive"
+                                      onClick={() => handleDeleteContact(contact.id, contact.name)}
+                                      disabled={isLoading}
+                                    >
                                       <Trash2 className="w-4 h-4 mr-2" />
                                       Excluir Contato
                                     </Button>
@@ -1609,28 +2069,70 @@ export default function Contatos() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">Grupos de Contatos</h3>
-                <Button>
+                <Button onClick={() => {
+                  setEditingGroupId(null);
+                  setNewGroup({ name: '', description: '', color: '#667eea' });
+                  setIsNewGroupOpen(true);
+                }}>
                   <Tag className="w-4 h-4 mr-2" />
                   Novo Grupo
                 </Button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {groups.map((group) => (
-                  <Card key={group} className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">{group}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          1.247 contatos
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
+                {groups.length === 0 ? (
+                  <div className="col-span-full text-center py-12">
+                    <Tag className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">Nenhum grupo criado ainda</p>
+                    <p className="text-sm text-muted-foreground mt-2">Crie seu primeiro grupo para organizar seus contatos</p>
+                  </div>
+                ) : (
+                  groups.map((group) => {
+                    const contactsInGroup = contacts.filter(c => c.group === group.name).length;
+                    return (
+                      <Card key={group.id} className="p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              {group.color && (
+                                <div 
+                                  className="w-3 h-3 rounded-full" 
+                                  style={{ backgroundColor: group.color }}
+                                />
+                              )}
+                              <h4 className="font-medium">{group.name}</h4>
+                            </div>
+                            {group.description && (
+                              <p className="text-xs text-muted-foreground mb-1">{group.description}</p>
+                            )}
+                            <p className="text-sm text-muted-foreground">
+                              {contactsInGroup} {contactsInGroup === 1 ? 'contato' : 'contatos'}
+                            </p>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleEditGroup(group)}
+                              disabled={isLoading}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleDeleteGroup(group.id, group.name)}
+                              disabled={isLoading}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })
+                )}
               </div>
             </Card>
           </TabsContent>
@@ -1639,18 +2141,67 @@ export default function Contatos() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">Etiquetas</h3>
-                <Button>
+                <Button onClick={() => {
+                  setEditingTagId(null);
+                  setNewTag({ name: '', color: '#667eea' });
+                  setIsNewTagOpen(true);
+                }}>
                   <Tag className="w-4 h-4 mr-2" />
                   Nova Etiqueta
                 </Button>
               </div>
               
               <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="cursor-pointer hover:bg-muted">
-                    {tag}
-                  </Badge>
-                ))}
+                {tags.length === 0 ? (
+                  <div className="w-full text-center py-12">
+                    <Tag className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">Nenhuma etiqueta criada ainda</p>
+                    <p className="text-sm text-muted-foreground mt-2">Crie sua primeira etiqueta para organizar seus contatos</p>
+                  </div>
+                ) : (
+                  tags.map((tag) => (
+                    <Badge 
+                      key={tag.id} 
+                      variant="outline" 
+                      className="cursor-pointer hover:bg-muted flex items-center gap-2 pr-1"
+                      style={{ borderColor: tag.color || undefined }}
+                    >
+                      {tag.color && (
+                        <div 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: tag.color }}
+                        />
+                      )}
+                      <span>{tag.name}</span>
+                      <div className="flex gap-1 ml-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 p-0 hover:bg-muted-foreground/20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditTag(tag);
+                          }}
+                          disabled={isLoading}
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 p-0 hover:bg-destructive/20 text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTag(tag.id, tag.name);
+                          }}
+                          disabled={isLoading}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </Badge>
+                  ))
+                )}
               </div>
             </Card>
           </TabsContent>
@@ -1756,8 +2307,7 @@ export default function Contatos() {
                             {contacts
                               .filter(c => c.segmentations.includes(selectedSegmentationView))
                               .map((contact) => {
-                                const detail = contactDetails[contact.id];
-                                const score = detail ? calculateScore(detail) : 0;
+                                const score = calculateScore(contact.id);
                                 const scoreInfo = getScoreColor(score);
 
                                 return (
@@ -1970,30 +2520,30 @@ export default function Contatos() {
                         <div className="space-y-2">
                           <div className="flex justify-between">
                             <span>📧 5 e-mails abertos × {tempWeights.emailOpens}</span>
-                            <span className="font-medium">{5 * tempWeights.emailOpens} pts</span>
+                            <span className="font-medium">{(5 * (tempWeights.emailOpens || 0)) || 0} pts</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>🔗 3 cliques × {tempWeights.linkClicks}</span>
-                            <span className="font-medium">{3 * tempWeights.linkClicks} pts</span>
+                            <span>🔗 3 cliques × {tempWeights.linkClicks || 0}</span>
+                            <span className="font-medium">{(3 * (tempWeights.linkClicks || 0)) || 0} pts</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>🛍️ 2 compras × {tempWeights.purchases}</span>
-                            <span className="font-medium">{2 * tempWeights.purchases} pts</span>
+                            <span>🛍️ 2 compras × {tempWeights.purchases || 0}</span>
+                            <span className="font-medium">{(2 * (tempWeights.purchases || 0)) || 0} pts</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>💰 R$ 500,00 ÷ {tempWeights.ltvDivisor}</span>
-                            <span className="font-medium">{Math.round(500 / tempWeights.ltvDivisor)} pts</span>
+                            <span>💰 R$ 500,00 ÷ {tempWeights.ltvDivisor || 10}</span>
+                            <span className="font-medium">{Math.round(500 / (tempWeights.ltvDivisor || 10)) || 0} pts</span>
                           </div>
                         </div>
                         <div className="border-t border-border pt-3 flex justify-between items-center">
                           <span className="font-bold">Score Total:</span>
                           <span className="text-2xl font-bold text-primary">
                             {Math.min(100, Math.round(
-                              (5 * tempWeights.emailOpens) + 
-                              (3 * tempWeights.linkClicks) + 
-                              (2 * tempWeights.purchases) + 
-                              (500 / tempWeights.ltvDivisor)
-                            ))}/100
+                              (5 * (tempWeights.emailOpens || 0)) + 
+                              (3 * (tempWeights.linkClicks || 0)) + 
+                              (2 * (tempWeights.purchases || 0)) + 
+                              (500 / (tempWeights.ltvDivisor || 10))
+                            )) || 0}/100
                           </span>
                         </div>
                       </div>
@@ -2021,33 +2571,60 @@ export default function Contatos() {
                 <div className="flex justify-between items-center pt-4 border-t border-border">
                   <Button 
                     variant="outline"
-                    onClick={() => {
-                      resetToDefaults();
-                      setTempWeights({ emailOpens: 2, linkClicks: 3, purchases: 10, ltvDivisor: 10 });
+                    onClick={async () => {
+                      try {
+                        await resetToDefaults();
+                        setTempWeights({ emailOpens: 2, linkClicks: 3, purchases: 10, ltvDivisor: 10 });
+                        toast({
+                          title: 'Configuração restaurada!',
+                          description: 'Os valores padrão foram restaurados com sucesso',
+                        });
+                      } catch (error) {
+                        toast({
+                          title: 'Erro ao restaurar configuração',
+                          description: error instanceof Error ? error.message : 'Não foi possível restaurar os valores padrão',
+                          variant: 'destructive',
+                        });
+                      }
                     }}
                     className="gap-2"
+                    disabled={isLoading || isLoadingScoreConfig}
                   >
                     <RotateCcw className="w-4 h-4" />
                     Restaurar Padrões
                   </Button>
                   
                   <Button 
-                    onClick={() => {
-                      updateWeights(tempWeights);
-                      // Aqui seria feita a persistência no banco quando o backend estiver ativo
+                    onClick={async () => {
+                      try {
+                        setIsLoading(true);
+                        await updateWeights(tempWeights);
+                        toast({
+                          title: 'Configuração salva!',
+                          description: 'A configuração de score foi salva com sucesso',
+                        });
+                      } catch (error) {
+                        toast({
+                          title: 'Erro ao salvar configuração',
+                          description: error instanceof Error ? error.message : 'Não foi possível salvar a configuração',
+                          variant: 'destructive',
+                        });
+                      } finally {
+                        setIsLoading(false);
+                      }
                     }}
                     className="gap-2"
+                    disabled={isLoading || isLoadingScoreConfig}
                   >
                     <Save className="w-4 h-4" />
                     Salvar Configuração
                   </Button>
                 </div>
 
-                {/* Aviso sobre persistência */}
-                <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                    ⚠️ <strong>Nota:</strong> As configurações estão sendo salvas localmente no navegador. 
-                    Para persistir no banco de dados e compartilhar entre usuários, conecte o Lovable Cloud.
+                {/* Informação sobre persistência */}
+                <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                  <p className="text-sm text-primary-foreground">
+                    ✅ <strong>Configuração salva no banco de dados!</strong> As configurações são específicas por usuário e são aplicadas automaticamente no cálculo de score dos contatos.
                   </p>
                 </div>
               </div>
@@ -2057,10 +2634,28 @@ export default function Contatos() {
       </div>
 
       {/* Modal Novo Contato */}
-      <Dialog open={isNewContactOpen} onOpenChange={setIsNewContactOpen}>
+      <Dialog open={isNewContactOpen} onOpenChange={(open) => {
+        setIsNewContactOpen(open);
+        if (!open) {
+          setEditingContactId(null);
+          setNewContact({
+            name: '',
+            phone: '',
+            email: '',
+            group: '',
+            groupId: null,
+            status: 'Ativo',
+            tags: [],
+            tagIds: [],
+            state: '',
+            city: '',
+            segmentations: []
+          });
+        }
+      }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Novo Contato</DialogTitle>
+            <DialogTitle>{editingContactId ? 'Editar Contato' : 'Novo Contato'}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -2107,7 +2702,7 @@ export default function Contatos() {
                   </SelectTrigger>
                   <SelectContent>
                     {groups.map((group) => (
-                      <SelectItem key={group} value={group}>{group}</SelectItem>
+                      <SelectItem key={group.id} value={group.name}>{group.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -2145,7 +2740,7 @@ export default function Contatos() {
                 </SelectTrigger>
                 <SelectContent>
                   {tags.map((tag) => (
-                    <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+                    <SelectItem key={tag.id} value={tag.name}>{tag.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -2208,8 +2803,8 @@ export default function Contatos() {
             <Button variant="outline" onClick={() => setIsNewContactOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSaveContact}>
-              Salvar Contato
+            <Button onClick={handleSaveContact} disabled={isLoading}>
+              {isLoading ? 'Salvando...' : editingContactId ? 'Atualizar Contato' : 'Salvar Contato'}
             </Button>
           </div>
         </DialogContent>
@@ -2246,39 +2841,202 @@ export default function Contatos() {
       </Dialog>
 
       {/* Modal Importar */}
-      <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
-        <DialogContent>
+      <Dialog open={isImportOpen} onOpenChange={(open) => {
+        setIsImportOpen(open);
+        if (!open) {
+          setImportFile(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Importar Contatos</DialogTitle>
+            <DialogDescription>
+              Faça upload de uma planilha CSV com seus contatos para importá-los em massa.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <p className="text-muted-foreground">
               Faça upload de uma planilha CSV com seus contatos.
             </p>
+            
+            {/* Download do exemplo */}
+            <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-sm mb-1">📥 Baixar arquivo de exemplo</p>
+                  <p className="text-xs text-muted-foreground">
+                    Use este modelo para criar sua planilha
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const csvContent = [
+                      'Nome,Telefone,Email,Grupo,Status,Etiquetas,Estado,Cidade,Segmentações',
+                      'João Silva,(11) 98765-4321,joao@exemplo.com,VIP,Ativo,Cliente Premium;Fidelidade,SP,São Paulo,by_purchase_count;high_ticket',
+                      'Maria Santos,(21) 91234-5678,maria@exemplo.com,Regular,Ativo,Newsletter,RJ,Rio de Janeiro,birthday',
+                      'Pedro Oliveira,(31) 99876-5432,pedro@exemplo.com,,Ativo,,MG,Belo Horizonte,',
+                    ].join('\n');
+                    
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'exemplo-contatos.csv';
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                  }}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar Exemplo
+                </Button>
+              </div>
+            </div>
+
+            {/* Área de upload */}
             <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="font-medium mb-2">Arraste e solte seu arquivo aqui</p>
-              <p className="text-sm text-muted-foreground mb-4">ou</p>
-              <Button variant="outline">
-                Selecionar Arquivo
-              </Button>
+              <input
+                type="file"
+                accept=".csv"
+                id="csv-upload"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast({
+                        title: 'Arquivo muito grande',
+                        description: 'O arquivo deve ter no máximo 5MB',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+                    setImportFile(file);
+                  }
+                }}
+              />
+              {!importFile ? (
+                <>
+                  <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="font-medium mb-2">Arraste e solte seu arquivo aqui</p>
+                  <p className="text-sm text-muted-foreground mb-4">ou</p>
+                  <Button 
+                    variant="outline"
+                    onClick={() => document.getElementById('csv-upload')?.click()}
+                  >
+                    Selecionar Arquivo
+                  </Button>
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <FileSpreadsheet className="w-12 h-12 mx-auto mb-4 text-primary" />
+                  <p className="font-medium">{importFile.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {(importFile.size / 1024).toFixed(2)} KB
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setImportFile(null);
+                      const input = document.getElementById('csv-upload') as HTMLInputElement;
+                      if (input) input.value = '';
+                    }}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Remover
+                  </Button>
+                </div>
+              )}
               <p className="text-xs text-muted-foreground mt-4">
                 Formatos aceitos: CSV (até 5MB)
               </p>
             </div>
+
+            {/* Formato esperado */}
             <div className="p-4 bg-muted rounded-lg">
               <p className="font-medium mb-2 text-sm">Formato esperado do CSV:</p>
-              <p className="text-xs text-muted-foreground font-mono">
-                Nome,Telefone,Email,Grupo,Status,Etiquetas,Estado,Cidade
+              <p className="text-xs text-muted-foreground font-mono mb-2">
+                Nome,Telefone,Email,Grupo,Status,Etiquetas,Estado,Cidade,Segmentações
               </p>
+              <div className="text-xs text-muted-foreground space-y-1 mt-2">
+                <p>• <strong>Nome</strong>: Obrigatório</p>
+                <p>• <strong>Telefone, Email</strong>: Opcionais</p>
+                <p>• <strong>Grupo</strong>: Nome do grupo (deve existir)</p>
+                <p>• <strong>Status</strong>: Ativo, Inativo, etc.</p>
+                <p>• <strong>Etiquetas</strong>: Separadas por ponto e vírgula (;)</p>
+                <p>• <strong>Estado, Cidade</strong>: Localização</p>
+                <p>• <strong>Segmentações</strong>: IDs separados por ponto e vírgula (;)</p>
+              </div>
             </div>
           </div>
           <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setIsImportOpen(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsImportOpen(false);
+                setImportFile(null);
+              }}
+              disabled={isImporting}
+            >
               Cancelar
             </Button>
-            <Button>
-              Importar Contatos
+            <Button 
+              onClick={async () => {
+                if (!importFile) {
+                  toast({
+                    title: 'Selecione um arquivo',
+                    description: 'Por favor, selecione um arquivo CSV para importar',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+
+                setIsImporting(true);
+                try {
+                  const result = await api.importContacts(importFile);
+                  
+                  toast({
+                    title: 'Importação concluída!',
+                    description: `${result.created} contato(s) importado(s) com sucesso${result.errors.length > 0 ? `. ${result.errors.length} erro(s) encontrado(s).` : '.'}`,
+                  });
+
+                  if (result.errors.length > 0) {
+                    console.warn('Erros na importação:', result.errors);
+                  }
+
+                  // Recarregar contatos
+                  const apiContacts = await api.getContacts();
+                  const frontendContacts = apiContacts.map(convertApiContactToFrontend);
+                  setContacts(frontendContacts);
+
+                  setIsImportOpen(false);
+                  setImportFile(null);
+                } catch (error) {
+                  console.error('Erro ao importar contatos:', error);
+                  toast({
+                    title: 'Erro ao importar contatos',
+                    description: error instanceof Error ? error.message : 'Não foi possível importar os contatos',
+                    variant: 'destructive',
+                  });
+                } finally {
+                  setIsImporting(false);
+                }
+              }}
+              disabled={!importFile || isImporting}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Importando...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importar Contatos
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>
@@ -2381,100 +3139,60 @@ export default function Contatos() {
                     </div>
                   </Card>
 
-                  {contactDetails[selectedContactId] && (
-                    <>
-                      {/* Forma de Pagamento */}
-                      <Card className="p-4">
-                        <h3 className="font-semibold mb-3 flex items-center gap-2">
-                          <CreditCard className="w-4 h-4" />
-                          Forma de Pagamento
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-sm">
-                            {contactDetails[selectedContactId].paymentMethod}
-                          </Badge>
-                        </div>
-                      </Card>
-
-                      {/* Campanha de Origem */}
-                      <Card className="p-4">
-                        <h3 className="font-semibold mb-3 flex items-center gap-2">
-                          <Target className="w-4 h-4" />
-                          Campanha de Origem
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="text-sm">
-                            {contactDetails[selectedContactId].sourceCampaign}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Primeira interação com a marca
-                        </p>
-                      </Card>
-                    </>
-                  )}
+                  {/* Informações básicas do contato */}
                 </div>
 
                 {/* Coluna 2: Score */}
-                {contactDetails[selectedContactId] && (
-                  <>
-                    {(() => {
-                      const currentScore = calculateScore(contactDetails[selectedContactId]);
-                      const scoreColors = getScoreColor(currentScore);
-                      
-                      return (
-                        <Card className={`p-4 ${scoreColors.bgLight} border-${scoreColors.border.replace('border-', '')} shadow-score animate-fade-in`}>
-                          <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-semibold flex items-center gap-2">
-                              <Activity className={`w-4 h-4 ${scoreColors.text}`} />
-                              Score do Lead
-                            </h3>
-                            <Badge 
-                              variant="outline" 
-                              className={`text-lg px-3 py-1 ${scoreColors.border} ${scoreColors.text} bg-white dark:bg-card`}
-                            >
-                              {currentScore}/100
-                            </Badge>
+                {selectedContactId && (() => {
+                  const purchaseData = contactPurchases[selectedContactId];
+                  const currentScore = calculateScore(selectedContactId);
+                  const scoreColors = getScoreColor(currentScore);
+                  const purchases = purchaseData?.purchases || [];
+                  const ltv = purchaseData?.ltv || 0;
+                  
+                  return (
+                    <Card className={`p-4 ${scoreColors.bgLight} border-${scoreColors.border.replace('border-', '')} shadow-score animate-fade-in`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <Activity className={`w-4 h-4 ${scoreColors.text}`} />
+                          Score do Lead
+                        </h3>
+                        <Badge 
+                          variant="outline" 
+                          className={`text-lg px-3 py-1 ${scoreColors.border} ${scoreColors.text} bg-white dark:bg-card`}
+                        >
+                          {currentScore}/100
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-16 h-16 rounded-xl ${scoreColors.bg} flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105`}>
+                          {React.createElement(scoreColors.icon, { className: "w-8 h-8" })}
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold">
+                            {scoreColors.label}
                           </div>
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className={`w-16 h-16 rounded-xl ${scoreColors.bg} flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105`}>
-                              {React.createElement(scoreColors.icon, { className: "w-8 h-8" })}
-                            </div>
-                            <div>
-                              <div className="text-2xl font-bold">
-                                {scoreColors.label}
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                Classificação automática
-                              </p>
-                            </div>
-                          </div>
-                          <div className="space-y-2 text-xs">
-                            <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                              <span className="text-muted-foreground">📧 E-mails abertos × {scoreConfig.weights.emailOpens}pts</span>
-                              <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'email_open').length * scoreConfig.weights.emailOpens} pts</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                              <span className="text-muted-foreground">🔗 Cliques em links × {scoreConfig.weights.linkClicks}pts</span>
-                              <span className="font-medium">{contactDetails[selectedContactId].history.filter(e => e.type === 'link_click').length * scoreConfig.weights.linkClicks} pts</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                              <span className="text-muted-foreground">🛍️ Compras × {scoreConfig.weights.purchases}pts</span>
-                              <span className="font-medium">{contactDetails[selectedContactId].purchases.length * scoreConfig.weights.purchases} pts</span>
-                            </div>
-                            <div className="flex justify-between items-center p-2 bg-background/50 rounded">
-                              <span className="text-muted-foreground">💰 LTV ÷ {scoreConfig.weights.ltvDivisor}</span>
-                              <span className="font-medium">{Math.round(contactDetails[selectedContactId].ltv / scoreConfig.weights.ltvDivisor)} pts</span>
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })()}
-                  </>
-                )}
+                          <p className="text-xs text-muted-foreground">
+                            Classificação automática
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                          <span className="text-muted-foreground">🛍️ Compras × {scoreConfig.weights.purchases || 0}pts</span>
+                          <span className="font-medium">{(purchases.length * (scoreConfig.weights.purchases || 0)) || 0} pts</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-background/50 rounded">
+                          <span className="text-muted-foreground">💰 LTV ÷ {scoreConfig.weights.ltvDivisor || 10}</span>
+                          <span className="font-medium">{Math.round(ltv / (scoreConfig.weights.ltvDivisor || 10)) || 0} pts</span>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })()}
 
                 {/* Coluna 3: LTV Total */}
-                {contactDetails[selectedContactId] && (
+                {selectedContactId && contactPurchases[selectedContactId] && (
                   <Card className="p-4 bg-ltv-bg border-ltv shadow-score animate-fade-in">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold flex items-center gap-2">
@@ -2482,7 +3200,7 @@ export default function Contatos() {
                         LTV Total
                       </h3>
                       <Badge variant="default" className="text-lg px-3 py-1 bg-ltv text-white">
-                        R$ {contactDetails[selectedContactId].ltv.toFixed(2)}
+                        R$ {contactPurchases[selectedContactId].ltv.toFixed(2)}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -2493,21 +3211,21 @@ export default function Contatos() {
               </div>
 
               {/* Seção Completa: Histórico de LTV */}
-              {contactDetails[selectedContactId] && (
+              {selectedContactId && contactPurchases[selectedContactId] && (
                 <div className="space-y-4">
                   <h3 className="font-semibold flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
                     Histórico de LTV
                   </h3>
                   <LtvHistory 
-                    purchases={contactDetails[selectedContactId].purchases}
-                    totalLtv={contactDetails[selectedContactId].ltv}
+                    purchases={contactPurchases[selectedContactId].purchases}
+                    totalLtv={contactPurchases[selectedContactId].ltv}
                   />
                 </div>
               )}
 
               {/* Histórico Completo - Timeline */}
-              {contactDetails[selectedContactId] && (
+              {selectedContactId && contactPurchases[selectedContactId] && (
                 <div>
                     <Card className="p-4">
                       <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -2521,9 +3239,16 @@ export default function Contatos() {
                         {/* Timeline line */}
                         <div className="absolute left-[15px] top-2 bottom-2 w-[2px] bg-border"></div>
                         
-                        {contactDetails[selectedContactId].history
+                        {contactPurchases[selectedContactId].purchases
                           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                          .map((event) => {
+                          .map((purchase) => {
+                            const event = {
+                              id: purchase.id,
+                              type: 'purchase' as const,
+                              date: purchase.date,
+                              description: `Compra realizada: ${purchase.product}`,
+                              metadata: { value: purchase.value, product: purchase.product }
+                            };
                             const getEventIcon = () => {
                               switch (event.type) {
                                 case 'purchase':
@@ -2621,7 +3346,7 @@ export default function Contatos() {
                   </div>
                 )}
 
-                {!contactDetails[selectedContactId] && (
+                {selectedContactId && !contactPurchases[selectedContactId] && (
                   <Card className="p-6 text-center">
                     <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
                     <p className="text-muted-foreground text-sm">
@@ -2634,12 +3359,157 @@ export default function Contatos() {
         </DialogContent>
       </Dialog>
 
+      {/* Modal Novo/Editar Grupo */}
+      <Dialog open={isNewGroupOpen || isEditGroupOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsNewGroupOpen(false);
+          setIsEditGroupOpen(false);
+          setEditingGroupId(null);
+          setNewGroup({ name: '', description: '', color: '#667eea' });
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingGroupId ? 'Editar Grupo' : 'Novo Grupo'}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="group-name">Nome *</Label>
+              <Input
+                id="group-name"
+                value={newGroup.name}
+                onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
+                placeholder="Ex: VIP, Clientes Premium, etc."
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="group-description">Descrição</Label>
+              <Textarea
+                id="group-description"
+                value={newGroup.description}
+                onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
+                placeholder="Descrição do grupo (opcional)"
+                rows={3}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="group-color">Cor</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="group-color"
+                  type="color"
+                  value={newGroup.color}
+                  onChange={(e) => setNewGroup({ ...newGroup, color: e.target.value })}
+                  className="w-16 h-10"
+                />
+                <Input
+                  value={newGroup.color}
+                  onChange={(e) => setNewGroup({ ...newGroup, color: e.target.value })}
+                  placeholder="#667eea"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsNewGroupOpen(false);
+                setIsEditGroupOpen(false);
+                setEditingGroupId(null);
+                setNewGroup({ name: '', description: '', color: '#667eea' });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveGroup} disabled={isLoading}>
+              {isLoading ? 'Salvando...' : editingGroupId ? 'Atualizar Grupo' : 'Criar Grupo'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Novo/Editar Etiqueta */}
+      <Dialog open={isNewTagOpen || isEditTagOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsNewTagOpen(false);
+          setIsEditTagOpen(false);
+          setEditingTagId(null);
+          setNewTag({ name: '', color: '#667eea' });
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingTagId ? 'Editar Etiqueta' : 'Nova Etiqueta'}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="tag-name">Nome *</Label>
+              <Input
+                id="tag-name"
+                value={newTag.name}
+                onChange={(e) => setNewTag({ ...newTag, name: e.target.value })}
+                placeholder="Ex: Black Friday, Newsletter, etc."
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="tag-color">Cor</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="tag-color"
+                  type="color"
+                  value={newTag.color}
+                  onChange={(e) => setNewTag({ ...newTag, color: e.target.value })}
+                  className="w-16 h-10"
+                />
+                <Input
+                  value={newTag.color}
+                  onChange={(e) => setNewTag({ ...newTag, color: e.target.value })}
+                  placeholder="#667eea"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setIsNewTagOpen(false);
+                setIsEditTagOpen(false);
+                setEditingTagId(null);
+                setNewTag({ name: '', color: '#667eea' });
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveTag} disabled={isLoading}>
+              {isLoading ? 'Salvando...' : editingTagId ? 'Atualizar Etiqueta' : 'Criar Etiqueta'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Manual Sale Dialog */}
       <ManualSaleDialog
         open={isManualSaleOpen}
         onOpenChange={setIsManualSaleOpen}
         contactName={selectedContactForSale?.name || ''}
         contactId={selectedContactForSale?.id || 0}
+        onPurchaseCreated={() => {
+          // Recarregar contatos para atualizar dados
+          const loadContacts = async () => {
+            try {
+              const apiContacts = await api.getContacts();
+              const frontendContacts = apiContacts.map(convertApiContactToFrontend);
+              setContacts(frontendContacts);
+            } catch (error) {
+              console.error('Erro ao recarregar contatos:', error);
+            }
+          };
+          loadContacts();
+        }}
       />
     </Layout>
   );

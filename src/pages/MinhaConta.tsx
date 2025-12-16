@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SuccessModal } from '@/components/ui/success-modal';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/lib/api';
 import { 
   User, 
   Lock,
@@ -21,18 +25,55 @@ import {
 } from 'lucide-react';
 
 export default function MinhaConta() {
+  const { user: authUser, login } = useAuth();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successModalContent, setSuccessModalContent] = useState({
+    title: '',
+    description: '',
+  });
   
   const [profileData, setProfileData] = useState({
-    firstName: 'João',
-    lastName: 'Silva',
-    email: 'joao.silva@email.com',
-    phone: '(11) 99999-9999',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      setIsLoading(true);
+      const userData = await api.getCurrentUser();
+      setProfileData({
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao carregar dados',
+        description: error instanceof Error ? error.message : 'Não foi possível carregar suas informações',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const [notifications, setNotifications] = useState({
     campaignUpdates: true,
@@ -68,14 +109,97 @@ export default function MinhaConta() {
     }
   ];
 
-  const handleProfileSave = () => {
-    console.log('Saving profile:', profileData);
-    // Handle profile save
+  const handleProfileSave = async () => {
+    try {
+      setIsSaving(true);
+      const updatedUser = await api.updateUser({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        email: profileData.email,
+        phone: profileData.phone,
+      });
+
+      // Atualizar contexto de autenticação
+      const token = localStorage.getItem('token');
+      if (token) {
+        login(token, updatedUser);
+      }
+
+      // Mostrar modal de sucesso
+      setSuccessModalContent({
+        title: 'Perfil Atualizado com Sucesso!',
+        description: 'Suas informações foram salvas com sucesso.',
+      });
+      setShowSuccessModal(true);
+    } catch (error) {
+      toast({
+        title: 'Erro ao salvar',
+        description: error instanceof Error ? error.message : 'Não foi possível salvar suas informações',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handlePasswordChange = () => {
-    console.log('Changing password');
-    // Handle password change
+  const handlePasswordChange = async () => {
+    if (!profileData.currentPassword || !profileData.newPassword || !profileData.confirmPassword) {
+      toast({
+        title: 'Atenção',
+        description: 'Preencha todos os campos de senha',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (profileData.newPassword !== profileData.confirmPassword) {
+      toast({
+        title: 'Erro',
+        description: 'As senhas não coincidem',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (profileData.newPassword.length < 8) {
+      toast({
+        title: 'Erro',
+        description: 'A nova senha deve ter no mínimo 8 caracteres',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      await api.changePassword({
+        currentPassword: profileData.currentPassword,
+        newPassword: profileData.newPassword,
+      });
+
+      // Limpar campos de senha
+      setProfileData(prev => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      }));
+
+      // Mostrar modal de sucesso
+      setSuccessModalContent({
+        title: 'Senha Alterada com Sucesso!',
+        description: 'Sua senha foi alterada com sucesso. Você já pode usar sua nova senha para fazer login.',
+      });
+      setShowSuccessModal(true);
+    } catch (error) {
+      toast({
+        title: 'Erro ao alterar senha',
+        description: error instanceof Error ? error.message : 'Não foi possível alterar a senha',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleNotificationsSave = () => {
@@ -105,9 +229,9 @@ export default function MinhaConta() {
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold">
-                    {profileData.firstName} {profileData.lastName}
+                    {isLoading ? 'Carregando...' : `${profileData.firstName} ${profileData.lastName}`}
                   </h3>
-                  <p className="text-muted-foreground">{profileData.email}</p>
+                  <p className="text-muted-foreground">{isLoading ? '...' : profileData.email}</p>
                   <Badge variant="default" className="mt-1">
                     Plano Pro
                   </Badge>
@@ -165,8 +289,12 @@ export default function MinhaConta() {
                   />
                 </div>
 
-                <Button onClick={handleProfileSave} className="w-full md:w-auto">
-                  Salvar Alterações
+                <Button 
+                  onClick={handleProfileSave} 
+                  className="w-full md:w-auto"
+                  disabled={isSaving || isLoading}
+                >
+                  {isSaving ? 'Salvando...' : 'Salvar Alterações'}
                 </Button>
               </div>
             </Card>
@@ -236,8 +364,11 @@ export default function MinhaConta() {
                     />
                   </div>
 
-                  <Button onClick={handlePasswordChange}>
-                    Alterar Senha
+                  <Button 
+                    onClick={handlePasswordChange}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Alterando...' : 'Alterar Senha'}
                   </Button>
                 </div>
               </Card>
@@ -443,6 +574,14 @@ export default function MinhaConta() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal de Sucesso */}
+      <SuccessModal
+        open={showSuccessModal}
+        onOpenChange={setShowSuccessModal}
+        title={successModalContent.title}
+        description={successModalContent.description}
+      />
     </Layout>
   );
 }

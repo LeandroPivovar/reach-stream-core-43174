@@ -8,9 +8,11 @@ interface LayoutProps {
   subtitle?: string;
   actions?: React.ReactNode;
   showSearch?: boolean;
+  onSearchChange?: (value: string) => void;
+  searchValue?: string;
 }
 
-export function Layout({ children, title, subtitle, actions, showSearch }: LayoutProps) {
+export function Layout({ children, title, subtitle, actions, showSearch, onSearchChange, searchValue }: LayoutProps) {
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -20,7 +22,9 @@ export function Layout({ children, title, subtitle, actions, showSearch }: Layou
           title={title} 
           subtitle={subtitle} 
           actions={actions} 
-          showSearch={showSearch} 
+          showSearch={showSearch}
+          onSearchChange={onSearchChange}
+          searchValue={searchValue}
         />
         
         <main className="flex-1 p-6 overflow-auto">

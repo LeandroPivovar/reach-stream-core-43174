@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import logoNucleocrm from '@/assets/logo-nucleocrm.png';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   BarChart3,
   MessageSquare,
@@ -34,8 +35,10 @@ const menuItems = [
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
+    logout();
     navigate('/auth/login');
   };
 
@@ -84,10 +87,10 @@ export function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">
-              Usuário
+              {user ? `${user.firstName} ${user.lastName}` : 'Usuário'}
             </p>
             <p className="text-xs text-white/70 truncate">
-              usuario@email.com
+              {user?.email || 'usuario@email.com'}
             </p>
           </div>
         </div>

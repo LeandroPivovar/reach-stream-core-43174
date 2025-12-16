@@ -15,9 +15,11 @@ interface HeaderProps {
   subtitle?: string;
   actions?: React.ReactNode;
   showSearch?: boolean;
+  onSearchChange?: (value: string) => void;
+  searchValue?: string;
 }
 
-export function Header({ title, subtitle, actions, showSearch = false }: HeaderProps) {
+export function Header({ title, subtitle, actions, showSearch = false, onSearchChange, searchValue }: HeaderProps) {
   return (
     <div className="bg-background border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
@@ -35,6 +37,8 @@ export function Header({ title, subtitle, actions, showSearch = false }: HeaderP
               <Input
                 placeholder="Pesquisar..."
                 className="pl-10 w-80"
+                value={searchValue || ''}
+                onChange={(e) => onSearchChange?.(e.target.value)}
               />
             </div>
           )}

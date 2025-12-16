@@ -1,24 +1,67 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Eye, EyeOff } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/lib/api';
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Mostrar mensagem se vier do registro
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.message) {
+      toast({
+        title: 'Conta criada!',
+        description: state.message,
+      });
+    }
+  }, [location.state, toast]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate login and redirect to home
-    console.log('Login attempt:', formData);
-    navigate('/');
+    setIsLoading(true);
+
+    try {
+      const response = await api.login({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Usar o contexto de autenticação para fazer login
+      login(response.token, response.user);
+
+      toast({
+        title: 'Login realizado com sucesso!',
+        description: 'Bem-vindo de volta',
+      });
+
+      // Redirecionar para a rota original ou dashboard
+      const from = (location.state as any)?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    } catch (error) {
+      toast({
+        title: 'Erro ao fazer login',
+        description: error instanceof Error ? error.message : 'Credenciais inválidas',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -87,8 +130,8 @@ export default function Login() {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full">
-              Entrar
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
 

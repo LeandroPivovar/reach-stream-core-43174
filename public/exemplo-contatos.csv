@@ -1,0 +1,7 @@
+Nome,Telefone,Email,Grupo,Status,Etiquetas,Estado,Cidade,Segmentações
+João Silva,(11) 98765-4321,joao@exemplo.com,VIP,Ativo,Cliente Premium;Fidelidade,SP,São Paulo,by_purchase_count;high_ticket
+Maria Santos,(21) 91234-5678,maria@exemplo.com,Regular,Ativo,Newsletter,RJ,Rio de Janeiro,birthday
+Pedro Oliveira,(31) 99876-5432,pedro@exemplo.com,,Ativo,,MG,Belo Horizonte,
+Ana Costa,(41) 98888-7777,ana@exemplo.com,VIP,Ativo,Cliente Premium,PR,Curitiba,high_ticket
+Carlos Souza,(51) 97777-6666,carlos@exemplo.com,Regular,Inativo,,RS,Porto Alegre,
+

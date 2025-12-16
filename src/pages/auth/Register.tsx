@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Eye, EyeOff } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 
 export default function Register() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -19,10 +24,69 @@ export default function Register() {
     acceptTerms: false
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle registration logic here
-    console.log('Registration attempt:', formData);
+    
+    if (!formData.acceptTerms) {
+      toast({
+        title: 'Atenção',
+        description: 'Você precisa aceitar os termos de uso para continuar',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: 'Erro',
+        description: 'As senhas não coincidem',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await api.register({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      toast({
+        title: 'Conta criada com sucesso!',
+        description: response.message || 'Verifique seu e-mail para ativar sua conta',
+      });
+
+      // Limpar o formulário
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        acceptTerms: false,
+      });
+
+      // Redirecionar para a tela de login com mensagem
+      navigate('/auth/login', { 
+        replace: true,
+        state: { 
+          message: 'Conta criada! Verifique seu e-mail para ativar sua conta antes de fazer login.' 
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao criar conta:', error);
+      toast({
+        title: 'Erro ao criar conta',
+        description: error instanceof Error ? error.message : 'Ocorreu um erro inesperado',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -156,8 +220,8 @@ export default function Register() {
               </Label>
             </div>
 
-            <Button type="submit" className="w-full">
-              Criar Conta
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Criando conta...' : 'Criar Conta'}
             </Button>
           </form>
 

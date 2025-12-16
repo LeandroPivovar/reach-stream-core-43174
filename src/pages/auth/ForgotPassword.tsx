@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, Mail, Key, Lock, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 
 type Step = 'email' | 'code' | 'password' | 'success';
 
@@ -15,10 +16,11 @@ export default function ForgotPassword() {
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
       toast({
@@ -28,15 +30,27 @@ export default function ForgotPassword() {
       });
       return;
     }
-    // Simulate sending code
-    toast({
-      title: 'Código enviado',
-      description: 'Verifique seu e-mail para o código de recuperação',
-    });
-    setStep('code');
+
+    setIsLoading(true);
+    try {
+      await api.forgotPassword(email);
+      toast({
+        title: 'Código enviado',
+        description: 'Verifique seu e-mail para o código de recuperação',
+      });
+      setStep('code');
+    } catch (error) {
+      toast({
+        title: 'Erro ao enviar código',
+        description: error instanceof Error ? error.message : 'Não foi possível enviar o código',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleCodeSubmit = (e: React.FormEvent) => {
+  const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!code || code.length < 6) {
       toast({
@@ -46,10 +60,31 @@ export default function ForgotPassword() {
       });
       return;
     }
-    setStep('password');
+
+    setIsLoading(true);
+    try {
+      const response = await api.verifyResetCode(email, code);
+      if (response.valid) {
+        setStep('password');
+      } else {
+        toast({
+          title: 'Código inválido',
+          description: 'O código informado é inválido ou expirou. Solicite um novo código.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro ao verificar código',
+        description: error instanceof Error ? error.message : 'Não foi possível verificar o código',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password || password.length < 8) {
       toast({
@@ -67,7 +102,24 @@ export default function ForgotPassword() {
       });
       return;
     }
-    setStep('success');
+
+    setIsLoading(true);
+    try {
+      await api.resetPassword(email, code, password, confirmPassword);
+      setStep('success');
+      toast({
+        title: 'Senha redefinida!',
+        description: 'Sua senha foi alterada com sucesso',
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao redefinir senha',
+        description: error instanceof Error ? error.message : 'Não foi possível redefinir a senha',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBackToLogin = () => {
@@ -116,8 +168,8 @@ export default function ForgotPassword() {
                 </p>
               </div>
 
-              <Button type="submit" className="w-full">
-                Enviar código
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Enviando...' : 'Enviar código'}
               </Button>
             </form>
           )}
@@ -154,17 +206,21 @@ export default function ForgotPassword() {
                 >
                   Voltar
                 </Button>
-                <Button type="submit" className="flex-1">
-                  Confirmar código
+                <Button type="submit" className="flex-1" disabled={isLoading}>
+                  {isLoading ? 'Verificando...' : 'Confirmar código'}
                 </Button>
               </div>
 
               <button
                 type="button"
-                onClick={handleEmailSubmit}
-                className="w-full text-sm text-primary hover:underline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleEmailSubmit(e);
+                }}
+                disabled={isLoading}
+                className="w-full text-sm text-primary hover:underline disabled:opacity-50"
               >
-                Reenviar código
+                {isLoading ? 'Enviando...' : 'Reenviar código'}
               </button>
             </form>
           )}
@@ -206,8 +262,8 @@ export default function ForgotPassword() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full">
-                Redefinir senha
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Redefinindo...' : 'Redefinir senha'}
               </Button>
             </form>
           )}
