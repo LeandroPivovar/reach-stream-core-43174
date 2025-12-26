@@ -177,6 +177,27 @@ export interface UpdateTagData {
   color?: string;
 }
 
+export interface EmailConnection {
+  id: number;
+  email: string;
+  smtpHost: string;
+  smtpPort: number;
+  username: string;
+  secure: boolean;
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateEmailConnectionData {
+  email: string;
+  smtpHost: string;
+  smtpPort: number;
+  username: string;
+  password: string;
+  secure?: boolean;
+}
+
 export interface ScoreConfig {
   id: number;
   userId: number;
@@ -570,6 +591,32 @@ class ApiService {
 
   async deleteTag(id: number): Promise<void> {
     return this.request<void>(`/tags/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Email Connections
+  async getEmailConnections(): Promise<EmailConnection[]> {
+    return this.request<EmailConnection[]>('/email-connections', {
+      method: 'GET',
+    });
+  }
+
+  async getEmailConnection(id: number): Promise<EmailConnection> {
+    return this.request<EmailConnection>(`/email-connections/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async createEmailConnection(data: CreateEmailConnectionData): Promise<EmailConnection> {
+    return this.request<EmailConnection>('/email-connections', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteEmailConnection(id: number): Promise<void> {
+    return this.request<void>(`/email-connections/${id}`, {
       method: 'DELETE',
     });
   }
