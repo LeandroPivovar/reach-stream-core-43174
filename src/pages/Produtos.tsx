@@ -45,7 +45,10 @@ import {
   History,
   User,
   Filter,
+  RefreshCw,
+  Check,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Product extends ApiProduct {
   status?: 'active' | 'inactive' | 'out_of_stock';
@@ -75,6 +78,18 @@ export default function Produtos() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [shopifyConnections, setShopifyConnections] = useState<any[]>([]);
+  const [nuvemshopConnections, setNuvemshopConnections] = useState<any[]>([]);
+  const [selectedIntegrations, setSelectedIntegrations] = useState<{
+    shopify: string[];
+    nuvemshop: string[];
+  }>({
+    shopify: [],
+    nuvemshop: [],
+  });
+  const [loadingConnections, setLoadingConnections] = useState(false);
   const [filters, setFilters] = useState({
     category: 'all',
     minPrice: '',
@@ -103,6 +118,12 @@ export default function Produtos() {
   useEffect(() => {
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    if (isSyncModalOpen) {
+      loadIntegrations();
+    }
+  }, [isSyncModalOpen]);
 
   const loadProducts = async () => {
     try {
@@ -592,6 +613,133 @@ export default function Produtos() {
     }
   };
 
+  const loadIntegrations = async () => {
+    try {
+      setLoadingConnections(true);
+      const [shopify, nuvemshop] = await Promise.all([
+        api.getShopifyConnections().catch(() => []),
+        api.getNuvemshopConnections().catch(() => []),
+      ]);
+      setShopifyConnections(shopify.filter((c: any) => c.isActive));
+      setNuvemshopConnections(nuvemshop.filter((c: any) => c.isActive));
+    } catch (error) {
+      console.error('Erro ao carregar integrações:', error);
+      toast({
+        title: 'Erro ao carregar integrações',
+        description: error instanceof Error ? error.message : 'Não foi possível carregar as integrações',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingConnections(false);
+    }
+  };
+
+  const handleSyncProducts = async () => {
+    const hasSelection = selectedIntegrations.shopify.length > 0 || selectedIntegrations.nuvemshop.length > 0;
+    
+    if (!hasSelection) {
+      toast({
+        title: 'Atenção',
+        description: 'Selecione pelo menos uma integração para sincronizar',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsSyncing(true);
+      const syncPromises: Promise<any>[] = [];
+
+      // Sincronizar com Shopify
+      for (const shop of selectedIntegrations.shopify) {
+        for (const product of products) {
+          syncPromises.push(
+            api.syncShopifyProduct(shop, {
+              title: product.name,
+              description: product.description || '',
+              variants: [{
+                price: product.price.toString(),
+                sku: product.sku || '',
+                inventory_quantity: product.stock || 0,
+              }],
+            }).catch((error) => {
+              console.error(`Erro ao sincronizar produto ${product.name} com Shopify ${shop}:`, error);
+              return { error: true, product: product.name, integration: `Shopify: ${shop}` };
+            })
+          );
+        }
+      }
+
+      // Sincronizar com Nuvemshop
+      for (const storeId of selectedIntegrations.nuvemshop) {
+        for (const product of products) {
+          syncPromises.push(
+            api.syncNuvemshopProduct(storeId, {
+              name: { pt: product.name },
+              description: { pt: product.description || '' },
+              variants: [{
+                price: product.price.toString(),
+                stock_management: true,
+                stock: product.stock || 0,
+                weight: '0.5',
+                sku: product.sku || '',
+              }],
+            }).catch((error) => {
+              console.error(`Erro ao sincronizar produto ${product.name} com Nuvemshop ${storeId}:`, error);
+              return { error: true, product: product.name, integration: `Nuvemshop: ${storeId}` };
+            })
+          );
+        }
+      }
+
+      const results = await Promise.all(syncPromises);
+      const errors = results.filter(r => r?.error);
+      const success = results.filter(r => !r?.error);
+
+      if (errors.length > 0) {
+        toast({
+          title: 'Sincronização parcial',
+          description: `${success.length} produto(s) sincronizado(s), ${errors.length} erro(s)`,
+          variant: 'default',
+        });
+      } else {
+        toast({
+          title: 'Sincronização concluída!',
+          description: `${success.length} produto(s) sincronizado(s) com sucesso`,
+        });
+      }
+
+      setIsSyncModalOpen(false);
+      setSelectedIntegrations({ shopify: [], nuvemshop: [] });
+    } catch (error) {
+      toast({
+        title: 'Erro ao sincronizar',
+        description: error instanceof Error ? error.message : 'Não foi possível sincronizar os produtos',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const toggleShopifyConnection = (shop: string) => {
+    setSelectedIntegrations(prev => ({
+      ...prev,
+      shopify: prev.shopify.includes(shop)
+        ? prev.shopify.filter(s => s !== shop)
+        : [...prev.shopify, shop],
+    }));
+  };
+
+  const toggleNuvemshopConnection = (storeId: string) => {
+    setSelectedIntegrations(prev => ({
+      ...prev,
+      nuvemshop: prev.nuvemshop.includes(storeId)
+        ? prev.nuvemshop.filter(s => s !== storeId)
+        : [...prev.nuvemshop, storeId],
+    }));
+  };
+
   const totalProducts = products.length;
   const activeProducts = products.filter(p => p.status === 'active').length;
   const outOfStock = products.filter(p => p.status === 'out_of_stock').length;
@@ -711,6 +859,10 @@ export default function Produtos() {
           </div>
         </PopoverContent>
       </Popover>
+      <Button variant="outline" onClick={() => setIsSyncModalOpen(true)}>
+        <RefreshCw className="w-4 h-4 mr-2" />
+        Sincronizar Produtos
+      </Button>
       <HeaderActions.Export onClick={() => setIsExportModalOpen(true)} />
       <HeaderActions.Add onClick={() => setIsNewProductOpen(true)}>
         Novo Produto
@@ -1375,6 +1527,163 @@ export default function Produtos() {
               disabled={isExporting}
             >
               Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sync Products Modal */}
+      <Dialog open={isSyncModalOpen} onOpenChange={setIsSyncModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-5 h-5" />
+              Sincronizar Produtos
+            </DialogTitle>
+            <DialogDescription>
+              Selecione as integrações para sincronizar seus produtos. Apenas integrações conectadas aparecem aqui.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {loadingConnections ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+                <p>Carregando integrações...</p>
+              </div>
+            ) : (
+              <>
+                {/* Shopify Connections */}
+                {shopifyConnections.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                        <ShoppingCart className="w-4 h-4 text-white" />
+                      </div>
+                      Shopify
+                    </h4>
+                    <div className="space-y-2 pl-10">
+                      {shopifyConnections.map((connection) => (
+                        <div
+                          key={connection.id}
+                          className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <Checkbox
+                            id={`shopify-${connection.id}`}
+                            checked={selectedIntegrations.shopify.includes(connection.shop)}
+                            onCheckedChange={() => toggleShopifyConnection(connection.shop)}
+                          />
+                          <Label
+                            htmlFor={`shopify-${connection.id}`}
+                            className="flex-1 cursor-pointer"
+                          >
+                            <div className="font-medium">{connection.shop}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {connection.isActive ? 'Conectado' : 'Desconectado'}
+                            </div>
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Nuvemshop Connections */}
+                {nuvemshopConnections.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                        <ShoppingCart className="w-4 h-4 text-white" />
+                      </div>
+                      Nuvemshop
+                    </h4>
+                    <div className="space-y-2 pl-10">
+                      {nuvemshopConnections.map((connection) => (
+                        <div
+                          key={connection.id}
+                          className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <Checkbox
+                            id={`nuvemshop-${connection.id}`}
+                            checked={selectedIntegrations.nuvemshop.includes(connection.storeId)}
+                            onCheckedChange={() => toggleNuvemshopConnection(connection.storeId)}
+                          />
+                          <Label
+                            htmlFor={`nuvemshop-${connection.id}`}
+                            className="flex-1 cursor-pointer"
+                          >
+                            <div className="font-medium">Loja ID: {connection.storeId}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {connection.isActive ? 'Conectado' : 'Desconectado'}
+                            </div>
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No Connections Message */}
+                {shopifyConnections.length === 0 && nuvemshopConnections.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p className="font-medium mb-1">Nenhuma integração conectada</p>
+                    <p className="text-sm">
+                      Conecte suas integrações em{' '}
+                      <a href="/integracoes" className="text-primary hover:underline">
+                        Integrações
+                      </a>{' '}
+                      para sincronizar produtos
+                    </p>
+                  </div>
+                )}
+
+                {/* Selected Count */}
+                {(selectedIntegrations.shopify.length > 0 || selectedIntegrations.nuvemshop.length > 0) && (
+                  <div className="bg-primary/10 p-3 rounded-lg border border-primary/20">
+                    <p className="text-sm font-medium mb-1">
+                      {selectedIntegrations.shopify.length + selectedIntegrations.nuvemshop.length} integração(ões) selecionada(s)
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {products.length} produto(s) serão sincronizados
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsSyncModalOpen(false);
+                setSelectedIntegrations({ shopify: [], nuvemshop: [] });
+              }}
+              disabled={isSyncing}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSyncProducts}
+              disabled={
+                isSyncing ||
+                loadingConnections ||
+                (selectedIntegrations.shopify.length === 0 && selectedIntegrations.nuvemshop.length === 0) ||
+                products.length === 0
+              }
+            >
+              {isSyncing ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Sincronizando...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Sincronizar
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>
