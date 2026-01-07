@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { api, type EmailConnection, type CreateEmailConnectionData } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +27,7 @@ import {
 } from 'lucide-react';
 
 export default function Conexoes() {
+  const { toast } = useToast();
   const [isNewConnectionOpen, setIsNewConnectionOpen] = useState(false);
   const [connectionType, setConnectionType] = useState<'whatsapp' | 'gmail' | 'sms' | null>(null);
   const [smtpData, setSmtpData] = useState({
@@ -35,36 +38,30 @@ export default function Conexoes() {
     password: ''
   });
   const [smsNumber, setSmsNumber] = useState('');
+  const [emailConnections, setEmailConnections] = useState<EmailConnection[]>([]);
+  const [loadingConnections, setLoadingConnections] = useState(false);
+  const [savingConnection, setSavingConnection] = useState(false);
 
-  const connections = [
-    {
-      id: 1,
-      type: 'WhatsApp',
-      name: 'WhatsApp Business',
-      status: 'Conectado',
-      icon: MessageSquare,
-      lastSync: '2024-03-22 14:30',
-      phone: '+55 11 99999-9999'
-    },
-    {
-      id: 2,
-      type: 'E-mail',
-      name: 'Gmail SMTP',
-      status: 'Conectado',
-      icon: Mail,
-      lastSync: '2024-03-22 12:15',
-      email: 'contato@empresa.com'
-    },
-    {
-      id: 3,
-      type: 'SMS',
-      name: 'Zenvia SMS',
-      status: 'Desconectado',
-      icon: Smartphone,
-      lastSync: '2024-03-20 08:45',
-      provider: 'Zenvia'
+  const loadConnections = async () => {
+    try {
+      setLoadingConnections(true);
+      const data = await api.getEmailConnections();
+      setEmailConnections(data || []);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao carregar conexões';
+      toast({ title: 'Erro', description: message, variant: 'destructive' });
+    } finally {
+      setLoadingConnections(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    loadConnections();
+  }, []);
+
+  const connectedCount = emailConnections.length;
+  const disconnectedCount = 0;
+  const totalCount = emailConnections.length;
 
   const handleOpenNewConnection = () => {
     setConnectionType(null);
@@ -88,9 +85,44 @@ export default function Conexoes() {
     setSmsNumber('');
   };
 
-  const handleConnect = () => {
-    console.log('Connecting:', { connectionType, smtpData, smsNumber });
-    handleCloseConnection();
+  const handleConnect = async () => {
+    if (connectionType !== 'gmail') {
+      handleCloseConnection();
+      return;
+    }
+
+    const payload: CreateEmailConnectionData = {
+      email: smtpData.email.trim(),
+      smtpHost: smtpData.server.trim(),
+      smtpPort: Number(smtpData.port) || 587,
+      username: smtpData.username.trim(),
+      password: smtpData.password,
+      secure: Number(smtpData.port) === 465 ? true : undefined,
+    };
+
+    try {
+      setSavingConnection(true);
+      await api.createEmailConnection(payload);
+      toast({ title: 'Conexão criada', description: 'SMTP salvo com sucesso.' });
+      await loadConnections();
+      handleCloseConnection();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao salvar conexão';
+      toast({ title: 'Erro', description: message, variant: 'destructive' });
+    } finally {
+      setSavingConnection(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await api.deleteEmailConnection(id);
+      toast({ title: 'Conexão removida', description: 'SMTP desconectado.' });
+      await loadConnections();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao remover conexão';
+      toast({ title: 'Erro', description: message, variant: 'destructive' });
+    }
   };
 
   const actions = (
@@ -112,7 +144,7 @@ export default function Conexoes() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Conexões Ativas</p>
-                <p className="text-2xl font-bold text-foreground">2</p>
+                <p className="text-2xl font-bold text-foreground">{connectedCount}</p>
               </div>
               <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
                 <Wifi className="w-5 h-5 text-green-500" />
@@ -124,7 +156,7 @@ export default function Conexoes() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Desconectadas</p>
-                <p className="text-2xl font-bold text-foreground">1</p>
+                <p className="text-2xl font-bold text-foreground">{disconnectedCount}</p>
               </div>
               <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center">
                 <WifiOff className="w-5 h-5 text-red-500" />
@@ -136,7 +168,7 @@ export default function Conexoes() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total de Canais</p>
-                <p className="text-2xl font-bold text-foreground">3</p>
+                <p className="text-2xl font-bold text-foreground">{totalCount}</p>
               </div>
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-primary" />
@@ -147,10 +179,25 @@ export default function Conexoes() {
 
         {/* Connections Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {connections.map((connection) => {
-            const Icon = connection.icon;
-            const isConnected = connection.status === 'Conectado';
-            
+          {loadingConnections && (
+            <Card className="p-6">
+              <p className="text-sm text-muted-foreground">Carregando conexões...</p>
+            </Card>
+          )}
+
+          {!loadingConnections && emailConnections.length === 0 && (
+            <Card className="p-6">
+              <p className="text-sm text-muted-foreground">
+                Nenhuma conexão SMTP cadastrada. Clique em “Nova Conexão” para adicionar.
+              </p>
+            </Card>
+          )}
+
+          {emailConnections.map((connection) => {
+            const Icon = Mail;
+            const isConnected = true;
+            const lastSync = new Date(connection.updatedAt || connection.createdAt).toLocaleString();
+
             return (
               <Card key={connection.id} className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -163,8 +210,8 @@ export default function Conexoes() {
                       }`} />
                     </div>
                     <div>
-                      <h3 className="font-semibold">{connection.name}</h3>
-                      <p className="text-sm text-muted-foreground">{connection.type}</p>
+                      <h3 className="font-semibold">{connection.email}</h3>
+                      <p className="text-sm text-muted-foreground">E-mail (SMTP)</p>
                     </div>
                   </div>
                   
@@ -177,52 +224,36 @@ export default function Conexoes() {
                 </div>
 
                 <div className="space-y-2 mb-4">
-                  {connection.phone && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">Número</p>
-                      <p className="text-sm">{connection.phone}</p>
-                    </div>
-                  )}
-                  {connection.email && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">E-mail</p>
-                      <p className="text-sm">{connection.email}</p>
-                    </div>
-                  )}
-                  {connection.provider && (
-                    <div>
-                      <p className="text-xs text-muted-foreground">Provedor</p>
-                      <p className="text-sm">{connection.provider}</p>
-                    </div>
-                  )}
-                  
+                  <div>
+                    <p className="text-xs text-muted-foreground">E-mail</p>
+                    <p className="text-sm">{connection.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Servidor</p>
+                    <p className="text-sm">{connection.smtpHost}:{connection.smtpPort}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Usuário</p>
+                    <p className="text-sm">{connection.username}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Segurança</p>
+                    <p className="text-sm">{connection.secure ? 'SSL' : 'TLS/STARTTLS'}</p>
+                  </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Última sincronização</p>
-                    <p className="text-sm">{connection.lastSync}</p>
+                    <p className="text-sm">{lastSync}</p>
                   </div>
                 </div>
 
                 <div className="flex space-x-2">
-                  {isConnected ? (
-                    <>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Settings className="w-4 h-4 mr-2" />
-                        Configurar
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Desconectar
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button size="sm" className="flex-1">
-                        Reconectar
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </>
-                  )}
+                  <Button variant="outline" size="sm" className="flex-1" disabled>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configurar
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleDelete(connection.id)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </Card>
             );
@@ -471,9 +502,9 @@ export default function Conexoes() {
                 </Button>
                 <Button 
                   onClick={handleConnect}
-                  disabled={!smtpData.email || !smtpData.server || !smtpData.username || !smtpData.password}
+                  disabled={savingConnection || !smtpData.email || !smtpData.server || !smtpData.username || !smtpData.password}
                 >
-                  Conectar
+                  {savingConnection ? 'Salvando...' : 'Conectar'}
                 </Button>
               </div>
             </div>
