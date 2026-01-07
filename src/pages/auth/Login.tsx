@@ -45,6 +45,25 @@ export default function Login() {
       // Usar o contexto de autenticação para fazer login
       login(response.token, response.user);
 
+      // Verificar se há uma conexão pendente da Nuvemshop
+      const pendingConnection = localStorage.getItem('nuvemshop_pending_connection');
+      if (pendingConnection) {
+        try {
+          const connectionData = JSON.parse(pendingConnection);
+          await api.connectNuvemshop(connectionData);
+          localStorage.removeItem('nuvemshop_pending_connection');
+          toast({
+            title: 'Nuvemshop conectada!',
+            description: 'Sua loja foi conectada com sucesso após o login.',
+          });
+          navigate('/integracoes', { replace: true });
+          return;
+        } catch (error) {
+          console.error('Erro ao completar conexão Nuvemshop:', error);
+          // Continuar com o redirecionamento normal mesmo se falhar
+        }
+      }
+
       toast({
         title: 'Login realizado com sucesso!',
         description: 'Bem-vindo de volta',

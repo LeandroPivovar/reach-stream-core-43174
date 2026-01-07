@@ -748,6 +748,70 @@ class ApiService {
       body: JSON.stringify({ shop }),
     });
   }
+
+  // Nuvemshop Integration
+  async initNuvemshopAuth(): Promise<{ authUrl: string; state: string }> {
+    return this.request<{ authUrl: string; state: string }>('/nuvemshop/auth/init', {
+      method: 'POST',
+    });
+  }
+
+  async connectNuvemshop(data: { storeId: string; accessToken: string; scope: string }): Promise<{ success: boolean; connection: any }> {
+    return this.request<{ success: boolean; connection: any }>('/nuvemshop/auth/connect', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getNuvemshopConnections(): Promise<any[]> {
+    return this.request<any[]>('/nuvemshop/connections', {
+      method: 'GET',
+    });
+  }
+
+  async syncNuvemshopProduct(storeId: string, product: any): Promise<any> {
+    return this.request<any>('/nuvemshop/products/sync', {
+      method: 'POST',
+      body: JSON.stringify({ storeId, ...product }),
+    });
+  }
+
+  async getNuvemshopAbandonedCheckouts(
+    storeId: string,
+    params?: {
+      limit?: number;
+      since_id?: number;
+    }
+  ): Promise<{ checkouts: any[]; count: number }> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('storeId', storeId);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.since_id) queryParams.append('since_id', params.since_id.toString());
+
+    return this.request<{ checkouts: any[]; count: number }>(`/nuvemshop/checkouts/abandoned?${queryParams.toString()}`, {
+      method: 'GET',
+    });
+  }
+
+  async createNuvemshopWebhook(storeId: string, event: string, url: string): Promise<any> {
+    return this.request<any>('/nuvemshop/webhooks', {
+      method: 'POST',
+      body: JSON.stringify({ storeId, event, url }),
+    });
+  }
+
+  async listNuvemshopWebhooks(storeId: string): Promise<{ webhooks: any[] }> {
+    return this.request<{ webhooks: any[] }>(`/nuvemshop/webhooks?storeId=${storeId}`, {
+      method: 'GET',
+    });
+  }
+
+  async disconnectNuvemshop(storeId: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>('/nuvemshop/disconnect', {
+      method: 'POST',
+      body: JSON.stringify({ storeId }),
+    });
+  }
 }
 
 export const api = new ApiService();

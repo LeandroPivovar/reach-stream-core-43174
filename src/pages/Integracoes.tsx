@@ -36,6 +36,8 @@ export default function Integracoes() {
   const [isShopifyInfoOpen, setIsShopifyInfoOpen] = useState(false);
   const [isConnectingShopify, setIsConnectingShopify] = useState(false);
   const [shopifyShop, setShopifyShop] = useState('');
+  const [isNuvemshopInfoOpen, setIsNuvemshopInfoOpen] = useState(false);
+  const [isConnectingNuvemshop, setIsConnectingNuvemshop] = useState(false);
   const [ecommerceData, setEcommerceData] = useState({
     apiKey: '',
     storeName: '',
@@ -201,6 +203,26 @@ export default function Integracoes() {
         variant: "destructive",
       });
       setIsConnectingShopify(false);
+    }
+  };
+
+  const handleConnectNuvemshop = async () => {
+    setIsConnectingNuvemshop(true);
+    try {
+      const response = await api.initNuvemshopAuth();
+      
+      // Salvar state no localStorage para verificação depois
+      localStorage.setItem('nuvemshop_oauth_state', response.state);
+      
+      // Redirecionar para a URL de autorização
+      window.location.href = response.authUrl;
+    } catch (error) {
+      toast({
+        title: "Erro ao iniciar conexão",
+        description: error instanceof Error ? error.message : "Não foi possível conectar com a Nuvemshop",
+        variant: "destructive",
+      });
+      setIsConnectingNuvemshop(false);
     }
   };
 
@@ -373,6 +395,8 @@ export default function Integracoes() {
                         onClick={() => {
                           if (integration.name === 'Shopify') {
                             setIsShopifyInfoOpen(true);
+                          } else if (integration.name === 'Nuvemshop') {
+                            setIsNuvemshopInfoOpen(true);
                           } else {
                             handleOpenNewIntegration();
                           }
@@ -561,7 +585,10 @@ export default function Integracoes() {
 
                 <Card 
                   className="p-4 cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => handleSelectEcommerce('Nuvemshop')}
+                  onClick={() => {
+                    setIsNuvemshopInfoOpen(true);
+                    setIsNewIntegrationOpen(false);
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -733,8 +760,74 @@ export default function Integracoes() {
             </div>
           )}
 
+          {/* Configuração Nuvemshop - OAuth */}
+          {selectedEcommerce === 'Nuvemshop' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-blue-500/10 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShoppingBag className="w-5 h-5 text-blue-500" />
+                  <span className="font-medium">Conectar com Nuvemshop</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Conecte sua loja Nuvemshop usando OAuth 2.0. Você será redirecionado para autorizar a conexão.
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  💡 Cada usuário faz sua própria conexão com sua loja. Você não precisa configurar credenciais - apenas autorizar o acesso.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20">
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Check className="w-4 h-4 text-blue-500" />
+                    O que acontece ao conectar?
+                  </h4>
+                  <ol className="text-xs text-muted-foreground space-y-2 list-decimal list-inside">
+                    <li>Você será redirecionado para a página de autorização da Nuvemshop</li>
+                    <li>Faça login na sua conta Nuvemshop e autorize o acesso</li>
+                    <li>Você será redirecionado de volta para o sistema</li>
+                    <li>A conexão será configurada automaticamente</li>
+                  </ol>
+                </div>
+
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="text-sm font-medium mb-2">Recursos incluídos:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Sincronização de produtos</li>
+                    <li>Busca de carrinhos abandonados</li>
+                    <li>Webhooks para pedidos em tempo real</li>
+                    <li>Segmentação de clientes por compras</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setSelectedEcommerce(null)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleConnectNuvemshop}
+                  disabled={isConnectingNuvemshop}
+                >
+                  {isConnectingNuvemshop ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Conectando...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Conectar Nuvemshop
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Configuração E-commerce (outros) */}
-          {selectedEcommerce && selectedEcommerce !== 'Shopify' && selectedEcommerce !== 'Try' && selectedEcommerce !== 'VTEX' && (
+          {selectedEcommerce && selectedEcommerce !== 'Shopify' && selectedEcommerce !== 'Nuvemshop' && selectedEcommerce !== 'Try' && selectedEcommerce !== 'VTEX' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -1180,6 +1273,70 @@ export default function Integracoes() {
                 setIsShopifyInfoOpen(false);
                 setIntegrationType('ecommerce');
                 setSelectedEcommerce('Shopify');
+                setIsNewIntegrationOpen(true);
+              }}
+            >
+              Continuar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Informações Nuvemshop */}
+      <Dialog open={isNuvemshopInfoOpen} onOpenChange={setIsNuvemshopInfoOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                <ShoppingBag className="w-5 h-5 text-white" />
+              </div>
+              Conectar Nuvemshop
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="bg-primary/10 p-4 rounded-lg space-y-3">
+              <p className="text-sm font-medium">Como funciona:</p>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <span>Conecte sua loja Nuvemshop existente</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <span>Autorize o acesso via OAuth 2.0</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <span>Sincronização automática de produtos e pedidos</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <span>Webhooks em tempo real para novos pedidos</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-muted p-4 rounded-lg">
+              <p className="text-sm font-medium mb-2">Recursos incluídos:</p>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Sincronização de produtos</li>
+                <li>Carrinhos abandonados</li>
+                <li>Pedidos em tempo real</li>
+                <li>Segmentação de clientes</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsNuvemshopInfoOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                setIsNuvemshopInfoOpen(false);
+                setIntegrationType('ecommerce');
+                setSelectedEcommerce('Nuvemshop');
                 setIsNewIntegrationOpen(true);
               }}
             >
