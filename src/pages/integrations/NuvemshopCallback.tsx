@@ -59,76 +59,62 @@ export default function NuvemshopCallback() {
       }
 
       try {
-        // O backend já processou o callback e redirecionou para cá com os dados
-        // Verificar se os dados estão na query string
-        const accessToken = searchParams.get('access_token');
-        const userId = searchParams.get('user_id');
-        const scope = searchParams.get('scope') || '';
+        // O backend já processou o callback e redirecionou para cá
+        // Verificar se há token_data na query string (base64)
+        const tokenDataBase64 = searchParams.get('token_data');
+        const success = searchParams.get('success');
 
-        if (!accessToken || !userId) {
-          // Se não tiver os dados na query, fazer requisição ao backend
-          const response = await fetch(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/nuvemshop/auth/callback?code=${code}&state=${encodeURIComponent(state)}`,
-            {
-              method: 'GET',
-            }
-          );
+        let tokenData: { access_token: string; user_id: string; scope: string } | null = null;
 
-          if (!response.ok) {
-            throw new Error('Falha ao processar callback');
+        if (tokenDataBase64 && success === 'true') {
+          // Decodificar o token_data (base64)
+          try {
+            const decoded = atob(tokenDataBase64);
+            tokenData = JSON.parse(decoded);
+          } catch (e) {
+            console.error('Erro ao decodificar token_data:', e);
+            throw new Error('Erro ao processar dados de autenticação');
           }
-
-          const data = await response.json();
-
-          if (!data.success || !data.access_token || !data.user_id) {
-            throw new Error('Resposta inválida do servidor');
-          }
-
-          // Usar os dados da resposta
-          const token = localStorage.getItem('token');
-          if (!token) {
-            // Salvar dados temporariamente e redirecionar para login
-            localStorage.setItem('nuvemshop_pending_connection', JSON.stringify({
-              storeId: data.user_id,
-              accessToken: data.access_token,
-              scope: data.scope || '',
-            }));
-            setStatus('error');
-            setMessage('Você precisa estar autenticado para completar a conexão. Redirecionando para login...');
-            setTimeout(() => navigate('/auth/login'), 2000);
-            return;
-          }
-
-          // Salvar a conexão usando o endpoint protegido
-          await api.connectNuvemshop({
-            storeId: data.user_id,
-            accessToken: data.access_token,
-            scope: data.scope || '',
-          });
         } else {
-          // Dados já estão na query string (backend redirecionou)
-          // Verificar se o usuário está autenticado
-          const token = localStorage.getItem('token');
-          if (!token) {
-            // Salvar dados temporariamente e redirecionar para login
-            localStorage.setItem('nuvemshop_pending_connection', JSON.stringify({
-              storeId: userId,
-              accessToken: accessToken,
-              scope: scope,
-            }));
-            setStatus('error');
-            setMessage('Você precisa estar autenticado para completar a conexão. Redirecionando para login...');
-            setTimeout(() => navigate('/auth/login'), 2000);
-            return;
-          }
+          // Fallback: tentar buscar da query string antiga (para compatibilidade)
+          const accessToken = searchParams.get('access_token');
+          const userId = searchParams.get('user_id');
+          const scope = searchParams.get('scope') || '';
 
-          // Salvar a conexão usando o endpoint protegido
-          await api.connectNuvemshop({
-            storeId: userId,
-            accessToken: accessToken,
-            scope: scope,
-          });
+          if (accessToken && userId) {
+            tokenData = {
+              access_token: accessToken,
+              user_id: userId,
+              scope: scope,
+            };
+          }
         }
+
+        if (!tokenData || !tokenData.access_token || !tokenData.user_id) {
+          throw new Error('Dados de autenticação não encontrados');
+        }
+
+        // Verificar se o usuário está autenticado
+        const token = localStorage.getItem('token');
+        if (!token) {
+          // Salvar dados temporariamente e redirecionar para login
+          localStorage.setItem('nuvemshop_pending_connection', JSON.stringify({
+            storeId: tokenData.user_id,
+            accessToken: tokenData.access_token,
+            scope: tokenData.scope || '',
+          }));
+          setStatus('error');
+          setMessage('Você precisa estar autenticado para completar a conexão. Redirecionando para login...');
+          setTimeout(() => navigate('/auth/login'), 2000);
+          return;
+        }
+
+        // Salvar a conexão usando o endpoint protegido
+        await api.connectNuvemshop({
+          storeId: tokenData.user_id,
+          accessToken: tokenData.access_token,
+          scope: tokenData.scope || '',
+        });
 
         // Limpar dados temporários
         localStorage.removeItem('nuvemshop_oauth_state');
