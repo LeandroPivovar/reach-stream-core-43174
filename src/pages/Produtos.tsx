@@ -1808,7 +1808,7 @@ export default function Produtos() {
                 isSyncing ||
                 loadingConnections ||
                 (selectedIntegrations.shopify.length === 0 && selectedIntegrations.nuvemshop.length === 0) ||
-                products.length === 0
+                (syncDirection !== 'receive' && products.length === 0)
               }
             >
               {isSyncing ? (
