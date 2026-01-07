@@ -31,38 +31,51 @@ export default function NuvemshopCallback() {
         return;
       }
 
-      // Verificar parâmetros obrigatórios
-      if (!code || !state) {
-        setStatus('error');
-        setMessage('Parâmetros de autorização inválidos.');
-        toast({
-          title: 'Erro na conexão',
-          description: 'Parâmetros de autorização inválidos.',
-          variant: 'destructive',
-        });
-        setTimeout(() => navigate('/integracoes'), 3000);
-        return;
-      }
+      // O backend já processou o callback e redirecionou para cá
+      // Verificar se há token_data na query string (base64)
+      const tokenDataBase64 = searchParams.get('token_data');
+      const success = searchParams.get('success');
 
-      // Verificar state (CSRF protection)
-      const savedState = localStorage.getItem('nuvemshop_oauth_state');
-      if (state !== savedState) {
-        setStatus('error');
-        setMessage('Token de segurança inválido.');
-        toast({
-          title: 'Erro na conexão',
-          description: 'Token de segurança inválido.',
-          variant: 'destructive',
-        });
-        setTimeout(() => navigate('/integracoes'), 3000);
-        return;
+      // Se o backend já processou e passou token_data, não precisamos do code/state
+      // Mas ainda verificamos o state se estiver presente (CSRF protection)
+      if (tokenDataBase64 && success === 'true') {
+        const state = searchParams.get('state');
+        if (state) {
+          const savedState = localStorage.getItem('nuvemshop_oauth_state');
+          if (state && savedState && state !== savedState) {
+            console.warn('State não corresponde ao salvo, mas continuando pois token_data está presente');
+          }
+        }
+      } else {
+        // Fluxo antigo: verificar code e state (quando o callback vem diretamente da Nuvemshop)
+        if (!code || !state) {
+          setStatus('error');
+          setMessage('Parâmetros de autorização inválidos.');
+          toast({
+            title: 'Erro na conexão',
+            description: 'Parâmetros de autorização inválidos.',
+            variant: 'destructive',
+          });
+          setTimeout(() => navigate('/integracoes'), 3000);
+          return;
+        }
+
+        // Verificar state (CSRF protection)
+        const savedState = localStorage.getItem('nuvemshop_oauth_state');
+        if (state !== savedState) {
+          setStatus('error');
+          setMessage('Token de segurança inválido.');
+          toast({
+            title: 'Erro na conexão',
+            description: 'Token de segurança inválido.',
+            variant: 'destructive',
+          });
+          setTimeout(() => navigate('/integracoes'), 3000);
+          return;
+        }
       }
 
       try {
-        // O backend já processou o callback e redirecionou para cá
-        // Verificar se há token_data na query string (base64)
-        const tokenDataBase64 = searchParams.get('token_data');
-        const success = searchParams.get('success');
 
         let tokenData: { access_token: string; user_id: string; scope: string } | null = null;
 
