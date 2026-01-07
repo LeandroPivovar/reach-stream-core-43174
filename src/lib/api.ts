@@ -852,6 +852,34 @@ class ApiService {
       body: JSON.stringify({ storeId }),
     });
   }
+
+  // VTEX Integration
+  async connectVtex(data: { accountName: string; appKey: string; appToken: string }): Promise<{ success: boolean; connection: any }> {
+    return this.request<{ success: boolean; connection: any }>('/vtex/auth/connect', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getVtexConnections(): Promise<any[]> {
+    return this.request<any[]>('/vtex/connections', {
+      method: 'GET',
+    });
+  }
+
+  async testVtexConnection(accountName: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>('/vtex/test-connection', {
+      method: 'POST',
+      body: JSON.stringify({ accountName }),
+    });
+  }
+
+  async disconnectVtex(accountName: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>('/vtex/disconnect', {
+      method: 'POST',
+      body: JSON.stringify({ accountName }),
+    });
+  }
 }
 
 export const api = new ApiService();

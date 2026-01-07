@@ -62,15 +62,17 @@ export default function ShopifyCallback() {
       try {
         // Fazer requisição para o backend processar o callback
         // O backend vai trocar o código por token e salvar a conexão
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/shopify/auth/callback?code=${code}&shop=${encodeURIComponent(shop)}&state=${encodeURIComponent(state)}`,
-          {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-          }
-        );
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        // Remover /api do final se existir, pois vamos adicionar depois
+        const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+        const endpoint = `/api/shopify/auth/callback?code=${code}&shop=${encodeURIComponent(shop)}&state=${encodeURIComponent(state)}`;
+        
+        const response = await fetch(`${baseUrl}${endpoint}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error('Falha ao processar callback');

@@ -43,7 +43,7 @@ export default function Integracoes() {
     storeName: '',
     domain: ''
   });
-  const [tryData, setTryData] = useState({
+  const [trayData, setTrayData] = useState({
     apiKey: '',
     secretKey: '',
     endpoint: ''
@@ -65,9 +65,11 @@ export default function Integracoes() {
   // Estados para conexões e webhooks
   const [nuvemshopConnections, setNuvemshopConnections] = useState<any[]>([]);
   const [shopifyConnections, setShopifyConnections] = useState<any[]>([]);
+  const [vtexConnections, setVtexConnections] = useState<any[]>([]);
   const [webhooks, setWebhooks] = useState<any[]>([]);
   const [loadingConnections, setLoadingConnections] = useState(false);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
+  const [isConnectingVtex, setIsConnectingVtex] = useState(false);
 
   // Mapeamento de eventos técnicos para nomes amigáveis
   const eventLabels: Record<string, string> = {
@@ -103,16 +105,16 @@ export default function Integracoes() {
       name: 'Loja Integrada',
       description: 'Conecte com a Loja Integrada para automações avançadas',
       icon: ShoppingBag,
-      status: 'Disponível',
+      status: 'Em desenvolvimento',
       color: 'bg-purple-500',
       features: ['Catálogo sincronizado', 'Remarketing', 'Análise de vendas']
     },
     {
       id: 4,
-      name: 'Try',
-      description: 'Integração com a plataforma Try para gestão de vendas',
+      name: 'Tray',
+      description: 'Integração com a plataforma Tray para gestão de vendas',
       icon: Zap,
-      status: 'Disponível',
+      status: 'Em desenvolvimento',
       color: 'bg-orange-500',
       features: ['API de produtos', 'Sincronização de pedidos', 'Webhooks em tempo real']
     },
@@ -135,16 +137,19 @@ export default function Integracoes() {
   const loadConnections = async () => {
     try {
       setLoadingConnections(true);
-      const [nuvemshop, shopify] = await Promise.all([
+      const [nuvemshop, shopify, vtex] = await Promise.all([
         api.getNuvemshopConnections().catch(() => []),
         api.getShopifyConnections().catch(() => []),
+        api.getVtexConnections().catch(() => []),
       ]);
       
       const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
       const activeShopify = shopify.filter((c: any) => c.isActive);
+      const activeVtex = vtex.filter((c: any) => c.isActive);
       
       setNuvemshopConnections(activeNuvemshop);
       setShopifyConnections(activeShopify);
+      setVtexConnections(activeVtex);
 
       // Buscar webhooks de todas as conexões ativas
       const allWebhooks: any[] = [];
@@ -184,19 +189,21 @@ export default function Integracoes() {
     }
   };
 
-  const handleDisconnect = async (platform: 'nuvemshop' | 'shopify', identifier: string) => {
+  const handleDisconnect = async (platform: 'nuvemshop' | 'shopify' | 'vtex', identifier: string) => {
     try {
       setDisconnecting(`${platform}-${identifier}`);
       
       if (platform === 'nuvemshop') {
         await api.disconnectNuvemshop(identifier);
-      } else {
+      } else if (platform === 'shopify') {
         await api.disconnectShopify(identifier);
+      } else if (platform === 'vtex') {
+        await api.disconnectVtex(identifier);
       }
 
       toast({
         title: 'Desconectado com sucesso',
-        description: `A conexão com ${platform === 'nuvemshop' ? 'Nuvemshop' : 'Shopify'} foi desconectada.`,
+        description: `A conexão com ${platform === 'nuvemshop' ? 'Nuvemshop' : platform === 'shopify' ? 'Shopify' : 'VTEX'} foi desconectada.`,
       });
 
       // Recarregar conexões
@@ -219,12 +226,15 @@ export default function Integracoes() {
     } else if (platformName === 'Shopify') {
       const connection = shopifyConnections.find(c => c.isActive);
       return { connected: !!connection, connection };
+    } else if (platformName === 'VTEX') {
+      const connection = vtexConnections.find(c => c.isActive);
+      return { connected: !!connection, connection };
     }
     return { connected: false };
   };
 
   // Contar integrações ativas
-  const activeIntegrationsCount = nuvemshopConnections.length + shopifyConnections.length;
+  const activeIntegrationsCount = nuvemshopConnections.length + shopifyConnections.length + vtexConnections.length;
 
   const handleOpenNewIntegration = () => {
     setIntegrationType(null);
@@ -240,7 +250,7 @@ export default function Integracoes() {
     setSelectedEcommerce(platform);
   };
 
-  const handleTestConnection = async (platform: 'try' | 'vtex') => {
+  const handleTestConnection = async (platform: 'tray' | 'vtex') => {
     setTestingConnection(true);
     
     // Simulate API test
@@ -250,7 +260,7 @@ export default function Integracoes() {
       if (success) {
         toast({
           title: "Conexão bem-sucedida!",
-          description: `A conexão com ${platform === 'try' ? 'Try' : 'VTEX'} foi testada com sucesso.`,
+          description: `A conexão com ${platform === 'tray' ? 'Tray' : 'VTEX'} foi testada com sucesso.`,
         });
       } else {
         toast({
@@ -313,25 +323,64 @@ export default function Integracoes() {
     }
   };
 
-  const handleConnect = () => {
+  const handleConnectVtex = async () => {
+    if (!vtexData.accountName || !vtexData.appKey || !vtexData.appToken) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsConnectingVtex(true);
+    try {
+      await api.connectVtex({
+        accountName: vtexData.accountName,
+        appKey: vtexData.appKey,
+        appToken: vtexData.appToken,
+      });
+
+      toast({
+        title: "VTEX conectada!",
+        description: "Sua loja VTEX foi conectada com sucesso.",
+      });
+
+      // Recarregar conexões
+      await loadConnections();
+
+      // Fechar diálogo e limpar dados
+      setIsNewIntegrationOpen(false);
+      setIntegrationType(null);
+      setSelectedEcommerce(null);
+      setVtexData({ accountName: '', appKey: '', appToken: '' });
+    } catch (error) {
+      toast({
+        title: "Erro ao conectar",
+        description: error instanceof Error ? error.message : "Não foi possível conectar com a VTEX",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnectingVtex(false);
+    }
+  };
+
+  const handleConnect = async () => {
     if (integrationType === 'ecommerce') {
       if (selectedEcommerce === 'Shopify') {
         // Shopify usa OAuth, não precisa fazer nada aqui
         return;
-      } else if (selectedEcommerce === 'Try') {
-        console.log('Connecting Try:', tryData);
+      } else if (selectedEcommerce === 'Tray') {
+        console.log('Connecting Tray:', trayData);
         // Here you would save to database with encrypted credentials
         toast({
-          title: "Try conectado!",
+          title: "Tray conectado!",
           description: "Credenciais salvas com segurança.",
         });
       } else if (selectedEcommerce === 'VTEX') {
-        console.log('Connecting VTEX:', vtexData);
-        // Here you would save to database with encrypted credentials
-        toast({
-          title: "VTEX conectada!",
-          description: "Credenciais salvas com segurança.",
-        });
+        // VTEX usa conexão direta, não OAuth
+        await handleConnectVtex();
+        return;
       } else {
         console.log('Connecting e-commerce:', { platform: selectedEcommerce, ...ecommerceData });
         toast({
@@ -350,7 +399,7 @@ export default function Integracoes() {
     setIntegrationType(null);
     setSelectedEcommerce(null);
     setEcommerceData({ apiKey: '', storeName: '', domain: '' });
-    setTryData({ apiKey: '', secretKey: '', endpoint: '' });
+    setTrayData({ apiKey: '', secretKey: '', endpoint: '' });
     setVtexData({ accountName: '', appKey: '', appToken: '' });
     setWebhookData({ name: '', url: '', events: [], headers: '', payloadExample: '' });
   };
@@ -360,7 +409,7 @@ export default function Integracoes() {
     setIntegrationType(null);
     setSelectedEcommerce(null);
     setEcommerceData({ apiKey: '', storeName: '', domain: '' });
-    setTryData({ apiKey: '', secretKey: '', endpoint: '' });
+    setTrayData({ apiKey: '', secretKey: '', endpoint: '' });
     setVtexData({ accountName: '', appKey: '', appToken: '' });
     setWebhookData({ name: '', url: '', events: [], headers: '', payloadExample: '' });
   };
@@ -448,8 +497,8 @@ export default function Integracoes() {
                       </div>
                       <div>
                         <h4 className="font-semibold">{integration.name}</h4>
-                        <Badge variant={isConnectedPlatform ? 'default' : 'secondary'}>
-                          {isConnectedPlatform ? 'Conectado' : 'Disponível'}
+                        <Badge variant={isConnectedPlatform ? 'default' : integration.status === 'Em desenvolvimento' ? 'secondary' : 'secondary'}>
+                          {isConnectedPlatform ? 'Conectado' : integration.status}
                         </Badge>
                       </div>
                     </div>
@@ -480,11 +529,19 @@ export default function Integracoes() {
                             handleDisconnect('nuvemshop', connection.storeId);
                           } else if (integration.name === 'Shopify' && connection) {
                             handleDisconnect('shopify', connection.shop);
+                          } else if (integration.name === 'VTEX' && connection) {
+                            handleDisconnect('vtex', connection.accountName);
                           }
                         }}
-                        disabled={disconnecting === `${integration.name === 'Nuvemshop' ? 'nuvemshop' : 'shopify'}-${connection?.storeId || connection?.shop}`}
+                        disabled={
+                          (integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
+                          (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
+                          (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`)
+                        }
                       >
-                        {disconnecting === `${integration.name === 'Nuvemshop' ? 'nuvemshop' : 'shopify'}-${connection?.storeId || connection?.shop}` ? (
+                        {((integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
+                          (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
+                          (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`)) ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             Desconectando...
@@ -495,6 +552,14 @@ export default function Integracoes() {
                             Desconectar
                           </>
                         )}
+                      </Button>
+                    ) : integration.status === 'Em desenvolvimento' ? (
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        disabled
+                      >
+                        Em desenvolvimento
                       </Button>
                     ) : (
                       <Button 
@@ -772,14 +837,14 @@ export default function Integracoes() {
 
                 <Card 
                   className="p-4 cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => handleSelectEcommerce('Try')}
+                  onClick={() => handleSelectEcommerce('Tray')}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
                       <Zap className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="font-medium">Try</p>
+                      <p className="font-medium">Tray</p>
                       <p className="text-xs text-muted-foreground">
                         Gestão de vendas e pedidos
                       </p>
@@ -960,7 +1025,7 @@ export default function Integracoes() {
           )}
 
           {/* Configuração E-commerce (outros) */}
-          {selectedEcommerce && selectedEcommerce !== 'Shopify' && selectedEcommerce !== 'Nuvemshop' && selectedEcommerce !== 'Try' && selectedEcommerce !== 'VTEX' && (
+          {selectedEcommerce && selectedEcommerce !== 'Shopify' && selectedEcommerce !== 'Nuvemshop' && selectedEcommerce !== 'Tray' && selectedEcommerce !== 'VTEX' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -1034,37 +1099,37 @@ export default function Integracoes() {
             </div>
           )}
 
-          {/* Configuração Try */}
-          {selectedEcommerce === 'Try' && (
+          {/* Configuração Tray */}
+          {selectedEcommerce === 'Tray' && (
             <div className="space-y-6 py-4">
               <div className="bg-orange-500/10 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  Preencha os dados para conectar sua conta Try
+                  Preencha os dados para conectar sua conta Tray
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="try-api-key">API Key *</Label>
+                  <Label htmlFor="tray-api-key">API Key *</Label>
                   <Input
-                    id="try-api-key"
+                    id="tray-api-key"
                     type="password"
-                    value={tryData.apiKey}
-                    onChange={(e) => setTryData({ ...tryData, apiKey: e.target.value })}
-                    placeholder="Cole sua API Key da Try"
+                    value={trayData.apiKey}
+                    onChange={(e) => setTrayData({ ...trayData, apiKey: e.target.value })}
+                    placeholder="Cole sua API Key da Tray"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Encontre nas configurações da sua conta Try em Integrações
+                    Encontre nas configurações da sua conta Tray em Integrações
                   </p>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="try-secret-key">Secret Key *</Label>
+                  <Label htmlFor="tray-secret-key">Secret Key *</Label>
                   <Input
-                    id="try-secret-key"
+                    id="tray-secret-key"
                     type="password"
-                    value={tryData.secretKey}
-                    onChange={(e) => setTryData({ ...tryData, secretKey: e.target.value })}
+                    value={trayData.secretKey}
+                    onChange={(e) => setTrayData({ ...trayData, secretKey: e.target.value })}
                     placeholder="Cole sua Secret Key"
                   />
                   <p className="text-xs text-muted-foreground">
@@ -1073,15 +1138,15 @@ export default function Integracoes() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="try-endpoint">Endpoint *</Label>
+                  <Label htmlFor="tray-endpoint">Endpoint *</Label>
                   <Input
-                    id="try-endpoint"
-                    value={tryData.endpoint}
-                    onChange={(e) => setTryData({ ...tryData, endpoint: e.target.value })}
-                    placeholder="https://api.try.com.br/v1"
+                    id="tray-endpoint"
+                    value={trayData.endpoint}
+                    onChange={(e) => setTrayData({ ...trayData, endpoint: e.target.value })}
+                    placeholder="https://api.tray.com.br/v1"
                   />
                   <p className="text-xs text-muted-foreground">
-                    URL base da API Try (geralmente https://api.try.com.br/v1)
+                    URL base da API Tray (geralmente https://api.tray.com.br/v1)
                   </p>
                 </div>
               </div>
@@ -1104,16 +1169,16 @@ export default function Integracoes() {
                 <div className="flex gap-2">
                   <Button 
                     variant="outline"
-                    onClick={() => handleTestConnection('try')}
-                    disabled={!tryData.apiKey || !tryData.secretKey || !tryData.endpoint || testingConnection}
+                    onClick={() => handleTestConnection('tray')}
+                    disabled={!trayData.apiKey || !trayData.secretKey || !trayData.endpoint || testingConnection}
                   >
                     {testingConnection ? 'Testando...' : 'Testar Conexão'}
                   </Button>
                   <Button 
                     onClick={handleConnect}
-                    disabled={!tryData.apiKey || !tryData.secretKey || !tryData.endpoint}
+                    disabled={!trayData.apiKey || !trayData.secretKey || !trayData.endpoint}
                   >
-                    Conectar Try
+                    Conectar Tray
                   </Button>
                 </div>
               </div>
@@ -1190,16 +1255,63 @@ export default function Integracoes() {
                 <div className="flex gap-2">
                   <Button 
                     variant="outline"
-                    onClick={() => handleTestConnection('vtex')}
+                    onClick={async () => {
+                      if (!vtexData.accountName || !vtexData.appKey || !vtexData.appToken) {
+                        toast({
+                          title: "Erro",
+                          description: "Por favor, preencha todos os campos antes de testar.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      setTestingConnection(true);
+                      try {
+                        const result = await api.testVtexConnection(vtexData.accountName);
+                        if (result.success) {
+                          toast({
+                            title: "Conexão bem-sucedida!",
+                            description: "Suas credenciais estão válidas.",
+                          });
+                        } else {
+                          toast({
+                            title: "Erro na conexão",
+                            description: result.message || "Verifique suas credenciais e tente novamente.",
+                            variant: "destructive",
+                          });
+                        }
+                      } catch (error) {
+                        toast({
+                          title: "Erro ao testar conexão",
+                          description: error instanceof Error ? error.message : "Não foi possível testar a conexão.",
+                          variant: "destructive",
+                        });
+                      } finally {
+                        setTestingConnection(false);
+                      }
+                    }}
                     disabled={!vtexData.accountName || !vtexData.appKey || !vtexData.appToken || testingConnection}
                   >
-                    {testingConnection ? 'Testando...' : 'Testar Conexão'}
+                    {testingConnection ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Testando...
+                      </>
+                    ) : (
+                      'Testar Conexão'
+                    )}
                   </Button>
                   <Button 
-                    onClick={handleConnect}
-                    disabled={!vtexData.accountName || !vtexData.appKey || !vtexData.appToken}
+                    onClick={handleConnectVtex}
+                    disabled={!vtexData.accountName || !vtexData.appKey || !vtexData.appToken || isConnectingVtex}
                   >
-                    Conectar VTEX
+                    {isConnectingVtex ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Conectando...
+                      </>
+                    ) : (
+                      'Conectar VTEX'
+                    )}
                   </Button>
                 </div>
               </div>
