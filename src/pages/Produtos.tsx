@@ -742,6 +742,12 @@ export default function Produtos() {
         for (const storeId of selectedIntegrations.nuvemshop) {
           try {
             const response = await api.getNuvemshopProducts(storeId, { limit: 250 });
+            
+            if (!response.products || response.products.length === 0) {
+              console.warn(`Nenhum produto encontrado na loja Nuvemshop ${storeId}`);
+              continue;
+            }
+
             for (const nuvemshopProduct of response.products) {
               productsToSync++;
               // Buscar primeira variante
@@ -769,6 +775,22 @@ export default function Produtos() {
             }
           } catch (error) {
             console.error(`Erro ao buscar produtos da Nuvemshop ${storeId}:`, error);
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            
+            // Se o erro for de token inválido, sugerir reconectar
+            if (errorMessage.includes('Unauthorized') || errorMessage.includes('Invalid access token') || errorMessage.includes('401')) {
+              toast({
+                title: 'Token inválido',
+                description: `A conexão com a loja ${storeId} está inválida. Por favor, reconecte a integração em Integrações.`,
+                variant: 'destructive',
+              });
+            } else {
+              toast({
+                title: 'Erro ao buscar produtos',
+                description: `Não foi possível buscar produtos da loja ${storeId}: ${errorMessage}`,
+                variant: 'destructive',
+              });
+            }
           }
         }
       }
