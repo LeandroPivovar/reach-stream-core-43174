@@ -59,46 +59,76 @@ export default function NuvemshopCallback() {
       }
 
       try {
-        // Fazer requisição para o backend processar o callback
-        // O backend vai trocar o código por token
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/nuvemshop/auth/callback?code=${code}&state=${encodeURIComponent(state)}`,
-          {
-            method: 'GET',
+        // O backend já processou o callback e redirecionou para cá com os dados
+        // Verificar se os dados estão na query string
+        const accessToken = searchParams.get('access_token');
+        const userId = searchParams.get('user_id');
+        const scope = searchParams.get('scope') || '';
+
+        if (!accessToken || !userId) {
+          // Se não tiver os dados na query, fazer requisição ao backend
+          const response = await fetch(
+            `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/nuvemshop/auth/callback?code=${code}&state=${encodeURIComponent(state)}`,
+            {
+              method: 'GET',
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error('Falha ao processar callback');
           }
-        );
 
-        if (!response.ok) {
-          throw new Error('Falha ao processar callback');
-        }
+          const data = await response.json();
 
-        const data = await response.json();
+          if (!data.success || !data.access_token || !data.user_id) {
+            throw new Error('Resposta inválida do servidor');
+          }
 
-        if (!data.success || !data.access_token || !data.user_id) {
-          throw new Error('Resposta inválida do servidor');
-        }
+          // Usar os dados da resposta
+          const token = localStorage.getItem('token');
+          if (!token) {
+            // Salvar dados temporariamente e redirecionar para login
+            localStorage.setItem('nuvemshop_pending_connection', JSON.stringify({
+              storeId: data.user_id,
+              accessToken: data.access_token,
+              scope: data.scope || '',
+            }));
+            setStatus('error');
+            setMessage('Você precisa estar autenticado para completar a conexão. Redirecionando para login...');
+            setTimeout(() => navigate('/auth/login'), 2000);
+            return;
+          }
 
-        // Verificar se o usuário está autenticado
-        const token = localStorage.getItem('token');
-        if (!token) {
-          // Salvar dados temporariamente e redirecionar para login
-          localStorage.setItem('nuvemshop_pending_connection', JSON.stringify({
+          // Salvar a conexão usando o endpoint protegido
+          await api.connectNuvemshop({
             storeId: data.user_id,
             accessToken: data.access_token,
             scope: data.scope || '',
-          }));
-          setStatus('error');
-          setMessage('Você precisa estar autenticado para completar a conexão. Redirecionando para login...');
-          setTimeout(() => navigate('/auth/login'), 2000);
-          return;
-        }
+          });
+        } else {
+          // Dados já estão na query string (backend redirecionou)
+          // Verificar se o usuário está autenticado
+          const token = localStorage.getItem('token');
+          if (!token) {
+            // Salvar dados temporariamente e redirecionar para login
+            localStorage.setItem('nuvemshop_pending_connection', JSON.stringify({
+              storeId: userId,
+              accessToken: accessToken,
+              scope: scope,
+            }));
+            setStatus('error');
+            setMessage('Você precisa estar autenticado para completar a conexão. Redirecionando para login...');
+            setTimeout(() => navigate('/auth/login'), 2000);
+            return;
+          }
 
-        // Salvar a conexão usando o endpoint protegido
-        await api.connectNuvemshop({
-          storeId: data.user_id,
-          accessToken: data.access_token,
-          scope: data.scope || '',
-        });
+          // Salvar a conexão usando o endpoint protegido
+          await api.connectNuvemshop({
+            storeId: userId,
+            accessToken: accessToken,
+            scope: scope,
+          });
+        }
 
         // Limpar dados temporários
         localStorage.removeItem('nuvemshop_oauth_state');
