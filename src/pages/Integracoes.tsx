@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -61,6 +61,13 @@ export default function Integracoes() {
     headers: '',
     payloadExample: ''
   });
+  
+  // Estados para conexões e webhooks
+  const [nuvemshopConnections, setNuvemshopConnections] = useState<any[]>([]);
+  const [shopifyConnections, setShopifyConnections] = useState<any[]>([]);
+  const [webhooks, setWebhooks] = useState<any[]>([]);
+  const [loadingConnections, setLoadingConnections] = useState(false);
+  const [disconnecting, setDisconnecting] = useState<string | null>(null);
 
   // Mapeamento de eventos técnicos para nomes amigáveis
   const eventLabels: Record<string, string> = {
@@ -120,24 +127,104 @@ export default function Integracoes() {
     }
   ];
 
-  const webhookIntegrations = [
-    {
-      id: 1,
-      name: 'Webhook Personalizado #1',
-      url: 'https://api.minhaempresa.com/webhook',
-      events: ['lead_captured', 'campaign_sent'],
-      status: 'Ativo',
-      lastTrigger: '2024-03-22 14:30'
-    },
-    {
-      id: 2,
-      name: 'Sistema CRM',
-      url: 'https://crm.empresa.com/api/leads',
-      events: ['contact_created', 'tag_added'],
-      status: 'Erro',
-      lastTrigger: '2024-03-20 10:15'
+  // Carregar conexões e webhooks ao montar o componente
+  useEffect(() => {
+    loadConnections();
+  }, []);
+
+  const loadConnections = async () => {
+    try {
+      setLoadingConnections(true);
+      const [nuvemshop, shopify] = await Promise.all([
+        api.getNuvemshopConnections().catch(() => []),
+        api.getShopifyConnections().catch(() => []),
+      ]);
+      
+      const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
+      const activeShopify = shopify.filter((c: any) => c.isActive);
+      
+      setNuvemshopConnections(activeNuvemshop);
+      setShopifyConnections(activeShopify);
+
+      // Buscar webhooks de todas as conexões ativas
+      const allWebhooks: any[] = [];
+      
+      for (const conn of activeNuvemshop) {
+        try {
+          const response = await api.listNuvemshopWebhooks(conn.storeId);
+          if (response.webhooks && Array.isArray(response.webhooks)) {
+            allWebhooks.push(...response.webhooks.map((wh: any) => ({ ...wh, platform: 'Nuvemshop', storeId: conn.storeId })));
+          }
+        } catch (error) {
+          console.error(`Erro ao buscar webhooks da Nuvemshop ${conn.storeId}:`, error);
+        }
+      }
+
+      for (const conn of activeShopify) {
+        try {
+          const response = await api.listShopifyWebhooks(conn.shop);
+          if (response.webhooks && Array.isArray(response.webhooks)) {
+            allWebhooks.push(...response.webhooks.map((wh: any) => ({ ...wh, platform: 'Shopify', shop: conn.shop })));
+          }
+        } catch (error) {
+          console.error(`Erro ao buscar webhooks da Shopify ${conn.shop}:`, error);
+        }
+      }
+
+      setWebhooks(allWebhooks);
+    } catch (error) {
+      console.error('Erro ao carregar conexões:', error);
+      toast({
+        title: 'Erro ao carregar integrações',
+        description: error instanceof Error ? error.message : 'Não foi possível carregar as integrações',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingConnections(false);
     }
-  ];
+  };
+
+  const handleDisconnect = async (platform: 'nuvemshop' | 'shopify', identifier: string) => {
+    try {
+      setDisconnecting(`${platform}-${identifier}`);
+      
+      if (platform === 'nuvemshop') {
+        await api.disconnectNuvemshop(identifier);
+      } else {
+        await api.disconnectShopify(identifier);
+      }
+
+      toast({
+        title: 'Desconectado com sucesso',
+        description: `A conexão com ${platform === 'nuvemshop' ? 'Nuvemshop' : 'Shopify'} foi desconectada.`,
+      });
+
+      // Recarregar conexões
+      await loadConnections();
+    } catch (error) {
+      toast({
+        title: 'Erro ao desconectar',
+        description: error instanceof Error ? error.message : 'Não foi possível desconectar',
+        variant: 'destructive',
+      });
+    } finally {
+      setDisconnecting(null);
+    }
+  };
+
+  const isConnected = (platformName: string): { connected: boolean; connection?: any } => {
+    if (platformName === 'Nuvemshop') {
+      const connection = nuvemshopConnections.find(c => c.isActive);
+      return { connected: !!connection, connection };
+    } else if (platformName === 'Shopify') {
+      const connection = shopifyConnections.find(c => c.isActive);
+      return { connected: !!connection, connection };
+    }
+    return { connected: false };
+  };
+
+  // Contar integrações ativas
+  const activeIntegrationsCount = nuvemshopConnections.length + shopifyConnections.length;
 
   const handleOpenNewIntegration = () => {
     setIntegrationType(null);
@@ -301,12 +388,21 @@ export default function Integracoes() {
     >
       <div className="space-y-6">
         {/* Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Integrações Ativas</p>
-                <p className="text-2xl font-bold text-foreground">3</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {loadingConnections ? (
+                    <Loader2 className="w-6 h-6 animate-spin inline" />
+                  ) : (
+                    activeIntegrationsCount
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {activeIntegrationsCount === 1 ? 'plataforma conectada' : 'plataformas conectadas'}
+                </p>
               </div>
               <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
                 <Check className="w-5 h-5 text-green-500" />
@@ -318,22 +414,16 @@ export default function Integracoes() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Webhooks Configurados</p>
-                <p className="text-2xl font-bold text-foreground">2</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {loadingConnections ? (
+                    <Loader2 className="w-6 h-6 animate-spin inline" />
+                  ) : (
+                    webhooks.length
+                  )}
+                </p>
               </div>
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Webhook className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Disponíveis</p>
-                <p className="text-2xl font-bold text-foreground">12</p>
-              </div>
-              <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-blue-500" />
               </div>
             </div>
           </Card>
@@ -345,7 +435,9 @@ export default function Integracoes() {
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {integrations.map((integration) => {
               const Icon = integration.icon;
-              const isConnected = integration.status === 'Conectado';
+              const connectionStatus = isConnected(integration.name);
+              const isConnectedPlatform = connectionStatus.connected;
+              const connection = connectionStatus.connection;
               
               return (
                 <Card key={integration.id} className="p-6 border-2 border-border hover:border-primary/20 transition-colors">
@@ -356,8 +448,8 @@ export default function Integracoes() {
                       </div>
                       <div>
                         <h4 className="font-semibold">{integration.name}</h4>
-                        <Badge variant={isConnected ? 'default' : 'secondary'}>
-                          {integration.status}
+                        <Badge variant={isConnectedPlatform ? 'default' : 'secondary'}>
+                          {isConnectedPlatform ? 'Conectado' : 'Disponível'}
                         </Badge>
                       </div>
                     </div>
@@ -378,16 +470,32 @@ export default function Integracoes() {
                   </div>
 
                   <div className="flex space-x-2">
-                    {isConnected ? (
-                      <>
-                        <Button variant="outline" size="sm" className="flex-1">
-                          <Settings className="w-4 h-4 mr-2" />
-                          Configurar
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          Desconectar
-                        </Button>
-                      </>
+                    {isConnectedPlatform ? (
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => {
+                          if (integration.name === 'Nuvemshop' && connection) {
+                            handleDisconnect('nuvemshop', connection.storeId);
+                          } else if (integration.name === 'Shopify' && connection) {
+                            handleDisconnect('shopify', connection.shop);
+                          }
+                        }}
+                        disabled={disconnecting === `${integration.name === 'Nuvemshop' ? 'nuvemshop' : 'shopify'}-${connection?.storeId || connection?.shop}`}
+                      >
+                        {disconnecting === `${integration.name === 'Nuvemshop' ? 'nuvemshop' : 'shopify'}-${connection?.storeId || connection?.shop}` ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Desconectando...
+                          </>
+                        ) : (
+                          <>
+                            <X className="w-4 h-4 mr-2" />
+                            Desconectar
+                          </>
+                        )}
+                      </Button>
                     ) : (
                       <Button 
                         size="sm" 
@@ -438,55 +546,80 @@ export default function Integracoes() {
                 </tr>
               </thead>
               <tbody>
-                {webhookIntegrations.map((webhook) => (
-                  <tr key={webhook.id} className="border-b border-border last:border-0">
-                    <td className="py-4 px-2">
-                      <div className="font-medium">{webhook.name}</div>
-                    </td>
-                    <td className="py-4 px-2">
-                      <div className="flex items-center space-x-2">
-                        <code className="text-sm bg-muted px-2 py-1 rounded">
-                          {webhook.url}
-                        </code>
-                        <Button variant="ghost" size="icon">
-                          <ExternalLink className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </td>
-                    <td className="py-4 px-2">
-                      <div className="flex flex-wrap gap-1">
-                        {webhook.events.map((event) => (
-                          <Badge key={event} variant="outline" className="text-xs">
-                            {eventLabels[event] || event}
-                          </Badge>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="py-4 px-2">
-                      <Badge variant={webhook.status === 'Ativo' ? 'default' : 'destructive'}>
-                        <div className={`w-2 h-2 rounded-full mr-2 ${
-                          webhook.status === 'Ativo' ? 'bg-green-500' : 'bg-red-500'
-                        }`}></div>
-                        {webhook.status}
-                      </Badge>
-                    </td>
-                    <td className="py-4 px-2">
-                      <span className="text-sm text-muted-foreground">
-                        {webhook.lastTrigger}
-                      </span>
-                    </td>
-                    <td className="py-4 px-2 text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Settings className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
+                {loadingConnections ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                      <p className="text-sm text-muted-foreground mt-2">Carregando webhooks...</p>
                     </td>
                   </tr>
-                ))}
+                ) : webhooks.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                      Nenhum webhook configurado ainda
+                    </td>
+                  </tr>
+                ) : (
+                  webhooks.map((webhook, index) => (
+                    <tr key={webhook.id || index} className="border-b border-border last:border-0">
+                      <td className="py-4 px-2">
+                        <div className="font-medium">
+                          {webhook.platform || 'Webhook'}
+                          {webhook.event ? ` - ${webhook.event}` : ''}
+                        </div>
+                      </td>
+                      <td className="py-4 px-2">
+                        <div className="flex items-center space-x-2">
+                          <code className="text-sm bg-muted px-2 py-1 rounded max-w-xs truncate">
+                            {webhook.address || webhook.url || 'N/A'}
+                          </code>
+                          {(webhook.address || webhook.url) && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => window.open(webhook.address || webhook.url, '_blank')}
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-2">
+                        <div className="flex flex-wrap gap-1">
+                          {webhook.event ? (
+                            <Badge variant="outline" className="text-xs">
+                              {eventLabels[webhook.event] || webhook.event}
+                            </Badge>
+                          ) : webhook.topic ? (
+                            <Badge variant="outline" className="text-xs">
+                              {webhook.topic}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">-</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-2">
+                        <Badge variant="default">
+                          <div className="w-2 h-2 rounded-full mr-2 bg-green-500"></div>
+                          Ativo
+                        </Badge>
+                      </td>
+                      <td className="py-4 px-2">
+                        <span className="text-sm text-muted-foreground">
+                          {webhook.created_at ? new Date(webhook.created_at).toLocaleDateString('pt-BR') : '-'}
+                        </span>
+                      </td>
+                      <td className="py-4 px-2 text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button variant="ghost" size="sm">
+                            <Settings className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
