@@ -719,7 +719,7 @@ export default function Produtos() {
               // Buscar primeira variante
               const variant = shopifyProduct.variants?.[0] || {};
               syncPromises.push(
-                api.createProduct({
+                api.importProduct({
                   name: shopifyProduct.title || 'Produto sem nome',
                   description: shopifyProduct.body_html || '',
                   price: parseFloat(variant.price || '0'),
@@ -727,6 +727,11 @@ export default function Produtos() {
                   sku: variant.sku || undefined,
                   category: shopifyProduct.product_type || undefined,
                   active: shopifyProduct.status === 'active',
+                  externalIds: {
+                    shopify: {
+                      [shop]: shopifyProduct.id ? `gid://shopify/Product/${shopifyProduct.id}` : undefined,
+                    },
+                  },
                 }).catch((error) => {
                   console.error(`Erro ao importar produto ${shopifyProduct.title} da Shopify:`, error);
                   return { error: true, product: shopifyProduct.title, integration: `Shopify: ${shop}` };
@@ -759,15 +764,30 @@ export default function Produtos() {
                 ? (nuvemshopProduct.description?.pt || nuvemshopProduct.description?.en || nuvemshopProduct.description?.es || '')
                 : (nuvemshopProduct.description || '');
               
+              const productData = {
+                name: name,
+                description: description,
+                price: parseFloat(variant.price || '0'),
+                stock: variant.stock || 0,
+                sku: variant.sku || undefined,
+                active: true,
+                externalIds: {
+                  nuvemshop: {
+                    [storeId]: nuvemshopProduct.id,
+                  },
+                },
+              };
+              
+              console.log(`[FRONTEND] Importando produto da Nuvemshop:`, {
+                name,
+                sku: variant.sku,
+                nuvemshopId: nuvemshopProduct.id,
+                storeId,
+                externalIds: productData.externalIds,
+              });
+              
               syncPromises.push(
-                api.createProduct({
-                  name: name,
-                  description: description,
-                  price: parseFloat(variant.price || '0'),
-                  stock: variant.stock || 0,
-                  sku: variant.sku || undefined,
-                  active: true,
-                }).catch((error) => {
+                api.importProduct(productData).catch((error) => {
                   console.error(`Erro ao importar produto ${name} da Nuvemshop:`, error);
                   return { error: true, product: name, integration: `Nuvemshop: ${storeId}` };
                 })

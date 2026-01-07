@@ -445,6 +445,24 @@ class ApiService {
     });
   }
 
+  /**
+   * Importa produto de integração (cria ou atualiza se já existir)
+   * Verifica por SKU ou externalIds antes de criar
+   */
+  async importProduct(
+    data: CreateProductData & {
+      externalIds?: {
+        nuvemshop?: Record<string, number>;
+        shopify?: Record<string, string>;
+      };
+    },
+  ): Promise<Product> {
+    return this.request<Product>('/products/import', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async updateProduct(id: number, data: UpdateProductData): Promise<Product> {
     return this.request<Product>(`/products/${id}`, {
       method: 'PATCH',
