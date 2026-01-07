@@ -63,7 +63,7 @@ export default function ShopifyCallback() {
         // Fazer requisição para o backend processar o callback
         // O backend vai trocar o código por token e salvar a conexão
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/shopify/auth/callback?code=${code}&shop=${shop}&state=${state}`,
+          `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/shopify/auth/callback?code=${code}&shop=${encodeURIComponent(shop)}&state=${encodeURIComponent(state)}`,
           {
             method: 'GET',
             headers: {

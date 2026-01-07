@@ -301,7 +301,10 @@ class ApiService {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    // Adicionar /api se não estiver presente no endpoint e se o API_URL não já incluir /api
+    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+    const apiEndpoint = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
+    const response = await fetch(`${baseUrl}${apiEndpoint}`, {
       ...options,
       headers,
     });
@@ -513,7 +516,8 @@ class ApiService {
     formData.append('file', file);
 
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/contacts/import`, {
+    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+    const response = await fetch(`${baseUrl}/api/contacts/import`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
