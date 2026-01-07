@@ -23,6 +23,7 @@ import Indicacoes from "./pages/Indicacoes";
 import MinhaConta from "./pages/MinhaConta";
 import Produtos from "./pages/Produtos";
 import NotFound from "./pages/NotFound";
+import ShopifyCallback from "./pages/integrations/ShopifyCallback";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/conexoes" element={<ProtectedRoute><Conexoes /></ProtectedRoute>} />
             <Route path="/rastreamento" element={<ProtectedRoute><Rastreamento /></ProtectedRoute>} />
             <Route path="/integracoes" element={<ProtectedRoute><Integracoes /></ProtectedRoute>} />
+            <Route path="/integrations/shopify/callback" element={<ProtectedRoute><ShopifyCallback /></ProtectedRoute>} />
             <Route path="/assinaturas" element={<ProtectedRoute><Assinaturas /></ProtectedRoute>} />
             <Route path="/indicacoes" element={<ProtectedRoute><Indicacoes /></ProtectedRoute>} />
             <Route path="/conta" element={<ProtectedRoute><MinhaConta /></ProtectedRoute>} />

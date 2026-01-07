@@ -635,6 +635,68 @@ class ApiService {
       method: 'GET',
     });
   }
+
+  // Shopify Integration
+  async initShopifyAuth(shop: string): Promise<{ authUrl: string; state: string; shop: string }> {
+    return this.request<{ authUrl: string; state: string; shop: string }>('/shopify/auth/init', {
+      method: 'POST',
+      body: JSON.stringify({ shop }),
+    });
+  }
+
+  async getShopifyConnections(): Promise<any[]> {
+    return this.request<any[]>('/shopify/connections', {
+      method: 'GET',
+    });
+  }
+
+  async syncShopifyProduct(shop: string, product: any): Promise<any> {
+    return this.request<any>('/shopify/products/sync', {
+      method: 'POST',
+      body: JSON.stringify({ shop, product }),
+    });
+  }
+
+  async getAbandonedCheckouts(
+    shop: string,
+    params?: {
+      limit?: number;
+      created_at_min?: string;
+      created_at_max?: string;
+      status?: 'open' | 'closed';
+    }
+  ): Promise<{ checkouts: any[]; count: number }> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('shop', shop);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.created_at_min) queryParams.append('created_at_min', params.created_at_min);
+    if (params?.created_at_max) queryParams.append('created_at_max', params.created_at_max);
+    if (params?.status) queryParams.append('status', params.status);
+
+    return this.request<{ checkouts: any[]; count: number }>(`/shopify/checkouts/abandoned?${queryParams.toString()}`, {
+      method: 'GET',
+    });
+  }
+
+  async createShopifyWebhook(shop: string, topic: string, address: string): Promise<any> {
+    return this.request<any>('/shopify/webhooks', {
+      method: 'POST',
+      body: JSON.stringify({ shop, topic, address }),
+    });
+  }
+
+  async listShopifyWebhooks(shop: string): Promise<{ webhooks: any[] }> {
+    return this.request<{ webhooks: any[] }>(`/shopify/webhooks?shop=${shop}`, {
+      method: 'GET',
+    });
+  }
+
+  async disconnectShopify(shop: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>('/shopify/disconnect', {
+      method: 'POST',
+      body: JSON.stringify({ shop }),
+    });
+  }
 }
 
 export const api = new ApiService();

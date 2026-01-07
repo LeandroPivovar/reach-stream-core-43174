@@ -71,3 +71,4 @@ sudo certbot --nginx -d seu-dominio.com
 
 📖 **Guia completo:** Veja `DEPLOY.md` para instruções detalhadas.
 
+

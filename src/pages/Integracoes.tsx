@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 import { 
   ShoppingBag, 
   Webhook,
@@ -23,7 +24,8 @@ import {
   X,
   ArrowLeft,
   Store,
-  Zap
+  Zap,
+  Loader2
 } from 'lucide-react';
 
 export default function Integracoes() {
@@ -32,6 +34,8 @@ export default function Integracoes() {
   const [integrationType, setIntegrationType] = useState<'ecommerce' | 'webhook' | null>(null);
   const [selectedEcommerce, setSelectedEcommerce] = useState<string | null>(null);
   const [isShopifyInfoOpen, setIsShopifyInfoOpen] = useState(false);
+  const [isConnectingShopify, setIsConnectingShopify] = useState(false);
+  const [shopifyShop, setShopifyShop] = useState('');
   const [ecommerceData, setEcommerceData] = useState({
     apiKey: '',
     storeName: '',
@@ -170,9 +174,42 @@ export default function Integracoes() {
     }, 2000);
   };
 
+  const handleConnectShopify = async () => {
+    if (!shopifyShop || !shopifyShop.includes('.myshopify.com')) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira um domínio válido da Shopify (ex: sualoja.myshopify.com)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsConnectingShopify(true);
+    try {
+      const response = await api.initShopifyAuth(shopifyShop);
+      
+      // Salvar state no localStorage para verificação depois
+      localStorage.setItem('shopify_oauth_state', response.state);
+      localStorage.setItem('shopify_shop', response.shop);
+      
+      // Redirecionar para a URL de autorização
+      window.location.href = response.authUrl;
+    } catch (error) {
+      toast({
+        title: "Erro ao iniciar conexão",
+        description: error instanceof Error ? error.message : "Não foi possível conectar com a Shopify",
+        variant: "destructive",
+      });
+      setIsConnectingShopify(false);
+    }
+  };
+
   const handleConnect = () => {
     if (integrationType === 'ecommerce') {
-      if (selectedEcommerce === 'Try') {
+      if (selectedEcommerce === 'Shopify') {
+        // Shopify usa OAuth, não precisa fazer nada aqui
+        return;
+      } else if (selectedEcommerce === 'Try') {
         console.log('Connecting Try:', tryData);
         // Here you would save to database with encrypted credentials
         toast({
@@ -617,8 +654,87 @@ export default function Integracoes() {
             </div>
           )}
 
-          {/* Configuração E-commerce */}
-          {selectedEcommerce && selectedEcommerce !== 'Try' && selectedEcommerce !== 'VTEX' && (
+          {/* Configuração Shopify - OAuth */}
+          {selectedEcommerce === 'Shopify' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-green-500/10 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShoppingBag className="w-5 h-5 text-green-500" />
+                  <span className="font-medium">Conectar com Shopify</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Conecte sua loja Shopify usando OAuth 2.0. Você será redirecionado para autorizar a conexão.
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  💡 Cada usuário faz sua própria conexão com sua loja. Você não precisa configurar credenciais - apenas autorizar o acesso.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="shopify-shop">Domínio da Loja Shopify *</Label>
+                  <Input
+                    id="shopify-shop"
+                    value={shopifyShop}
+                    onChange={(e) => setShopifyShop(e.target.value)}
+                    placeholder="minhaloja.myshopify.com"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Digite apenas o domínio da sua loja (ex: minhaloja.myshopify.com)
+                  </p>
+                </div>
+
+                <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20">
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Check className="w-4 h-4 text-blue-500" />
+                    O que acontece ao conectar?
+                  </h4>
+                  <ol className="text-xs text-muted-foreground space-y-2 list-decimal list-inside">
+                    <li>Você será redirecionado para a página de autorização da Shopify</li>
+                    <li>Faça login na sua conta Shopify e autorize o acesso</li>
+                    <li>Você será redirecionado de volta para o sistema</li>
+                    <li>A conexão será configurada automaticamente</li>
+                  </ol>
+                </div>
+
+                <div className="bg-muted p-4 rounded-lg">
+                  <p className="text-sm font-medium mb-2">Recursos incluídos:</p>
+                  <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                    <li>Sincronização de produtos via GraphQL</li>
+                    <li>Busca de carrinhos abandonados</li>
+                    <li>Webhooks para pedidos em tempo real</li>
+                    <li>Segmentação de clientes por compras</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setSelectedEcommerce(null)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button 
+                  onClick={handleConnectShopify}
+                  disabled={!shopifyShop || isConnectingShopify}
+                >
+                  {isConnectingShopify ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Conectando...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Conectar Shopify
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Configuração E-commerce (outros) */}
+          {selectedEcommerce && selectedEcommerce !== 'Shopify' && selectedEcommerce !== 'Try' && selectedEcommerce !== 'VTEX' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -644,7 +760,6 @@ export default function Integracoes() {
                     value={ecommerceData.domain}
                     onChange={(e) => setEcommerceData({ ...ecommerceData, domain: e.target.value })}
                     placeholder={
-                      selectedEcommerce === 'Shopify' ? 'minhaloja.myshopify.com' :
                       selectedEcommerce === 'Nuvemshop' ? 'minhaloja.nuvemshop.com.br' :
                       'minhaloja.com.br'
                     }
