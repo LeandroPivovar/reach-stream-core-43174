@@ -708,6 +708,17 @@ class ApiService {
     });
   }
 
+  async getShopifyProducts(shop: string, params?: { limit?: number; page?: number }): Promise<{ products: any[]; count: number }> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('shop', shop);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.page) queryParams.append('page', params.page.toString());
+
+    return this.request<{ products: any[]; count: number }>(`/shopify/products?${queryParams.toString()}`, {
+      method: 'GET',
+    });
+  }
+
   async getAbandonedCheckouts(
     shop: string,
     params?: {
@@ -773,6 +784,17 @@ class ApiService {
     return this.request<any>('/nuvemshop/products/sync', {
       method: 'POST',
       body: JSON.stringify({ storeId, ...product }),
+    });
+  }
+
+  async getNuvemshopProducts(storeId: string, params?: { limit?: number; page?: number }): Promise<{ products: any[]; count: number }> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('storeId', storeId);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.page) queryParams.append('page', params.page.toString());
+
+    return this.request<{ products: any[]; count: number }>(`/nuvemshop/products?${queryParams.toString()}`, {
+      method: 'GET',
     });
   }
 

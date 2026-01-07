@@ -90,6 +90,7 @@ export default function Produtos() {
     nuvemshop: [],
   });
   const [loadingConnections, setLoadingConnections] = useState(false);
+  const [syncDirection, setSyncDirection] = useState<'send' | 'receive' | 'both'>('both');
   const [filters, setFilters] = useState({
     category: 'all',
     minPrice: '',
@@ -646,49 +647,129 @@ export default function Produtos() {
       return;
     }
 
+    if (syncDirection === 'send' && products.length === 0) {
+      toast({
+        title: 'Atenção',
+        description: 'Não há produtos para enviar',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setIsSyncing(true);
       const syncPromises: Promise<any>[] = [];
+      let productsToSync = 0;
 
-      // Sincronizar com Shopify
-      for (const shop of selectedIntegrations.shopify) {
-        for (const product of products) {
-          syncPromises.push(
-            api.syncShopifyProduct(shop, {
-              title: product.name,
-              description: product.description || '',
-              variants: [{
-                price: product.price.toString(),
-                sku: product.sku || '',
-                inventory_quantity: product.stock || 0,
-              }],
-            }).catch((error) => {
-              console.error(`Erro ao sincronizar produto ${product.name} com Shopify ${shop}:`, error);
-              return { error: true, product: product.name, integration: `Shopify: ${shop}` };
-            })
-          );
+      // ENVIAR produtos para as lojas
+      if (syncDirection === 'send' || syncDirection === 'both') {
+        // Sincronizar com Shopify
+        for (const shop of selectedIntegrations.shopify) {
+          for (const product of products) {
+            productsToSync++;
+            syncPromises.push(
+              api.syncShopifyProduct(shop, {
+                title: product.name,
+                description: product.description || '',
+                variants: [{
+                  price: product.price.toString(),
+                  sku: product.sku || '',
+                  inventory_quantity: product.stock || 0,
+                }],
+              }).catch((error) => {
+                console.error(`Erro ao sincronizar produto ${product.name} com Shopify ${shop}:`, error);
+                return { error: true, product: product.name, integration: `Shopify: ${shop}` };
+              })
+            );
+          }
+        }
+
+        // Sincronizar com Nuvemshop
+        for (const storeId of selectedIntegrations.nuvemshop) {
+          for (const product of products) {
+            productsToSync++;
+            syncPromises.push(
+              api.syncNuvemshopProduct(storeId, {
+                name: { pt: product.name },
+                description: { pt: product.description || '' },
+                variants: [{
+                  price: product.price.toString(),
+                  stock_management: true,
+                  stock: product.stock || 0,
+                  weight: '0.5',
+                  sku: product.sku || '',
+                }],
+              }).catch((error) => {
+                console.error(`Erro ao sincronizar produto ${product.name} com Nuvemshop ${storeId}:`, error);
+                return { error: true, product: product.name, integration: `Nuvemshop: ${storeId}` };
+              })
+            );
+          }
         }
       }
 
-      // Sincronizar com Nuvemshop
-      for (const storeId of selectedIntegrations.nuvemshop) {
-        for (const product of products) {
-          syncPromises.push(
-            api.syncNuvemshopProduct(storeId, {
-              name: { pt: product.name },
-              description: { pt: product.description || '' },
-              variants: [{
-                price: product.price.toString(),
-                stock_management: true,
-                stock: product.stock || 0,
-                weight: '0.5',
-                sku: product.sku || '',
-              }],
-            }).catch((error) => {
-              console.error(`Erro ao sincronizar produto ${product.name} com Nuvemshop ${storeId}:`, error);
-              return { error: true, product: product.name, integration: `Nuvemshop: ${storeId}` };
-            })
-          );
+      // RECEBER produtos das lojas
+      if (syncDirection === 'receive' || syncDirection === 'both') {
+        // Buscar produtos da Shopify
+        for (const shop of selectedIntegrations.shopify) {
+          try {
+            const response = await api.getShopifyProducts(shop, { limit: 250 });
+            for (const shopifyProduct of response.products) {
+              productsToSync++;
+              // Buscar primeira variante
+              const variant = shopifyProduct.variants?.[0] || {};
+              syncPromises.push(
+                api.createProduct({
+                  name: shopifyProduct.title || 'Produto sem nome',
+                  description: shopifyProduct.body_html || '',
+                  price: parseFloat(variant.price || '0'),
+                  stock: variant.inventory_quantity || 0,
+                  sku: variant.sku || undefined,
+                  category: shopifyProduct.product_type || undefined,
+                  active: shopifyProduct.status === 'active',
+                }).catch((error) => {
+                  console.error(`Erro ao importar produto ${shopifyProduct.title} da Shopify:`, error);
+                  return { error: true, product: shopifyProduct.title, integration: `Shopify: ${shop}` };
+                })
+              );
+            }
+          } catch (error) {
+            console.error(`Erro ao buscar produtos da Shopify ${shop}:`, error);
+          }
+        }
+
+        // Buscar produtos da Nuvemshop
+        for (const storeId of selectedIntegrations.nuvemshop) {
+          try {
+            const response = await api.getNuvemshopProducts(storeId, { limit: 250 });
+            for (const nuvemshopProduct of response.products) {
+              productsToSync++;
+              // Buscar primeira variante
+              const variant = nuvemshopProduct.variants?.[0] || {};
+              const name = typeof nuvemshopProduct.name === 'object' 
+                ? (nuvemshopProduct.name.pt || nuvemshopProduct.name.en || nuvemshopProduct.name.es || 'Produto sem nome')
+                : (nuvemshopProduct.name || 'Produto sem nome');
+              const description = typeof nuvemshopProduct.description === 'object'
+                ? (nuvemshopProduct.description?.pt || nuvemshopProduct.description?.en || nuvemshopProduct.description?.es || '')
+                : (nuvemshopProduct.description || '');
+              
+              syncPromises.push(
+                api.createProduct({
+                  name: name,
+                  description: description,
+                  price: parseFloat(variant.price || '0'),
+                  stock: variant.stock || 0,
+                  sku: variant.sku || undefined,
+                  active: true,
+                }).catch((error) => {
+                  console.error(`Erro ao importar produto ${name} da Nuvemshop:`, error);
+                  return { error: true, product: name, integration: `Nuvemshop: ${storeId}` };
+                })
+              );
+            }
+          } catch (error) {
+            console.error(`Erro ao buscar produtos da Nuvemshop ${storeId}:`, error);
+          }
         }
       }
 
@@ -699,18 +780,24 @@ export default function Produtos() {
       if (errors.length > 0) {
         toast({
           title: 'Sincronização parcial',
-          description: `${success.length} produto(s) sincronizado(s), ${errors.length} erro(s)`,
+          description: `${success.length} produto(s) processado(s), ${errors.length} erro(s)`,
           variant: 'default',
         });
       } else {
         toast({
           title: 'Sincronização concluída!',
-          description: `${success.length} produto(s) sincronizado(s) com sucesso`,
+          description: `${success.length} produto(s) processado(s) com sucesso`,
         });
+      }
+
+      // Recarregar produtos se recebeu da loja
+      if (syncDirection === 'receive' || syncDirection === 'both') {
+        await loadProducts();
       }
 
       setIsSyncModalOpen(false);
       setSelectedIntegrations({ shopify: [], nuvemshop: [] });
+      setSyncDirection('both');
     } catch (error) {
       toast({
         title: 'Erro ao sincronizar',
@@ -1546,6 +1633,55 @@ export default function Produtos() {
           </DialogHeader>
 
           <div className="space-y-6 py-4">
+            {/* Direção da Sincronização */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Direção da Sincronização</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSyncDirection('send')}
+                  className={`p-4 border-2 rounded-lg transition-colors text-left ${
+                    syncDirection === 'send'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className="font-medium mb-1">Enviar</div>
+                  <div className="text-xs text-muted-foreground">
+                    Enviar produtos do sistema para as lojas
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSyncDirection('receive')}
+                  className={`p-4 border-2 rounded-lg transition-colors text-left ${
+                    syncDirection === 'receive'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className="font-medium mb-1">Receber</div>
+                  <div className="text-xs text-muted-foreground">
+                    Importar produtos das lojas para o sistema
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSyncDirection('both')}
+                  className={`p-4 border-2 rounded-lg transition-colors text-left ${
+                    syncDirection === 'both'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className="font-medium mb-1">Ambos</div>
+                  <div className="text-xs text-muted-foreground">
+                    Enviar e receber produtos
+                  </div>
+                </button>
+              </div>
+            </div>
+
             {loadingConnections ? (
               <div className="text-center py-8 text-muted-foreground">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
@@ -1645,7 +1781,9 @@ export default function Produtos() {
                       {selectedIntegrations.shopify.length + selectedIntegrations.nuvemshop.length} integração(ões) selecionada(s)
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {products.length} produto(s) serão sincronizados
+                      {syncDirection === 'send' && `${products.length} produto(s) serão enviados`}
+                      {syncDirection === 'receive' && `Produtos serão importados das lojas`}
+                      {syncDirection === 'both' && `${products.length} produto(s) serão sincronizados (enviados e recebidos)`}
                     </p>
                   </div>
                 )}
