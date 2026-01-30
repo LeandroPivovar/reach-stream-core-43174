@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -34,6 +34,8 @@ import { cn } from '@/lib/utils';
 import { WorkflowCanvas, WorkflowStep } from '@/components/workflow/WorkflowCanvas';
 import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
 import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
+import { api, Campaign, Contact, Group } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 import {
   Table,
   TableBody,
@@ -51,9 +53,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { 
-  MessageSquare, 
-  Mail, 
+import {
+  MessageSquare,
+  Mail,
   Smartphone,
   MoreHorizontal,
   Play,
@@ -80,11 +82,15 @@ import {
 } from 'lucide-react';
 
 export default function Campanhas() {
+  const { toast } = useToast();
   const [isNewCampaignOpen, setIsNewCampaignOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const contactsPerPage = 10;
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [newCampaign, setNewCampaign] = useState({
     campaignComplexity: '' as 'simple' | 'advanced' | '',
     name: '',
@@ -106,9 +112,9 @@ export default function Campanhas() {
         validityDate: undefined as Date | undefined
       }
     },
-    email: { 
-      subject: '', 
-      content: '', 
+    email: {
+      subject: '',
+      content: '',
       mode: 'text' as 'text' | 'html',
       media: [] as { url: string; type: 'image' | 'video'; name: string }[]
     },
@@ -152,71 +158,46 @@ export default function Campanhas() {
     });
   };
 
-  const contactGroups = [
-    { name: 'VIP', count: 342, description: 'Clientes de alto valor' },
-    { name: 'Regular', count: 1847, description: 'Clientes ativos regulares' },
-    { name: 'Novos', count: 523, description: 'Últimos 30 dias' },
-    { name: 'Inativos', count: 1205, description: 'Sem compras há 90+ dias' }
-  ];
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
+  const [segmentationStats, setSegmentationStats] = useState<Record<string, number>>({});
 
-  const [campaigns, setCampaigns] = useState([
-    {
-      id: 1,
-      name: 'Promoção Black Friday',
-      type: ['WhatsApp', 'E-mail'],
-      status: 'ativa',
-      recipients: 5247,
-      sent: 2847,
-      opens: 1943,
-      clicks: 312,
-      responses: 89,
-      revenue: 45890.50,
-      createdAt: '2024-03-15',
-      scheduledAt: '2024-03-20 09:00'
-    },
-    {
-      id: 2,
-      name: 'Carrinho Abandonado',
-      type: ['E-mail'],
-      status: 'pausada',
-      recipients: 1254,
-      sent: 1254,
-      opens: 834,
-      clicks: 127,
-      responses: 23,
-      revenue: 12340.00,
-      createdAt: '2024-03-10',
-      scheduledAt: null
-    },
-    {
-      id: 3,
-      name: 'Novos Produtos - Março',
-      type: ['SMS'],
-      status: 'agendada',
-      recipients: 892,
-      sent: 0,
-      opens: 0,
-      clicks: 0,
-      responses: 0,
-      revenue: 0,
-      createdAt: '2024-03-18',
-      scheduledAt: '2024-03-25 14:00'
-    },
-    {
-      id: 4,
-      name: 'Newsletter Semanal',
-      type: ['E-mail'],
-      status: 'finalizada',
-      recipients: 3421,
-      sent: 3421,
-      opens: 2156,
-      clicks: 445,
-      responses: 67,
-      revenue: 28750.80,
-      createdAt: '2024-03-12',
-      scheduledAt: null
+  useEffect(() => {
+    loadCampaigns();
+    loadExternalData();
+  }, []);
+
+  const loadExternalData = async () => {
+    try {
+      const [contactsData, groupsData, statsData] = await Promise.all([
+        api.getContacts(),
+        api.getGroups(),
+        api.getSegmentationStats()
+      ]);
+      setContacts(contactsData);
+      setAvailableGroups(groupsData);
+      setSegmentationStats(statsData);
+    } catch (error) {
+      console.error('Erro ao carregar dados externos:', error);
     }
-  ]);
+  };
+
+  const loadCampaigns = async () => {
+    try {
+      setIsLoading(true);
+      const data = await api.getCampaigns();
+      setCampaigns(data);
+    } catch (error) {
+      console.error('Erro ao carregar campanhas:', error);
+      toast({
+        title: 'Erro ao carregar campanhas',
+        description: error instanceof Error ? error.message : 'Não foi possível carregar as campanhas',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -239,10 +220,11 @@ export default function Campanhas() {
   };
 
   const getChannelIcon = (channel: string) => {
-    switch (channel) {
-      case 'WhatsApp': return MessageSquare;
-      case 'E-mail': return Mail;
-      case 'SMS': return Smartphone;
+    switch (channel.toLowerCase()) {
+      case 'whatsapp': return MessageSquare;
+      case 'email':
+      case 'e-mail': return Mail;
+      case 'sms': return Smartphone;
       default: return MessageSquare;
     }
   };
@@ -256,34 +238,11 @@ export default function Campanhas() {
     return 4;
   };
 
-  // Mock contacts data
-  const mockContacts = [
-    { id: 1, name: 'João Silva', email: 'joao@email.com', phone: '(11) 98765-4321', segment: 'VIP' },
-    { id: 2, name: 'Maria Santos', email: 'maria@email.com', phone: '(11) 97654-3210', segment: 'Regular' },
-    { id: 3, name: 'Pedro Oliveira', email: 'pedro@email.com', phone: '(11) 96543-2109', segment: 'VIP' },
-    { id: 4, name: 'Ana Costa', email: 'ana@email.com', phone: '(11) 95432-1098', segment: 'Novos' },
-    { id: 5, name: 'Carlos Souza', email: 'carlos@email.com', phone: '(11) 94321-0987', segment: 'Regular' },
-    { id: 6, name: 'Fernanda Lima', email: 'fernanda@email.com', phone: '(11) 93210-9876', segment: 'VIP' },
-    { id: 7, name: 'Ricardo Alves', email: 'ricardo@email.com', phone: '(11) 92109-8765', segment: 'Inativos' },
-    { id: 8, name: 'Juliana Rocha', email: 'juliana@email.com', phone: '(11) 91098-7654', segment: 'Regular' },
-    { id: 9, name: 'Bruno Martins', email: 'bruno@email.com', phone: '(11) 90987-6543', segment: 'Novos' },
-    { id: 10, name: 'Patricia Dias', email: 'patricia@email.com', phone: '(11) 89876-5432', segment: 'VIP' },
-    { id: 11, name: 'Lucas Ferreira', email: 'lucas@email.com', phone: '(11) 88765-4321', segment: 'Regular' },
-    { id: 12, name: 'Amanda Ribeiro', email: 'amanda@email.com', phone: '(11) 87654-3210', segment: 'Inativos' },
-    { id: 13, name: 'Rafael Gomes', email: 'rafael@email.com', phone: '(11) 86543-2109', segment: 'VIP' },
-    { id: 14, name: 'Camila Cardoso', email: 'camila@email.com', phone: '(11) 85432-1098', segment: 'Novos' },
-    { id: 15, name: 'Thiago Mendes', email: 'thiago@email.com', phone: '(11) 84321-0987', segment: 'Regular' },
-    { id: 16, name: 'Beatriz Castro', email: 'beatriz@email.com', phone: '(11) 83210-9876', segment: 'VIP' },
-    { id: 17, name: 'Gustavo Pinto', email: 'gustavo@email.com', phone: '(11) 82109-8765', segment: 'Regular' },
-    { id: 18, name: 'Larissa Barros', email: 'larissa@email.com', phone: '(11) 81098-7654', segment: 'Inativos' },
-    { id: 19, name: 'Rodrigo Teixeira', email: 'rodrigo@email.com', phone: '(11) 80987-6543', segment: 'Novos' },
-    { id: 20, name: 'Vanessa Moura', email: 'vanessa@email.com', phone: '(11) 79876-5432', segment: 'VIP' },
-  ];
-
   const getFilteredContacts = () => {
     if (newCampaign.segmentations.length === 0) return [];
-    // In a real app, this would filter based on actual segmentation rules
-    return mockContacts;
+    // Simplificado para demonstração: se houver segmentação, mostra contatos reais
+    // Em uma app real, a filtragem complexa seria feita no backend
+    return contacts;
   };
 
   const filteredContacts = getFilteredContacts();
@@ -315,48 +274,106 @@ export default function Campanhas() {
   };
 
 
-  const handleCreateCampaign = () => {
-    console.log('Creating campaign:', newCampaign);
-    setIsNewCampaignOpen(false);
-    setCurrentStep(1);
-    setNewCampaign({
-      campaignComplexity: '',
-      name: '',
-      groups: [],
-      segmentations: [],
-      channel: '',
-      campaignType: '',
-      campaignConfig: {
-        enableCoupon: false,
-        enableGiftback: false,
-        coupon: {
-          discountType: 'percentage',
-          discountValue: '',
-          validityDate: undefined
-        },
-        giftback: {
-          giftValue: '',
-          maxRedemptions: '',
-          validityDate: undefined
+  const handleCreateCampaign = async () => {
+    try {
+      setIsSaving(true);
+
+      const payload = {
+        name: newCampaign.name,
+        complexity: newCampaign.campaignComplexity,
+        channel: newCampaign.channel,
+        status: newCampaign.scheduleType === 'schedule' ? 'agendada' : 'ativa',
+        scheduledAt: newCampaign.scheduleType === 'schedule'
+          ? `${newCampaign.scheduleDate}T${newCampaign.scheduleTime}:00`
+          : undefined,
+        config: {
+          campaignType: newCampaign.campaignType,
+          campaignConfig: newCampaign.campaignConfig,
+          email: newCampaign.email,
+          workflow: newCampaign.workflow,
+          tracking: newCampaign.tracking,
+          groups: newCampaign.groups,
+          segmentations: newCampaign.segmentations
         }
-      },
-      email: { 
-        subject: '', 
-        content: '', 
-        mode: 'text',
-        media: []
-      },
-      workflow: [],
-      tracking: {
-        type: '',
-        utmSource: '',
-        utmMedium: '',
-        utmCampaign: ''
-      },
-      scheduleType: 'now',
-      scheduleDate: '',
-      scheduleTime: ''
-    });
+      };
+
+      await api.createCampaign(payload as any);
+
+      toast({
+        title: 'Campanha criada com sucesso!',
+        description: 'Sua campanha já está sendo processada.',
+      });
+
+      setIsNewCampaignOpen(false);
+      setCurrentStep(1);
+      setNewCampaign({
+        campaignComplexity: '',
+        name: '',
+        groups: [],
+        segmentations: [],
+        channel: '',
+        campaignType: '',
+        campaignConfig: {
+          enableCoupon: false,
+          enableGiftback: false,
+          coupon: {
+            discountType: 'percentage',
+            discountValue: '',
+            validityDate: undefined
+          },
+          giftback: {
+            giftValue: '',
+            maxRedemptions: '',
+            validityDate: undefined
+          }
+        },
+        email: {
+          subject: '',
+          content: '',
+          mode: 'text',
+          media: []
+        },
+        workflow: [],
+        tracking: {
+          type: '',
+          utmSource: '',
+          utmMedium: '',
+          utmCampaign: ''
+        },
+        scheduleType: 'now',
+        scheduleDate: '',
+        scheduleTime: ''
+      });
+
+      loadCampaigns();
+    } catch (error) {
+      console.error('Erro ao criar campanha:', error);
+      toast({
+        title: 'Erro ao criar campanha',
+        description: error instanceof Error ? error.message : 'Não foi possível criar a campanha',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteCampaign = async (id: number) => {
+    try {
+      await api.deleteCampaign(id);
+      toast({
+        title: 'Campanha excluída',
+        description: 'A campanha foi removida com sucesso.',
+      });
+      loadCampaigns();
+    } catch (error) {
+      console.error('Erro ao excluir campanha:', error);
+      toast({
+        title: 'Erro ao excluir campanha',
+        description: error instanceof Error ? error.message : 'Não foi possível excluir a campanha',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleExport = (format: 'csv' | 'excel' | 'pdf') => {
@@ -375,8 +392,8 @@ export default function Campanhas() {
   );
 
   return (
-    <Layout 
-      title="Campanhas" 
+    <Layout
+      title="Campanhas"
       subtitle="Gerencie suas campanhas de marketing multicanal"
       actions={actions}
       showSearch
@@ -400,7 +417,9 @@ export default function Campanhas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Enviado</p>
-                <p className="text-2xl font-bold text-foreground">7.522</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {campaigns.reduce((acc, c) => acc + (c.sentCount || 0), 0).toLocaleString()}
+                </p>
               </div>
               <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
                 <Users className="w-5 h-5 text-blue-500" />
@@ -412,7 +431,13 @@ export default function Campanhas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Taxa de Abertura</p>
-                <p className="text-2xl font-bold text-foreground">64.8%</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {(() => {
+                    const totalSent = campaigns.reduce((acc, c) => acc + (c.sentCount || 0), 0);
+                    const totalOpens = campaigns.reduce((acc, c) => acc + (c.opensCount || 0), 0);
+                    return totalSent > 0 ? ((totalOpens / totalSent) * 100).toFixed(1) : '0';
+                  })()}%
+                </p>
               </div>
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Eye className="w-5 h-5 text-primary" />
@@ -430,7 +455,7 @@ export default function Campanhas() {
                     currency: 'BRL',
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
-                  }).format(campaigns.reduce((acc, c) => acc + c.revenue, 0))}
+                  }).format(campaigns.reduce((acc, c) => acc + Number(c.revenue || 0), 0))}
                 </p>
               </div>
               <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
@@ -443,7 +468,9 @@ export default function Campanhas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Agendadas</p>
-                <p className="text-2xl font-bold text-foreground">2</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {campaigns.filter(c => c.status === 'agendada').length}
+                </p>
               </div>
               <div className="w-10 h-10 bg-orange-500/10 rounded-lg flex items-center justify-center">
                 <CalendarIcon className="w-5 h-5 text-orange-500" />
@@ -487,15 +514,15 @@ export default function Campanhas() {
                     </td>
                     <td className="py-4 px-2">
                       <div className="flex flex-wrap gap-1">
-                        {campaign.type.map((channel) => {
-                          const Icon = getChannelIcon(channel);
+                        {(() => {
+                          const Icon = getChannelIcon(campaign.channel);
                           return (
-                            <div key={channel} className="flex items-center space-x-1 bg-muted/50 rounded-full px-2 py-1">
+                            <div key={campaign.channel} className="flex items-center space-x-1 bg-muted/50 rounded-full px-2 py-1">
                               <Icon className="w-3 h-3" />
-                              <span className="text-xs">{channel}</span>
+                              <span className="text-xs">{campaign.channel}</span>
                             </div>
                           );
-                        })}
+                        })()}
                       </div>
                     </td>
                     <td className="py-4 px-2">
@@ -505,21 +532,21 @@ export default function Campanhas() {
                       </Badge>
                     </td>
                     <td className="py-4 px-2 text-right font-medium">
-                      {campaign.recipients.toLocaleString()}
+                      {campaign.recipientsCount.toLocaleString()}
                     </td>
                     <td className="py-4 px-2 text-right font-medium">
-                      {campaign.sent.toLocaleString()}
+                      {campaign.sentCount.toLocaleString()}
                     </td>
                     <td className="py-4 px-2 text-right">
-                      <div className="font-medium">{campaign.opens.toLocaleString()}</div>
+                      <div className="font-medium">{campaign.opensCount.toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">
-                        {campaign.sent > 0 ? ((campaign.opens / campaign.sent) * 100).toFixed(1) : 0}%
+                        {campaign.sentCount > 0 ? ((campaign.opensCount / campaign.sentCount) * 100).toFixed(1) : 0}%
                       </div>
                     </td>
                     <td className="py-4 px-2 text-right">
-                      <div className="font-medium">{campaign.clicks.toLocaleString()}</div>
+                      <div className="font-medium">{campaign.clicksCount.toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">
-                        {campaign.opens > 0 ? ((campaign.clicks / campaign.opens) * 100).toFixed(1) : 0}%
+                        {campaign.opensCount > 0 ? ((campaign.clicksCount / campaign.opensCount) * 100).toFixed(1) : 0}%
                       </div>
                     </td>
                     <td className="py-4 px-2 text-right">
@@ -527,14 +554,14 @@ export default function Campanhas() {
                         {new Intl.NumberFormat('pt-BR', {
                           style: 'currency',
                           currency: 'BRL'
-                        }).format(campaign.revenue)}
+                        }).format(Number(campaign.revenue))}
                       </div>
-                      {campaign.sent > 0 && (
+                      {campaign.sentCount > 0 && (
                         <div className="text-xs text-muted-foreground">
                           {new Intl.NumberFormat('pt-BR', {
                             style: 'currency',
                             currency: 'BRL'
-                          }).format(campaign.revenue / campaign.sent)} / envio
+                          }).format(Number(campaign.revenue) / campaign.sentCount)} / envio
                         </div>
                       )}
                     </td>
@@ -569,7 +596,11 @@ export default function Campanhas() {
                                 Reativar Campanha
                               </Button>
                             ) : null}
-                            <Button variant="ghost" className="justify-start text-destructive">
+                            <Button
+                              variant="ghost"
+                              className="justify-start text-destructive"
+                              onClick={() => handleDeleteCampaign(campaign.id)}
+                            >
                               <Trash2 className="w-4 h-4 mr-2" />
                               Excluir Campanha
                             </Button>
@@ -612,9 +643,9 @@ export default function Campanhas() {
                 validityDate: undefined
               }
             },
-            email: { 
-              subject: '', 
-              content: '', 
+            email: {
+              subject: '',
+              content: '',
               mode: 'text',
               media: []
             },
@@ -637,8 +668,8 @@ export default function Campanhas() {
           newCampaign.campaignComplexity === 'advanced' && currentStep === 4
             ? "!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] p-8"
             : newCampaign.campaignComplexity === 'simple' && currentStep === 5 && newCampaign.channel === 'whatsapp'
-            ? "max-w-6xl max-h-[90vh]"
-            : "max-w-3xl max-h-[90vh]"
+              ? "max-w-6xl max-h-[90vh]"
+              : "max-w-3xl max-h-[90vh]"
         )}>
           <DialogHeader>
             <DialogTitle>Nova Campanha - Etapa {currentStep} de {getTotalSteps()}</DialogTitle>
@@ -656,12 +687,11 @@ export default function Campanhas() {
               <div className="grid gap-2">
                 <Label>Tipo de Campanha *</Label>
                 <div className="grid grid-cols-1 gap-4">
-                  <Card 
-                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.campaignComplexity === 'simple' ? 'border-primary bg-primary/5' : ''
-                    }`}
-                    onClick={() => setNewCampaign({ 
-                      ...newCampaign, 
+                  <Card
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${newCampaign.campaignComplexity === 'simple' ? 'border-primary bg-primary/5' : ''
+                      }`}
+                    onClick={() => setNewCampaign({
+                      ...newCampaign,
                       campaignComplexity: 'simple',
                       campaignType: 'dispatch' // Simple campaigns are always dispatch
                     })}
@@ -684,10 +714,9 @@ export default function Campanhas() {
                     </div>
                   </Card>
 
-                  <Card 
-                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.campaignComplexity === 'advanced' ? 'border-primary bg-primary/5' : ''
-                    }`}
+                  <Card
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${newCampaign.campaignComplexity === 'advanced' ? 'border-primary bg-primary/5' : ''
+                      }`}
                     onClick={() => setNewCampaign({ ...newCampaign, campaignComplexity: 'advanced' })}
                   >
                     <div className="flex items-start gap-4">
@@ -712,7 +741,7 @@ export default function Campanhas() {
               </div>
 
               <div className="flex justify-end">
-                <Button 
+                <Button
                   onClick={handleNextStep}
                   disabled={!newCampaign.campaignComplexity}
                 >
@@ -728,6 +757,7 @@ export default function Campanhas() {
             <div className="space-y-6 py-4">
               <SegmentationPicker
                 selectedSegments={newCampaign.segmentations}
+                stats={segmentationStats}
                 onSegmentsChange={(segments) => {
                   setNewCampaign({ ...newCampaign, segmentations: segments });
                   setCurrentPage(1); // Reset pagination when segmentation changes
@@ -743,7 +773,7 @@ export default function Campanhas() {
                       {filteredContacts.length} contato(s) impactado(s)
                     </p>
                   </div>
-                  
+
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
@@ -757,11 +787,13 @@ export default function Campanhas() {
                       <TableBody>
                         {paginatedContacts.map((contact) => (
                           <TableRow key={contact.id}>
-                            <TableCell className="font-medium">{contact.name}</TableCell>
-                            <TableCell>{contact.email}</TableCell>
-                            <TableCell>{contact.phone}</TableCell>
+                            <TableCell className="font-medium">{contact.name} {contact.lastName}</TableCell>
+                            <TableCell>{contact.email || '-'}</TableCell>
+                            <TableCell>{contact.phone || '-'}</TableCell>
                             <TableCell>
-                              <Badge variant="outline">{contact.segment}</Badge>
+                              <Badge variant="outline">
+                                {contact.group?.name || 'Sem grupo'}
+                              </Badge>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -775,7 +807,7 @@ export default function Campanhas() {
                       <Pagination>
                         <PaginationContent>
                           <PaginationItem>
-                            <PaginationPrevious 
+                            <PaginationPrevious
                               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                               className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                             />
@@ -792,7 +824,7 @@ export default function Campanhas() {
                             </PaginationItem>
                           ))}
                           <PaginationItem>
-                            <PaginationNext 
+                            <PaginationNext
                               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                               className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                             />
@@ -809,7 +841,7 @@ export default function Campanhas() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleNextStep}
                   disabled={newCampaign.segmentations.length === 0}
                 >
@@ -844,7 +876,7 @@ export default function Campanhas() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleNextStep}
                   disabled={!newCampaign.name}
                 >
@@ -867,10 +899,9 @@ export default function Campanhas() {
               <div className="grid gap-2">
                 <Label>Canal de Envio *</Label>
                 <div className="grid grid-cols-1 gap-4">
-                  <Card 
-                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.channel === 'email' ? 'border-primary bg-primary/5' : ''
-                    }`}
+                  <Card
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${newCampaign.channel === 'email' ? 'border-primary bg-primary/5' : ''
+                      }`}
                     onClick={() => setNewCampaign({ ...newCampaign, channel: 'email' })}
                   >
                     <div className="flex items-start gap-4">
@@ -886,10 +917,9 @@ export default function Campanhas() {
                     </div>
                   </Card>
 
-                  <Card 
-                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.channel === 'sms' ? 'border-primary bg-primary/5' : ''
-                    }`}
+                  <Card
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${newCampaign.channel === 'sms' ? 'border-primary bg-primary/5' : ''
+                      }`}
                     onClick={() => setNewCampaign({ ...newCampaign, channel: 'sms' })}
                   >
                     <div className="flex items-start gap-4">
@@ -905,10 +935,9 @@ export default function Campanhas() {
                     </div>
                   </Card>
 
-                  <Card 
-                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${
-                      newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : ''
-                    }`}
+                  <Card
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : ''
+                      }`}
                     onClick={() => setNewCampaign({ ...newCampaign, channel: 'whatsapp' })}
                   >
                     <div className="flex items-start gap-4">
@@ -931,7 +960,7 @@ export default function Campanhas() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleNextStep}
                   disabled={!newCampaign.channel}
                 >
@@ -965,8 +994,8 @@ export default function Campanhas() {
                       <Textarea
                         id="whatsapp-content"
                         value={newCampaign.email.content}
-                        onChange={(e) => setNewCampaign({ 
-                          ...newCampaign, 
+                        onChange={(e) => setNewCampaign({
+                          ...newCampaign,
                           email: { ...newCampaign.email, content: e.target.value }
                         })}
                         placeholder="Digite a mensagem do WhatsApp..."
@@ -1026,10 +1055,10 @@ export default function Campanhas() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* WhatsApp Preview */}
-                  <WhatsappPreview 
-                    content={newCampaign.email.content} 
+                  <WhatsappPreview
+                    content={newCampaign.email.content}
                     media={newCampaign.email.media}
                   />
                 </div>
@@ -1038,129 +1067,129 @@ export default function Campanhas() {
                   {newCampaign.channel === 'email' && (
                     <>
                       <div className="bg-orange-500/10 p-4 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-5 h-5 text-orange-500" />
-                      <span className="font-medium">Configure o conteúdo do seu e-mail</span>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="email-subject">Assunto do E-mail *</Label>
-                    <Input
-                      id="email-subject"
-                      value={newCampaign.email.subject}
-                      onChange={(e) => setNewCampaign({ 
-                        ...newCampaign, 
-                        email: { ...newCampaign.email, subject: e.target.value }
-                      })}
-                      placeholder="Ex: Aproveite 20% de desconto na Black Friday!"
-                    />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="email-content">Conteúdo do E-mail *</Label>
-                    <Textarea
-                      id="email-content"
-                      value={newCampaign.email.content}
-                      onChange={(e) => setNewCampaign({ 
-                        ...newCampaign, 
-                        email: { ...newCampaign.email, content: e.target.value }
-                      })}
-                      placeholder="Digite o conteúdo do e-mail..."
-                      rows={12}
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label>Anexar Imagem ou Vídeo</Label>
-                    <div className="flex flex-col gap-3">
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="image/*,video/*"
-                          multiple
-                          onChange={handleFileUpload}
-                          className="hidden"
-                          id="email-media-upload"
-                        />
-                        <label htmlFor="email-media-upload">
-                          <Button type="button" variant="outline" className="w-full" asChild>
-                            <div className="cursor-pointer">
-                              <Upload className="w-4 h-4 mr-2" />
-                              Upload de Mídia
-                            </div>
-                          </Button>
-                        </label>
-                      </div>
-                      {newCampaign.email.media.length > 0 && (
-                        <div className="grid grid-cols-2 gap-2">
-                          {newCampaign.email.media.map((item, index) => (
-                            <div key={index} className="relative group border rounded-md p-2">
-                              <div className="flex items-center gap-2">
-                                {item.type === 'image' ? (
-                                  <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
-                                ) : (
-                                  <video src={item.url} className="w-12 h-12 object-cover rounded" />
-                                )}
-                                <span className="text-xs truncate flex-1">{item.name}</span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => removeMedia(index)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-5 h-5 text-orange-500" />
+                          <span className="font-medium">Configure o conteúdo do seu e-mail</span>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
+                      </div>
 
-              {newCampaign.channel === 'sms' && (
-                <>
-                  <div className="bg-green-500/10 p-4 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Smartphone className="w-5 h-5 text-green-500" />
-                      <span className="font-medium">Configure o conteúdo do SMS</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Limite de 160 caracteres por mensagem
-                    </p>
-                  </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="email-subject">Assunto do E-mail *</Label>
+                        <Input
+                          id="email-subject"
+                          value={newCampaign.email.subject}
+                          onChange={(e) => setNewCampaign({
+                            ...newCampaign,
+                            email: { ...newCampaign.email, subject: e.target.value }
+                          })}
+                          placeholder="Ex: Aproveite 20% de desconto na Black Friday!"
+                        />
+                      </div>
 
-                  <div className="grid gap-2">
-                    <div className="flex justify-between items-center">
-                      <Label htmlFor="sms-content">Mensagem SMS *</Label>
-                      <span className="text-xs text-muted-foreground">
-                        {newCampaign.email.content.length}/160
-                      </span>
-                    </div>
-                    <Textarea
-                      id="sms-content"
-                      value={newCampaign.email.content}
-                      onChange={(e) => {
-                        if (e.target.value.length <= 160) {
-                          setNewCampaign({ 
-                            ...newCampaign, 
+                      <div className="grid gap-2">
+                        <Label htmlFor="email-content">Conteúdo do E-mail *</Label>
+                        <Textarea
+                          id="email-content"
+                          value={newCampaign.email.content}
+                          onChange={(e) => setNewCampaign({
+                            ...newCampaign,
                             email: { ...newCampaign.email, content: e.target.value }
-                          });
-                        }
-                      }}
-                      placeholder="Digite a mensagem do SMS..."
-                      rows={4}
-                      maxLength={160}
-                    />
-                  </div>
-                </>
-              )}
+                          })}
+                          placeholder="Digite o conteúdo do e-mail..."
+                          rows={12}
+                        />
+                      </div>
 
-              </>
+                      <div className="grid gap-2">
+                        <Label>Anexar Imagem ou Vídeo</Label>
+                        <div className="flex flex-col gap-3">
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*,video/*"
+                              multiple
+                              onChange={handleFileUpload}
+                              className="hidden"
+                              id="email-media-upload"
+                            />
+                            <label htmlFor="email-media-upload">
+                              <Button type="button" variant="outline" className="w-full" asChild>
+                                <div className="cursor-pointer">
+                                  <Upload className="w-4 h-4 mr-2" />
+                                  Upload de Mídia
+                                </div>
+                              </Button>
+                            </label>
+                          </div>
+                          {newCampaign.email.media.length > 0 && (
+                            <div className="grid grid-cols-2 gap-2">
+                              {newCampaign.email.media.map((item, index) => (
+                                <div key={index} className="relative group border rounded-md p-2">
+                                  <div className="flex items-center gap-2">
+                                    {item.type === 'image' ? (
+                                      <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                                    ) : (
+                                      <video src={item.url} className="w-12 h-12 object-cover rounded" />
+                                    )}
+                                    <span className="text-xs truncate flex-1">{item.name}</span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      onClick={() => removeMedia(index)}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {newCampaign.channel === 'sms' && (
+                    <>
+                      <div className="bg-green-500/10 p-4 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <Smartphone className="w-5 h-5 text-green-500" />
+                          <span className="font-medium">Configure o conteúdo do SMS</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Limite de 160 caracteres por mensagem
+                        </p>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <div className="flex justify-between items-center">
+                          <Label htmlFor="sms-content">Mensagem SMS *</Label>
+                          <span className="text-xs text-muted-foreground">
+                            {newCampaign.email.content.length}/160
+                          </span>
+                        </div>
+                        <Textarea
+                          id="sms-content"
+                          value={newCampaign.email.content}
+                          onChange={(e) => {
+                            if (e.target.value.length <= 160) {
+                              setNewCampaign({
+                                ...newCampaign,
+                                email: { ...newCampaign.email, content: e.target.value }
+                              });
+                            }
+                          }}
+                          placeholder="Digite a mensagem do SMS..."
+                          rows={4}
+                          maxLength={160}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                </>
               )}
 
               <div className="flex justify-between pt-4">
@@ -1168,10 +1197,10 @@ export default function Campanhas() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleNextStep}
                   disabled={
-                    newCampaign.channel === 'email' 
+                    newCampaign.channel === 'email'
                       ? !newCampaign.email.subject || !newCampaign.email.content
                       : !newCampaign.email.content
                   }
@@ -1207,7 +1236,7 @@ export default function Campanhas() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleNextStep}
                   disabled={!newCampaign.name}
                 >
@@ -1227,7 +1256,7 @@ export default function Campanhas() {
                   <span className="font-medium">Editor de Workflow Visual</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Configure sua automação completa: adicione nós de e-mail, SMS, WhatsApp, condições, delays e muito mais. 
+                  Configure sua automação completa: adicione nós de e-mail, SMS, WhatsApp, condições, delays e muito mais.
                   Clique nos nós para configurar o conteúdo das mensagens, agendamento e outras opções.
                 </p>
               </div>
@@ -1246,27 +1275,10 @@ export default function Campanhas() {
                   </div>
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
-                      // Calcular total de afetados baseado nas segmentações
-                      const mockAffectedCounts: Record<string, number> = {
-                        'by_purchase_count': 2847,
-                        'birthday': 142,
-                        'inactive_customers': 1523,
-                        'active_coupon': 634,
-                        'high_ticket': 458,
-                        'purchase_value_x': 891,
-                        'lead_captured': 3241,
-                        'cart_recovered_customer': 287,
-                        'no_purchase_x_days': 1876,
-                        'gender_male': 4562,
-                        'gender_female': 5123,
-                        'by_state': 9685,
-                        'all': 9685
-                      };
-                      
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        return sum + (mockAffectedCounts[seg] || 0);
+                        return sum + (segmentationStats[seg] || 0);
                       }, 0);
-                      
+
                       return total.toLocaleString('pt-BR');
                     })()}
                   </p>
@@ -1279,26 +1291,10 @@ export default function Campanhas() {
                   </div>
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
-                      const mockAffectedCounts: Record<string, number> = {
-                        'by_purchase_count': 2847,
-                        'birthday': 142,
-                        'inactive_customers': 1523,
-                        'active_coupon': 634,
-                        'high_ticket': 458,
-                        'purchase_value_x': 891,
-                        'lead_captured': 3241,
-                        'cart_recovered_customer': 287,
-                        'no_purchase_x_days': 1876,
-                        'gender_male': 4562,
-                        'gender_female': 5123,
-                        'by_state': 9685,
-                        'all': 9685
-                      };
-                      
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        return sum + (mockAffectedCounts[seg] || 0);
+                        return sum + (segmentationStats[seg] || 0);
                       }, 0);
-                      
+
                       const credits = Math.ceil(total / 100); // 1 crédito a cada 100 pessoas
                       return credits.toLocaleString('pt-BR');
                     })()}
@@ -1312,30 +1308,14 @@ export default function Campanhas() {
                   </div>
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
-                      const mockAffectedCounts: Record<string, number> = {
-                        'by_purchase_count': 2847,
-                        'birthday': 142,
-                        'inactive_customers': 1523,
-                        'active_coupon': 634,
-                        'high_ticket': 458,
-                        'purchase_value_x': 891,
-                        'lead_captured': 3241,
-                        'cart_recovered_customer': 287,
-                        'no_purchase_x_days': 1876,
-                        'gender_male': 4562,
-                        'gender_female': 5123,
-                        'by_state': 9685,
-                        'all': 9685
-                      };
-                      
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        return sum + (mockAffectedCounts[seg] || 0);
+                        return sum + (segmentationStats[seg] || 0);
                       }, 0);
-                      
+
                       const credits = Math.ceil(total / 100);
                       const valorPorCredito = 0.10;
                       const valorTotal = credits * valorPorCredito;
-                      
+
                       return `R$ ${valorTotal.toFixed(2)}`;
                     })()}
                   </p>
@@ -1373,7 +1353,7 @@ export default function Campanhas() {
                 <Label>Selecione os benefícios que deseja oferecer:</Label>
                 <div className="flex gap-4">
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="enable-coupon"
                       checked={newCampaign.campaignConfig.enableCoupon}
                       onCheckedChange={(checked) => setNewCampaign({
@@ -1389,7 +1369,7 @@ export default function Campanhas() {
                     </label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="enable-giftback"
                       checked={newCampaign.campaignConfig.enableGiftback}
                       onCheckedChange={(checked) => setNewCampaign({
@@ -1479,8 +1459,8 @@ export default function Campanhas() {
                     {/* Valor do Desconto */}
                     <div className="grid gap-2">
                       <Label htmlFor="discount-value">
-                        {newCampaign.campaignConfig.coupon.discountType === 'percentage' 
-                          ? 'Percentual de Desconto (%)' 
+                        {newCampaign.campaignConfig.coupon.discountType === 'percentage'
+                          ? 'Percentual de Desconto (%)'
                           : 'Valor do Desconto (R$)'}
                       </Label>
                       <Input
@@ -1698,27 +1678,10 @@ export default function Campanhas() {
                   </div>
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
-                      // Calcular total de afetados baseado nas segmentações
-                      const mockAffectedCounts: Record<string, number> = {
-                        'by_purchase_count': 2847,
-                        'birthday': 142,
-                        'inactive_customers': 1523,
-                        'active_coupon': 634,
-                        'high_ticket': 458,
-                        'purchase_value_x': 891,
-                        'lead_captured': 3241,
-                        'cart_recovered_customer': 287,
-                        'no_purchase_x_days': 1876,
-                        'gender_male': 4562,
-                        'gender_female': 5123,
-                        'by_state': 9685,
-                        'all': 9685
-                      };
-                      
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        return sum + (mockAffectedCounts[seg] || 0);
+                        return sum + (segmentationStats[seg] || 0);
                       }, 0);
-                      
+
                       return total.toLocaleString('pt-BR');
                     })()}
                   </p>
@@ -1746,11 +1709,11 @@ export default function Campanhas() {
                         'by_state': 9685,
                         'all': 9685
                       };
-                      
+
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
                         return sum + (mockAffectedCounts[seg] || 0);
                       }, 0);
-                      
+
                       const credits = Math.ceil(total / 100); // 1 crédito a cada 100 pessoas
                       return credits.toLocaleString('pt-BR');
                     })()}
@@ -1779,15 +1742,15 @@ export default function Campanhas() {
                         'by_state': 9685,
                         'all': 9685
                       };
-                      
+
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
                         return sum + (mockAffectedCounts[seg] || 0);
                       }, 0);
-                      
+
                       const credits = Math.ceil(total / 100);
                       const valorPorCredito = 0.10;
                       const valorTotal = credits * valorPorCredito;
-                      
+
                       return `R$ ${valorTotal.toFixed(2)}`;
                     })()}
                   </p>
@@ -1796,11 +1759,10 @@ export default function Campanhas() {
 
               <div className="grid gap-4 mt-6">
                 <Label>Quando enviar a campanha?</Label>
-                
+
                 <Card
-                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                    newCampaign.scheduleType === 'now' ? 'border-primary bg-primary/5' : ''
-                  }`}
+                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${newCampaign.scheduleType === 'now' ? 'border-primary bg-primary/5' : ''
+                    }`}
                   onClick={() => setNewCampaign({ ...newCampaign, scheduleType: 'now' })}
                 >
                   <div className="flex items-start gap-3">
@@ -1814,10 +1776,9 @@ export default function Campanhas() {
                   </div>
                 </Card>
 
-                <Card 
-                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                    newCampaign.scheduleType === 'schedule' ? 'border-primary bg-primary/5' : ''
-                  }`}
+                <Card
+                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${newCampaign.scheduleType === 'schedule' ? 'border-primary bg-primary/5' : ''
+                    }`}
                   onClick={() => setNewCampaign({ ...newCampaign, scheduleType: 'schedule' })}
                 >
                   <div className="flex items-start gap-3">
@@ -1827,7 +1788,7 @@ export default function Campanhas() {
                       <p className="text-sm text-muted-foreground mb-3">
                         Escolha data e hora para enviar a campanha
                       </p>
-                      
+
                       {newCampaign.scheduleType === 'schedule' && (
                         <div className="grid grid-cols-2 gap-3 mt-3">
                           <div className="grid gap-2">
@@ -1861,11 +1822,11 @@ export default function Campanhas() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleCreateCampaign}
                   disabled={
-                    (newCampaign.scheduleType === 'schedule' && 
-                    (!newCampaign.scheduleDate || !newCampaign.scheduleTime))
+                    (newCampaign.scheduleType === 'schedule' &&
+                      (!newCampaign.scheduleDate || !newCampaign.scheduleTime))
                   }
                 >
                   {newCampaign.scheduleType === 'now' ? (
@@ -1899,7 +1860,7 @@ export default function Campanhas() {
             </p>
 
             <div className="grid gap-3">
-              <Card 
+              <Card
                 className="p-4 cursor-pointer hover:border-primary transition-colors"
                 onClick={() => handleExport('csv')}
               >
@@ -1916,7 +1877,7 @@ export default function Campanhas() {
                 </div>
               </Card>
 
-              <Card 
+              <Card
                 className="p-4 cursor-pointer hover:border-primary transition-colors"
                 onClick={() => handleExport('excel')}
               >
@@ -1933,7 +1894,7 @@ export default function Campanhas() {
                 </div>
               </Card>
 
-              <Card 
+              <Card
                 className="p-4 cursor-pointer hover:border-primary transition-colors"
                 onClick={() => handleExport('pdf')}
               >
@@ -1953,7 +1914,7 @@ export default function Campanhas() {
 
             <div className="bg-muted p-3 rounded-lg">
               <p className="text-xs text-muted-foreground">
-                <strong>Dados incluídos:</strong> Nome da campanha, canais, status, 
+                <strong>Dados incluídos:</strong> Nome da campanha, canais, status,
                 destinatários, métricas de envio, aberturas e cliques.
               </p>
             </div>

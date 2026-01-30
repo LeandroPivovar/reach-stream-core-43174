@@ -262,6 +262,33 @@ export interface Product {
   updatedAt: string;
 }
 
+export interface Campaign {
+  id: number;
+  name: string;
+  complexity: string;
+  channel: string;
+  status: string;
+  recipientsCount: number;
+  sentCount: number;
+  opensCount: number;
+  clicksCount: number;
+  revenue: number | string;
+  config: any;
+  scheduledAt?: string;
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCampaignData {
+  name: string;
+  complexity: string;
+  channel: string;
+  status?: string;
+  config?: any;
+  scheduledAt?: string;
+}
+
 export interface CreateProductData {
   name: string;
   description?: string;
@@ -318,8 +345,8 @@ class ApiService {
         error = { message: 'Erro ao processar requisição' };
       }
       // NestJS retorna mensagens de erro em error.message ou em um array
-      const errorMessage = error.message || 
-                          (Array.isArray(error.message) ? error.message.join(', ') : 'Erro ao processar requisição');
+      const errorMessage = error.message ||
+        (Array.isArray(error.message) ? error.message.join(', ') : 'Erro ao processar requisição');
       throw new Error(errorMessage);
     }
 
@@ -516,6 +543,12 @@ class ApiService {
     });
   }
 
+  async getSegmentationStats(): Promise<Record<string, number>> {
+    return this.request<Record<string, number>>('/contacts/segmentation-stats', {
+      method: 'GET',
+    });
+  }
+
   async updateContact(id: number, data: UpdateContactData): Promise<Contact> {
     return this.request<Contact>(`/contacts/${id}`, {
       method: 'PATCH',
@@ -665,7 +698,7 @@ class ApiService {
 
   // Contact Purchases
   async getContactPurchases(contactId?: number): Promise<ContactPurchase[]> {
-    const url = contactId 
+    const url = contactId
       ? `/contact-purchases?contactId=${contactId}`
       : '/contact-purchases';
     return this.request<ContactPurchase[]>(url, {
@@ -878,6 +911,39 @@ class ApiService {
     return this.request<{ success: boolean; message: string }>('/vtex/disconnect', {
       method: 'POST',
       body: JSON.stringify({ accountName }),
+    });
+  }
+
+  // Campaigns
+  async getCampaigns(): Promise<Campaign[]> {
+    return this.request<Campaign[]>('/campaigns', {
+      method: 'GET',
+    });
+  }
+
+  async getCampaign(id: number): Promise<Campaign> {
+    return this.request<Campaign>(`/campaigns/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async createCampaign(data: CreateCampaignData): Promise<Campaign> {
+    return this.request<Campaign>('/campaigns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCampaign(id: number, data: Partial<CreateCampaignData>): Promise<Campaign> {
+    return this.request<Campaign>(`/campaigns/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCampaign(id: number): Promise<void> {
+    return this.request<void>(`/campaigns/${id}`, {
+      method: 'DELETE',
     });
   }
 }

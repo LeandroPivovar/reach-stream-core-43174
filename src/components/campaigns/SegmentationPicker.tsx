@@ -15,24 +15,24 @@ interface SegmentationOption {
 interface SegmentationPickerProps {
   selectedSegments: string[];
   onSegmentsChange: (segments: string[]) => void;
+  stats?: Record<string, number>;
 }
 
-const audienceFilters: SegmentationOption[] = [
-  { id: 'by_purchase_count', label: 'Clientes por número de compras', description: 'Segmentar por quantidade de compras', affectedCount: 2847 },
-  { id: 'birthday', label: 'Aniversário', description: 'Clientes que fazem aniversário', affectedCount: 142 },
-  { id: 'inactive_customers', label: 'Clientes inativos', description: 'Sem compras por período prolongado', affectedCount: 1523 },
-  { id: 'active_coupon', label: 'Clientes com cupom ativo', description: 'Possuem cupons válidos não utilizados', affectedCount: 634 },
-  { id: 'high_ticket', label: 'Clientes com maior ticket médio', description: 'Alto valor por compra', affectedCount: 458 },
-  { id: 'purchase_value_x', label: 'Valor de compra X', description: 'Compras acima de valor específico', affectedCount: 891 },
-  { id: 'lead_captured', label: 'Lead capturado', description: 'Lead obtido por formulário', affectedCount: 3241 },
-  { id: 'cart_recovered_customer', label: 'Carrinho recuperado', description: 'Cliente que recuperou carrinho', affectedCount: 287 },
-  { id: 'no_purchase_x_days', label: 'Clientes que não compram há X dias', description: 'Inativos por período específico', affectedCount: 1876 },
-  { id: 'gender_male', label: 'Sexo: Masculino', description: 'Clientes do sexo masculino', affectedCount: 4562 },
-  { id: 'gender_female', label: 'Sexo: Feminino', description: 'Clientes do sexo feminino', affectedCount: 5123 },
-  { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: 9685 },
-];
+export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats = {} }: SegmentationPickerProps) {
+  const audienceFilters: SegmentationOption[] = [
+    { id: 'by_purchase_count', label: 'Clientes por número de compras', description: 'Segmentar por quantidade de compras', affectedCount: stats['by_purchase_count'] || 0 },
+    { id: 'birthday', label: 'Aniversário', description: 'Clientes que fazem aniversário', affectedCount: stats['birthday'] || 0 },
+    { id: 'inactive_customers', label: 'Clientes inativos', description: 'Sem compras por período prolongado', affectedCount: stats['inactive_customers'] || 0 },
+    { id: 'active_coupon', label: 'Clientes com cupom ativo', description: 'Possuem cupons válidos não utilizados', affectedCount: stats['active_coupon'] || 0 },
+    { id: 'high_ticket', label: 'Clientes com maior ticket médio', description: 'Alto valor por compra', affectedCount: stats['high_ticket'] || 0 },
+    { id: 'lead_captured', label: 'Lead capturado', description: 'Lead obtido por formulário', affectedCount: stats['lead_captured'] || 0 },
+    { id: 'cart_recovered_customer', label: 'Carrinho recuperado', description: 'Cliente que recuperou carrinho', affectedCount: stats['cart_recovered_customer'] || 0 },
+    { id: 'no_purchase_x_days', label: 'Clientes que não compram há X dias', description: 'Inativos por período específico', affectedCount: stats['no_purchase_x_days'] || 0 },
+    { id: 'gender_male', label: 'Sexo: Masculino', description: 'Clientes do sexo masculino', affectedCount: stats['gender_male'] || 0 },
+    { id: 'gender_female', label: 'Sexo: Feminino', description: 'Clientes do sexo feminino', affectedCount: stats['gender_female'] || 0 },
+    { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: stats['total'] || 0 },
+  ];
 
-export function SegmentationPicker({ selectedSegments, onSegmentsChange }: SegmentationPickerProps) {
   const toggleSegment = (segmentId: string) => {
     if (selectedSegments.includes(segmentId)) {
       onSegmentsChange(selectedSegments.filter(id => id !== segmentId));
@@ -48,17 +48,15 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange }: Segme
         return (
           <Card
             key={segment.id}
-            className={`p-4 cursor-pointer hover:border-primary transition-all ${
-              isSelected ? 'border-primary bg-primary/5 shadow-md' : ''
-            }`}
+            className={`p-4 cursor-pointer hover:border-primary transition-all ${isSelected ? 'border-primary bg-primary/5 shadow-md' : ''
+              }`}
             onClick={() => toggleSegment(segment.id)}
           >
             <div className="flex items-start gap-3">
-              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 mt-0.5 ${
-                isSelected 
-                  ? 'bg-primary border-primary' 
+              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 mt-0.5 ${isSelected
+                  ? 'bg-primary border-primary'
                   : 'border-input'
-              }`}>
+                }`}>
                 {isSelected && (
                   <Check className="w-3 h-3 text-primary-foreground" />
                 )}
@@ -112,8 +110,8 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange }: Segme
                   return segment ? (
                     <Badge key={id} variant="secondary" className="gap-1">
                       {segment.label}
-                      <X 
-                        className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                      <X
+                        className="w-3 h-3 cursor-pointer hover:text-destructive"
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleSegment(id);
