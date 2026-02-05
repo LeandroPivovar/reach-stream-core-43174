@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { StatsCard } from '@/components/ui/stats-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  DollarSign, 
-  ShoppingCart, 
+import {
+  DollarSign,
+  ShoppingCart,
   TrendingUp,
   Calendar as CalendarIcon,
   ChevronRight,
@@ -40,248 +40,121 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 
+import { api, DashboardStats, SalesByCampaign, SalesByChannel, TopProduct, PaymentMethodStats, FunnelStage } from '@/lib/api';
+import { toast } from '@/components/ui/use-toast';
+
 export default function Vendas() {
   const [period, setPeriod] = useState('15');
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
-  
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Estados dos dados
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [salesByCampaign, setSalesByCampaign] = useState<SalesByCampaign[]>([]);
+  const [salesByChannel, setSalesByChannel] = useState<SalesByChannel[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodStats[]>([]);
+  const [funnelData, setFunnelData] = useState<FunnelStage[]>([]); // Funnel Data from API
+
   // Datas de comparação
   const [compareStartDate, setCompareStartDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 15)));
   const [compareEndDate, setCompareEndDate] = useState<Date>(new Date());
 
-  // Dados mock - em produção viriam de uma API
-  const salesData = {
-    '7': {
-      faturamento: 45800,
-      vendas: 127,
-      ticketMedio: 360.63,
-      trends: {
-        faturamento: 15.3,
-        vendas: 12.8,
-        ticketMedio: 2.2
-      },
-      campanhas: [
-        { nome: 'Promoção Black Friday', canal: 'WhatsApp', faturamento: 18500, vendas: 52 },
-        { nome: 'E-mail Marketing Semanal', canal: 'E-mail', faturamento: 12300, vendas: 38 },
-        { nome: 'Recuperação de Carrinho', canal: 'E-mail', faturamento: 8900, vendas: 24 },
-        { nome: 'SMS Flash Sale', canal: 'SMS', faturamento: 6100, vendas: 13 }
-      ]
-    },
-    '15': {
-      faturamento: 98700,
-      vendas: 284,
-      ticketMedio: 347.54,
-      trends: {
-        faturamento: 22.4,
-        vendas: 18.6,
-        ticketMedio: 3.2
-      },
-      campanhas: [
-        { nome: 'Promoção Black Friday', canal: 'WhatsApp', faturamento: 38200, vendas: 112 },
-        { nome: 'E-mail Marketing Semanal', canal: 'E-mail', faturamento: 26500, vendas: 81 },
-        { nome: 'Recuperação de Carrinho', canal: 'E-mail', faturamento: 18900, vendas: 54 },
-        { nome: 'SMS Flash Sale', canal: 'SMS', faturamento: 15100, vendas: 37 }
-      ]
-    },
-    '30': {
-      faturamento: 187500,
-      vendas: 542,
-      ticketMedio: 345.94,
-      trends: {
-        faturamento: 18.7,
-        vendas: 15.2,
-        ticketMedio: 3.0
-      },
-      campanhas: [
-        { nome: 'Promoção Black Friday', canal: 'WhatsApp', faturamento: 72400, vendas: 218 },
-        { nome: 'E-mail Marketing Semanal', canal: 'E-mail', faturamento: 51200, vendas: 156 },
-        { nome: 'Recuperação de Carrinho', canal: 'E-mail', faturamento: 38700, vendas: 108 },
-        { nome: 'SMS Flash Sale', canal: 'SMS', faturamento: 25200, vendas: 60 }
-      ]
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const days = parseInt(period);
+
+      const [stats, campaigns, channels, products, payments, funnel] = await Promise.all([
+        api.getDashboardStats(days),
+        api.getSalesByCampaign(days),
+        api.getSalesByChannel(days),
+        api.getTopProducts(days),
+        api.getPaymentMethods(days),
+        api.getFunnelData(days)
+      ]);
+
+      setDashboardStats(stats);
+      setSalesByCampaign(campaigns);
+      setSalesByChannel(channels);
+      setTopProducts(products);
+      setPaymentMethods(payments);
+      setFunnelData(funnel);
+
+    } catch (error) {
+      console.error('Erro ao carregar dados de vendas:', error);
+      toast({
+        title: 'Erro ao carregar dados',
+        description: 'Não foi possível carregar as métricas de vendas.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const currentData = salesData[period as keyof typeof salesData];
+  useEffect(() => {
+    fetchData();
+  }, [period]);
 
   const stats = [
     {
       title: 'Faturamento Total',
-      value: `R$ ${currentData.faturamento.toLocaleString('pt-BR')}`,
+      value: dashboardStats ? `R$ ${dashboardStats.faturamento.toLocaleString('pt-BR')}` : 'R$ 0,00',
       icon: DollarSign,
-      trend: { value: currentData.trends.faturamento, isPositive: true },
+      trend: { value: dashboardStats?.trends?.faturamento || 0, isPositive: (dashboardStats?.trends?.faturamento || 0) >= 0 },
       description: `Últimos ${period} dias`
     },
     {
       title: 'Vendas Realizadas',
-      value: currentData.vendas.toString(),
+      value: dashboardStats ? dashboardStats.vendas.toString() : '0',
       icon: ShoppingCart,
-      trend: { value: currentData.trends.vendas, isPositive: true },
+      trend: { value: dashboardStats?.trends?.vendas || 0, isPositive: (dashboardStats?.trends?.vendas || 0) >= 0 },
       description: 'Total de transações'
     },
     {
       title: 'Ticket Médio',
-      value: `R$ ${currentData.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      value: dashboardStats ? `R$ ${dashboardStats.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ 0,00',
       icon: TrendingUp,
-      trend: { value: currentData.trends.ticketMedio, isPositive: true },
+      trend: { value: dashboardStats?.trends?.ticketMedio || 0, isPositive: (dashboardStats?.trends?.ticketMedio || 0) >= 0 },
       description: 'Valor médio por venda'
     }
   ];
 
   const getChannelColor = (canal: string) => {
-    switch (canal) {
-      case 'WhatsApp':
+    switch (canal?.toLowerCase()) {
+      case 'whatsapp':
         return 'bg-green-500';
-      case 'E-mail':
+      case 'email':
+      case 'e-mail':
         return 'bg-blue-500';
-      case 'SMS':
+      case 'sms':
         return 'bg-orange-500';
       default:
         return 'bg-gray-500';
     }
   };
 
-  // Dados detalhados das campanhas (mock)
+  // Dados detalhados das campanhas (mock - para manter funcionalidade do dialog enquanto não implementamos detalhe profundo)
   const campaignDetails: Record<string, any> = {
-    'Promoção Black Friday': {
-      produtos: [
-        { nome: 'Notebook Dell', quantidade: 45, faturamento: 67500, ticketMedio: 1500 },
-        { nome: 'Mouse Logitech', quantidade: 89, faturamento: 4450, ticketMedio: 50 },
-        { nome: 'Teclado Mecânico', quantidade: 67, faturamento: 20100, ticketMedio: 300 },
-        { nome: 'Monitor Samsung', quantidade: 17, faturamento: 10200, ticketMedio: 600 }
-      ],
-      evolucao: [
-        { dia: 'Dia 1', vendas: 8, faturamento: 2800 },
-        { dia: 'Dia 2', vendas: 15, faturamento: 5100 },
-        { dia: 'Dia 3', vendas: 22, faturamento: 7800 },
-        { dia: 'Dia 4', vendas: 31, faturamento: 10900 },
-        { dia: 'Dia 5', vendas: 36, faturamento: 12600 }
-      ],
-      insights: [
-        'Taxa de conversão 23% acima da média - considere estender a campanha',
-        'Horário de pico: 19h-21h - programe envios neste período',
-        'Produtos com desconto acima de 30% tiveram melhor performance'
-      ]
-    },
-    'E-mail Marketing Semanal': {
-      produtos: [
-        { nome: 'Curso Online', quantidade: 124, faturamento: 18600, ticketMedio: 150 },
-        { nome: 'E-book Premium', quantidade: 89, faturamento: 4450, ticketMedio: 50 },
-        { nome: 'Consultoria', quantidade: 12, faturamento: 12000, ticketMedio: 1000 }
-      ],
-      evolucao: [
-        { dia: 'Sem 1', vendas: 12, faturamento: 1800 },
-        { dia: 'Sem 2', vendas: 18, faturamento: 2700 },
-        { dia: 'Sem 3', vendas: 25, faturamento: 3800 },
-        { dia: 'Sem 4', vendas: 26, faturamento: 3900 }
-      ],
-      insights: [
-        'Taxa de abertura de 32% - teste linhas de assunto mais criativas',
-        'Segmente por interesse para aumentar conversão',
-        'CTR maior em terças e quintas-feiras'
-      ]
-    },
-    'Recuperação de Carrinho': {
-      produtos: [
-        { nome: 'Tênis Esportivo', quantidade: 78, faturamento: 23400, ticketMedio: 300 },
-        { nome: 'Camisa Premium', quantidade: 134, faturamento: 13400, ticketMedio: 100 },
-        { nome: 'Jaqueta', quantidade: 45, faturamento: 13500, ticketMedio: 300 }
-      ],
-      evolucao: [
-        { dia: 'Sem 1', vendas: 15, faturamento: 4500 },
-        { dia: 'Sem 2', vendas: 18, faturamento: 5400 },
-        { dia: 'Sem 3', vendas: 21, faturamento: 6300 },
-        { dia: 'Sem 4', vendas: 24, faturamento: 7200 }
-      ],
-      insights: [
-        'Envie lembrete após 1h de abandono - maior taxa de retorno',
-        'Ofereça cupom de 10% no segundo e-mail',
-        'Taxa de recuperação de 18% - acima da média do setor'
-      ]
-    },
-    'SMS Flash Sale': {
-      produtos: [
-        { nome: 'Smartphone', quantidade: 34, faturamento: 51000, ticketMedio: 1500 },
-        { nome: 'Fone Bluetooth', quantidade: 89, faturamento: 8900, ticketMedio: 100 },
-        { nome: 'Carregador Rápido', quantidade: 67, faturamento: 3350, ticketMedio: 50 }
-      ],
-      evolucao: [
-        { dia: '0-2h', vendas: 8, faturamento: 2400 },
-        { dia: '2-4h', vendas: 12, faturamento: 3600 },
-        { dia: '4-6h', vendas: 9, faturamento: 2700 },
-        { dia: '6-8h', vendas: 8, faturamento: 2400 }
-      ],
-      insights: [
-        'Conversão imediata alta - ideal para ofertas urgentes',
-        'Limite o número de caracteres para melhor entrega',
-        'Taxa de resposta de 15% nos primeiros 30 minutos'
-      ]
-    }
+    // ... manter mocks ou deixar vazio ...
+    // Vamos deixar vazio e mostrar apenas mensagem por enquanto
   };
 
   const currentCampaignDetails = selectedCampaign ? campaignDetails[selectedCampaign] : null;
 
-  // Dados para o funil do período selecionado
-  const getComparisonFunnelData = () => {
-    const funnelStages = ['Leads Gerados', 'Abriram Campanha', 'Clicaram Link', 'Adicionaram Carrinho', 'Finalizaram Compra'];
-    
-    // Dados mock baseados no período selecionado
-    const periodData = [1000, 650, 420, 315, 284];
-    
-    return funnelStages.map((stage, index) => ({
-      stage,
-      value: periodData[index],
-      percentage: (periodData[index] / periodData[0]) * 100
-    }));
-  };
-
-  const comparisonFunnelData = getComparisonFunnelData();
-
-  // Dados do funil de vendas
-  const funnelData = [
-    {
-      stage: 'Leads Gerados',
-      value: 1000,
-      percentage: 100,
-      quantidade: 1000,
-      tempoMedio: '0 dias',
-      color: 'hsl(var(--chart-1))'
-    },
-    {
-      stage: 'Abriram Campanha',
-      value: 650,
-      percentage: 65,
-      quantidade: 650,
-      tempoMedio: '2 horas',
-      color: 'hsl(var(--chart-2))'
-    },
-    {
-      stage: 'Clicaram Link',
-      value: 420,
-      percentage: 42,
-      quantidade: 420,
-      tempoMedio: '1 dia',
-      color: 'hsl(var(--chart-3))'
-    },
-    {
-      stage: 'Adicionaram Carrinho',
-      value: 315,
-      percentage: 31.5,
-      quantidade: 315,
-      tempoMedio: '3 dias',
-      color: 'hsl(var(--chart-4))'
-    },
-    {
-      stage: 'Finalizaram Compra',
-      value: currentData.vendas,
-      percentage: (currentData.vendas / 1000) * 100,
-      quantidade: currentData.vendas,
-      tempoMedio: '5 dias',
-      color: 'hsl(var(--primary))'
-    }
+  // Use funnelData from API
+  const comparisonFunnelData = funnelData.length > 0 ? funnelData : [
+    { stage: 'Leads Gerados', value: 0, percentage: 0 },
+    { stage: 'Abriram Campanha', value: 0, percentage: 0 },
+    { stage: 'Clicaram Link', value: 0, percentage: 0 },
+    { stage: 'Adicionaram Carrinho', value: 0, percentage: 0 },
+    { stage: 'Finalizaram Compra', value: 0, percentage: 0 }
   ];
 
   return (
-    <Layout 
-      title="Vendas" 
+    <Layout
+      title="Vendas"
       subtitle="Acompanhe o faturamento das suas campanhas"
       actions={
         <div className="flex items-center gap-3">
@@ -312,7 +185,7 @@ export default function Vendas() {
           <CardHeader>
             <div className="flex flex-col gap-4">
               <CardTitle>Comparação de Funil entre Períodos</CardTitle>
-              
+
               {/* Seletores de Data */}
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Selecione o período para análise</p>
@@ -372,30 +245,30 @@ export default function Vendas() {
             <div className="space-y-6">
               {/* Gráfico de Funil */}
               <ResponsiveContainer width="100%" height={400}>
-                <BarChart 
+                <BarChart
                   data={comparisonFunnelData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="stage" 
+                  <XAxis
+                    dataKey="stage"
                     className="text-xs"
                     angle={-15}
                     textAnchor="end"
                     height={80}
                   />
                   <YAxis className="text-xs" />
-                  <Tooltip 
-                    contentStyle={{ 
+                  <Tooltip
+                    contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }}
                     formatter={(value: number) => [value, '']}
                   />
-                  <Bar 
-                    dataKey="value" 
-                    fill="hsl(var(--primary))" 
+                  <Bar
+                    dataKey="value"
+                    fill="hsl(var(--primary))"
                     radius={[8, 8, 0, 0]}
                   />
                 </BarChart>
@@ -469,11 +342,11 @@ export default function Vendas() {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentData.campanhas.map((campanha, index) => {
-                    const ticketMedio = campanha.faturamento / campanha.vendas;
+                  {salesByCampaign.map((campanha, index) => {
+                    const ticketMedio = campanha.vendas > 0 ? campanha.faturamento / campanha.vendas : 0;
                     return (
-                      <tr 
-                        key={index} 
+                      <tr
+                        key={index}
                         className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
                         onClick={() => setSelectedCampaign(campanha.nome)}
                       >
@@ -505,12 +378,12 @@ export default function Vendas() {
                 <tfoot className="border-t-2 border-border">
                   <tr className="font-semibold">
                     <td className="py-4 px-2" colSpan={2}>Total</td>
-                    <td className="py-4 px-2 text-right">{currentData.vendas}</td>
+                    <td className="py-4 px-2 text-right">{dashboardStats?.vendas || 0}</td>
                     <td className="py-4 px-2 text-right text-success">
-                      R$ {currentData.faturamento.toLocaleString('pt-BR')}
+                      R$ {(dashboardStats?.faturamento || 0).toLocaleString('pt-BR')}
                     </td>
                     <td className="py-4 px-2 text-right text-muted-foreground">
-                      R$ {currentData.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {(dashboardStats?.ticketMedio || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
                   </tr>
                 </tfoot>
@@ -526,18 +399,19 @@ export default function Vendas() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {['WhatsApp', 'E-mail', 'SMS'].map((canal) => {
-                const campanhasCanal = currentData.campanhas.filter(c => c.canal === canal);
-                const totalFaturamento = campanhasCanal.reduce((acc, c) => acc + c.faturamento, 0);
-                const totalVendas = campanhasCanal.reduce((acc, c) => acc + c.vendas, 0);
-                const percentual = (totalFaturamento / currentData.faturamento) * 100;
-                
+              {salesByChannel.map((canalData) => {
+                const totalFaturamento = canalData.faturamento;
+                const totalVendas = canalData.vendas;
+                const percentual = dashboardStats && dashboardStats.faturamento > 0
+                  ? (totalFaturamento / dashboardStats.faturamento) * 100
+                  : 0;
+
                 return (
-                  <div key={canal} className="space-y-2">
+                  <div key={canalData.canal} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${getChannelColor(canal)}`}></div>
-                        <span className="font-medium">{canal}</span>
+                        <div className={`w-3 h-3 rounded-full ${getChannelColor(canalData.canal)}`}></div>
+                        <span className="font-medium">{canalData.canal}</span>
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-success">
@@ -549,8 +423,8 @@ export default function Vendas() {
                       </div>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full ${getChannelColor(canal)}`}
+                      <div
+                        className={`h-2 rounded-full ${getChannelColor(canalData.canal)}`}
                         style={{ width: `${percentual}%` }}
                       ></div>
                     </div>
@@ -570,14 +444,8 @@ export default function Vendas() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[
-                  { nome: 'Notebook Dell', vendas: 145, faturamento: 217500 },
-                  { nome: 'Mouse Logitech', vendas: 289, faturamento: 14450 },
-                  { nome: 'Teclado Mecânico', vendas: 234, faturamento: 70200 },
-                  { nome: 'Monitor Samsung', vendas: 89, faturamento: 53400 },
-                  { nome: 'Webcam HD', vendas: 156, faturamento: 46800 }
-                ].map((produto, index) => {
-                  const ticketMedio = produto.faturamento / produto.vendas;
+                {topProducts.map((produto, index) => {
+                  const ticketMedio = produto.vendas > 0 ? produto.faturamento / produto.vendas : 0;
                   return (
                     <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
                       <div className="flex items-center gap-3">
@@ -613,63 +481,39 @@ export default function Vendas() {
             </CardHeader>
             <CardContent>
               <div className="space-y-5">
-                {[
-                  { 
-                    metodo: 'PIX', 
-                    percentual: 48.9, 
-                    transacoes: 234, 
-                    tempoMedio: '2 min',
-                    color: 'bg-teal-500'
-                  },
-                  { 
-                    metodo: 'Cartão de Crédito', 
-                    percentual: 32.6, 
-                    transacoes: 156, 
-                    tempoMedio: '5 min',
-                    color: 'bg-blue-500'
-                  },
-                  { 
-                    metodo: 'Boleto', 
-                    percentual: 14.0, 
-                    transacoes: 67, 
-                    tempoMedio: '8 min',
-                    color: 'bg-orange-500'
-                  },
-                  { 
-                    metodo: 'Cartão de Débito', 
-                    percentual: 4.5, 
-                    transacoes: 22, 
-                    tempoMedio: '3 min',
-                    color: 'bg-purple-500'
-                  }
-                ].map((pagamento, index) => (
-                  <div key={index} className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <CreditCard className="w-5 h-5 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{pagamento.metodo}</p>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <span>{pagamento.transacoes} transações</span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              Tempo médio: {pagamento.tempoMedio}
-                            </span>
+                {paymentMethods.map((pagamento, index) => {
+                  const colors = ['bg-teal-500', 'bg-blue-500', 'bg-orange-500', 'bg-purple-500', 'bg-pink-500'];
+                  const color = colors[index % colors.length];
+
+                  return (
+                    <div key={index} className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CreditCard className="w-5 h-5 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{pagamento.metodo}</p>
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <span>{pagamento.transacoes} transações</span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                Tempo médio: {pagamento.tempoMedio}
+                              </span>
+                            </div>
                           </div>
                         </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold">{pagamento.percentual.toFixed(1)}%</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">{pagamento.percentual}%</p>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${color}`}
+                          style={{ width: `${pagamento.percentual}%` }}
+                        ></div>
                       </div>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full ${pagamento.color}`}
-                        style={{ width: `${pagamento.percentual}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -728,16 +572,16 @@ export default function Vendas() {
                   <ResponsiveContainer width="100%" height={250}>
                     <LineChart data={currentCampaignDetails.evolucao}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis 
-                        dataKey="dia" 
+                      <XAxis
+                        dataKey="dia"
                         className="text-xs"
                         stroke="hsl(var(--muted-foreground))"
                       />
-                      <YAxis 
+                      <YAxis
                         className="text-xs"
                         stroke="hsl(var(--muted-foreground))"
                       />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{
                           backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
@@ -745,10 +589,10 @@ export default function Vendas() {
                         }}
                         formatter={(value: any) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Faturamento']}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="faturamento" 
-                        stroke="hsl(var(--primary))" 
+                      <Line
+                        type="monotone"
+                        dataKey="faturamento"
+                        stroke="hsl(var(--primary))"
                         strokeWidth={2}
                         dot={{ fill: 'hsl(var(--primary))', r: 4 }}
                       />

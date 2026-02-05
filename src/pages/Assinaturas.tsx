@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  CreditCard, 
+import {
+  CreditCard,
   Calendar,
   TrendingUp,
   DollarSign,
@@ -14,100 +13,53 @@ import {
   Zap,
   Crown
 } from 'lucide-react';
+import {
+  api,
+  Plan,
+  Subscription,
+  Invoice,
+  SubscriptionStats
+} from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function Assinaturas() {
-  const currentPlan = {
-    name: 'Plano Pro',
-    price: 'R$ 97,00',
-    period: 'mensal',
-    nextBilling: '2024-04-22',
-    status: 'Ativa',
-    features: [
-      'Até 10.000 contatos',
-      'Campanhas ilimitadas',
-      'WhatsApp + E-mail + SMS',
-      'Analytics avançados',
-      'Suporte prioritário'
-    ]
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [stats, setStats] = useState<SubscriptionStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [plansData, subData, invoicesData, statsData] = await Promise.all([
+        api.getPlans(),
+        api.getCurrentSubscription(),
+        api.getInvoices(),
+        api.getSubscriptionStats()
+      ]);
+
+      setPlans(plansData || []);
+      setSubscription(subData);
+      setInvoices(invoicesData || []);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      toast.error('Erro ao carregar informações da assinatura');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const availablePlans = [
-    {
-      id: 1,
-      name: 'Starter',
-      price: 'R$ 47,00',
-      period: 'mensal',
-      contacts: '2.000',
-      channels: ['E-mail'],
-      features: [
-        'Até 2.000 contatos',
-        'E-mail marketing',
-        'Templates básicos',
-        'Suporte por e-mail'
-      ],
-      isPopular: false
-    },
-    {
-      id: 2,
-      name: 'Pro',
-      price: 'R$ 97,00',
-      period: 'mensal',
-      contacts: '10.000',
-      channels: ['E-mail', 'WhatsApp', 'SMS'],
-      features: [
-        'Até 10.000 contatos',
-        'Todos os canais',
-        'Analytics avançados',
-        'Automações ilimitadas',
-        'Suporte prioritário'
-      ],
-      isPopular: true,
-      isCurrent: true
-    },
-    {
-      id: 3,
-      name: 'Enterprise',
-      price: 'R$ 247,00',
-      period: 'mensal',
-      contacts: '50.000',
-      channels: ['E-mail', 'WhatsApp', 'SMS'],
-      features: [
-        'Até 50.000 contatos',
-        'Recursos avançados',
-        'API completa',
-        'White label',
-        'Gerente dedicado'
-      ],
-      isPopular: false
-    }
-  ];
-
-  const transactions = [
-    {
-      id: 1,
-      date: '2024-03-22',
-      description: 'Plano Pro - Março/2024',
-      amount: 'R$ 97,00',
-      status: 'Pago',
-      method: 'Cartão ****1234'
-    },
-    {
-      id: 2,
-      date: '2024-02-22',
-      description: 'Plano Pro - Fevereiro/2024',
-      amount: 'R$ 97,00',
-      status: 'Pago',
-      method: 'PIX'
-    },
-    {
-      id: 3,
-      date: '2024-01-22',
-      description: 'Plano Pro - Janeiro/2024',
-      amount: 'R$ 97,00',
-      status: 'Pago',
-      method: 'Cartão ****1234'
-    }
-  ];
+  const currentPlanName = subscription?.plan?.name || 'Gratuito';
+  const currentPrice = subscription?.plan?.price
+    ? `R$ ${subscription.plan.price.toString().replace('.', ',')}`
+    : 'R$ 0,00';
+  const status = subscription?.status === 'active' ? 'Ativa' : 'Inativa';
 
   const actions = (
     <Button variant="outline" onClick={() => console.log('Export invoices')}>
@@ -116,9 +68,19 @@ export default function Assinaturas() {
     </Button>
   );
 
+  if (loading) {
+    return (
+      <Layout title="Assinaturas & Pagamentos" subtitle="Carregando...">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <Layout 
-      title="Assinaturas & Pagamentos" 
+    <Layout
+      title="Assinaturas & Pagamentos"
       subtitle="Gerencie seu plano e histórico de pagamentos"
       actions={actions}
     >
@@ -131,14 +93,14 @@ export default function Assinaturas() {
                 <Crown className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold">{currentPlan.name}</h3>
-                <Badge variant="default">
-                  {currentPlan.status}
+                <h3 className="text-xl font-semibold">{currentPlanName}</h3>
+                <Badge variant={status === 'Ativa' ? 'default' : 'secondary'}>
+                  {status}
                 </Badge>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold">{currentPlan.price}</p>
+              <p className="text-2xl font-bold">{currentPrice}</p>
               <p className="text-sm text-muted-foreground">por mês</p>
             </div>
           </div>
@@ -147,33 +109,37 @@ export default function Assinaturas() {
             <div>
               <p className="text-sm font-medium mb-2">Recursos incluídos:</p>
               <ul className="space-y-1">
-                {currentPlan.features.map((feature) => (
-                  <li key={feature} className="text-sm flex items-center space-x-2">
+                {subscription?.plan?.features?.map((feature, i) => (
+                  <li key={i} className="text-sm flex items-center space-x-2">
                     <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
                     <span>{feature}</span>
                   </li>
-                ))}
+                )) || <li className="text-sm text-muted-foreground">Nenhum plano ativo</li>}
               </ul>
             </div>
-            
+
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-background rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm">Próxima cobrança</span>
+              {subscription && (
+                <div className="flex items-center justify-between p-3 bg-background rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">Próxima cobrança</span>
+                  </div>
+                  <span className="text-sm font-medium">
+                    {new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')}
+                  </span>
                 </div>
-                <span className="text-sm font-medium">
-                  {new Date(currentPlan.nextBilling).toLocaleDateString('pt-BR')}
-                </span>
-              </div>
-              
+              )}
+
               <div className="flex space-x-2">
                 <Button variant="outline" className="flex-1">
                   Alterar Plano
                 </Button>
-                <Button variant="outline">
-                  Cancelar
-                </Button>
+                {subscription && (
+                  <Button variant="outline" className="text-destructive hover:text-destructive">
+                    Cancelar
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -183,63 +149,55 @@ export default function Assinaturas() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-6">Planos Disponíveis</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {availablePlans.map((plan) => (
-              <Card 
-                key={plan.id} 
-                className={`p-6 relative ${
-                  plan.isPopular ? 'border-primary shadow-brand' : ''
-                } ${plan.isCurrent ? 'bg-muted/30' : ''}`}
-              >
-                {plan.isPopular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground">
-                      Mais Popular
-                    </Badge>
-                  </div>
-                )}
-                
-                <div className="text-center mb-4">
-                  <h4 className="text-xl font-semibold mb-2">{plan.name}</h4>
-                  <div className="text-3xl font-bold mb-1">{plan.price}</div>
-                  <p className="text-sm text-muted-foreground">por {plan.period}</p>
-                </div>
+            {plans.map((plan) => {
+              const isCurrent = subscription?.planId === plan.id;
+              const features = Array.isArray(plan.features) ? plan.features : [];
+              const limits = plan.limits || { contacts: 0, emails: 0 };
 
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-sm">
-                    <span>Contatos</span>
-                    <span className="font-medium">{plan.contacts}</span>
+              return (
+                <Card
+                  key={plan.id}
+                  className={`p-6 relative ${isCurrent ? 'bg-muted/30 border-primary' : ''
+                    }`}
+                >
+                  <div className="text-center mb-4">
+                    <h4 className="text-xl font-semibold mb-2">{plan.name}</h4>
+                    <div className="text-3xl font-bold mb-1">
+                      R$ {plan.price.toString().replace('.', ',')}
+                    </div>
+                    <p className="text-sm text-muted-foreground">por {plan.interval === 'monthly' ? 'mês' : 'ano'}</p>
                   </div>
-                  
-                  <div className="text-sm">
-                    <p className="font-medium mb-1">Canais:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {plan.channels.map((channel) => (
-                        <Badge key={channel} variant="secondary" className="text-xs">
-                          {channel}
-                        </Badge>
-                      ))}
+
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between text-sm">
+                      <span>Contatos</span>
+                      <span className="font-medium">{limits.contacts.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Envios de E-mail</span>
+                      <span className="font-medium">{limits.emails.toLocaleString()}</span>
                     </div>
                   </div>
-                </div>
 
-                <ul className="space-y-2 mb-6">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="text-sm flex items-start space-x-2">
-                      <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                  <ul className="space-y-2 mb-6">
+                    {features.map((feature, i) => (
+                      <li key={i} className="text-sm flex items-start space-x-2">
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-                <Button 
-                  className="w-full" 
-                  variant={plan.isCurrent ? 'secondary' : 'default'}
-                  disabled={plan.isCurrent}
-                >
-                  {plan.isCurrent ? 'Plano Atual' : 'Selecionar Plano'}
-                </Button>
-              </Card>
-            ))}
+                  <Button
+                    className="w-full"
+                    variant={isCurrent ? 'secondary' : 'default'}
+                    disabled={isCurrent}
+                  >
+                    {isCurrent ? 'Plano Atual' : 'Selecionar Plano'}
+                  </Button>
+                </Card>
+              );
+            })}
           </div>
         </Card>
 
@@ -249,7 +207,9 @@ export default function Assinaturas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Contatos Utilizados</p>
-                <p className="text-2xl font-bold">4.247 / 10.000</p>
+                <p className="text-2xl font-bold">
+                  {stats?.contactsUsed.toLocaleString()} / {stats?.contactsLimit.toLocaleString()}
+                </p>
               </div>
               <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-blue-500" />
@@ -257,7 +217,10 @@ export default function Assinaturas() {
             </div>
             <div className="mt-2">
               <div className="w-full bg-muted rounded-full h-2">
-                <div className="bg-primary h-2 rounded-full" style={{width: '42.47%'}}></div>
+                <div
+                  className="bg-primary h-2 rounded-full"
+                  style={{ width: `${Math.min(((stats?.contactsUsed || 0) / (stats?.contactsLimit || 1)) * 100, 100)}%` }}
+                ></div>
               </div>
             </div>
           </Card>
@@ -266,7 +229,7 @@ export default function Assinaturas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Envios Este Mês</p>
-                <p className="text-2xl font-bold">12.847</p>
+                <p className="text-2xl font-bold">{stats?.emailsSent.toLocaleString()}</p>
               </div>
               <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
                 <Zap className="w-5 h-5 text-green-500" />
@@ -278,7 +241,9 @@ export default function Assinaturas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Valor Mensal</p>
-                <p className="text-2xl font-bold">R$ 97,00</p>
+                <p className="text-2xl font-bold">
+                  R$ {stats?.price.toString().replace('.', ',')}
+                </p>
               </div>
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-primary" />
@@ -296,50 +261,47 @@ export default function Assinaturas() {
               Baixar Faturas
             </Button>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-2 font-medium text-muted-foreground">Data</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Descrição</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Método</th>
                   <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Valor</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((transaction) => (
-                  <tr key={transaction.id} className="border-b border-border last:border-0">
-                    <td className="py-4 px-2">
-                      {new Date(transaction.date).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="py-4 px-2">
-                      <div className="font-medium">{transaction.description}</div>
-                    </td>
-                    <td className="py-4 px-2">
-                      <div className="flex items-center space-x-2">
-                        <CreditCard className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">{transaction.method}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-2">
-                      <Badge variant="default">
-                        {transaction.status}
-                      </Badge>
-                    </td>
-                    <td className="py-4 px-2 text-right font-medium">
-                      {transaction.amount}
-                    </td>
-                    <td className="py-4 px-2 text-right">
-                      <Button variant="ghost" size="sm">
-                        <FileText className="w-4 h-4 mr-2" />
-                        Fatura
-                      </Button>
+                {invoices.length > 0 ? (
+                  invoices.map((invoice) => (
+                    <tr key={invoice.id} className="border-b border-border last:border-0">
+                      <td className="py-4 px-2">
+                        {new Date(invoice.createdAt).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="py-4 px-2">
+                        <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
+                          {invoice.status === 'paid' ? 'Pago' : invoice.status}
+                        </Badge>
+                      </td>
+                      <td className="py-4 px-2 text-right font-medium">
+                        R$ {invoice.amount.toString().replace('.', ',')}
+                      </td>
+                      <td className="py-4 px-2 text-right">
+                        <Button variant="ghost" size="sm">
+                          <FileText className="w-4 h-4 mr-2" />
+                          Fatura
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-muted-foreground">
+                      Nenhuma fatura encontrada.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

@@ -65,6 +65,49 @@ export interface CreateSaleData {
   status?: string;
 }
 
+export interface DashboardStats {
+  faturamento: number;
+  vendas: number;
+  ticketMedio: number;
+  trends: {
+    faturamento: number;
+    vendas: number;
+    ticketMedio: number;
+  };
+}
+
+export interface SalesByCampaign {
+  nome: string;
+  canal: string;
+  faturamento: number;
+  vendas: number;
+}
+
+export interface SalesByChannel {
+  canal: string;
+  faturamento: number;
+  vendas: number;
+}
+
+export interface TopProduct {
+  nome: string;
+  vendas: number;
+  faturamento: number;
+}
+
+export interface PaymentMethodStats {
+  metodo: string;
+  transacoes: number;
+  percentual: number;
+  tempoMedio: string;
+}
+
+export interface FunnelStage {
+  stage: string;
+  value: number;
+  percentage: number;
+}
+
 export interface Contact {
   id: number;
   name: string;
@@ -523,6 +566,42 @@ class ApiService {
     });
   }
 
+  async getDashboardStats(period: number): Promise<DashboardStats> {
+    return this.request<DashboardStats>(`/sales/dashboard/stats?period=${period}`, {
+      method: 'GET',
+    });
+  }
+
+  async getSalesByCampaign(period: number): Promise<SalesByCampaign[]> {
+    return this.request<SalesByCampaign[]>(`/sales/dashboard/campaigns?period=${period}`, {
+      method: 'GET',
+    });
+  }
+
+  async getSalesByChannel(period: number): Promise<SalesByChannel[]> {
+    return this.request<SalesByChannel[]>(`/sales/dashboard/channels?period=${period}`, {
+      method: 'GET',
+    });
+  }
+
+  async getTopProducts(period: number): Promise<TopProduct[]> {
+    return this.request<TopProduct[]>(`/sales/dashboard/products?period=${period}`, {
+      method: 'GET',
+    });
+  }
+
+  async getPaymentMethods(period: number): Promise<PaymentMethodStats[]> {
+    return this.request<PaymentMethodStats[]>(`/sales/dashboard/payment-methods?period=${period}`, {
+      method: 'GET',
+    });
+  }
+
+  async getFunnelData(period: number): Promise<FunnelStage[]> {
+    return this.request<FunnelStage[]>(`/sales/dashboard/funnel?period=${period}`, {
+      method: 'GET',
+    });
+  }
+
   // Contacts
   async getContacts(): Promise<Contact[]> {
     return this.request<Contact[]>('/contacts', {
@@ -946,7 +1025,77 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Subscriptions
+  async getPlans(): Promise<Plan[]> {
+    return this.request<Plan[]>('/subscriptions/plans', {
+      method: 'GET',
+    });
+  }
+
+  async getCurrentSubscription(): Promise<Subscription | null> {
+    return this.request<Subscription | null>('/subscriptions/current', {
+      method: 'GET',
+    });
+  }
+
+  async getInvoices(): Promise<Invoice[]> {
+    return this.request<Invoice[]>('/subscriptions/invoices', {
+      method: 'GET',
+    });
+  }
+
+  async getSubscriptionStats(): Promise<SubscriptionStats> {
+    return this.request<SubscriptionStats>('/subscriptions/dashboard/stats', {
+      method: 'GET',
+    });
+  }
 }
 
 export const api = new ApiService();
+
+export interface Plan {
+  id: number;
+  name: string;
+  price: number;
+  interval: string;
+  features: string[];
+  limits: {
+    contacts: number;
+    emails: number;
+    whatsapp: boolean;
+    sms: boolean;
+  };
+  active: boolean;
+}
+
+export interface Subscription {
+  id: number;
+  userId: number;
+  planId: number;
+  plan?: Plan;
+  status: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface Invoice {
+  id: number;
+  subscriptionId?: number;
+  userId: number;
+  amount: number;
+  status: string;
+  hostedInvoiceUrl?: string;
+  pdfUrl?: string;
+  createdAt: string;
+}
+
+export interface SubscriptionStats {
+  contactsUsed: number;
+  contactsLimit: number;
+  emailsSent: number;
+  currentPlan: string;
+  price: number;
+}
 
