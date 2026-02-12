@@ -684,28 +684,29 @@ export default function Rastreamento() {
                   />
                 </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="pixel-id">
-                    {newPixelType === 'facebook' ? 'ID do Pixel Facebook *' :
-                      newPixelType === 'google' ? 'ID de Medição (GA4) *' :
-                        'ID ou Código do Pixel *'}
-                  </Label>
-                  <Input
-                    id="pixel-id"
-                    value={newPixelData.pixelId}
-                    onChange={(e) => setNewPixelData({ ...newPixelData, pixelId: e.target.value })}
-                    placeholder={
-                      newPixelType === 'facebook' ? 'Ex: 1234567890' :
-                        newPixelType === 'google' ? 'Ex: G-XXXXXXXXXX' :
-                          'Cole o ID ou código completo'
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {newPixelType === 'facebook' && 'Encontre no Gerenciador de Eventos do Facebook'}
-                    {newPixelType === 'google' && 'Encontre nas configurações de propriedade do GA4'}
-                    {newPixelType === 'custom' && 'Cole o ID fornecido pela plataforma'}
-                  </p>
-                </div>
+                {newPixelType !== 'custom' && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="pixel-id">
+                      {newPixelType === 'facebook' ? 'ID do Pixel Facebook *' :
+                        newPixelType === 'google' ? 'ID de Medição (GA4) *' :
+                          'ID ou Código do Pixel *'}
+                    </Label>
+                    <Input
+                      id="pixel-id"
+                      value={newPixelData.pixelId}
+                      onChange={(e) => setNewPixelData({ ...newPixelData, pixelId: e.target.value })}
+                      placeholder={
+                        newPixelType === 'facebook' ? 'Ex: 1234567890' :
+                          newPixelType === 'google' ? 'Ex: G-XXXXXXXXXX' :
+                            'Cole o ID ou código completo'
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {newPixelType === 'facebook' && 'Encontre no Gerenciador de Eventos do Facebook'}
+                      {newPixelType === 'google' && 'Encontre nas configurações de propriedade do GA4'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="bg-muted p-4 rounded-lg">
