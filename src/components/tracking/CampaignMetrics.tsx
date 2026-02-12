@@ -1,50 +1,55 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MousePointerClick, 
-  UserPlus, 
-  TrendingUp, 
+import {
+  MousePointerClick,
+  UserPlus,
+  TrendingUp,
   BarChart3,
   FileText,
   Award
 } from 'lucide-react';
 
-export function CampaignMetrics() {
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+
+interface CampaignMetricsProps {
+  periodDays?: number;
+}
+
+export function CampaignMetrics({ periodDays = 30 }: CampaignMetricsProps) {
+  const { data: metricsData, isLoading } = useQuery({
+    queryKey: ['pixel-metrics', periodDays],
+    queryFn: () => api.getPixelMetrics(periodDays),
+  });
+
   const metrics = [
     {
       label: 'Total de Cliques',
-      value: '5.560',
-      change: '+12.5%',
-      isPositive: true,
+      value: isLoading ? '...' : metricsData?.clicks.value.toLocaleString() || '0',
+      change: isLoading ? '...' : `${metricsData?.clicks.change.toFixed(1)}%`,
+      isPositive: (metricsData?.clicks.change || 0) >= 0,
       icon: MousePointerClick,
       color: 'text-blue-500'
     },
     {
       label: 'Leads Captados',
-      value: '479',
-      change: '+8.3%',
-      isPositive: true,
+      value: isLoading ? '...' : metricsData?.leads.value.toLocaleString() || '0',
+      change: isLoading ? '...' : `${metricsData?.leads.change.toFixed(1)}%`,
+      isPositive: (metricsData?.leads.change || 0) >= 0,
       icon: UserPlus,
       color: 'text-green-500'
     },
     {
       label: 'Taxa de Conversão',
-      value: '8.6%',
-      change: '-2.1%',
-      isPositive: false,
+      value: isLoading ? '...' : `${metricsData?.conversionRate.value.toFixed(1)}%` || '0%',
+      change: isLoading ? '...' : `${metricsData?.conversionRate.change.toFixed(1)}%`,
+      isPositive: (metricsData?.conversionRate.change || 0) >= 0,
       icon: TrendingUp,
       color: 'text-orange-500'
     }
   ];
 
-  const pageRanking = [
-    { name: 'Landing Page - Black Friday', visits: 4523, conversions: 234, rate: 5.2 },
-    { name: 'Formulário Newsletter', visits: 3421, conversions: 156, rate: 4.6 },
-    { name: 'Página de Produto Premium', visits: 2847, conversions: 89, rate: 3.1 },
-    { name: 'Checkout Simplificado', visits: 2106, conversions: 67, rate: 3.2 },
-    { name: 'Blog - Artigo Principal', visits: 1892, conversions: 45, rate: 2.4 }
-  ];
 
   const topForms = [
     { name: 'Formulário Landing Page Principal', submissions: 234, rate: 48.9, efficiency: 'Alta' },
@@ -67,7 +72,7 @@ export function CampaignMetrics() {
                     <p className="text-sm text-muted-foreground mb-1">{metric.label}</p>
                     <p className="text-3xl font-bold">{metric.value}</p>
                     <div className="mt-2">
-                      <Badge 
+                      <Badge
                         variant={metric.isPositive ? "default" : "destructive"}
                         className="text-xs"
                       >
@@ -98,28 +103,34 @@ export function CampaignMetrics() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {pageRanking.map((page, index) => (
-              <div 
-                key={index}
-                className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
-                    {index + 1}
+            {isLoading ? (
+              <div className="text-center py-4 text-muted-foreground">Carregando ranking...</div>
+            ) : metricsData?.topPages?.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">Nenhum dado encontrado para o período.</div>
+            ) : (
+              (metricsData?.topPages || []).map((page, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium truncate max-w-[200px]" title={page.name}>{page.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {page.visits.toLocaleString()} visitas • {page.conversions} conversões
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{page.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {page.visits.toLocaleString()} visitas • {page.conversions} conversões
-                    </p>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-primary">{page.rate}%</p>
+                    <p className="text-xs text-muted-foreground">Taxa conversão</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-primary">{page.rate}%</p>
-                  <p className="text-xs text-muted-foreground">Taxa conversão</p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

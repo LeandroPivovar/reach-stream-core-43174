@@ -17,6 +17,7 @@ import Vendas from "./pages/Vendas";
 import Contatos from "./pages/Contatos";
 import Conexoes from "./pages/Conexoes";
 import Rastreamento from "./pages/Rastreamento";
+import PixelGuide from "./pages/PixelGuide";
 import Integracoes from "./pages/Integracoes";
 import Assinaturas from "./pages/Assinaturas";
 import Indicacoes from "./pages/Indicacoes";
@@ -42,12 +43,12 @@ const App = () => (
         >
           <Routes>
             {/* Rotas públicas (apenas para não autenticados) */}
-                  <Route path="/auth/login" element={<PublicRoute><Login /></PublicRoute>} />
-                  <Route path="/auth/register" element={<PublicRoute><Register /></PublicRoute>} />
-                  <Route path="/auth/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-                  <Route path="/auth/verify-email" element={<PublicRoute><VerifyEmail /></PublicRoute>} />
-                  <Route path="/auth/resend-verification" element={<PublicRoute><ResendVerification /></PublicRoute>} />
-            
+            <Route path="/auth/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/auth/register" element={<PublicRoute><Register /></PublicRoute>} />
+            <Route path="/auth/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+            <Route path="/auth/verify-email" element={<PublicRoute><VerifyEmail /></PublicRoute>} />
+            <Route path="/auth/resend-verification" element={<PublicRoute><ResendVerification /></PublicRoute>} />
+
             {/* Rotas protegidas (apenas para autenticados) */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/campanhas" element={<ProtectedRoute><Campanhas /></ProtectedRoute>} />
@@ -56,13 +57,14 @@ const App = () => (
             <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
             <Route path="/conexoes" element={<ProtectedRoute><Conexoes /></ProtectedRoute>} />
             <Route path="/rastreamento" element={<ProtectedRoute><Rastreamento /></ProtectedRoute>} />
+            <Route path="/rastreamento/documentacao" element={<ProtectedRoute><PixelGuide /></ProtectedRoute>} />
             <Route path="/integracoes" element={<ProtectedRoute><Integracoes /></ProtectedRoute>} />
             <Route path="/integrations/shopify/callback" element={<ProtectedRoute><ShopifyCallback /></ProtectedRoute>} />
             <Route path="/integrations/nuvemshop/callback" element={<NuvemshopCallback />} />
             <Route path="/assinaturas" element={<ProtectedRoute><Assinaturas /></ProtectedRoute>} />
             <Route path="/indicacoes" element={<ProtectedRoute><Indicacoes /></ProtectedRoute>} />
             <Route path="/conta" element={<ProtectedRoute><MinhaConta /></ProtectedRoute>} />
-            
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

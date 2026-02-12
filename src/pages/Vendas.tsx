@@ -288,7 +288,7 @@ export default function Vendas() {
                     {comparisonFunnelData.map((stage, index) => (
                       <tr key={index} className="border-t border-border">
                         <td className="py-3 px-4 font-medium">{stage.stage}</td>
-                        <td className="py-3 px-4 text-right">{stage.value.toLocaleString('pt-BR')}</td>
+                        <td className="py-3 px-4 text-right">{(stage.value || 0).toLocaleString('pt-BR')}</td>
                         <td className="py-3 px-4 text-right">
                           <span className="font-semibold text-primary">
                             {stage.percentage.toFixed(1)}%

@@ -103,9 +103,13 @@ export interface PaymentMethodStats {
 }
 
 export interface FunnelStage {
-  stage: string;
-  value: number;
+  id?: string;
+  name?: string;  // New standard
+  stage: string;  // Legacy standard
+  count?: number; // New standard
+  value: number;  // Legacy standard
   percentage: number;
+  description?: string;
 }
 
 export interface Contact {
@@ -352,6 +356,17 @@ export interface UpdateProductData {
   active?: boolean;
 }
 
+export interface Pixel {
+  id: number;
+  pixelId: string;
+  name: string;
+  userId: number;
+  eventsCount?: number;
+  conversionsCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 class ApiService {
   private getAuthToken(): string | null {
     return localStorage.getItem('token');
@@ -412,6 +427,12 @@ class ApiService {
       // Se não conseguir parsear, retornar undefined (pode ser resposta vazia válida)
       return undefined as any;
     }
+  }
+
+  async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'GET',
+    });
   }
 
   async register(data: RegisterData): Promise<RegisterResponse> {
@@ -1050,6 +1071,62 @@ class ApiService {
       method: 'GET',
     });
   }
+
+  // Pixels
+  async getPixels(): Promise<Pixel[]> {
+    return this.request<Pixel[]>('/pixels', {
+      method: 'GET',
+    });
+  }
+
+  async createPixel(data: { name: string }): Promise<Pixel> {
+    return this.request<Pixel>('/pixels', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+  async getPixelMetrics(period = 30): Promise<PixelMetrics> {
+    return this.request<PixelMetrics>(`/pixels/metrics?period=${period}`, {
+      method: 'GET',
+    });
+  }
+}
+
+export interface PixelMetrics {
+  clicks: { value: number; change: number };
+  leads: { value: number; change: number };
+  conversionRate: { value: number; change: number };
+  topPages: Array<{
+    name: string;
+    visits: number;
+    conversions: number;
+    rate: number;
+  }>;
+  clicksBreakdown: {
+    abandonedCarts: {
+      total: number;
+      value: string;
+      items: Array<{ product: string; count: number; value: string }>;
+    };
+    completedPurchases: {
+      total: number;
+      value: string;
+      avgTicket: string;
+      items: Array<{ date: string; customer: string; product: string; value: string }>;
+    };
+    topProducts: Array<{
+      name: string;
+      sales: number;
+      revenue: string;
+      conversion: number;
+    }>;
+    topCustomers: Array<{
+      name: string;
+      purchases: number;
+      total: string;
+      avgTicket: string;
+    }>;
+  };
 }
 
 export const api = new ApiService();

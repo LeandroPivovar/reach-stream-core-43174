@@ -9,35 +9,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  UserPlus, 
-  Eye, 
-  ShoppingCart, 
-  CreditCard, 
+import {
+  UserPlus,
+  Eye,
+  ShoppingCart,
+  CreditCard,
   Heart,
   ArrowRight,
   Filter
 } from 'lucide-react';
 
-interface JourneyStage {
+export interface JourneyStage {
   id: string;
   name: string;
   description: string;
   count: number;
   percentage: number;
-  icon: React.ElementType;
-  color: string;
 }
 
-export function CustomerJourney() {
+
+interface CustomerJourneyProps {
+  stages?: JourneyStage[];
+}
+
+export function CustomerJourney({ stages }: CustomerJourneyProps) {
   const [selectedCampaign, setSelectedCampaign] = useState('all');
 
-  const journeyStages: JourneyStage[] = [
+  const defaultStages = [
     {
       id: 'leads',
       name: 'Leads',
       description: 'Novos contatos',
-      count: 3847,
+      count: 0,
       percentage: 100,
       icon: UserPlus,
       color: 'bg-blue-500/20 text-blue-900 dark:text-blue-100 border-blue-500/30'
@@ -46,8 +49,8 @@ export function CustomerJourney() {
       id: 'engaged',
       name: 'Engajados',
       description: 'Abriram campanhas',
-      count: 2621,
-      percentage: 68,
+      count: 0,
+      percentage: 0,
       icon: Eye,
       color: 'bg-purple-500/20 text-purple-900 dark:text-purple-100 border-purple-500/30'
     },
@@ -55,8 +58,8 @@ export function CustomerJourney() {
       id: 'cart',
       name: 'Carrinho',
       description: 'Adicionaram produtos',
-      count: 1247,
-      percentage: 32,
+      count: 0,
+      percentage: 0,
       icon: ShoppingCart,
       color: 'bg-orange-500/20 text-orange-900 dark:text-orange-100 border-orange-500/30'
     },
@@ -64,8 +67,8 @@ export function CustomerJourney() {
       id: 'purchase',
       name: 'Compradores',
       description: 'Finalizaram compra',
-      count: 892,
-      percentage: 23,
+      count: 0,
+      percentage: 0,
       icon: CreditCard,
       color: 'bg-green-500/20 text-green-900 dark:text-green-100 border-green-500/30'
     },
@@ -73,12 +76,17 @@ export function CustomerJourney() {
       id: 'loyal',
       name: 'Fiéis',
       description: '2+ compras',
-      count: 423,
-      percentage: 11,
+      count: 0,
+      percentage: 0,
       icon: Heart,
       color: 'bg-pink-500/20 text-pink-900 dark:text-pink-100 border-pink-500/30'
     }
   ];
+
+  const journeyStages = defaultStages.map(ds => {
+    const s = stages?.find(st => st.id === ds.id);
+    return s ? { ...ds, count: s.count, percentage: s.percentage } : ds;
+  });
 
   return (
     <div className="space-y-4">
@@ -134,7 +142,7 @@ export function CustomerJourney() {
                     </div>
                   </div>
                 </Card>
-                
+
                 {/* Arrow between stages - centered */}
                 {index < journeyStages.length - 1 && (
                   <div className="hidden lg:flex items-center justify-center px-2">

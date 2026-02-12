@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -13,39 +14,99 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Target, 
-  Code, 
+import {
+  Target,
+  Code,
   BarChart3,
   Copy,
   ExternalLink,
   Eye,
   MousePointer,
   Users,
-  Check
+  Check,
+  Plus
 } from 'lucide-react';
 import { CampaignFunnel } from '@/components/tracking/CampaignFunnel';
 import { CampaignMetrics } from '@/components/tracking/CampaignMetrics';
 import { ClicksBreakdown } from '@/components/tracking/ClicksBreakdown';
 import { ConversionDetails } from '@/components/tracking/ConversionDetails';
 import { CampaignFilters } from '@/components/tracking/CampaignFilters';
+import { api, Pixel } from '@/lib/api';
+import { useEffect } from 'react';
 
 export default function Rastreamento() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [isNewPixelOpen, setIsNewPixelOpen] = useState(false);
   const [selectedPixel, setSelectedPixel] = useState<any>(null);
+  const [selectedEventType, setSelectedEventType] = useState('PageView');
+  const [eventData, setEventData] = useState<any>({});
   const [newPixelType, setNewPixelType] = useState<'facebook' | 'google' | 'custom' | null>(null);
+  const [pixels, setPixels] = useState<Pixel[]>([]);
+  const [loading, setLoading] = useState(false);
   const [newPixelData, setNewPixelData] = useState({
     name: '',
     pixelId: ''
   });
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    campaigns: string[];
+    period: string;
+    dateRange: { from?: Date; to?: Date };
+  }>({
     campaigns: [],
     period: 'geral',
     dateRange: {}
   });
+
+  const [products, setProducts] = useState<any[]>([]);
+
+  const fetchPixels = async () => {
+    try {
+      const data = await api.getPixels();
+      setPixels(data);
+    } catch (error) {
+      console.error('Erro ao buscar pixels:', error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const data = await api.getProducts();
+      setProducts(data);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPixels();
+    fetchProducts();
+  }, []);
+
+  const handleProductSelect = (productId: string) => {
+    const product = products.find(p => p.id.toString() === productId);
+    if (product) {
+      setEventData({
+        ...eventData,
+        content_name: product.name,
+        value: Number(product.price),
+        content_id: product.id.toString(),
+        sku: product.sku || undefined, // Adiciona SKU se disponível
+        currency: 'BRL'
+      });
+    }
+  };
+
+  // ... inside render ...
 
   const handleFilterChange = (newFilters: any) => {
     setFilters(newFilters);
@@ -57,72 +118,12 @@ export default function Rastreamento() {
     });
   };
 
-  const trackingCodes = [
-    {
-      id: 1,
-      name: 'Pixel Facebook Ads',
-      type: 'Facebook',
-      status: 'Ativo',
-      events: 1247,
-      conversions: 89,
-      code: `<!-- Facebook Pixel Code -->
-<script>
-  !function(f,b,e,v,n,t,s)
-  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t,s)}(window, document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init', 'YOUR_PIXEL_ID');
-  fbq('track', 'PageView');
-</script>
-<noscript>
-  <img height="1" width="1" style="display:none"
-  src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"/>
-</noscript>
-<!-- End Facebook Pixel Code -->`
-    },
-    {
-      id: 2,
-      name: 'Google Analytics',
-      type: 'Google',
-      status: 'Ativo',
-      events: 3421,
-      conversions: 156,
-      code: `<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'GA_MEASUREMENT_ID');
-</script>
-<!-- End Google Analytics -->`
-    },
-    {
-      id: 3,
-      name: 'Formulário Landing Page',
-      type: 'Form',
-      status: 'Ativo',
-      events: 892,
-      conversions: 234,
-      code: `<!-- Pixel de Conversão -->
-<script>
-  (function() {
-    var img = document.createElement('img');
-    img.src = 'https://api.nucleo.com/pixel/track?id=FORM_ID';
-    img.style.display = 'none';
-    document.body.appendChild(img);
-  })();
-</script>
-<!-- End Pixel de Conversão -->`
-    }
-  ];
+  const trackingCodes: any[] = [];
 
   const handleOpenCode = (pixel: any) => {
     setSelectedPixel(pixel);
+    setSelectedEventType('PageView');
+    setEventData({});
     setIsCodeModalOpen(true);
   };
 
@@ -140,15 +141,73 @@ export default function Rastreamento() {
     setNewPixelType(type);
   };
 
-  const handleCreatePixel = () => {
-    console.log('Creating pixel:', { type: newPixelType, ...newPixelData });
-    setIsNewPixelOpen(false);
-    setNewPixelType(null);
-    setNewPixelData({ name: '', pixelId: '' });
-    toast({
-      title: "Pixel configurado!",
-      description: "O novo pixel foi configurado com sucesso.",
-    });
+  const generateInternalScript = (pixelId: string, event: string = 'PageView', data: any = {}) => {
+    const apiBaseUrl = window.location.origin.includes('localhost') ? 'http://localhost:3000' : window.location.origin;
+
+    let eventCall = `internalPixel('${event}')`;
+    if (Object.keys(data).length > 0) {
+      eventCall = `internalPixel('${event}', ${JSON.stringify(data, null, 2)})`;
+    }
+
+    return `<!-- Pixel de Rastreamento Interno -->
+        <script>
+          (function(w,d,s,l,i){
+            w[l] = w[l] || function (event, data) {
+              fetch('${apiBaseUrl}/api/pixels/events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  pixel_id: i,
+                  event: event,
+                  data: data,
+                  url: w.location.href,
+                  page_title: d.title,
+                  user_agent: navigator.userAgent,
+                  timestamp: Date.now()
+                })
+              });
+            }
+          })(window, document, 'script', 'internalPixel', '${pixelId}');
+
+          setTimeout(function() {
+            ${eventCall};
+  }, 500);
+        </script>
+        <!-- End Pixel de Rastreamento Interno -->`;
+  };
+
+  const handleCreatePixel = async () => {
+    setLoading(true);
+    try {
+      if (newPixelType === 'custom') {
+        const pixel = await api.createPixel({ name: newPixelData.name });
+        setPixels([...pixels, pixel]);
+
+        toast({
+          title: "Pixel criado!",
+          description: "Seu pixel interno foi gerado com sucesso.",
+        });
+      } else {
+        // Para tipos externos, manteríamos o mock ou integraríamos conforme necessidade futura
+        console.log('Creating external pixel:', { type: newPixelType, ...newPixelData });
+        toast({
+          title: "Pixel configurado!",
+          description: "O pixel externo foi configurado localmente.",
+        });
+      }
+
+      setIsNewPixelOpen(false);
+      setNewPixelType(null);
+      setNewPixelData({ name: '', pixelId: '' });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar pixel",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const actions = (
@@ -157,9 +216,17 @@ export default function Rastreamento() {
     </HeaderActions.Add>
   );
 
+  const periodDays = filters.period === 'hoje' ? 1 :
+    filters.period === '7dias' ? 7 :
+      filters.period === '30dias' ? 30 :
+        filters.period === '90dias' ? 90 :
+          filters.period === 'custom' && filters.dateRange?.from && filters.dateRange?.to
+            ? Math.ceil((new Date(filters.dateRange.to).getTime() - new Date(filters.dateRange.from).getTime()) / (1000 * 60 * 60 * 24)) || 1
+            : 30;
+
   return (
-    <Layout 
-      title="Rastreamento" 
+    <Layout
+      title="Rastreamento"
       subtitle="Configure pixels e formulários para capturar leads"
       actions={actions}
     >
@@ -176,16 +243,16 @@ export default function Rastreamento() {
             <div className="space-y-6">
               {/* Filtros de Campanha e Período */}
               <CampaignFilters onFilterChange={handleFilterChange} />
-              
+
               {/* Métricas e Rankings */}
-              <CampaignMetrics />
-              
+              <CampaignMetrics periodDays={periodDays} />
+
               {/* Detalhamento dos Cliques */}
-              <ClicksBreakdown />
-              
+              <ClicksBreakdown periodDays={periodDays} />
+
               {/* Detalhamento da Taxa de Conversão */}
               <ConversionDetails />
-              
+
               {/* Funil de Conversão */}
               <CampaignFunnel />
             </div>
@@ -208,42 +275,48 @@ export default function Rastreamento() {
                       </tr>
                     </thead>
                     <tbody>
-                      {trackingCodes.map((code) => (
-                        <tr key={code.id} className="border-b border-border last:border-0">
-                          <td className="py-4 px-2">
-                            <div className="font-medium">{code.name}</div>
-                          </td>
-                          <td className="py-4 px-2">
-                            <Badge variant="outline">{code.type}</Badge>
-                          </td>
-                          <td className="py-4 px-2">
-                            <Badge variant="default">
-                              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                              {code.status}
-                            </Badge>
-                          </td>
-                          <td className="py-4 px-2 text-right font-medium">
-                            {code.events.toLocaleString()}
-                          </td>
-                          <td className="py-4 px-2 text-right font-medium">
-                            {code.conversions.toLocaleString()}
-                          </td>
-                          <td className="py-4 px-2 text-right">
-                            <div className="flex justify-end space-x-2">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleOpenCode(code)}
-                              >
-                                <Code className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <ExternalLink className="w-4 h-4" />
-                              </Button>
-                            </div>
+                      {pixels.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                            Nenhum pixel configurado. Clique em "Novo Pixel" para começar.
                           </td>
                         </tr>
-                      ))}
+                      )}
+                      {pixels.map((p) => {
+                        const code = generateInternalScript(p.pixelId);
+                        return (
+                          <tr key={p.pixelId} className="border-b border-border last:border-0">
+                            <td className="py-4 px-2">
+                              <div className="font-medium">{p.name}</div>
+                            </td>
+                            <td className="py-4 px-2">
+                              <Badge variant="default">Interno</Badge>
+                            </td>
+                            <td className="py-4 px-2">
+                              <Badge variant="default">
+                                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                Ativo
+                              </Badge>
+                            </td>
+                            <td className="py-4 px-2 text-right font-medium">{p.eventsCount || 0}</td>
+                            <td className="py-4 px-2 text-right font-medium">{p.conversionsCount || 0}</td>
+                            <td className="py-4 px-2 text-right">
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleOpenCode(p)}
+                                >
+                                  <Code className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm">
+                                  <ExternalLink className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -255,7 +328,7 @@ export default function Rastreamento() {
             <div className="space-y-6">
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Gerador de Formulários</h3>
-                
+
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -272,7 +345,7 @@ export default function Rastreamento() {
                     <Label>Código HTML Gerado</Label>
                     <div className="mt-2 p-4 bg-muted rounded-lg">
                       <code className="text-sm">
-{`<form action="https://api.nucleo.com/forms/capture" method="POST">
+                        {`<form action="https://api.nucleo.com/forms/capture" method="POST">
   <input type="text" name="name" placeholder="Nome" required>
   <input type="email" name="email" placeholder="E-mail" required>
   <input type="tel" name="phone" placeholder="Telefone">
@@ -294,7 +367,7 @@ export default function Rastreamento() {
             <div className="space-y-6">
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Métricas de Tracking</h3>
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     <h4 className="font-medium mb-3">Eventos por Fonte</h4>
@@ -340,29 +413,154 @@ export default function Rastreamento() {
 
       {/* Modal Código HTML */}
       <Dialog open={isCodeModalOpen} onOpenChange={setIsCodeModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Código de Rastreamento - {selectedPixel?.name}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="bg-blue-500/10 p-3 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                Copie o código abaixo e cole no <code className="bg-muted px-1 rounded">{"<head>"}</code> do seu site
-              </p>
+            <div className="bg-blue-500/10 p-4 rounded-lg space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Configuração do Evento</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[10px]"
+                  onClick={() => navigate('/rastreamento/documentacao')}
+                >
+                  <ExternalLink className="w-3 h-3 mr-1" />
+                  Guia Modo Avançado
+                </Button>
+              </div>
+
+              <div className="grid gap-4">
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Select
+                      value={selectedEventType}
+                      onValueChange={(value) => {
+                        setSelectedEventType(value);
+                        setEventData({}); // Limpa os dados ao trocar o evento
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o evento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PageView">Page View (Padrão)</SelectItem>
+                        <SelectItem value="Purchase">Compra (Purchase)</SelectItem>
+                        <SelectItem value="Lead">Lead / Cadastro</SelectItem>
+                        <SelectItem value="AddToCart">Adicionar ao Carrinho</SelectItem>
+                        <SelectItem value="InitiateCheckout">Iniciado Checkout</SelectItem>
+                        <SelectItem value="Contact">Clique em Contato</SelectItem>
+                        <SelectItem value="ViewContent">Ver Produto</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {(selectedEventType === 'Purchase' || selectedEventType === 'ViewContent' || selectedEventType === 'AddToCart' || selectedEventType === 'InitiateCheckout') && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                      {(selectedEventType === 'Purchase' || selectedEventType === 'ViewContent' || selectedEventType === 'AddToCart' || selectedEventType === 'InitiateCheckout') && (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Valor"
+                            type="number"
+                            className="flex-1"
+                            value={eventData.value || ''}
+                            onChange={(e) => setEventData({ ...eventData, value: parseFloat(e.target.value) || 0 })}
+                          />
+                          <Input
+                            placeholder="BRL"
+                            className="w-20"
+                            value={eventData.currency || 'BRL'}
+                            onChange={(e) => setEventData({ ...eventData, currency: e.target.value })}
+                          />
+                        </div>
+                      )}
+
+                      {(selectedEventType === 'Purchase' || selectedEventType === 'AddToCart' || selectedEventType === 'ViewContent' || selectedEventType === 'InitiateCheckout') && (
+                        <div className="flex gap-2">
+                          <Input
+                            className="flex-1"
+                            placeholder="Nome do Produto"
+                            value={eventData.content_name || ''}
+                            onChange={(e) => setEventData({ ...eventData, content_name: e.target.value })}
+                          />
+                          <Input
+                            className="w-1/3"
+                            placeholder="SKU / ID"
+                            value={eventData.sku || eventData.content_id || ''}
+                            onChange={(e) => setEventData({ ...eventData, sku: e.target.value, content_id: e.target.value })}
+                          />
+                        </div>
+                      )}
+
+                      {selectedEventType === 'Purchase' && (
+                        <div className="flex-1">
+                          <Input
+                            placeholder="Nome do Cliente"
+                            onChange={(e) => setEventData({ ...eventData, customer_name: e.target.value })}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {(selectedEventType === 'Purchase' || selectedEventType === 'AddToCart' || selectedEventType === 'ViewContent' || selectedEventType === 'InitiateCheckout') && (
+                      <div className="space-y-3 p-3 bg-muted/50 rounded-lg border border-border/50">
+                        <Label className="text-xs font-semibold">Preencher via Produto</Label>
+                        <Select onValueChange={handleProductSelect}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um produto para auto-preencher" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {products.map(product => (
+                              <SelectItem key={product.id} value={product.id.toString()}>
+                                {product.name} ({Number(product.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground">
+                          Selecionar um produto preenche automaticamente nome, valor e SKU.
+                        </p>
+                      </div>
+                    )}
+
+                    <p className="text-[10px] text-muted-foreground">
+                      Personalize o evento para capturar dados específicos. O snippet abaixo será atualizado automaticamente.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="relative">
-              <pre className="p-4 bg-muted rounded-lg overflow-x-auto text-xs">
-                <code>{selectedPixel?.code}</code>
+            <div className="bg-muted p-4 rounded-lg relative group">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-xs font-mono text-muted-foreground">Script de Rastreamento</p>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[10px] bg-green-500/10 text-green-600 px-2 py-0.5 rounded border border-green-500/20">Código Gerado</span>
+                </div>
+              </div>
+              <pre className="p-4 bg-background/50 border rounded-md overflow-x-auto text-[11px] font-mono leading-relaxed h-[220px]">
+                <code>{selectedPixel?.pixelId ? generateInternalScript(selectedPixel.pixelId, selectedEventType, eventData) : '// Selecione um pixel para gerar o código'}</code>
               </pre>
               <Button
                 size="sm"
-                className="absolute top-2 right-2"
-                onClick={handleCopyCode}
+                className="absolute bottom-6 right-6 shadow-lg"
+                onClick={() => {
+                  const code = generateInternalScript(selectedPixel.pixelId, selectedEventType, eventData);
+                  navigator.clipboard.writeText(code);
+                  toast({
+                    title: "Código copiado!",
+                    description: "O código foi copiado. Basta colar no seu site.",
+                  });
+                }}
               >
                 <Copy className="w-4 h-4 mr-2" />
-                Copiar Código
+                Copiar Script
               </Button>
             </div>
 
@@ -397,10 +595,10 @@ export default function Rastreamento() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {!newPixelType ? 'Configurar Novo Pixel' : 
-               newPixelType === 'facebook' ? 'Facebook Pixel' :
-               newPixelType === 'google' ? 'Google Analytics' :
-               'Pixel Customizado'}
+              {!newPixelType ? 'Configurar Novo Pixel' :
+                newPixelType === 'facebook' ? 'Facebook Pixel' :
+                  newPixelType === 'google' ? 'Google Analytics' :
+                    'Pixel Customizado'}
             </DialogTitle>
           </DialogHeader>
 
@@ -411,7 +609,7 @@ export default function Rastreamento() {
               </p>
 
               <div className="grid gap-4">
-                <Card 
+                <Card
                   className="p-6 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectPixelType('facebook')}
                 >
@@ -428,7 +626,7 @@ export default function Rastreamento() {
                   </div>
                 </Card>
 
-                <Card 
+                <Card
                   className="p-6 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectPixelType('google')}
                 >
@@ -445,7 +643,7 @@ export default function Rastreamento() {
                   </div>
                 </Card>
 
-                <Card 
+                <Card
                   className="p-6 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectPixelType('custom')}
                 >
@@ -480,8 +678,8 @@ export default function Rastreamento() {
                     onChange={(e) => setNewPixelData({ ...newPixelData, name: e.target.value })}
                     placeholder={
                       newPixelType === 'facebook' ? 'Ex: Facebook Pixel Principal' :
-                      newPixelType === 'google' ? 'Ex: Google Analytics Site' :
-                      'Ex: Pixel Personalizado'
+                        newPixelType === 'google' ? 'Ex: Google Analytics Site' :
+                          'Ex: Pixel Personalizado'
                     }
                   />
                 </div>
@@ -489,8 +687,8 @@ export default function Rastreamento() {
                 <div className="grid gap-2">
                   <Label htmlFor="pixel-id">
                     {newPixelType === 'facebook' ? 'ID do Pixel Facebook *' :
-                     newPixelType === 'google' ? 'ID de Medição (GA4) *' :
-                     'ID ou Código do Pixel *'}
+                      newPixelType === 'google' ? 'ID de Medição (GA4) *' :
+                        'ID ou Código do Pixel *'}
                   </Label>
                   <Input
                     id="pixel-id"
@@ -498,8 +696,8 @@ export default function Rastreamento() {
                     onChange={(e) => setNewPixelData({ ...newPixelData, pixelId: e.target.value })}
                     placeholder={
                       newPixelType === 'facebook' ? 'Ex: 1234567890' :
-                      newPixelType === 'google' ? 'Ex: G-XXXXXXXXXX' :
-                      'Cole o ID ou código completo'
+                        newPixelType === 'google' ? 'Ex: G-XXXXXXXXXX' :
+                          'Cole o ID ou código completo'
                     }
                   />
                   <p className="text-xs text-muted-foreground">
@@ -526,17 +724,17 @@ export default function Rastreamento() {
                 <Button variant="outline" onClick={() => setNewPixelType(null)}>
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleCreatePixel}
-                  disabled={!newPixelData.name || !newPixelData.pixelId}
+                  disabled={loading || !newPixelData.name || (newPixelType !== 'custom' && !newPixelData.pixelId)}
                 >
-                  Configurar Pixel
+                  {loading ? 'Criando...' : 'Configurar Pixel'}
                 </Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
-    </Layout>
+    </Layout >
   );
 }
