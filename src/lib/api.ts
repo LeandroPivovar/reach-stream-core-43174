@@ -395,6 +395,10 @@ class ApiService {
     });
 
     if (!response.ok) {
+      if (response.status === 401 && !endpoint.includes('/auth/login')) {
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+      }
+
       let error;
       try {
         const text = await response.text();

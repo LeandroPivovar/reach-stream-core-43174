@@ -39,8 +39,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('user');
       }
     }
-    
+
     setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
   }, []);
 
   const login = (token: string, userData: User) => {
