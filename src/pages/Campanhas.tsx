@@ -464,7 +464,9 @@ export default function Campanhas() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Campanhas Ativas</p>
-                <p className="text-2xl font-bold text-foreground">3</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {campaigns.filter(c => c.status === 'ativa').length}
+                </p>
               </div>
               <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
                 <Play className="w-5 h-5 text-green-500" />
