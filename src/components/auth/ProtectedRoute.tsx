@@ -12,13 +12,17 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
 
   // Buscar a assinatura apenas se estiver autenticado
-  const { data: subscription, isLoading: isSubscriptionLoading } = useQuery({
+  const {
+    data: subscription,
+    isLoading: isSubscriptionLoading,
+    isFetching: isSubscriptionFetching
+  } = useQuery({
     queryKey: ['currentSubscription'],
     queryFn: () => api.getCurrentSubscription(),
     enabled: isAuthenticated,
   });
 
-  if (isLoading || (isAuthenticated && isSubscriptionLoading)) {
+  if (isLoading || (isAuthenticated && (isSubscriptionLoading || isSubscriptionFetching))) {
     // Mostrar loading enquanto verifica autenticação ou assinatura
     return (
       <div className="min-h-screen flex items-center justify-center">
