@@ -1138,14 +1138,15 @@ export const api = new ApiService();
 export interface Plan {
   id: number;
   name: string;
-  price: number;
+  price: number; // or string if your db gives back decimal string
   interval: string;
   features: string[];
   limits: {
     contacts: number;
     emails: number;
     whatsapp: boolean;
-    sms: boolean;
+    sms: number;
+    advancedCampaigns?: number;
   };
   active: boolean;
 }
