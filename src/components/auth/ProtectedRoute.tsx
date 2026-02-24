@@ -1,5 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,8 +11,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
-  if (isLoading) {
-    // Mostrar loading enquanto verifica autenticação
+  // Buscar a assinatura apenas se estiver autenticado
+  const { data: subscription, isLoading: isSubscriptionLoading } = useQuery({
+    queryKey: ['currentSubscription'],
+    queryFn: () => api.getCurrentSubscription(),
+    enabled: isAuthenticated,
+  });
+
+  if (isLoading || (isAuthenticated && isSubscriptionLoading)) {
+    // Mostrar loading enquanto verifica autenticação ou assinatura
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -24,6 +33,22 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!isAuthenticated) {
     // Redirecionar para login, salvando a rota atual para redirecionar depois
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+
+  // Rotas permitidas mesmo sem plano ativo
+  const allowedPathsWithoutPlan = [
+    '/assinaturas',
+    '/conta',
+    '/integrations/shopify/callback',
+    '/integrations/nuvemshop/callback'
+  ];
+
+  const hasActivePlan = subscription?.status === 'active';
+  const isAllowedPath = allowedPathsWithoutPlan.some(path => location.pathname.startsWith(path));
+
+  // Redirecionar para a página de assinaturas se não tiver plano ativo e estiver tentando acessar outra rota
+  if (!hasActivePlan && !isAllowedPath) {
+    return <Navigate to="/assinaturas" replace />;
   }
 
   return <>{children}</>;
