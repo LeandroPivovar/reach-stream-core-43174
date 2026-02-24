@@ -48,7 +48,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   ];
 
   const hasActivePlan = subscription?.status === 'active';
-  const isAllowedPath = allowedPathsWithoutPlan.some(path => location.pathname.startsWith(path));
+  const isAllowedPath = allowedPathsWithoutPlan.some(path => {
+    // Para rotas de integração, aceitamos sub-rotas. Para as demais, exigimos match exato ou com barra no final
+    if (path.startsWith('/integrations/')) {
+      return location.pathname.startsWith(path);
+    }
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  });
 
   // Redirecionar para a página de assinaturas se não tiver plano ativo e estiver tentando acessar outra rota
   if (!hasActivePlan && !isAllowedPath) {
