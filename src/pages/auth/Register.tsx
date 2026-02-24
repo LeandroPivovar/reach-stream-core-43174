@@ -26,7 +26,7 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.acceptTerms) {
       toast({
         title: 'Atenção',
@@ -57,7 +57,7 @@ export default function Register() {
 
       toast({
         title: 'Conta criada com sucesso!',
-        description: response.message || 'Verifique seu e-mail para ativar sua conta',
+        description: response.message || 'Você já pode fazer o seu login com suas credenciais.',
       });
 
       // Limpar o formulário
@@ -71,10 +71,10 @@ export default function Register() {
       });
 
       // Redirecionar para a tela de login com mensagem
-      navigate('/auth/login', { 
+      navigate('/auth/login', {
         replace: true,
-        state: { 
-          message: 'Conta criada! Verifique seu e-mail para ativar sua conta antes de fazer login.' 
+        state: {
+          message: 'Conta criada! Você já pode fazer o login com suas credenciais.'
         }
       });
     } catch (error) {
@@ -200,10 +200,10 @@ export default function Register() {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox 
+              <Checkbox
                 id="acceptTerms"
                 checked={formData.acceptTerms}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   setFormData(prev => ({ ...prev, acceptTerms: checked as boolean }))
                 }
                 required
@@ -236,11 +236,11 @@ export default function Register() {
         </Card>
 
         {/* Security Notice */}
-        <div className="mt-4 text-center">
+        {/* <div className="mt-4 text-center">
           <p className="text-xs text-muted-foreground">
             Após o cadastro, você receberá um e-mail de confirmação
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );
