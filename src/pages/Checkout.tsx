@@ -206,7 +206,6 @@ export default function Checkout() {
                                 <p className="text-sm text-muted-foreground mb-6 flex items-center">
                                     <ShieldCheck className="w-4 h-4 mr-2 text-green-500" /> Transação 100% segura e encriptada.
                                 </p>
-
                                 <div className="grid gap-6 relative z-10">
                                     <div className="grid gap-2">
                                         <Label htmlFor="card_number">Número do Cartão de Crédito</Label>
@@ -227,28 +226,12 @@ export default function Checkout() {
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="flex space-x-3 mt-8">
                                     <Button variant="outline" className="w-1/3" onClick={() => setStep(2)}>Voltar</Button>
                                     <Button className="w-2/3" onClick={handleConfirmCheckout} disabled={isSubmitting}>
                                         {isSubmitting ? 'Processando Pagamento...' : `Finalizar e Pagar R$ ${plan.price}`}
                                     </Button>
                                 </div>
-                            </Card>
-                        )}
-
-                        {step === 4 && (
-                            <Card className="p-10 text-center flex flex-col items-center justify-center space-y-6">
-                                <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center">
-                                    <CheckCircle2 className="w-12 h-12 text-green-500" />
-                                </div>
-                                <div>
-                                    <h2 className="text-3xl font-bold mb-2">Pagamento Aprovado!</h2>
-                                    <p className="text-muted-foreground text-lg">Parabéns! Sua assinatura do plano <b>{plan.name}</b> está ativa.</p>
-                                </div>
-                                <Button className="mt-8 px-8 py-6 text-lg" onClick={() => navigate('/')}>
-                                    Acessar o Dashboard
-                                </Button>
                             </Card>
                         )}
                     </div>
@@ -281,6 +264,24 @@ export default function Checkout() {
                         </div>
                     )}
                 </div>
+
+                {/* Step 4 - Success Screen (full width, centered) */}
+                {step === 4 && (
+                    <div className="flex justify-center">
+                        <Card className="p-12 text-center flex flex-col items-center justify-center space-y-6 max-w-lg w-full">
+                            <div className="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center">
+                                <CheckCircle2 className="w-14 h-14 text-green-500" />
+                            </div>
+                            <div>
+                                <h2 className="text-3xl font-bold mb-3">Pagamento Aprovado!</h2>
+                                <p className="text-muted-foreground text-lg">Parabéns! Sua assinatura do plano <b>{plan.name}</b> está ativa.</p>
+                            </div>
+                            <Button className="px-10 py-6 text-lg" onClick={() => navigate('/')}>
+                                Acessar o Dashboard
+                            </Button>
+                        </Card>
+                    </div>
+                )}
             </div>
         </Layout>
     );
