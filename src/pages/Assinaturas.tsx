@@ -134,11 +134,13 @@ export default function Assinaturas() {
               )}
 
               <div className="flex space-x-2">
-                <Button variant="outline" className="flex-1">
+                <Button variant="outline" className="flex-1" onClick={() => {
+                  document.getElementById('planos-disponiveis')?.scrollIntoView({ behavior: 'smooth' });
+                }}>
                   Alterar Plano
                 </Button>
                 {subscription && (
-                  <Button variant="outline" className="text-destructive hover:text-destructive">
+                  <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => navigate('/cancelar-assinatura')}>
                     Cancelar
                   </Button>
                 )}
@@ -148,7 +150,7 @@ export default function Assinaturas() {
         </Card>
 
         {/* Available Plans */}
-        <Card className="p-6">
+        <Card className="p-6" id="planos-disponiveis">
           <h3 className="text-lg font-semibold mb-6">Planos Disponíveis</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map((plan) => {

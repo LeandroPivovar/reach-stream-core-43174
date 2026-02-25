@@ -651,6 +651,10 @@ class ApiService {
     });
   }
 
+  async cancelSubscription(): Promise<any> {
+    return this.request<any>('/subscriptions/cancel', { method: 'POST' });
+  }
+
   // --- Campaign Contacts ---
 
   async getFunnelData(period: number): Promise<FunnelStage[]> {

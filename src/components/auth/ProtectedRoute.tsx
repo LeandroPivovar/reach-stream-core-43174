@@ -43,6 +43,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const allowedPathsWithoutPlan = [
     '/assinaturas',
     '/checkout',
+    '/cancelar-assinatura',
     '/conta',
     '/integrations/shopify/callback',
     '/integrations/nuvemshop/callback'

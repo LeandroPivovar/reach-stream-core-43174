@@ -27,6 +27,7 @@ import NotFound from "./pages/NotFound";
 import ShopifyCallback from "./pages/integrations/ShopifyCallback";
 import AdminUsers from "./pages/admin/AdminUsers";
 import Checkout from "./pages/Checkout";
+import CancelarAssinatura from "./pages/CancelarAssinatura";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => (
             <Route path="/integrations/shopify/callback" element={<ProtectedRoute><ShopifyCallback /></ProtectedRoute>} />
             <Route path="/assinaturas" element={<ProtectedRoute><Assinaturas /></ProtectedRoute>} />
             <Route path="/checkout/:planId" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/cancelar-assinatura" element={<ProtectedRoute><CancelarAssinatura /></ProtectedRoute>} />
             <Route path="/indicacoes" element={<ProtectedRoute><Indicacoes /></ProtectedRoute>} />
             <Route path="/conta" element={<ProtectedRoute><MinhaConta /></ProtectedRoute>} />
 
