@@ -23,7 +23,7 @@ export default function Checkout() {
 
     // Form Data
     const [formData, setFormData] = useState({
-        name: user?.firstName ? `\${user.firstName} \${user.lastName || ''}`.trim() : '',
+        name: [user?.firstName, user?.lastName].filter(Boolean).join(' '),
         email: user?.email || '',
         document: '',
         address: '',
@@ -61,9 +61,6 @@ export default function Checkout() {
                 return toast({ title: 'Aviso', description: 'Preencha os campos obrigatórios.', variant: 'destructive' });
             }
         }
-        if (step === 2) {
-            // just info block, move over
-        }
         setStep(p => p + 1);
     };
 
@@ -81,8 +78,6 @@ export default function Checkout() {
                 address: formData.address,
                 phone: formData.phone
             });
-
-            // Vai para a tela de Sucesso
             setStep(4);
         } catch (error) {
             toast({ title: 'Aviso', description: 'Erro ao processar assinatura', variant: 'destructive' });
@@ -103,28 +98,35 @@ export default function Checkout() {
 
     if (!plan) return null;
 
+    const stepClass = (n: number) =>
+        step >= n ? 'text-primary' : 'text-muted-foreground';
+    const circleClass = (n: number) =>
+        `w-10 h-10 rounded-full flex items-center justify-center border-2 ${step >= n ? 'border-primary bg-primary/10' : 'border-muted'}`;
+    const lineClass = (n: number) =>
+        `w-16 h-1 -mt-6 mx-2 ${step >= n ? 'bg-primary' : 'bg-border'}`;
+
     return (
         <Layout title="Finalizar Assinatura" subtitle="Complete os passos para assinar seu novo plano">
             <div className="max-w-4xl mx-auto mt-6">
 
                 {/* Stepper Header */}
                 <div className="flex items-center justify-center mb-10">
-                    <div className={`flex flex-col items-center \${step >= 1 ? 'text-primary' : 'text-muted-foreground'}`}>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 \${step >= 1 ? 'border-primary bg-primary/10' : 'border-muted'}`}>
+                    <div className={`flex flex-col items-center ${stepClass(1)}`}>
+                        <div className={circleClass(1)}>
                             <UserIcon className="w-5 h-5" />
                         </div>
                         <span className="text-xs font-medium mt-2">Dados</span>
                     </div>
-                    <div className={`w-16 h-1 bg-border \${step >= 2 ? 'bg-primary' : ''} -mt-6 mx-2`}></div>
-                    <div className={`flex flex-col items-center \${step >= 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 \${step >= 2 ? 'border-primary bg-primary/10' : 'border-muted'}`}>
+                    <div className={lineClass(2)}></div>
+                    <div className={`flex flex-col items-center ${stepClass(2)}`}>
+                        <div className={circleClass(2)}>
                             <Box className="w-5 h-5" />
                         </div>
                         <span className="text-xs font-medium mt-2">Revisão</span>
                     </div>
-                    <div className={`w-16 h-1 bg-border \${step >= 3 ? 'bg-primary' : ''} -mt-6 mx-2`}></div>
-                    <div className={`flex flex-col items-center \${step >= 3 ? 'text-primary' : 'text-muted-foreground'}`}>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 \${step >= 3 ? 'border-primary bg-primary/10' : 'border-muted'}`}>
+                    <div className={lineClass(3)}></div>
+                    <div className={`flex flex-col items-center ${stepClass(3)}`}>
+                        <div className={circleClass(3)}>
                             <CreditCard className="w-5 h-5" />
                         </div>
                         <span className="text-xs font-medium mt-2">Pagamento</span>
@@ -149,11 +151,11 @@ export default function Checkout() {
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div className="grid gap-2">
                                             <Label htmlFor="base_doc">CPF / CNPJ *</Label>
-                                            <Input id="base_doc" placeholder="Apenas números" value={formData.document} onChange={e => setFormData({ ...formData, document: e.target.value.replace(/\\D/g, '') })} />
+                                            <Input id="base_doc" placeholder="Apenas números" value={formData.document} onChange={e => setFormData({ ...formData, document: e.target.value.replace(/\D/g, '') })} />
                                         </div>
                                         <div className="grid gap-2">
                                             <Label htmlFor="base_phone">Telefone (WhatsApp) *</Label>
-                                            <Input id="base_phone" placeholder="Apenas números" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\\D/g, '') })} />
+                                            <Input id="base_phone" placeholder="Apenas números" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} />
                                         </div>
                                     </div>
                                     <div className="grid gap-2">
@@ -161,7 +163,9 @@ export default function Checkout() {
                                         <Input id="base_address" placeholder="Rua, Número, Complemento, CEP..." value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
                                     </div>
                                 </div>
-                                <Button className="w-full mt-8" onClick={handleNextStep}>Continuar para Revisão <ChevronRight className="w-4 h-4 ml-2" /></Button>
+                                <Button className="w-full mt-8" onClick={handleNextStep}>
+                                    Continuar para Revisão <ChevronRight className="w-4 h-4 ml-2" />
+                                </Button>
                             </Card>
                         )}
 
@@ -186,7 +190,9 @@ export default function Checkout() {
                                 </div>
                                 <div className="flex space-x-3">
                                     <Button variant="outline" className="w-1/3" onClick={() => setStep(1)}>Voltar</Button>
-                                    <Button className="w-2/3" onClick={handleNextStep}>Ir para Pagamento <ChevronRight className="w-4 h-4 ml-2" /></Button>
+                                    <Button className="w-2/3" onClick={handleNextStep}>
+                                        Ir para Pagamento <ChevronRight className="w-4 h-4 ml-2" />
+                                    </Button>
                                 </div>
                             </Card>
                         )}
@@ -225,7 +231,7 @@ export default function Checkout() {
                                 <div className="flex space-x-3 mt-8">
                                     <Button variant="outline" className="w-1/3" onClick={() => setStep(2)}>Voltar</Button>
                                     <Button className="w-2/3" onClick={handleConfirmCheckout} disabled={isSubmitting}>
-                                        {isSubmitting ? 'Processando Pagamento...' : `Finalizar e Pagar R$ \${plan.price}`}
+                                        {isSubmitting ? 'Processando Pagamento...' : `Finalizar e Pagar R$ ${plan.price}`}
                                     </Button>
                                 </div>
                             </Card>
@@ -247,7 +253,7 @@ export default function Checkout() {
                         )}
                     </div>
 
-                    {/* Right Area (Order Summary Stick) */}
+                    {/* Right Area (Order Summary) */}
                     {step < 4 && (
                         <div className="md:col-span-1">
                             <Card className="p-6 sticky top-6">
