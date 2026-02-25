@@ -616,10 +616,14 @@ class ApiService {
   }
 
   async getPaymentMethods(period: number): Promise<PaymentMethodStats[]> {
-    return this.request<PaymentMethodStats[]>(`/sales/dashboard/payment-methods?period=${period}`, {
-      method: 'GET',
-    });
+    return this.get<PaymentMethodStats[]>(`/sales/dashboard/payment-methods?period=${period}`);
   }
+
+  async getCampaignDashboardPerformance(period: string): Promise<any> {
+    return this.get<any>(`/campaigns/dashboard/performance?period=${period}`);
+  }
+
+  // --- Campaign Contacts ---
 
   async getFunnelData(period: number): Promise<FunnelStage[]> {
     return this.request<FunnelStage[]>(`/sales/dashboard/funnel?period=${period}`, {

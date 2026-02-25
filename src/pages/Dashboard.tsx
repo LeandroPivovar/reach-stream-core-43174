@@ -46,23 +46,26 @@ export default function Dashboard() {
     const [funnelStats, setFunnelStats] = useState<any[]>([]);
     const [segmentationStats, setSegmentationStats] = useState<any>(null);
     const [dashboardStats, setDashboardStats] = useState<any>(null);
+    const [campaignStats, setCampaignStats] = useState<any>({ chartData: [], recentCampaigns: [] });
     const [isLoadingStats, setIsLoadingStats] = useState(true);
 
     React.useEffect(() => {
         const fetchAdditionalStats = async () => {
             try {
-                const [funnelData, segData] = await Promise.all([
+                const [funnelData, segData, campData] = await Promise.all([
                     api.get<any[]>('/sales/dashboard/funnel?period=30'),
-                    api.get<any>('/sales/dashboard/segmentation')
+                    api.get<any>('/sales/dashboard/segmentation'),
+                    api.getCampaignDashboardPerformance(chartPeriod)
                 ]);
                 setFunnelStats(funnelData);
                 setSegmentationStats(segData);
+                setCampaignStats(campData);
             } catch (error) {
-                console.error('Error fetching funnel/segmentation:', error);
+                console.error('Error fetching dashboard extra stats:', error);
             }
         };
         fetchAdditionalStats();
-    }, []);
+    }, [chartPeriod]);
 
     // Dados de segmentação automática quando há integrações
     const leadSegmentation = [
@@ -180,71 +183,8 @@ export default function Dashboard() {
         }
     ];
 
-    const recentCampaigns = [
-        {
-            name: 'Promoção Black Friday',
-            type: 'WhatsApp + E-mail',
-            status: 'Ativa',
-            sent: 2847,
-            opens: 1943,
-            clicks: 312
-        },
-        {
-            name: 'Carrinho Abandonado',
-            type: 'E-mail',
-            status: 'Pausada',
-            sent: 1254,
-            opens: 834,
-            clicks: 127
-        },
-        {
-            name: 'Novos Produtos',
-            type: 'SMS',
-            status: 'Agendada',
-            sent: 0,
-            opens: 0,
-            clicks: 0
-        }
-    ];
-
-    const chartDataDaily = [
-        { periodo: '01/12', envios: 1850, aberturas: 1240, cliques: 320 },
-        { periodo: '02/12', envios: 2100, aberturas: 1450, cliques: 380 },
-        { periodo: '03/12', envios: 1920, aberturas: 1310, cliques: 340 },
-        { periodo: '04/12', envios: 2450, aberturas: 1680, cliques: 420 },
-        { periodo: '05/12', envios: 2280, aberturas: 1540, cliques: 390 },
-        { periodo: '06/12', envios: 1540, aberturas: 1050, cliques: 280 },
-        { periodo: '07/12', envios: 1707, aberturas: 1170, cliques: 290 }
-    ];
-
-    const chartDataWeekly = [
-        { periodo: 'Seg', envios: 1850, aberturas: 1240, cliques: 320 },
-        { periodo: 'Ter', envios: 2100, aberturas: 1450, cliques: 380 },
-        { periodo: 'Qua', envios: 1920, aberturas: 1310, cliques: 340 },
-        { periodo: 'Qui', envios: 2450, aberturas: 1680, cliques: 420 },
-        { periodo: 'Sex', envios: 2280, aberturas: 1540, cliques: 390 },
-        { periodo: 'Sáb', envios: 1540, aberturas: 1050, cliques: 280 },
-        { periodo: 'Dom', envios: 1707, aberturas: 1170, cliques: 290 }
-    ];
-
-    const chartDataMonthly = [
-        { periodo: 'Jan', envios: 45000, aberturas: 30500, cliques: 7800 },
-        { periodo: 'Fev', envios: 52000, aberturas: 35400, cliques: 9200 },
-        { periodo: 'Mar', envios: 48000, aberturas: 32800, cliques: 8500 },
-        { periodo: 'Abr', envios: 61000, aberturas: 41500, cliques: 10800 },
-        { periodo: 'Mai', envios: 58000, aberturas: 39400, cliques: 10200 },
-        { periodo: 'Jun', envios: 54000, aberturas: 36800, cliques: 9500 }
-    ];
-
     const getChartData = () => {
-        switch (chartPeriod) {
-            case 'diario':
-                return chartDataDaily;
-            case 'mensal':
-                return chartDataMonthly;
-            default:
-                return chartDataWeekly;
-        }
+        return campaignStats.chartData || [];
     };
 
     const getPeriodLabel = () => {
@@ -517,7 +457,7 @@ export default function Dashboard() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {recentCampaigns.map((campaign, index) => (
+                                {(campaignStats.recentCampaigns || []).map((campaign: any, index: number) => (
                                     <tr key={index} className="border-b border-border last:border-0">
                                         <td className="py-4 px-2">
                                             <div className="font-medium">{campaign.name}</div>
