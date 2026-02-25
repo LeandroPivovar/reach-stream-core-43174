@@ -194,7 +194,10 @@ export default function Assinaturas() {
                     className="w-full mt-6"
                     variant={isCurrent ? 'secondary' : 'default'}
                     disabled={isCurrent}
-                    onClick={() => navigate(`/checkout/${plan.id}`)}
+                    onClick={() => {
+                      console.log('[Assinaturas] Clicou em Selecionar Plano, planId:', plan.id);
+                      navigate(`/checkout/${plan.id}`);
+                    }}
                   >
                     {isCurrent ? 'Plano Atual' : 'Selecionar Plano'}
                   </Button>
