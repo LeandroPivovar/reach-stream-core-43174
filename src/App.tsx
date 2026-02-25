@@ -26,6 +26,7 @@ import Produtos from "./pages/Produtos";
 import NotFound from "./pages/NotFound";
 import ShopifyCallback from "./pages/integrations/ShopifyCallback";
 import NuvemshopCallback from "./pages/integrations/NuvemshopCallback";
+import AdminUsers from "./pages/admin/AdminUsers";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,9 @@ const App = () => (
             <Route path="/assinaturas" element={<ProtectedRoute><Assinaturas /></ProtectedRoute>} />
             <Route path="/indicacoes" element={<ProtectedRoute><Indicacoes /></ProtectedRoute>} />
             <Route path="/conta" element={<ProtectedRoute><MinhaConta /></ProtectedRoute>} />
+
+            {/* Rotas Administrativas Livres */}
+            <Route path="/admin/users" element={<AdminUsers />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

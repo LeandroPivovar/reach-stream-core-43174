@@ -623,6 +623,26 @@ class ApiService {
     return this.get<any>(`/campaigns/dashboard/performance?period=${period}`);
   }
 
+  // --- Admin User Methods ---
+
+  async getAdminUsers(): Promise<AdminUser[]> {
+    return this.get<AdminUser[]>('/admin/users');
+  }
+
+  async updateAdminUser(id: number, data: Partial<AdminUser>): Promise<AdminUser> {
+    return this.request<AdminUser>(`/admin/users/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async assignAdminUserPlan(userId: number, planId: number): Promise<any> {
+    return this.request<any>(`/admin/users/${userId}/plan`, {
+      method: 'POST',
+      body: JSON.stringify({ planId })
+    });
+  }
+
   // --- Campaign Contacts ---
 
   async getFunnelData(period: number): Promise<FunnelStage[]> {
@@ -1135,6 +1155,19 @@ export interface PixelMetrics {
       avgTicket: string;
     }>;
   };
+}
+
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  country: string;
+  state: string;
+  city: string;
+  active: boolean;
+  createdAt: string;
+  currentPlan?: Plan;
 }
 
 export const api = new ApiService();
