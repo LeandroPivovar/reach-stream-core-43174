@@ -42,6 +42,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Rotas permitidas mesmo sem plano ativo
   const allowedPathsWithoutPlan = [
     '/assinaturas',
+    '/checkout',
     '/conta',
     '/integrations/shopify/callback',
     '/integrations/nuvemshop/callback'
