@@ -21,8 +21,10 @@ import {
   SubscriptionStats
 } from '@/lib/api';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export default function Assinaturas() {
+  const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -189,9 +191,10 @@ export default function Assinaturas() {
                   </ul>
 
                   <Button
-                    className="w-full"
+                    className="w-full mt-6"
                     variant={isCurrent ? 'secondary' : 'default'}
                     disabled={isCurrent}
+                    onClick={() => navigate(`/checkout/${plan.id}`)}
                   >
                     {isCurrent ? 'Plano Atual' : 'Selecionar Plano'}
                   </Button>

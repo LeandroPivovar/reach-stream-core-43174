@@ -643,6 +643,14 @@ class ApiService {
     });
   }
 
+  // --- Checkout Flow ---
+  async checkoutPlan(data: { planId: number, document: string, address: string, phone: string, name: string }): Promise<any> {
+    return this.request<any>('/subscriptions/checkout', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
   // --- Campaign Contacts ---
 
   async getFunnelData(period: number): Promise<FunnelStage[]> {
