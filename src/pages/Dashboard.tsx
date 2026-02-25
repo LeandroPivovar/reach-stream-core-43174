@@ -198,6 +198,17 @@ export default function Dashboard() {
         }
     };
 
+    const getRelativeTime = (dateStr: string) => {
+        const diff = new Date().getTime() - new Date(dateStr).getTime();
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        if (days > 0) return `há ${days} dia${days > 1 ? 's' : ''}`;
+        if (hours > 0) return `há ${hours} hora${hours > 1 ? 's' : ''}`;
+        if (minutes > 0) return `há ${minutes} minuto${minutes > 1 ? 's' : ''}`;
+        return 'agora mesmo';
+    };
+
     return (
         <Layout
             title="Visão Geral"
@@ -363,38 +374,21 @@ export default function Dashboard() {
                         </div>
 
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                                <div className="flex items-center space-x-3">
-                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                    <span className="font-medium">WhatsApp</span>
+                            {(campaignStats?.channelPerformance || []).map((perf: any, index: number) => (
+                                <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                        <div className={`w-3 h-3 rounded-full ${perf.channel === 'whatsapp' ? 'bg-green-500' : perf.channel === 'email' ? 'bg-blue-500' : 'bg-orange-500'}`}></div>
+                                        <span className="font-medium capitalize">{perf.channel}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-semibold">{perf.envios.toLocaleString()} envios</p>
+                                        <p className="text-sm text-muted-foreground">{perf.taxaAbertura.toFixed(1)}% abertura</p>
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="font-semibold">7.234 envios</p>
-                                    <p className="text-sm text-muted-foreground">76.3% abertura</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                                <div className="flex items-center space-x-3">
-                                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                    <span className="font-medium">E-mail</span>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold">4.821 envios</p>
-                                    <p className="text-sm text-muted-foreground">58.7% abertura</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                                <div className="flex items-center space-x-3">
-                                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                    <span className="font-medium">SMS</span>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold">792 envios</p>
-                                    <p className="text-sm text-muted-foreground">94.1% abertura</p>
-                                </div>
-                            </div>
+                            ))}
+                            {(!campaignStats?.channelPerformance || campaignStats.channelPerformance.length === 0) && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Nenhum dado no período</p>
+                            )}
                         </div>
                     </Card>
 
@@ -408,29 +402,18 @@ export default function Dashboard() {
                         </div>
 
                         <div className="space-y-4">
-                            <div className="flex items-start space-x-3">
-                                <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium">Nova campanha criada</p>
-                                    <p className="text-xs text-muted-foreground">Promoção Black Friday - há 2 horas</p>
+                            {(campaignStats?.recentActivity || []).map((act: any, index: number) => (
+                                <div key={index} className="flex items-start space-x-3">
+                                    <div className={`w-2 h-2 rounded-full mt-2 ${act.type.includes('created') ? 'bg-primary' : act.type.includes('finished') ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium">{act.title}</p>
+                                        <p className="text-xs text-muted-foreground">{act.subtitle} - {getRelativeTime(act.timestamp)}</p>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div className="flex items-start space-x-3">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium">Campanha finalizada</p>
-                                    <p className="text-xs text-muted-foreground">Newsletter Semanal - há 4 horas</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start space-x-3">
-                                <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-medium">Novos contatos importados</p>
-                                    <p className="text-xs text-muted-foreground">1.247 contatos adicionados - há 6 horas</p>
-                                </div>
-                            </div>
+                            ))}
+                            {(!campaignStats?.recentActivity || campaignStats.recentActivity.length === 0) && (
+                                <p className="text-sm text-muted-foreground text-center py-4">Nenhuma atividade recente</p>
+                            )}
                         </div>
                     </Card>
                 </div>
