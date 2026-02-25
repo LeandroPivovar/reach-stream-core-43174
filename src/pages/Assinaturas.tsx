@@ -61,7 +61,8 @@ export default function Assinaturas() {
   const currentPrice = subscription?.plan?.price
     ? `R$ ${subscription.plan.price.toString().replace('.', ',')}`
     : 'R$ 0,00';
-  const status = subscription?.status === 'active' ? 'Ativa' : 'Inativa';
+  const isExpired = (subscription as any)?.isExpired === true;
+  const status = subscription?.status === 'active' && !isExpired ? 'Ativa' : isExpired ? 'Vencida' : 'Inativa';
 
   const actions = (
     <Button variant="outline" onClick={() => console.log('Export invoices')}>
@@ -87,6 +88,21 @@ export default function Assinaturas() {
       actions={actions}
     >
       <div className="space-y-6">
+        {/* Expired Subscription Warning */}
+        {isExpired && (
+          <div className="flex items-start space-x-3 bg-destructive/10 border border-destructive/30 rounded-xl p-4">
+            <div className="w-6 h-6 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <CreditCard className="w-4 h-4 text-destructive" />
+            </div>
+            <div>
+              <p className="font-semibold text-destructive">Assinatura Vencida</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Sua assinatura do plano <b>{currentPlanName}</b> está vencida. Para continuar usando todos os recursos, regularize sua situação selecionando um novo plano abaixo.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Current Plan */}
         <Card className="p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
           <div className="flex items-center justify-between mb-4">

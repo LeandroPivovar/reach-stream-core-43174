@@ -49,7 +49,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     '/integrations/nuvemshop/callback'
   ];
 
-  const hasActivePlan = subscription?.status === 'active';
+  const hasActivePlan = subscription?.status === 'active' && !(subscription as any)?.isExpired;
   const isAllowedPath = allowedPathsWithoutPlan.some(path => {
     // Para rotas de integração, aceitamos sub-rotas. Para as demais, exigimos match exato ou com barra no final
     if (path.startsWith('/integrations/')) {

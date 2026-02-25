@@ -655,6 +655,13 @@ class ApiService {
     return this.request<any>('/subscriptions/cancel', { method: 'POST' });
   }
 
+  async setAdminUserSubscriptionExpiry(userId: number, expiryDate: string): Promise<any> {
+    return this.request<any>(`/admin/users/${userId}/subscription-expiry`, {
+      method: 'PATCH',
+      body: JSON.stringify({ expiryDate })
+    });
+  }
+
   // --- Campaign Contacts ---
 
   async getFunnelData(period: number): Promise<FunnelStage[]> {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserCog, MoreVertical, Edit, ShieldAlert, CheckCircle, XCircle } from 'lucide-react';
+import { UserCog, MoreVertical, Edit, ShieldAlert, CheckCircle, XCircle, CalendarClock } from 'lucide-react';
 import { api, AdminUser, Plan } from '@/lib/api';
 
 import {
@@ -53,6 +53,8 @@ export default function AdminUsers() {
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+    const [isExpiryModalOpen, setIsExpiryModalOpen] = useState(false);
+    const [expiryDate, setExpiryDate] = useState('');
 
     // Form State
     const [editForm, setEditForm] = useState({ name: '', email: '', phone: '' });
@@ -89,6 +91,21 @@ export default function AdminUsers() {
         }
     });
 
+    const expiryMutation = useMutation({
+        mutationFn: (date: string) => {
+            if (!selectedUser) throw new Error('No user selected');
+            return api.setAdminUserSubscriptionExpiry(selectedUser.id, date);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+            toast({ title: 'Sucesso', description: 'Vencimento atualizado com sucesso.' });
+            setIsExpiryModalOpen(false);
+        },
+        onError: () => {
+            toast({ title: 'Erro', description: 'Falha ao atualizar vencimento. O usuário precisa ter um plano ativo.', variant: 'destructive' });
+        }
+    });
+
     // Handlers
     const handleOpenEdit = (user: AdminUser) => {
         setSelectedUser(user);
@@ -115,6 +132,22 @@ export default function AdminUsers() {
         if (!selectedPlanId) return;
         const planId = selectedPlanId === 'none' ? null : parseInt(selectedPlanId);
         assignPlanMutation.mutate(planId);
+    };
+    const handleOpenExpiry = (user: AdminUser) => {
+        setSelectedUser(user);
+        // Pre-fill with current expiry if available
+        const sub = (user as any).currentSubscription;
+        if (sub?.currentPeriodEnd) {
+            setExpiryDate(new Date(sub.currentPeriodEnd).toISOString().split('T')[0]);
+        } else {
+            setExpiryDate('');
+        }
+        setIsExpiryModalOpen(true);
+    };
+
+    const submitExpiry = () => {
+        if (!expiryDate) return;
+        expiryMutation.mutate(expiryDate);
     };
 
 
@@ -187,6 +220,10 @@ export default function AdminUsers() {
                                             <DropdownMenuItem onClick={() => handleOpenPlan(user)}>
                                                 <ShieldAlert className="mr-2 h-4 w-4" />
                                                 Atribuir Plano
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleOpenExpiry(user)}>
+                                                <CalendarClock className="mr-2 h-4 w-4" />
+                                                Alterar Vencimento
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem onClick={() => handleToggleActive(user)}>
@@ -291,6 +328,37 @@ export default function AdminUsers() {
                         <Button variant="outline" onClick={() => setIsPlanModalOpen(false)}>Cancelar</Button>
                         <Button onClick={submitPlan} disabled={assignPlanMutation.isPending || !selectedPlanId}>
                             {assignPlanMutation.isPending ? 'Atribuindo...' : 'Atribuir Plano'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {/* Set Expiry Modal */}
+            <Dialog open={isExpiryModalOpen} onOpenChange={setIsExpiryModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Alterar Vencimento da Assinatura</DialogTitle>
+                        <DialogDescription>
+                            Defina a data de vencimento da assinatura ativa de <b>{selectedUser?.name}</b>. Use isto para simular assinaturas expiradas.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="expiry_date">Data de Vencimento</Label>
+                            <Input
+                                id="expiry_date"
+                                type="date"
+                                value={expiryDate}
+                                onChange={(e) => setExpiryDate(e.target.value)}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Coloque uma data no passado para simular uma assinatura expirada.
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsExpiryModalOpen(false)}>Cancelar</Button>
+                        <Button onClick={submitExpiry} disabled={expiryMutation.isPending || !expiryDate}>
+                            {expiryMutation.isPending ? 'Salvando...' : 'Salvar Vencimento'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
