@@ -75,7 +75,7 @@ export default function AdminUsers() {
     });
 
     const assignPlanMutation = useMutation({
-        mutationFn: (planId: number) => {
+        mutationFn: (planId: number | null) => {
             if (!selectedUser) throw new Error('No user selected');
             return api.assignAdminUserPlan(selectedUser.id, planId);
         },
@@ -98,7 +98,7 @@ export default function AdminUsers() {
 
     const handleOpenPlan = (user: AdminUser) => {
         setSelectedUser(user);
-        setSelectedPlanId(user.currentPlan ? user.currentPlan.id.toString() : '');
+        setSelectedPlanId(user.currentPlan ? user.currentPlan.id.toString() : 'none');
         setIsPlanModalOpen(true);
     };
 
@@ -113,7 +113,8 @@ export default function AdminUsers() {
 
     const submitPlan = () => {
         if (!selectedPlanId) return;
-        assignPlanMutation.mutate(parseInt(selectedPlanId));
+        const planId = selectedPlanId === 'none' ? null : parseInt(selectedPlanId);
+        assignPlanMutation.mutate(planId);
     };
 
 
@@ -274,6 +275,9 @@ export default function AdminUsers() {
                                     <SelectValue placeholder="Selecione um plano" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="none">
+                                        Nenhum plano (Gratuito)
+                                    </SelectItem>
                                     {plans?.map((plan: Plan) => (
                                         <SelectItem key={plan.id} value={plan.id.toString()}>
                                             {plan.name} - R$ {Number(plan.price).toFixed(2)}

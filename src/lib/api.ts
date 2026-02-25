@@ -636,7 +636,7 @@ class ApiService {
     });
   }
 
-  async assignAdminUserPlan(userId: number, planId: number): Promise<any> {
+  async assignAdminUserPlan(userId: number, planId: number | null): Promise<any> {
     return this.request<any>(`/admin/users/${userId}/plan`, {
       method: 'POST',
       body: JSON.stringify({ planId })
