@@ -154,14 +154,14 @@ export default function WebhookLogs() {
                             <div className="space-y-6">
                                 <div>
                                     <h4 className="text-sm font-semibold mb-2 text-primary border-b border-primary/20 pb-1">HEADERS</h4>
-                                    <pre className="text-xs font-mono text-muted-foreground">
+                                    <pre className="text-xs font-mono text-neutral-400 overflow-x-auto p-2 bg-black/40 rounded">
                                         {JSON.stringify(selectedLog?.headers, null, 2)}
                                     </pre>
                                 </div>
 
                                 <div>
                                     <h4 className="text-sm font-semibold mb-2 text-primary border-b border-primary/20 pb-1">PAYLOAD (BODY)</h4>
-                                    <pre className="text-xs font-mono text-green-400">
+                                    <pre className="text-xs font-mono text-neutral-400 overflow-x-auto p-2 bg-black/40 rounded">
                                         {JSON.stringify(selectedLog?.payload, null, 2)}
                                     </pre>
                                 </div>
