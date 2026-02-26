@@ -724,6 +724,10 @@ class ApiService {
     return this.get<any>(endpoint);
   }
 
+  async getContactSegmentationStats(): Promise<Record<string, number>> {
+    return this.get<Record<string, number>>('/contacts/segmentation-stats');
+  }
+
   async updateContact(id: number, data: UpdateContactData): Promise<Contact> {
     return this.request<Contact>(`/contacts/${id}`, {
       method: 'PATCH',

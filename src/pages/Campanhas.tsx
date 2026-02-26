@@ -174,7 +174,7 @@ export default function Campanhas() {
       const [contactsData, groupsData, statsData] = await Promise.all([
         api.getContacts(),
         api.getGroups(),
-        api.getSegmentationStats()
+        api.getContactSegmentationStats()
       ]);
       setContacts(contactsData);
       setAvailableGroups(groupsData);
