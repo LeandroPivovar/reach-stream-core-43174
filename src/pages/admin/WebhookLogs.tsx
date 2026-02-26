@@ -129,29 +129,29 @@ export default function WebhookLogs() {
                             </DialogTitle>
                         </DialogHeader>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-                            <div className="space-y-1">
-                                <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                                    <Hash className="h-3 w-3" /> ORIGEM
-                                </p>
-                                <p className="text-sm font-medium">{selectedLog?.source || 'Desconhecida'}</p>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                                    <Clock className="h-3 w-3" /> RECEBIDO EM
-                                </p>
-                                <p className="text-sm font-medium">{selectedLog && new Date(selectedLog.createdAt).toLocaleString()}</p>
-                            </div>
-                            <div className="space-y-1 md:col-span-2">
-                                <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                                    <Globe className="h-3 w-3" /> URL DE RECEBIMENTO
-                                </p>
-                                <p className="text-xs font-mono bg-muted p-2 rounded break-all">{selectedLog?.url}</p>
-                            </div>
-                        </div>
+                        <ScrollArea className="flex-1 mt-4 pr-4">
+                            <div className="space-y-6 pb-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                                            <Hash className="h-3 w-3" /> ORIGEM
+                                        </p>
+                                        <p className="text-sm font-medium">{selectedLog?.source || 'Desconhecida'}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                                            <Clock className="h-3 w-3" /> RECEBIDO EM
+                                        </p>
+                                        <p className="text-sm font-medium">{selectedLog && new Date(selectedLog.createdAt).toLocaleString()}</p>
+                                    </div>
+                                    <div className="space-y-1 md:col-span-2">
+                                        <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                                            <Globe className="h-3 w-3" /> URL DE RECEBIMENTO
+                                        </p>
+                                        <p className="text-xs font-mono bg-muted p-2 rounded break-all">{selectedLog?.url}</p>
+                                    </div>
+                                </div>
 
-                        <ScrollArea className="flex-1 p-0">
-                            <div className="space-y-6">
                                 <div>
                                     <h4 className="text-sm font-semibold mb-2 text-primary border-b border-primary/20 pb-1">HEADERS</h4>
                                     <pre className="text-xs font-mono text-black overflow-x-auto py-2">
