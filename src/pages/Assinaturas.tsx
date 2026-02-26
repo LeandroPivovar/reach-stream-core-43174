@@ -227,42 +227,103 @@ export default function Assinaturas() {
 
         {/* Usage Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">SMS Enviados (Mês)</p>
-                <p className="text-2xl font-bold">{(stats as any)?.smsSent?.toLocaleString() ?? '0'}</p>
-              </div>
-              <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-blue-500" />
-              </div>
-            </div>
-          </Card>
+          {/* SMS Card */}
+          {(() => {
+            const used = (stats as any)?.smsSent ?? 0;
+            const limit = (stats as any)?.smsLimit;
+            const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+            const barColor = pct >= 90 ? 'bg-destructive' : pct >= 70 ? 'bg-orange-500' : 'bg-blue-500';
+            return (
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">SMS Enviados (Mês)</p>
+                    <p className="text-2xl font-bold">
+                      {used.toLocaleString()}
+                      {limit != null && limit !== -1 && (
+                        <span className="text-base font-normal text-muted-foreground"> / {Number(limit).toLocaleString()}</span>
+                      )}
+                      {limit === -1 && <span className="text-base font-normal text-muted-foreground"> / ∞</span>}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-blue-500" />
+                  </div>
+                </div>
+                {limit != null && limit !== -1 && (
+                  <div className="w-full bg-muted rounded-full h-1.5">
+                    <div className={`${barColor} h-1.5 rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                  </div>
+                )}
+              </Card>
+            );
+          })()}
 
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Emails Enviados (Mês)</p>
-                <p className="text-2xl font-bold">{stats?.emailsSent?.toLocaleString() ?? '0'}</p>
-              </div>
-              <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-green-500" />
-              </div>
-            </div>
-          </Card>
+          {/* Emails Card */}
+          {(() => {
+            const used = (stats as any)?.emailsSent ?? 0;
+            const limit = (stats as any)?.emailsLimit;
+            const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+            const barColor = pct >= 90 ? 'bg-destructive' : pct >= 70 ? 'bg-orange-500' : 'bg-green-500';
+            return (
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Emails Enviados (Mês)</p>
+                    <p className="text-2xl font-bold">
+                      {used.toLocaleString()}
+                      {limit != null && limit !== -1 && (
+                        <span className="text-base font-normal text-muted-foreground"> / {Number(limit).toLocaleString()}</span>
+                      )}
+                      {limit === -1 && <span className="text-base font-normal text-muted-foreground"> / ∞</span>}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-green-500" />
+                  </div>
+                </div>
+                {limit != null && limit !== -1 && (
+                  <div className="w-full bg-muted rounded-full h-1.5">
+                    <div className={`${barColor} h-1.5 rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                  </div>
+                )}
+              </Card>
+            );
+          })()}
 
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Campanhas Criadas (Mês)</p>
-                <p className="text-2xl font-bold">{(stats as any)?.campaignsCreated?.toLocaleString() ?? '0'}</p>
-              </div>
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-          </Card>
+          {/* Campanhas Card */}
+          {(() => {
+            const used = (stats as any)?.campaignsCreated ?? 0;
+            const limit = (stats as any)?.campaignsLimit;
+            const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+            const barColor = pct >= 90 ? 'bg-destructive' : pct >= 70 ? 'bg-orange-500' : 'bg-primary';
+            return (
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Campanhas Criadas (Mês)</p>
+                    <p className="text-2xl font-bold">
+                      {used.toLocaleString()}
+                      {limit != null && limit !== -1 && (
+                        <span className="text-base font-normal text-muted-foreground"> / {Number(limit).toLocaleString()}</span>
+                      )}
+                      {limit === -1 && <span className="text-base font-normal text-muted-foreground"> / ∞</span>}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-primary" />
+                  </div>
+                </div>
+                {limit != null && limit !== -1 && (
+                  <div className="w-full bg-muted rounded-full h-1.5">
+                    <div className={`${barColor} h-1.5 rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                  </div>
+                )}
+              </Card>
+            );
+          })()}
         </div>
+
 
         {/* Transaction History */}
         <Card className="p-6">
