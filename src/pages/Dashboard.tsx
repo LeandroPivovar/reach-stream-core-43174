@@ -199,8 +199,11 @@ export default function Dashboard() {
             title: 'Respostas',
             value: isLoadingStats ? '...' : dashboardStats?.respostas?.toLocaleString() || '0',
             icon: MessageCircle,
-            trend: { value: 0, isPositive: true },
-            description: 'Taxa de resposta -',
+            trend: {
+                value: dashboardStats?.trends?.respostas || 0,
+                isPositive: (dashboardStats?.trends?.respostas || 0) >= 0
+            },
+            description: isLoadingStats ? '...' : `Taxa de ${(dashboardStats?.responseRate || 0).toFixed(1)}%`,
             colorClass: 'bg-green-500/20 text-green-900 dark:text-green-100 border-green-500/30'
         },
         {
@@ -421,12 +424,12 @@ export default function Dashboard() {
                 )}
 
                 {/* Alerta de Clientes Inativos */}
-                {hasIntegrations && (
+                {hasIntegrations && segmentationStats?.inactive > 0 && (
                     <Alert className="border-orange-500/50 bg-orange-500/10">
                         <AlertCircle className="h-4 w-4 text-orange-500" />
                         <AlertTitle className="text-orange-500 font-semibold">Atenção: Clientes Inativos</AlertTitle>
                         <AlertDescription className="text-muted-foreground">
-                            Você tem <span className="font-bold text-foreground">1.205</span> clientes inativos (sem compras há mais de 90 dias).
+                            Você tem <span className="font-bold text-foreground">{segmentationStats.inactive.toLocaleString()}</span> clientes inativos (sem compras há mais de 90 dias).
                             Considere criar uma campanha de reengajamento para recuperar esses clientes.
                         </AlertDescription>
                     </Alert>
