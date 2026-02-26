@@ -23,7 +23,10 @@ import {
     ShoppingCart,
     CheckCircle,
     Clock,
-    Zap
+    Zap,
+    Filter,
+    Package,
+    Target
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import {
@@ -47,25 +50,55 @@ export default function Dashboard() {
     const [segmentationStats, setSegmentationStats] = useState<any>(null);
     const [dashboardStats, setDashboardStats] = useState<any>(null);
     const [campaignStats, setCampaignStats] = useState<any>({ chartData: [], recentCampaigns: [] });
+    const [heatmapData, setHeatmapData] = useState<any[]>([]);
     const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+    // Filters
+    const [selectedCampaign, setSelectedCampaign] = useState<string>('all');
+    const [selectedProduct, setSelectedProduct] = useState<string>('all');
+    const [campaigns, setCampaigns] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchFiltersData = async () => {
+            try {
+                const [camps, prods] = await Promise.all([
+                    api.getCampaigns(),
+                    api.getProducts()
+                ]);
+                setCampaigns(camps);
+                setProducts(prods);
+            } catch (error) {
+                console.error('Error fetching filters data:', error);
+            }
+        };
+        fetchFiltersData();
+    }, []);
 
     React.useEffect(() => {
         const fetchAdditionalStats = async () => {
             try {
-                const [funnelData, segData, campData] = await Promise.all([
-                    api.get<any[]>('/sales/dashboard/funnel?period=30'),
-                    api.get<any>('/sales/dashboard/segmentation'),
-                    api.getCampaignDashboardPerformance(chartPeriod)
+                const filters = {
+                    campaignId: selectedCampaign !== 'all' ? selectedCampaign : undefined,
+                    productId: selectedProduct !== 'all' ? selectedProduct : undefined,
+                };
+
+                const [funnelData, segData, campData, heatData] = await Promise.all([
+                    api.getFunnelData(30),
+                    api.getSegmentationStats(),
+                    api.getCampaignDashboardPerformance(chartPeriod),
+                    api.getDashboardHeatmap(filters)
                 ]);
                 setFunnelStats(funnelData);
                 setSegmentationStats(segData);
                 setCampaignStats(campData);
+                setHeatmapData(heatData);
             } catch (error) {
                 console.error('Error fetching dashboard extra stats:', error);
             }
         };
         fetchAdditionalStats();
-    }, [chartPeriod]);
+    }, [chartPeriod, selectedCampaign, selectedProduct]);
 
     // Dados de segmentação automática quando há integrações
     const leadSegmentation = [
@@ -95,16 +128,16 @@ export default function Dashboard() {
         }
     ];
 
-    // Dados simulados de segmentos para o mapa de calor
-    const customerSegments = [
-        { name: 'Novos Leads', leads: 523, engaged: 312, cart: 145, purchase: 67, loyal: 23 },
-        { name: 'Engajados', leads: 198, engaged: 567, cart: 289, purchase: 134, loyal: 56 },
-        { name: 'Carrinho Ativo', leads: 45, engaged: 123, cart: 456, purchase: 234, loyal: 89 },
-        { name: 'Compradores', leads: 23, engaged: 89, cart: 167, purchase: 689, loyal: 312 },
-        { name: 'Clientes Fiéis', leads: 12, engaged: 34, cart: 78, purchase: 245, loyal: 823 },
-        { name: 'Inativos 30d', leads: 234, engaged: 156, cart: 89, purchase: 45, loyal: 12 },
-        { name: 'Inativos 60d', leads: 456, engaged: 234, cart: 112, purchase: 34, loyal: 8 },
-        { name: 'Recuperados', leads: 67, engaged: 145, cart: 234, purchase: 178, loyal: 98 },
+    // Dados do mapa de calor vindos do backend
+    const customerSegments = heatmapData.length > 0 ? heatmapData : [
+        { name: 'Novos Leads', leads: 0, engaged: 0, cart: 0, purchase: 0, loyal: 0 },
+        { name: 'Engajados', leads: 0, engaged: 0, cart: 0, purchase: 0, loyal: 0 },
+        { name: 'Carrinho Ativo', leads: 0, engaged: 0, cart: 0, purchase: 0, loyal: 0 },
+        { name: 'Compradores', leads: 0, engaged: 0, cart: 0, purchase: 0, loyal: 0 },
+        { name: 'Clientes Fiéis', leads: 0, engaged: 0, cart: 0, purchase: 0, loyal: 0 },
+        { name: 'Inativos 30d', leads: 0, engaged: 0, cart: 0, purchase: 0, loyal: 0 },
+        { name: 'Inativos 60d', leads: 0, engaged: 0, cart: 0, purchase: 0, loyal: 0 },
+        { name: 'Recuperados', leads: 0, engaged: 0, cart: 0, purchase: 0, loyal: 0 },
     ];
 
 
@@ -215,6 +248,51 @@ export default function Dashboard() {
             subtitle="Acompanhe o desempenho das suas campanhas"
         >
             <div className="space-y-6">
+                {/* Filtros GLOBAIS do Dashboard */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-1">
+                        <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
+                            <SelectTrigger className="w-full bg-card border-border">
+                                <Target className="w-4 h-4 mr-2 text-primary" />
+                                <SelectValue placeholder="Todas as Campanhas" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todas as Campanhas</SelectItem>
+                                {campaigns.map((camp: any) => (
+                                    <SelectItem key={camp.id} value={camp.id.toString()}>
+                                        {camp.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex-1">
+                        <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+                            <SelectTrigger className="w-full bg-card border-border">
+                                <Package className="w-4 h-4 mr-2 text-primary" />
+                                <SelectValue placeholder="Todos os Produtos" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos os Produtos</SelectItem>
+                                {products.map((prod: any) => (
+                                    <SelectItem key={prod.id} value={prod.id.toString()}>
+                                        {prod.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <Button variant="outline" className="md:w-auto" onClick={() => {
+                        setSelectedCampaign('all');
+                        setSelectedProduct('all');
+                    }}>
+                        <Filter className="w-4 h-4 mr-2" />
+                        Limpar Filtros
+                    </Button>
+                </div>
+
                 {/* Stats Cards - Primeira Linha */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     {stats.map((stat, index) => (

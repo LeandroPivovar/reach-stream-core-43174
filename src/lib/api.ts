@@ -115,6 +115,15 @@ export interface FunnelStage {
   description?: string;
 }
 
+export interface HeatmapSegment {
+  name: string;
+  leads: number;
+  engaged: number;
+  cart: number;
+  purchase: number;
+  loyal: number;
+}
+
 export interface Contact {
   id: number;
   name: string;
@@ -671,6 +680,17 @@ class ApiService {
     return this.request<FunnelStage[]>(`/sales/dashboard/funnel?period=${period}`, {
       method: 'GET',
     });
+  }
+
+  async getDashboardHeatmap(filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<HeatmapSegment[]> {
+    const params = new URLSearchParams();
+    if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters.productId) params.append('productId', filters.productId.toString());
+
+    const query = params.toString();
+    const endpoint = `/sales/dashboard/heatmap${query ? `?${query}` : ''}`;
+
+    return this.get<HeatmapSegment[]>(endpoint);
   }
 
   // Contacts
