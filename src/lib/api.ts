@@ -1182,6 +1182,15 @@ class ApiService {
   async validateReferralCode(code: string): Promise<{ referrerName: string; isValid: boolean }> {
     return this.get<{ referrerName: string; isValid: boolean }>(`/referrals/validate/${code}`);
   }
+
+  // Webhooks
+  async getWebhookLogs(): Promise<any[]> {
+    return this.get<any[]>('/webhooks/logs');
+  }
+
+  async getWebhookLog(id: number): Promise<any> {
+    return this.get<any>(`/webhooks/logs/${id}`);
+  }
 }
 
 export interface PixelMetrics {

@@ -26,6 +26,7 @@ import Produtos from "./pages/Produtos";
 import NotFound from "./pages/NotFound";
 import ShopifyCallback from "./pages/integrations/ShopifyCallback";
 import AdminUsers from "./pages/admin/AdminUsers";
+import WebhookLogs from "./pages/admin/WebhookLogs";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
 
@@ -70,6 +71,7 @@ const App = () => (
 
             {/* Rotas Administrativas Livres */}
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/webhooks" element={<WebhookLogs />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

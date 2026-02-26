@@ -16,6 +16,7 @@ import {
   LogOut,
   DollarSign,
   Package,
+  Terminal,
 } from 'lucide-react';
 
 const menuItems = [
@@ -30,6 +31,7 @@ const menuItems = [
   { title: 'Assinaturas', href: '/assinaturas', icon: CreditCard },
   { title: 'Indicações', href: '/indicacoes', icon: Share2 },
   { title: 'Minha Conta', href: '/conta', icon: User },
+  { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
 ];
 
 export function Sidebar() {
@@ -47,9 +49,9 @@ export function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-white/20">
         <div className="flex items-center justify-center">
-          <img 
-            src={logoNucleocrm} 
-            alt="Núcleo CRM" 
+          <img
+            src={logoNucleocrm}
+            alt="Núcleo CRM"
             className="h-5 w-auto"
           />
         </div>
@@ -60,7 +62,7 @@ export function Sidebar() {
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href;
-          
+
           return (
             <NavLink
               key={item.href}
@@ -94,8 +96,8 @@ export function Sidebar() {
             </p>
           </div>
         </div>
-        
-        <button 
+
+        <button
           onClick={handleLogout}
           className="w-full flex items-center space-x-3 px-3 py-2 mt-2 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
         >
