@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Terminal, Eye, Clock, Hash, Globe } from 'lucide-react';
 import { api } from '@/lib/api';
-import { Layout } from '@/components/layout/Layout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 
 import {
     Table,
@@ -39,30 +39,20 @@ export default function WebhookLogs() {
 
     if (isLoading) {
         return (
-            <Layout title="Logs de Webhooks">
+            <AdminLayout title="Logs de Webhooks">
                 <div className="flex justify-center items-center h-full min-h-[400px]">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-            </Layout>
+            </AdminLayout>
         );
     }
 
     return (
-        <Layout
+        <AdminLayout
             title="Logs de Webhooks"
             subtitle="Visualize todos os payloads recebidos via webhook"
         >
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-3xl font-bold tracking-tight text-white">Administração de Webhooks</h2>
-                        <p className="text-muted-foreground mt-2">
-                            Endpoint para envio: <code className="bg-muted px-2 py-1 rounded text-primary text-xs">POST /api/webhooks/receive/[source]</code>
-                        </p>
-                    </div>
-                    <Terminal className="h-10 w-10 text-muted-foreground opacity-50" />
-                </div>
-
                 <div className="bg-card rounded-xl border border-border overflow-hidden">
                     <Table>
                         <TableHeader>
@@ -182,6 +172,6 @@ export default function WebhookLogs() {
                     </DialogContent>
                 </Dialog>
             </div>
-        </Layout>
+        </AdminLayout>
     );
 }

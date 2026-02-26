@@ -17,6 +17,8 @@ import {
   DollarSign,
   Package,
   Terminal,
+  Settings,
+  ShieldCheck,
 } from 'lucide-react';
 
 const menuItems = [
@@ -31,7 +33,7 @@ const menuItems = [
   { title: 'Assinaturas', href: '/assinaturas', icon: CreditCard },
   { title: 'Indicações', href: '/indicacoes', icon: Share2 },
   { title: 'Minha Conta', href: '/conta', icon: User },
-  { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
+  { title: 'Administração', href: '/admin', icon: ShieldCheck },
 ];
 
 export function Sidebar() {

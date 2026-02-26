@@ -25,8 +25,10 @@ import MinhaConta from "./pages/MinhaConta";
 import Produtos from "./pages/Produtos";
 import NotFound from "./pages/NotFound";
 import ShopifyCallback from "./pages/integrations/ShopifyCallback";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import WebhookLogs from "./pages/admin/WebhookLogs";
+import AdminSettings from "./pages/admin/AdminSettings";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
 
@@ -69,9 +71,11 @@ const App = () => (
             <Route path="/indicacoes" element={<ProtectedRoute><Indicacoes /></ProtectedRoute>} />
             <Route path="/conta" element={<ProtectedRoute><MinhaConta /></ProtectedRoute>} />
 
-            {/* Rotas Administrativas Livres */}
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/webhooks" element={<WebhookLogs />} />
+            {/* Rotas Administrativas */}
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+            <Route path="/admin/webhooks" element={<ProtectedRoute><WebhookLogs /></ProtectedRoute>} />
+            <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

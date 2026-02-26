@@ -379,6 +379,15 @@ export interface Pixel {
   updatedAt: string;
 }
 
+export interface SystemSetting {
+  id: number;
+  key: string;
+  value: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 class ApiService {
   private getAuthToken(): string | null {
     return localStorage.getItem('token');
@@ -656,7 +665,14 @@ class ApiService {
   }
 
   // --- Checkout Flow ---
-  async checkoutPlan(data: { planId: number, document: string, address: string, phone: string, name: string }): Promise<any> {
+  async checkoutPlan(data: {
+    planId: number,
+    document: string,
+    address: string,
+    phone: string,
+    name: string,
+    billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX'
+  }): Promise<any> {
     return this.request<any>('/subscriptions/checkout', {
       method: 'POST',
       body: JSON.stringify(data)
@@ -671,6 +687,25 @@ class ApiService {
     return this.request<any>(`/admin/users/${userId}/subscription-expiry`, {
       method: 'PATCH',
       body: JSON.stringify({ expiryDate })
+    });
+  }
+
+  // --- Admin Settings ---
+  async getSystemSettings(): Promise<SystemSetting[]> {
+    return this.get<SystemSetting[]>('/admin/settings');
+  }
+
+  async updateSystemSettings(key: string, value: string): Promise<any> {
+    return this.request<any>(`/system-settings/${key}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ value })
+    });
+  }
+
+  async updateSystemSettingsBulk(settings: { key: string, value: string }[]): Promise<any> {
+    return this.request<any>('/admin/settings/bulk', {
+      method: 'PATCH',
+      body: JSON.stringify(settings)
     });
   }
 

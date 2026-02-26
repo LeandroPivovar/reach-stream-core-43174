@@ -28,11 +28,14 @@ export default function Checkout() {
         document: '',
         address: '',
         phone: user?.phone || '',
+        billingType: 'CREDIT_CARD', // 'BOLETO', 'CREDIT_CARD', 'PIX'
         cardNumber: '',
         cardName: '',
         cardExpiry: '',
         cardCvc: '',
     });
+
+    const [asaasResult, setAsaasResult] = useState<{ invoiceUrl: string } | null>(null);
 
     useEffect(() => {
         const fetchPlan = async () => {
@@ -65,22 +68,31 @@ export default function Checkout() {
     };
 
     const handleConfirmCheckout = async () => {
-        if (!formData.cardNumber || !formData.cardName || !formData.cardExpiry || !formData.cardCvc) {
-            return toast({ title: 'Aviso', description: 'Preencha os dados do cartão.', variant: 'destructive' });
+        if (formData.billingType === 'CREDIT_CARD') {
+            if (!formData.cardNumber || !formData.cardName || !formData.cardExpiry || !formData.cardCvc) {
+                return toast({ title: 'Aviso', description: 'Preencha os dados do cartão.', variant: 'destructive' });
+            }
         }
 
         setIsSubmitting(true);
         try {
-            await api.checkoutPlan({
+            const result = await api.checkoutPlan({
                 planId: parseInt(planId as string),
                 name: formData.name,
                 document: formData.document,
                 address: formData.address,
-                phone: formData.phone
+                phone: formData.phone,
+                billingType: formData.billingType as any
             });
-            setStep(4);
-        } catch (error) {
-            toast({ title: 'Aviso', description: 'Erro ao processar assinatura', variant: 'destructive' });
+
+            if (result.asaas?.invoiceUrl) {
+                setAsaasResult(result.asaas);
+                setStep(4);
+            } else {
+                setStep(4);
+            }
+        } catch (error: any) {
+            toast({ title: 'Erro', description: error.message || 'Erro ao processar assinatura', variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -171,7 +183,7 @@ export default function Checkout() {
 
                         {step === 2 && (
                             <Card className="p-6">
-                                <h3 className="text-xl font-bold mb-6">Confirmação do Plano</h3>
+                                <h3 className="text-xl font-bold mb-6">Confirmação de Plano e Pagamento</h3>
                                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 mb-6">
                                     <h4 className="text-2xl font-bold text-primary mb-2">{plan.name}</h4>
                                     <div className="flex items-end space-x-2 mb-4">
@@ -179,19 +191,40 @@ export default function Checkout() {
                                         <span className="text-muted-foreground pb-1">/{plan.interval === 'monthly' ? 'mês' : 'ano'}</span>
                                     </div>
                                     <hr className="my-4 border-primary/10" />
-                                    <ul className="space-y-3">
-                                        {Array.isArray(plan.features) && plan.features.map((feature, i) => (
-                                            <li key={i} className="flex items-center space-x-3">
-                                                <CheckCircle2 className="w-5 h-5 text-primary" />
-                                                <span className="text-sm font-medium">{feature}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                    <div className="space-y-4">
+                                        <Label className="text-sm font-semibold">Escolha a Forma de Pagamento:</Label>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <Button
+                                                variant={formData.billingType === 'CREDIT_CARD' ? 'default' : 'outline'}
+                                                className="flex flex-col h-auto py-4 gap-2"
+                                                onClick={() => setFormData({ ...formData, billingType: 'CREDIT_CARD' })}
+                                            >
+                                                <CreditCard className="w-5 h-5" />
+                                                <span className="text-[10px]">Cartão</span>
+                                            </Button>
+                                            <Button
+                                                variant={formData.billingType === 'PIX' ? 'default' : 'outline'}
+                                                className="flex flex-col h-auto py-4 gap-2"
+                                                onClick={() => setFormData({ ...formData, billingType: 'PIX' })}
+                                            >
+                                                <div className="font-bold text-lg">PIX</div>
+                                                <span className="text-[10px]">Instantâneo</span>
+                                            </Button>
+                                            <Button
+                                                variant={formData.billingType === 'BOLETO' ? 'default' : 'outline'}
+                                                className="flex flex-col h-auto py-4 gap-2"
+                                                onClick={() => setFormData({ ...formData, billingType: 'BOLETO' })}
+                                            >
+                                                <div className="font-bold text-lg">Boleto</div>
+                                                <span className="text-[10px]">Venc. 1 dia</span>
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="flex space-x-3">
                                     <Button variant="outline" className="w-1/3" onClick={() => setStep(1)}>Voltar</Button>
-                                    <Button className="w-2/3" onClick={handleNextStep}>
-                                        Ir para Pagamento <ChevronRight className="w-4 h-4 ml-2" />
+                                    <Button className="w-2/3" onClick={formData.billingType === 'CREDIT_CARD' ? handleNextStep : handleConfirmCheckout}>
+                                        {formData.billingType === 'CREDIT_CARD' ? 'Dados do Cartão' : 'Gerar Cobrança'} <ChevronRight className="w-4 h-4 ml-2" />
                                     </Button>
                                 </div>
                             </Card>
@@ -273,16 +306,27 @@ export default function Checkout() {
                                 <CheckCircle2 className="w-14 h-14 text-green-500" />
                             </div>
                             <div>
-                                <h2 className="text-3xl font-bold mb-3">Pagamento Aprovado!</h2>
-                                <p className="text-muted-foreground text-lg">Parabéns! Sua assinatura do plano <b>{plan.name}</b> está ativa.</p>
+                                <h2 className="text-3xl font-bold mb-3">{asaasResult ? 'Cobrança Gerada!' : 'Pagamento Aprovado!'}</h2>
+                                <p className="text-muted-foreground text-lg">
+                                    {asaasResult
+                                        ? `Sua fatura foi gerada no Asaas. Acesse o link abaixo para concluir o pagamento via ${formData.billingType}.`
+                                        : `Parabéns! Sua assinatura do plano ${plan.name} está ativa.`}
+                                </p>
                             </div>
-                            <Button className="px-10 py-6 text-lg" onClick={() => navigate('/')}>
-                                Acessar o Dashboard
+
+                            {asaasResult && (
+                                <Button className="w-full py-6 text-lg bg-blue-600 hover:bg-blue-700" onClick={() => window.open(asaasResult.invoiceUrl, '_blank')}>
+                                    Abrir Fatura / Pagar Agora
+                                </Button>
+                            )}
+
+                            <Button variant={asaasResult ? "outline" : "default"} className="w-full py-6 text-lg" onClick={() => navigate('/')}>
+                                Ir para o Dashboard
                             </Button>
                         </Card>
                     </div>
                 )}
             </div>
-        </Layout>
+        </Layout >
     );
 }

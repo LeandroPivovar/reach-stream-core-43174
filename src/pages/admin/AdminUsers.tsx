@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserCog, MoreVertical, Edit, ShieldAlert, CheckCircle, XCircle, CalendarClock } from 'lucide-react';
 import { api, AdminUser, Plan } from '@/lib/api';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 
 import {
     Table,
@@ -151,26 +152,11 @@ export default function AdminUsers() {
     };
 
 
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center h-full min-h-[400px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
-
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Administração de Usuários</h2>
-                    <p className="text-muted-foreground mt-2">
-                        Gerencie os usuários cadastrados na plataforma e seus respectivos planos.
-                    </p>
-                </div>
-                <UserCog className="h-10 w-10 text-muted-foreground opacity-50" />
-            </div>
-
+        <AdminLayout
+            title="Administração de Usuários"
+            subtitle="Gerencie os usuários cadastrados na plataforma e seus respectivos planos."
+        >
             <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <Table>
                     <TableHeader>
@@ -364,6 +350,6 @@ export default function AdminUsers() {
                 </DialogContent>
             </Dialog>
 
-        </div>
+        </AdminLayout>
     );
 }
