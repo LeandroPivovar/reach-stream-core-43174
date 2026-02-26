@@ -27,12 +27,16 @@ export interface JourneyStage {
   percentage: number;
 }
 
-
 interface CustomerJourneyProps {
   stages?: JourneyStage[];
+  segmentationStats?: {
+    conversionRate: number;
+    loyaltyRate: number;
+    cartAbandonmentRate: number;
+  };
 }
 
-export function CustomerJourney({ stages }: CustomerJourneyProps) {
+export function CustomerJourney({ stages, segmentationStats }: CustomerJourneyProps) {
   const [selectedCampaign, setSelectedCampaign] = useState('all');
 
   const defaultStages = [
@@ -142,6 +146,30 @@ export function CustomerJourney({ stages }: CustomerJourneyProps) {
         </div>
       </div>
 
+      {/* Insights */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <Card className="p-4 bg-muted/30">
+          <p className="text-sm font-medium">Taxa de Conversão</p>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+            {segmentationStats?.conversionRate ?? 0}%
+          </p>
+          <p className="text-xs text-muted-foreground">Lead → Comprador</p>
+        </Card>
+        <Card className="p-4 bg-muted/30">
+          <p className="text-sm font-medium">Taxa de Fidelização</p>
+          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            {segmentationStats?.loyaltyRate ?? 0}%
+          </p>
+          <p className="text-xs text-muted-foreground">Comprador → Fiel</p>
+        </Card>
+        <Card className="p-4 bg-muted/30">
+          <p className="text-sm font-medium">Abandono de Carrinho</p>
+          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+            {segmentationStats?.cartAbandonmentRate ?? 0}%
+          </p>
+          <p className="text-xs text-muted-foreground">Carrinho → Não comprou</p>
+        </Card>
+      </div>
     </div>
   );
 }

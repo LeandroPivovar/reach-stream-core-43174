@@ -107,32 +107,6 @@ export default function Dashboard() {
     }, [chartPeriod, selectedCampaign, selectedProduct]);
 
     // Novos cards de Taxas baseados na imagem do usuário
-    const conversionStats = [
-        {
-            title: 'Taxa de Conversão',
-            value: isLoadingStats ? '...' : `${segmentationStats?.conversionRate || 0}%`,
-            description: 'Lead → Comprador',
-            icon: TrendingUp,
-            trend: { value: 0, isPositive: true },
-            colorClass: 'bg-green-500/20 text-green-900 dark:text-green-100 border-green-500/30'
-        },
-        {
-            title: 'Taxa de Fidelização',
-            value: isLoadingStats ? '...' : `${segmentationStats?.loyaltyRate || 0}%`,
-            description: 'Comprador → Fiel',
-            icon: CheckCircle,
-            trend: { value: 0, isPositive: true },
-            colorClass: 'bg-purple-500/20 text-purple-900 dark:text-purple-100 border-purple-500/30'
-        },
-        {
-            title: 'Abandono de Carrinho',
-            value: isLoadingStats ? '...' : `${segmentationStats?.abandonmentRate || 0}%`,
-            description: 'Carrinho → Não comprou',
-            icon: ShoppingCart,
-            trend: { value: 0, isPositive: false },
-            colorClass: 'bg-orange-500/20 text-orange-900 dark:text-orange-100 border-orange-500/30'
-        }
-    ];
 
     // Dados do mapa de calor vindos do backend
     const customerSegments = heatmapData.length > 0 ? heatmapData : [
@@ -382,35 +356,11 @@ export default function Dashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Taxas de Conversão e Fidelização - Terceira Linha */}
-                {hasIntegrations ? (
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {conversionStats.map((segment, index) => (
-                                <StatsCard key={index} {...segment} />
-                            ))}
-                        </div>
-                    </>
-                ) : (
-                    <Alert className="border-primary/50 bg-primary/10">
-                        <Zap className="h-4 w-4 text-primary" />
-                        <AlertTitle className="text-primary font-semibold">Ative Integrações para Segmentação Automática</AlertTitle>
-                        <AlertDescription className="text-muted-foreground">
-                            Conecte suas integrações (e-commerce, CRM) para que a plataforma faça a segmentação automática dos seus leads
-                            (abandono de carrinho, compraram recentemente, sem compras há 60 dias) e maximize seus resultados.
-                            <div className="mt-3">
-                                <Button size="sm" className="mt-2">
-                                    Configurar Integrações
-                                </Button>
-                            </div>
-                        </AlertDescription>
-                    </Alert>
-                )}
 
                 {/* Jornada do Cliente */}
                 {hasIntegrations && (
                     <Card className="p-6">
-                        <CustomerJourney stages={funnelStats} />
+                        <CustomerJourney stages={funnelStats} segmentationStats={segmentationStats} />
                     </Card>
                 )}
 
