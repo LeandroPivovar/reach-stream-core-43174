@@ -158,7 +158,7 @@ export default function WebhookLogs() {
                                             <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                                             HEADERS
                                         </h4>
-                                        <pre className="text-xs font-mono text-black overflow-x-auto py-2 leading-relaxed">
+                                        <pre className="text-xs font-mono text-black overflow-auto max-h-[500px] py-2 leading-relaxed pr-2">
                                             {JSON.stringify(selectedLog?.headers, null, 2)}
                                         </pre>
                                     </div>
@@ -168,7 +168,7 @@ export default function WebhookLogs() {
                                             <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                                             PAYLOAD (BODY)
                                         </h4>
-                                        <pre className="text-xs font-mono text-black overflow-x-auto py-2 leading-relaxed">
+                                        <pre className="text-xs font-mono text-black overflow-auto max-h-[500px] py-2 leading-relaxed pr-2">
                                             {JSON.stringify(selectedLog?.payload, null, 2)}
                                         </pre>
                                     </div>
