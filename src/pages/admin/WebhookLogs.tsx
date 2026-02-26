@@ -121,7 +121,7 @@ export default function WebhookLogs() {
 
                 {/* Detail Modal */}
                 <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-                    <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+                    <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <Terminal className="h-5 w-5 text-primary" />
@@ -130,8 +130,8 @@ export default function WebhookLogs() {
                         </DialogHeader>
 
                         <ScrollArea className="flex-1 mt-4 pr-4">
-                            <div className="space-y-6 pb-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-8 pb-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-lg border border-border">
                                     <div className="space-y-1">
                                         <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                                             <Hash className="h-3 w-3" /> ORIGEM
@@ -148,22 +148,30 @@ export default function WebhookLogs() {
                                         <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                                             <Globe className="h-3 w-3" /> URL DE RECEBIMENTO
                                         </p>
-                                        <p className="text-xs font-mono bg-muted p-2 rounded break-all">{selectedLog?.url}</p>
+                                        <p className="text-xs font-mono bg-white p-2 rounded border border-border break-all">{selectedLog?.url}</p>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <h4 className="text-sm font-semibold mb-2 text-primary border-b border-primary/20 pb-1">HEADERS</h4>
-                                    <pre className="text-xs font-mono text-black overflow-x-auto py-2">
-                                        {JSON.stringify(selectedLog?.headers, null, 2)}
-                                    </pre>
-                                </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    <div className="space-y-2">
+                                        <h4 className="text-sm font-semibold text-primary border-b border-primary/20 pb-2 flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                            HEADERS
+                                        </h4>
+                                        <pre className="text-xs font-mono text-black overflow-x-auto py-2 leading-relaxed">
+                                            {JSON.stringify(selectedLog?.headers, null, 2)}
+                                        </pre>
+                                    </div>
 
-                                <div>
-                                    <h4 className="text-sm font-semibold mb-2 text-primary border-b border-primary/20 pb-1">PAYLOAD (BODY)</h4>
-                                    <pre className="text-xs font-mono text-black overflow-x-auto py-2">
-                                        {JSON.stringify(selectedLog?.payload, null, 2)}
-                                    </pre>
+                                    <div className="space-y-2">
+                                        <h4 className="text-sm font-semibold text-primary border-b border-primary/20 pb-2 flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                            PAYLOAD (BODY)
+                                        </h4>
+                                        <pre className="text-xs font-mono text-black overflow-x-auto py-2 leading-relaxed">
+                                            {JSON.stringify(selectedLog?.payload, null, 2)}
+                                        </pre>
+                                    </div>
                                 </div>
                             </div>
                         </ScrollArea>
