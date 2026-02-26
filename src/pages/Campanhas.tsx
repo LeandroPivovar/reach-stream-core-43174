@@ -242,9 +242,34 @@ export default function Campanhas() {
 
   const getFilteredContacts = () => {
     if (newCampaign.segmentations.length === 0) return [];
-    // Simplificado para demonstração: se houver segmentação, mostra contatos reais
-    // Em uma app real, a filtragem complexa seria feita no backend
-    return contacts;
+
+    return contacts.filter(contact => {
+      // Verificar se o contato tem alguma das segmentações selecionadas fixas
+      const hasSegmentation = contact.contactSegmentations?.some(cs =>
+        newCampaign.segmentations.includes(cs.segmentationId)
+      );
+      if (hasSegmentation) return true;
+
+      // Lógica dinâmica para segmentações específicas se não estiverem marcadas explicitamente
+      for (const segId of newCampaign.segmentations) {
+        // Estado
+        if (segId === 'by_state' || segId.startsWith('state_')) {
+          if (contact.state) return true;
+        }
+
+        // Leads
+        if (segId === 'lead_captured') {
+          if (contact.status?.toLowerCase() === 'lead') return true;
+        }
+
+        // Clientes (qualquer um que tenha comprado ou status customer)
+        if (segId === 'by_purchase_count' || segId === 'inactive_customers' || segId === 'high_ticket') {
+          if (contact.status?.toLowerCase() === 'customer' || contact.status?.toLowerCase() === 'cliente') return true;
+        }
+      }
+
+      return false;
+    });
   };
 
   const filteredContacts = getFilteredContacts();

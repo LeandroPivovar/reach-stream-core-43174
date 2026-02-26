@@ -30,7 +30,7 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
     { id: 'no_purchase_x_days', label: 'Clientes que não compram há X dias', description: 'Inativos por período específico', affectedCount: stats['no_purchase_x_days'] || 0 },
     { id: 'gender_male', label: 'Sexo: Masculino', description: 'Clientes do sexo masculino', affectedCount: stats['gender_male'] || 0 },
     { id: 'gender_female', label: 'Sexo: Feminino', description: 'Clientes do sexo feminino', affectedCount: stats['gender_female'] || 0 },
-    { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: stats['total'] || 0 },
+    { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: Object.keys(stats).filter(k => k.startsWith('state_')).reduce((acc, k) => acc + stats[k], 0) || 0 },
   ];
 
   const toggleSegment = (segmentId: string) => {
@@ -54,8 +54,8 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
           >
             <div className="flex items-start gap-3">
               <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 mt-0.5 ${isSelected
-                  ? 'bg-primary border-primary'
-                  : 'border-input'
+                ? 'bg-primary border-primary'
+                : 'border-input'
                 }`}>
                 {isSelected && (
                   <Check className="w-3 h-3 text-primary-foreground" />
