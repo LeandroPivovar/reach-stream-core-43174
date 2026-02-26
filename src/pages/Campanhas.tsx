@@ -701,14 +701,16 @@ export default function Campanhas() {
                                 Reativar Campanha
                               </Button>
                             ) : null}
-                            <Button
-                              variant="ghost"
-                              className="justify-start text-destructive"
-                              onClick={() => handleDeleteCampaign(campaign.id)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Excluir Campanha
-                            </Button>
+                            {campaign.status !== 'finalizada' && (
+                              <Button
+                                variant="ghost"
+                                className="justify-start text-destructive"
+                                onClick={() => handleDeleteCampaign(campaign.id)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Excluir Campanha
+                              </Button>
+                            )}
                           </div>
                         </DialogContent>
                       </Dialog>

@@ -291,6 +291,38 @@ export default function Assinaturas() {
             );
           })()}
 
+          {/* WhatsApp Card */}
+          {(() => {
+            const used = (stats as any)?.whatsappSent ?? 0;
+            const limit = (stats as any)?.whatsappLimit;
+            const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+            const barColor = pct >= 90 ? 'bg-destructive' : pct >= 70 ? 'bg-orange-500' : 'bg-green-600';
+            return (
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">WhatsApp Enviados (Mês)</p>
+                    <p className="text-2xl font-bold">
+                      {used.toLocaleString()}
+                      {limit != null && limit !== -1 && limit !== 0 && (
+                        <span className="text-base font-normal text-muted-foreground"> / {Number(limit).toLocaleString()}</span>
+                      )}
+                      {(limit === -1 || limit === true) && <span className="text-base font-normal text-muted-foreground"> / ∞</span>}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 bg-green-600/10 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  </div>
+                </div>
+                {limit != null && limit !== -1 && limit !== 0 && (
+                  <div className="w-full bg-muted rounded-full h-1.5">
+                    <div className={`${barColor} h-1.5 rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                  </div>
+                )}
+              </Card>
+            );
+          })()}
+
           {/* Campanhas Card */}
           {(() => {
             const used = (stats as any)?.campaignsCreated ?? 0;
