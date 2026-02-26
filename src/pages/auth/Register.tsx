@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +12,7 @@ import { api } from '@/lib/api';
 
 export default function Register() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -21,8 +23,27 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
+    document: '',
+    address: '',
+    referralCode: '',
     acceptTerms: false
   });
+
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) {
+      setFormData(prev => ({ ...prev, referralCode: ref }));
+    }
+  }, [searchParams]);
+
+  const formatCPF = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+      .replace(/(-\d{2})\d+?$/, '$1');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +74,9 @@ export default function Register() {
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
+        document: formData.document,
+        address: formData.address,
+        referralCode: formData.referralCode,
       });
 
       toast({
@@ -67,6 +91,9 @@ export default function Register() {
         email: '',
         password: '',
         confirmPassword: '',
+        document: '',
+        address: '',
+        referralCode: '',
         acceptTerms: false,
       });
 
@@ -141,6 +168,42 @@ export default function Register() {
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="document">CPF</Label>
+                <Input
+                  id="document"
+                  type="text"
+                  placeholder="000.000.000-00"
+                  value={formData.document}
+                  onChange={(e) => setFormData(prev => ({ ...prev, document: formatCPF(e.target.value) }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="referralCode">Código de Indicação</Label>
+                <Input
+                  id="referralCode"
+                  type="text"
+                  placeholder="Opcional"
+                  value={formData.referralCode}
+                  onChange={(e) => setFormData(prev => ({ ...prev, referralCode: e.target.value.toUpperCase() }))}
+                  readOnly={!!searchParams.get('ref')}
+                  className={searchParams.get('ref') ? 'bg-muted' : ''}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Endereço</Label>
+              <Input
+                id="address"
+                type="text"
+                placeholder="Rua, Número, Bairro, Cidade - UF"
+                value={formData.address}
+                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
               />
             </div>
 

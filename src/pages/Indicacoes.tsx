@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { 
-  Share2, 
+import {
+  Share2,
   DollarSign,
   Users,
   TrendingUp,
@@ -17,21 +18,67 @@ import {
   Star,
   Calendar,
   Info,
-  TrendingUp as TrendingUpIcon
+  TrendingUp as TrendingUpIcon,
+  Loader2
 } from 'lucide-react';
 
 export default function Indicacoes() {
   const { toast } = useToast();
-  const [referralLink, setReferralLink] = useState(`https://nucleo.com/ref/SEU-CODIGO-123`);
+  const [loading, setLoading] = useState(true);
+  const [referralCode, setReferralCode] = useState('');
+  const [stats, setStats] = useState({
+    totalReferrals: 0,
+    activeReferrals: 0,
+    totalEarnings: 0,
+    pendingEarnings: 0,
+    referralPercentage: 3
+  });
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
 
-  // Histórico de ganhos dos últimos 6 meses (mock data)
+  const referralLink = useMemo(() => {
+    if (!referralCode) return '';
+    return `${window.location.origin}/auth/register?ref=${referralCode}`;
+  }, [referralCode]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [codeRes, statsRes, referralsRes, plansRes] = await Promise.all([
+          api.getMyReferralCode(),
+          api.getReferralStats(),
+          api.getMyReferrals(),
+          api.getPlans()
+        ]);
+
+        setReferralCode(codeRes.referralCode);
+        setStats(statsRes);
+        setReferrals(referralsRes);
+        setPlans(plansRes);
+      } catch (error) {
+        console.error('Erro ao buscar dados de indicações:', error);
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar suas informações de indicações.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [toast]);
+
+  // Histórico de ganhos dos últimos 6 meses (Manter mock por enquanto até ter lógica de ganhos)
   const historicalEarnings = [
-    { month: 'Out/24', earnings: 320 },
-    { month: 'Nov/24', earnings: 380 },
-    { month: 'Dez/24', earnings: 420 },
-    { month: 'Jan/25', earnings: 456 },
-    { month: 'Fev/25', earnings: 490 },
-    { month: 'Mar/25', earnings: 540 },
+    { month: 'Out/24', earnings: 0 },
+    { month: 'Nov/24', earnings: 0 },
+    { month: 'Dez/24', earnings: 0 },
+    { month: 'Jan/25', earnings: 0 },
+    { month: 'Fev/25', earnings: 0 },
+    { month: 'Mar/25', earnings: 0 },
   ];
 
   // Cálculo da previsão
@@ -44,7 +91,7 @@ export default function Indicacoes() {
     // Gera previsão para os próximos 6 meses
     const forecast = [];
     const monthNames = ['Abr/25', 'Mai/25', 'Jun/25', 'Jul/25', 'Ago/25', 'Set/25'];
-    
+
     for (let i = 0; i < 6; i++) {
       const projectedEarnings = currentMonthEarnings + (avgGrowth * (i + 1));
       forecast.push({
@@ -59,64 +106,27 @@ export default function Indicacoes() {
       ...historicalEarnings.map(item => ({ ...item, isProjected: false })),
       ...forecast
     ];
-  }, []);
+  }, [historicalEarnings]);
 
   // Cálculo de totais da previsão
   const forecastSummary = useMemo(() => {
     const projectedMonths = forecastData.filter(item => item.isProjected);
     const total = projectedMonths.reduce((sum, item) => sum + item.earnings, 0);
-    const avgMonthly = Math.round(total / projectedMonths.length);
-    
+    const avgMonthly = projectedMonths.length > 0 ? Math.round(total / projectedMonths.length) : 0;
+
     return { total, avgMonthly };
   }, [forecastData]);
-  
-  const stats = {
-    totalReferrals: 12,
-    activeReferrals: 8,
-    totalEarnings: 456.00,
-    pendingEarnings: 97.00
-  };
 
-  const referrals = [
-    {
-      id: 1,
-      name: 'Ana Silva',
-      email: 'ana.silva@email.com',
-      signupDate: '2024-03-15',
-      status: 'Ativo',
-      plan: 'Pro',
-      commission: 48.50,
-      commissionStatus: 'Pago'
-    },
-    {
-      id: 2,
-      name: 'Carlos Santos',
-      email: 'carlos@empresa.com',
-      signupDate: '2024-03-10',
-      status: 'Ativo',
-      plan: 'Enterprise',
-      commission: 123.50,
-      commissionStatus: 'Pago'
-    },
-    {
-      id: 3,
-      name: 'Mariana Costa',
-      email: 'mariana@startup.com',
-      signupDate: '2024-03-20',
-      status: 'Trial',
-      plan: 'Pro',
-      commission: 48.50,
-      commissionStatus: 'Pendente'
-    }
-  ];
-
-  const commissionRules = [
-    { plan: 'Starter', commission: '30%', amount: 'R$ 14,10' },
-    { plan: 'Pro', commission: '50%', amount: 'R$ 48,50' },
-    { plan: 'Enterprise', commission: '50%', amount: 'R$ 123,50' }
-  ];
+  const commissionRules = useMemo(() => {
+    return plans.map(plan => ({
+      plan: plan.name,
+      commission: `${stats.referralPercentage}%`,
+      amount: `R$ ${((plan.price * stats.referralPercentage) / 100).toFixed(2).replace('.', ',')}`
+    }));
+  }, [plans, stats.referralPercentage]);
 
   const copyReferralLink = () => {
+    if (!referralLink) return;
     navigator.clipboard.writeText(referralLink);
     toast({
       title: "Link copiado!",
@@ -124,9 +134,19 @@ export default function Indicacoes() {
     });
   };
 
+  if (loading) {
+    return (
+      <Layout title="Programa de Indicações" subtitle="Carregando...">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <Layout 
-      title="Programa de Indicações" 
+    <Layout
+      title="Programa de Indicações"
       subtitle="Indique amigos e ganhe comissões recorrentes"
     >
       <div className="space-y-6">
@@ -231,17 +251,17 @@ export default function Indicacoes() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={forecastData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="month" 
+                <XAxis
+                  dataKey="month"
                   className="text-xs"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
                 />
-                <YAxis 
+                <YAxis
                   className="text-xs"
                   tick={{ fill: 'hsl(var(--muted-foreground))' }}
                   tickFormatter={(value) => `R$${value}`}
                 />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
@@ -254,9 +274,9 @@ export default function Indicacoes() {
                     props.payload.isProjected ? 'Projetado' : 'Real'
                   ]}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="earnings" 
+                <Line
+                  type="monotone"
+                  dataKey="earnings"
                   stroke="hsl(var(--primary))"
                   strokeWidth={2}
                   dot={(props) => {
@@ -305,9 +325,9 @@ export default function Indicacoes() {
             {/* Referral Link Input */}
             <div className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg">
               <div className="flex-1">
-                <Input 
-                  value={referralLink} 
-                  readOnly 
+                <Input
+                  value={referralLink}
+                  readOnly
                   className="font-mono text-sm"
                 />
               </div>
@@ -347,7 +367,7 @@ export default function Indicacoes() {
               </h3>
               <div className="space-y-3 text-sm text-muted-foreground">
                 <p className="leading-relaxed">
-                  <strong className="text-foreground">Você recebe comissão por cada venda</strong> feita através da sua indicação. 
+                  <strong className="text-foreground">Você recebe comissão por cada venda</strong> feita através da sua indicação.
                   O valor é calculado sobre as vendas confirmadas no mês seguinte.
                 </p>
                 <div className="bg-muted/30 rounded-lg p-4 space-y-2">
@@ -399,7 +419,7 @@ export default function Indicacoes() {
               </Card>
             ))}
           </div>
-          
+
           <div className="mt-4 p-4 bg-muted/30 rounded-lg">
             <div className="flex items-center space-x-2 mb-2">
               <Star className="w-4 h-4 text-primary" />
@@ -417,7 +437,7 @@ export default function Indicacoes() {
         {/* Referrals Table */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-6">Suas Indicações</h3>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -460,7 +480,7 @@ export default function Indicacoes() {
                       <div className="text-xs text-muted-foreground">por mês</div>
                     </td>
                     <td className="py-4 px-2 text-right">
-                      <Badge 
+                      <Badge
                         variant={referral.commissionStatus === 'Pago' ? 'default' : 'secondary'}
                       >
                         {referral.commissionStatus}

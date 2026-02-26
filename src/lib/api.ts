@@ -5,6 +5,9 @@ export interface RegisterData {
   lastName: string;
   email: string;
   password: string;
+  document?: string;
+  address?: string;
+  referralCode?: string;
 }
 
 export interface LoginData {
@@ -1136,6 +1139,23 @@ class ApiService {
     return this.request<PixelMetrics>(`/pixels/metrics?period=${period}`, {
       method: 'GET',
     });
+  }
+
+  // Referrals
+  async getMyReferralCode(): Promise<{ referralCode: string }> {
+    return this.get<{ referralCode: string }>('/referrals/my-code');
+  }
+
+  async getMyReferrals(): Promise<any[]> {
+    return this.get<any[]>('/referrals/my-referrals');
+  }
+
+  async getReferralStats(): Promise<any> {
+    return this.get<any>('/referrals/stats');
+  }
+
+  async validateReferralCode(code: string): Promise<{ referrerName: string; isValid: boolean }> {
+    return this.get<{ referrerName: string; isValid: boolean }>(`/referrals/validate/${code}`);
   }
 }
 
