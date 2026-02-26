@@ -163,6 +163,7 @@ export default function Campanhas() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
   const [segmentationStats, setSegmentationStats] = useState<Record<string, number>>({});
+  const [subscriptionStats, setSubscriptionStats] = useState<any>(null);
 
   useEffect(() => {
     loadCampaigns();
@@ -171,14 +172,16 @@ export default function Campanhas() {
 
   const loadExternalData = async () => {
     try {
-      const [contactsData, groupsData, statsData] = await Promise.all([
+      const [contactsData, groupsData, statsData, subStats] = await Promise.all([
         api.getContacts(),
         api.getGroups(),
-        api.getContactSegmentationStats()
+        api.getContactSegmentationStats(),
+        api.getSubscriptionStats()
       ]);
       setContacts(contactsData);
       setAvailableGroups(groupsData);
       setSegmentationStats(statsData);
+      setSubscriptionStats(subStats);
     } catch (error) {
       console.error('Erro ao carregar dados externos:', error);
     }
@@ -1791,69 +1794,40 @@ export default function Campanhas() {
 
                 <Card className="p-4 border-blue-500/20 bg-blue-500/5">
                   <div className="flex items-center gap-2 mb-2">
-                    <Zap className="w-5 h-5 text-blue-500" />
-                    <span className="text-sm font-medium text-muted-foreground">Créditos</span>
+                    <Send className="w-5 h-5 text-blue-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Envios a serem feitos</span>
                   </div>
                   <p className="text-2xl font-bold text-foreground">
-                    {(() => {
-                      const mockAffectedCounts: Record<string, number> = {
-                        'by_purchase_count': 2847,
-                        'birthday': 142,
-                        'inactive_customers': 1523,
-                        'active_coupon': 634,
-                        'high_ticket': 458,
-                        'purchase_value_x': 891,
-                        'lead_captured': 3241,
-                        'cart_recovered_customer': 287,
-                        'no_purchase_x_days': 1876,
-                        'gender_male': 4562,
-                        'gender_female': 5123,
-                        'by_state': 9685,
-                        'all': 9685
-                      };
-
-                      const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        return sum + (mockAffectedCounts[seg] || 0);
-                      }, 0);
-
-                      const credits = Math.ceil(total / 100); // 1 crédito a cada 100 pessoas
-                      return credits.toLocaleString('pt-BR');
-                    })()}
+                    {filteredContacts.length.toLocaleString('pt-BR')}
                   </p>
                 </Card>
 
                 <Card className="p-4 border-green-500/20 bg-green-500/5">
                   <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-5 h-5 text-green-500" />
-                    <span className="text-sm font-medium text-muted-foreground">Valor Total</span>
+                    <Zap className="w-5 h-5 text-green-500" />
+                    <span className="text-sm font-medium text-muted-foreground">Envios restantes</span>
                   </div>
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
-                      const mockAffectedCounts: Record<string, number> = {
-                        'by_purchase_count': 2847,
-                        'birthday': 142,
-                        'inactive_customers': 1523,
-                        'active_coupon': 634,
-                        'high_ticket': 458,
-                        'purchase_value_x': 891,
-                        'lead_captured': 3241,
-                        'cart_recovered_customer': 287,
-                        'no_purchase_x_days': 1876,
-                        'gender_male': 4562,
-                        'gender_female': 5123,
-                        'by_state': 9685,
-                        'all': 9685
-                      };
+                      if (!subscriptionStats) return '...';
+                      const channel = newCampaign.channel;
+                      let limit = 0;
+                      let used = 0;
 
-                      const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        return sum + (mockAffectedCounts[seg] || 0);
-                      }, 0);
+                      if (channel === 'email') {
+                        limit = subscriptionStats.emailsLimit;
+                        used = subscriptionStats.emailsSent;
+                      } else if (channel === 'sms') {
+                        limit = subscriptionStats.smsLimit;
+                        used = subscriptionStats.smsSent;
+                      } else if (channel === 'whatsapp') {
+                        limit = subscriptionStats.whatsappLimit;
+                        used = subscriptionStats.whatsappSent;
+                      }
 
-                      const credits = Math.ceil(total / 100);
-                      const valorPorCredito = 0.10;
-                      const valorTotal = credits * valorPorCredito;
-
-                      return `R$ ${valorTotal.toFixed(2)}`;
+                      if (limit === -1) return 'Ilimitado';
+                      const remaining = Math.max(0, limit - used);
+                      return remaining.toLocaleString('pt-BR');
                     })()}
                   </p>
                 </Card>

@@ -1291,6 +1291,13 @@ export interface SubscriptionStats {
   contactsUsed: number;
   contactsLimit: number;
   emailsSent: number;
+  emailsLimit: number;
+  smsSent: number;
+  smsLimit: number;
+  whatsappSent: number;
+  whatsappLimit: number;
+  campaignsCreated: number;
+  campaignsLimit: number;
   currentPlan: string;
   price: number;
 }
