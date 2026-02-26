@@ -230,21 +230,11 @@ export default function Assinaturas() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Contatos Utilizados</p>
-                <p className="text-2xl font-bold">
-                  {stats?.contactsUsed.toLocaleString()} / {stats?.contactsLimit.toLocaleString()}
-                </p>
+                <p className="text-sm text-muted-foreground">SMS Enviados (Mês)</p>
+                <p className="text-2xl font-bold">{(stats as any)?.smsSent?.toLocaleString() ?? '0'}</p>
               </div>
               <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-blue-500" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="w-full bg-muted rounded-full h-2">
-                <div
-                  className="bg-primary h-2 rounded-full"
-                  style={{ width: `${Math.min(((stats?.contactsUsed || 0) / (stats?.contactsLimit || 1)) * 100, 100)}%` }}
-                ></div>
+                <Zap className="w-5 h-5 text-blue-500" />
               </div>
             </div>
           </Card>
@@ -252,11 +242,11 @@ export default function Assinaturas() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Envios Este Mês</p>
-                <p className="text-2xl font-bold">{stats?.emailsSent.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Emails Enviados (Mês)</p>
+                <p className="text-2xl font-bold">{stats?.emailsSent?.toLocaleString() ?? '0'}</p>
               </div>
               <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-green-500" />
+                <TrendingUp className="w-5 h-5 text-green-500" />
               </div>
             </div>
           </Card>
@@ -264,10 +254,8 @@ export default function Assinaturas() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Valor Mensal</p>
-                <p className="text-2xl font-bold">
-                  R$ {stats?.price.toString().replace('.', ',')}
-                </p>
+                <p className="text-sm text-muted-foreground">Campanhas Criadas (Mês)</p>
+                <p className="text-2xl font-bold">{(stats as any)?.campaignsCreated?.toLocaleString() ?? '0'}</p>
               </div>
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-primary" />
