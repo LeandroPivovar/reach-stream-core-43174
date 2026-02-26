@@ -150,18 +150,18 @@ export default function WebhookLogs() {
                             </div>
                         </div>
 
-                        <ScrollArea className="flex-1 bg-black/20 rounded-lg border border-border p-4">
+                        <ScrollArea className="flex-1 bg-white rounded-lg border border-border p-4">
                             <div className="space-y-6">
                                 <div>
                                     <h4 className="text-sm font-semibold mb-2 text-primary border-b border-primary/20 pb-1">HEADERS</h4>
-                                    <pre className="text-xs font-mono text-neutral-400 overflow-x-auto p-2 bg-black/40 rounded">
+                                    <pre className="text-xs font-mono text-black overflow-x-auto p-3 bg-muted/30 rounded-md">
                                         {JSON.stringify(selectedLog?.headers, null, 2)}
                                     </pre>
                                 </div>
 
                                 <div>
                                     <h4 className="text-sm font-semibold mb-2 text-primary border-b border-primary/20 pb-1">PAYLOAD (BODY)</h4>
-                                    <pre className="text-xs font-mono text-neutral-400 overflow-x-auto p-2 bg-black/40 rounded">
+                                    <pre className="text-xs font-mono text-black overflow-x-auto p-3 bg-muted/30 rounded-md">
                                         {JSON.stringify(selectedLog?.payload, null, 2)}
                                     </pre>
                                 </div>
