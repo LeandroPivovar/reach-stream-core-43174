@@ -85,7 +85,7 @@ export default function Dashboard() {
 
                 const [funnelData, segData, campData, heatData] = await Promise.all([
                     api.getFunnelData(30),
-                    api.getSegmentationStats(),
+                    api.getSegmentationStats(filters),
                     api.getCampaignDashboardPerformance(chartPeriod),
                     api.getDashboardHeatmap(filters)
                 ]);
@@ -100,31 +100,31 @@ export default function Dashboard() {
         fetchAdditionalStats();
     }, [chartPeriod, selectedCampaign, selectedProduct]);
 
-    // Dados de segmentação automática quando há integrações
-    const leadSegmentation = [
+    // Novos cards de Taxas baseados na imagem do usuário
+    const conversionStats = [
         {
-            title: 'Abandono de Carrinho',
-            value: isLoadingStats ? '...' : segmentationStats?.abandonedCart?.toLocaleString() || '0',
-            description: 'Últimas 24 horas',
-            icon: ShoppingCart,
-            trend: { value: 0, isPositive: false }, // Placeholder trend
-            colorClass: 'bg-orange-500/20 text-orange-900 dark:text-orange-100 border-orange-500/30'
-        },
-        {
-            title: 'Compraram Recentemente',
-            value: isLoadingStats ? '...' : segmentationStats?.recentBuyers?.toLocaleString() || '0',
-            description: 'Últimos 7 dias',
-            icon: CheckCircle,
+            title: 'Taxa de Conversão',
+            value: isLoadingStats ? '...' : `${segmentationStats?.conversionRate || 0}%`,
+            description: 'Lead → Comprador',
+            icon: TrendingUp,
             trend: { value: 0, isPositive: true },
             colorClass: 'bg-green-500/20 text-green-900 dark:text-green-100 border-green-500/30'
         },
         {
-            title: 'Sem Compras - 60 dias',
-            value: isLoadingStats ? '...' : segmentationStats?.inactive?.toLocaleString() || '0',
-            description: 'Potencial reengajamento',
-            icon: Clock,
+            title: 'Taxa de Fidelização',
+            value: isLoadingStats ? '...' : `${segmentationStats?.loyaltyRate || 0}%`,
+            description: 'Comprador → Fiel',
+            icon: CheckCircle,
+            trend: { value: 0, isPositive: true },
+            colorClass: 'bg-purple-500/20 text-purple-900 dark:text-purple-100 border-purple-500/30'
+        },
+        {
+            title: 'Abandono de Carrinho',
+            value: isLoadingStats ? '...' : `${segmentationStats?.abandonmentRate || 0}%`,
+            description: 'Carrinho → Não comprou',
+            icon: ShoppingCart,
             trend: { value: 0, isPositive: false },
-            colorClass: 'bg-red-500/20 text-red-900 dark:text-red-100 border-red-500/30'
+            colorClass: 'bg-orange-500/20 text-orange-900 dark:text-orange-100 border-orange-500/30'
         }
     ];
 
@@ -388,11 +388,11 @@ export default function Dashboard() {
                     </CardContent>
                 </Card>
 
-                {/* Segmentação Automática de Leads - Terceira Linha */}
+                {/* Taxas de Conversão e Fidelização - Terceira Linha */}
                 {hasIntegrations ? (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {leadSegmentation.map((segment, index) => (
+                            {conversionStats.map((segment, index) => (
                                 <StatsCard key={index} {...segment} />
                             ))}
                         </div>
