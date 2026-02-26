@@ -97,19 +97,6 @@ export function CustomerJourney({ stages }: CustomerJourneyProps) {
             Acompanhe o progresso dos seus clientes no funil
           </p>
         </div>
-        <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
-          <SelectTrigger className="w-[220px]">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Filtrar por campanha" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as campanhas</SelectItem>
-            <SelectItem value="black-friday">Promoção Black Friday</SelectItem>
-            <SelectItem value="carrinho">Carrinho Abandonado</SelectItem>
-            <SelectItem value="novos-produtos">Novos Produtos</SelectItem>
-            <SelectItem value="newsletter">Newsletter Semanal</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="relative">
@@ -155,24 +142,6 @@ export function CustomerJourney({ stages }: CustomerJourneyProps) {
         </div>
       </div>
 
-      {/* Insights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        <Card className="p-4 bg-muted/30">
-          <p className="text-sm font-medium">Taxa de Conversão</p>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">23%</p>
-          <p className="text-xs text-muted-foreground">Lead → Comprador</p>
-        </Card>
-        <Card className="p-4 bg-muted/30">
-          <p className="text-sm font-medium">Taxa de Fidelização</p>
-          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">47%</p>
-          <p className="text-xs text-muted-foreground">Comprador → Fiel</p>
-        </Card>
-        <Card className="p-4 bg-muted/30">
-          <p className="text-sm font-medium">Abandono de Carrinho</p>
-          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">28%</p>
-          <p className="text-xs text-muted-foreground">Carrinho → Não comprou</p>
-        </Card>
-      </div>
     </div>
   );
 }

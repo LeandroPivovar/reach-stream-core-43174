@@ -713,10 +713,15 @@ class ApiService {
     });
   }
 
-  async getSegmentationStats(): Promise<Record<string, number>> {
-    return this.request<Record<string, number>>('/contacts/segmentation-stats', {
-      method: 'GET',
-    });
+  async getSegmentationStats(filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<any> {
+    const params = new URLSearchParams();
+    if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters.productId) params.append('productId', filters.productId.toString());
+
+    const query = params.toString();
+    const endpoint = `/sales/dashboard/segmentation${query ? `?${query}` : ''}`;
+
+    return this.get<any>(endpoint);
   }
 
   async updateContact(id: number, data: UpdateContactData): Promise<Contact> {

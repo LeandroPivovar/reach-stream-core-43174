@@ -76,28 +76,34 @@ export default function Dashboard() {
     }, []);
 
     React.useEffect(() => {
-        const fetchAdditionalStats = async () => {
+        const fetchAllStats = async () => {
+            setIsLoadingStats(true);
             try {
                 const filters = {
                     campaignId: selectedCampaign !== 'all' ? selectedCampaign : undefined,
                     productId: selectedProduct !== 'all' ? selectedProduct : undefined,
                 };
 
-                const [funnelData, segData, campData, heatData] = await Promise.all([
+                const [statsData, funnelData, segData, campData, heatData] = await Promise.all([
+                    api.getDashboardStats(30),
                     api.getFunnelData(30),
                     api.getSegmentationStats(filters),
                     api.getCampaignDashboardPerformance(chartPeriod),
                     api.getDashboardHeatmap(filters)
                 ]);
+
+                setDashboardStats(statsData);
                 setFunnelStats(funnelData);
                 setSegmentationStats(segData);
                 setCampaignStats(campData);
                 setHeatmapData(heatData);
             } catch (error) {
-                console.error('Error fetching dashboard extra stats:', error);
+                console.error('Error fetching dashboard stats:', error);
+            } finally {
+                setIsLoadingStats(false);
             }
         };
-        fetchAdditionalStats();
+        fetchAllStats();
     }, [chartPeriod, selectedCampaign, selectedProduct]);
 
     // Novos cards de Taxas baseados na imagem do usuário
@@ -141,21 +147,6 @@ export default function Dashboard() {
     ];
 
 
-    React.useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                // Using 30 days as default for the cards as per design ("Últimos 30 dias")
-                const data = await api.get<any>('/sales/dashboard/stats?period=30');
-                setDashboardStats(data);
-            } catch (error) {
-                console.error('Error fetching dashboard stats:', error);
-            } finally {
-                setIsLoadingStats(false);
-            }
-        };
-
-        fetchStats();
-    }, []);
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
