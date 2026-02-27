@@ -128,13 +128,9 @@ export default function Checkout() {
                 } : {})
             });
 
-            if (result.asaas?.invoiceUrl) {
-                setAsaasResult(result.asaas);
-                setStep(4); // Aguardando pagamento
-                startPolling();
-            } else {
-                setStep(5); // Sucesso direto (se não houve Asaas URL, talvez já ativou)
-            }
+            setAsaasResult(result.asaas || null);
+            setStep(4); // Aguardando pagamento
+            startPolling();
         } catch (error: any) {
             toast({ title: 'Erro', description: error.message || 'Erro ao processar assinatura', variant: 'destructive' });
         } finally {
