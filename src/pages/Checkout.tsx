@@ -26,6 +26,7 @@ export default function Checkout() {
         name: [user?.firstName, user?.lastName].filter(Boolean).join(' '),
         email: user?.email || '',
         document: '',
+        postalCode: '',
         address: '',
         phone: user?.phone || '',
         billingType: 'CREDIT_CARD', // 'BOLETO', 'CREDIT_CARD', 'PIX'
@@ -60,8 +61,8 @@ export default function Checkout() {
 
     const handleNextStep = () => {
         if (step === 1) {
-            if (!formData.name || !formData.document || !formData.address || !formData.phone) {
-                return toast({ title: 'Aviso', description: 'Preencha os campos obrigatórios.', variant: 'destructive' });
+            if (!formData.name || !formData.document || !formData.address || !formData.phone || !formData.postalCode) {
+                return toast({ title: 'Aviso', description: 'Preencha os campos obrigatórios (incluindo CEP).', variant: 'destructive' });
             }
         }
         setStep(p => p + 1);
@@ -87,15 +88,15 @@ export default function Checkout() {
                     creditCard: {
                         holderName: formData.cardName,
                         number: formData.cardNumber.replace(/\s/g, ''),
-                        expiryMonth: formData.cardExpiry.split('/')[0],
-                        expiryYear: `20${formData.cardExpiry.split('/')[1]}`,
+                        expiryMonth: formData.cardExpiry.split('/')[0] || '',
+                        expiryYear: formData.cardExpiry.split('/')[1] ? `20${formData.cardExpiry.split('/')[1]}` : '',
                         ccv: formData.cardCvc
                     },
                     creditCardHolderInfo: {
                         name: formData.name,
                         email: formData.email,
                         cpfCnpj: formData.document,
-                        postalCode: formData.address.replace(/\D/g, '').substring(0, 8), // Simplificação para pegar CEP
+                        postalCode: formData.postalCode,
                         addressNumber: 'S/N', // Como não temos campo separado, enviamos S/N
                         mobilePhone: formData.phone
                     }
@@ -187,9 +188,15 @@ export default function Checkout() {
                                             <Input id="base_phone" placeholder="Apenas números" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })} />
                                         </div>
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="base_address">Endereço Completo *</Label>
-                                        <Input id="base_address" placeholder="Rua, Número, Complemento, CEP..." value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="base_postal">CEP *</Label>
+                                            <Input id="base_postal" placeholder="00000-000" value={formData.postalCode} onChange={e => setFormData({ ...formData, postalCode: e.target.value.replace(/\D/g, '').substring(0, 8) })} />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="base_address">Endereço Completo *</Label>
+                                            <Input id="base_address" placeholder="Rua, Número, Complemento..." value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
+                                        </div>
                                     </div>
                                 </div>
                                 <Button className="w-full mt-8" onClick={handleNextStep}>
@@ -267,8 +274,20 @@ export default function Checkout() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="grid gap-2">
-                                            <Label htmlFor="card_expiry">Validade</Label>
-                                            <Input id="card_expiry" placeholder="MM/AA" maxLength={5} value={formData.cardExpiry} onChange={e => setFormData({ ...formData, cardExpiry: e.target.value })} />
+                                            <Label htmlFor="card_expiry">Validade (MM/AA)</Label>
+                                            <Input
+                                                id="card_expiry"
+                                                placeholder="MM/AA"
+                                                maxLength={5}
+                                                value={formData.cardExpiry}
+                                                onChange={e => {
+                                                    let val = e.target.value.replace(/\D/g, '');
+                                                    if (val.length > 2) {
+                                                        val = val.substring(0, 2) + '/' + val.substring(2, 4);
+                                                    }
+                                                    setFormData({ ...formData, cardExpiry: val });
+                                                }}
+                                            />
                                         </div>
                                         <div className="grid gap-2">
                                             <Label htmlFor="card_cvc">CVV</Label>
