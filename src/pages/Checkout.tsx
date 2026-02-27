@@ -51,7 +51,7 @@ export default function Checkout() {
         const interval = setInterval(async () => {
             try {
                 const sub = await api.getCurrentSubscription();
-                if (sub && sub.status === 'active') {
+                if (sub && sub.status === 'active' && sub.plan?.id === parseInt(planId as string)) {
                     setIsPaymentConfirmed(true);
                     setStep(5); // Sucesso final
                     if (interval) clearInterval(interval);
