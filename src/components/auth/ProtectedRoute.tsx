@@ -45,6 +45,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     '/checkout',
     '/cancelar-assinatura',
     '/conta',
+    '/admin',
     '/integrations/shopify/callback',
     '/integrations/nuvemshop/callback'
   ];
