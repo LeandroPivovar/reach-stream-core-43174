@@ -82,7 +82,24 @@ export default function Checkout() {
                 document: formData.document,
                 address: formData.address,
                 phone: formData.phone,
-                billingType: formData.billingType as any
+                billingType: formData.billingType as any,
+                ...(formData.billingType === 'CREDIT_CARD' ? {
+                    creditCard: {
+                        holderName: formData.cardName,
+                        number: formData.cardNumber.replace(/\s/g, ''),
+                        expiryMonth: formData.cardExpiry.split('/')[0],
+                        expiryYear: `20${formData.cardExpiry.split('/')[1]}`,
+                        ccv: formData.cardCvc
+                    },
+                    creditCardHolderInfo: {
+                        name: formData.name,
+                        email: formData.email,
+                        cpfCnpj: formData.document,
+                        postalCode: formData.address.replace(/\D/g, '').substring(0, 8), // Simplificação para pegar CEP
+                        addressNumber: 'S/N', // Como não temos campo separado, enviamos S/N
+                        mobilePhone: formData.phone
+                    }
+                } : {})
             });
 
             if (result.asaas?.invoiceUrl) {

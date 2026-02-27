@@ -671,7 +671,24 @@ class ApiService {
     address: string,
     phone: string,
     name: string,
-    billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX'
+    billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX',
+    creditCard?: {
+      holderName: string,
+      number: string,
+      expiryMonth: string,
+      expiryYear: string,
+      ccv: string
+    },
+    creditCardHolderInfo?: {
+      name: string,
+      email: string,
+      cpfCnpj: string,
+      postalCode: string,
+      addressNumber: string,
+      addressComplement?: string,
+      phone?: string,
+      mobilePhone?: string
+    }
   }): Promise<any> {
     return this.request<any>('/subscriptions/checkout', {
       method: 'POST',
