@@ -1217,6 +1217,13 @@ class ApiService {
     });
   }
 
+  async testEmail(email: string): Promise<any> {
+    return this.request<any>('/admin/settings/test-email', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
   async createPixel(data: { name: string }): Promise<Pixel> {
     return this.request<Pixel>('/pixels', {
       method: 'POST',
