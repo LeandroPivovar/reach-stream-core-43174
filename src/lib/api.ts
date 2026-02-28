@@ -1203,6 +1203,13 @@ class ApiService {
     });
   }
 
+  async buyCredits(data: { type: 'email' | 'sms', amount: number, billingType: 'PIX' | 'CREDIT_CARD' }): Promise<any> {
+    return this.request<any>('/subscriptions/buy-credits', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Pixels
   async getPixels(): Promise<Pixel[]> {
     return this.request<Pixel[]>('/pixels', {

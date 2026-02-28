@@ -22,6 +22,7 @@ import {
 } from '@/lib/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { BuyCreditsModal } from '@/components/subscriptions/BuyCreditsModal';
 
 export default function Assinaturas() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function Assinaturas() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [stats, setStats] = useState<SubscriptionStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isBuyCreditsModalOpen, setIsBuyCreditsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -226,6 +228,13 @@ export default function Assinaturas() {
         </Card>
 
         {/* Usage Stats */}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Consumo do Mês</h3>
+          <Button variant="outline" onClick={() => setIsBuyCreditsModalOpen(true)}>
+            <DollarSign className="w-4 h-4 mr-2" />
+            Comprar Pacotes Adicionais
+          </Button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* SMS Card */}
           {(() => {
@@ -412,6 +421,12 @@ export default function Assinaturas() {
           </div>
         </Card>
       </div>
+
+      <BuyCreditsModal
+        isOpen={isBuyCreditsModalOpen}
+        onClose={() => setIsBuyCreditsModalOpen(false)}
+        onSuccess={fetchData}
+      />
     </Layout>
   );
 }
