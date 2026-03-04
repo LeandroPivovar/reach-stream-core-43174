@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useLocalStorage('register_formData', {
     firstName: '',
     lastName: '',
     email: '',

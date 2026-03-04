@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Card } from '@/components/ui/card';
@@ -21,8 +22,7 @@ export default function Checkout() {
     const [loadingPlan, setLoadingPlan] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Form Data
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useLocalStorage('checkout_formData', {
         name: [user?.firstName, user?.lastName].filter(Boolean).join(' '),
         email: user?.email || '',
         document: '',

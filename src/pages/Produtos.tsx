@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -91,13 +92,13 @@ export default function Produtos() {
   });
   const [loadingConnections, setLoadingConnections] = useState(false);
   const [syncDirection, setSyncDirection] = useState<'send' | 'receive' | 'both'>('both');
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useLocalStorage('produtos_filters', {
     category: 'all',
     minPrice: '',
     maxPrice: '',
     stockFilter: 'all', // 'all', 'with_stock', 'without_stock'
   });
-  const [newProduct, setNewProduct] = useState({
+  const [newProduct, setNewProduct] = useLocalStorage('produtos_newProduct', {
     name: '',
     description: '',
     price: '',
@@ -106,7 +107,7 @@ export default function Produtos() {
     sku: '',
     active: true,
   });
-  const [editProduct, setEditProduct] = useState({
+  const [editProduct, setEditProduct] = useLocalStorage('produtos_editProduct', {
     name: '',
     description: '',
     price: '',
@@ -187,7 +188,7 @@ export default function Produtos() {
         description: 'O produto foi adicionado ao seu catálogo.',
       });
       setShowSuccessModal(true);
-      
+
       setIsNewProductOpen(false);
       setNewProduct({
         name: '',
@@ -198,7 +199,7 @@ export default function Produtos() {
         sku: '',
         active: true,
       });
-      
+
       await loadProducts();
     } catch (error) {
       toast({
@@ -238,10 +239,10 @@ export default function Produtos() {
         description: 'As alterações foram salvas.',
       });
       setShowSuccessModal(true);
-      
+
       setIsEditProductOpen(false);
       setSelectedProduct(null);
-      
+
       await loadProducts();
     } catch (error) {
       toast({
@@ -352,7 +353,7 @@ export default function Produtos() {
     // Aplicar busca
     if (search.trim()) {
       const searchLower = search.toLowerCase();
-      filtered = filtered.filter(p => 
+      filtered = filtered.filter(p =>
         p.name.toLowerCase().includes(searchLower) ||
         p.description?.toLowerCase().includes(searchLower) ||
         p.sku?.toLowerCase().includes(searchLower) ||
@@ -566,7 +567,7 @@ export default function Produtos() {
 
     try {
       setIsExporting(true);
-      
+
       switch (format) {
         case 'csv':
           exportToCSV();
@@ -583,7 +584,7 @@ export default function Produtos() {
         title: 'Exportação realizada',
         description: `Produtos exportados com sucesso em formato ${format.toUpperCase()}`,
       });
-      
+
       setIsExportModalOpen(false);
     } catch (error) {
       toast({
@@ -637,7 +638,7 @@ export default function Produtos() {
 
   const handleSyncProducts = async () => {
     const hasSelection = selectedIntegrations.shopify.length > 0 || selectedIntegrations.nuvemshop.length > 0;
-    
+
     if (!hasSelection) {
       toast({
         title: 'Atenção',
@@ -747,7 +748,7 @@ export default function Produtos() {
         for (const storeId of selectedIntegrations.nuvemshop) {
           try {
             const response = await api.getNuvemshopProducts(storeId, { limit: 250 });
-            
+
             if (!response.products || response.products.length === 0) {
               console.warn(`Nenhum produto encontrado na loja Nuvemshop ${storeId}`);
               continue;
@@ -757,13 +758,13 @@ export default function Produtos() {
               productsToSync++;
               // Buscar primeira variante
               const variant = nuvemshopProduct.variants?.[0] || {};
-              const name = typeof nuvemshopProduct.name === 'object' 
+              const name = typeof nuvemshopProduct.name === 'object'
                 ? (nuvemshopProduct.name.pt || nuvemshopProduct.name.en || nuvemshopProduct.name.es || 'Produto sem nome')
                 : (nuvemshopProduct.name || 'Produto sem nome');
               const description = typeof nuvemshopProduct.description === 'object'
                 ? (nuvemshopProduct.description?.pt || nuvemshopProduct.description?.en || nuvemshopProduct.description?.es || '')
                 : (nuvemshopProduct.description || '');
-              
+
               const productData = {
                 name: name,
                 description: description,
@@ -777,7 +778,7 @@ export default function Produtos() {
                   },
                 },
               };
-              
+
               console.log(`[FRONTEND] Importando produto da Nuvemshop:`, {
                 name,
                 sku: variant.sku,
@@ -785,7 +786,7 @@ export default function Produtos() {
                 storeId,
                 externalIds: productData.externalIds,
               });
-              
+
               syncPromises.push(
                 api.importProduct(productData).catch((error) => {
                   console.error(`Erro ao importar produto ${name} da Nuvemshop:`, error);
@@ -796,7 +797,7 @@ export default function Produtos() {
           } catch (error) {
             console.error(`Erro ao buscar produtos da Nuvemshop ${storeId}:`, error);
             const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-            
+
             // Se o erro for de token inválido, sugerir reconectar
             if (errorMessage.includes('Unauthorized') || errorMessage.includes('Invalid access token') || errorMessage.includes('401')) {
               toast({
@@ -877,7 +878,7 @@ export default function Produtos() {
     // Produto deve estar ativo E ter status 'active' (não inativo e não sem estoque)
     return p.active === true && p.status === 'active';
   });
-  
+
   const totalValue = activeProductsForValue.reduce((acc, p) => {
     // Converter para número, tratando strings e valores decimais do MySQL
     const price = p.price ? (typeof p.price === 'string' ? parseFloat(p.price) : (typeof p.price === 'number' ? p.price : 0)) : 0;
@@ -1000,8 +1001,8 @@ export default function Produtos() {
   );
 
   return (
-    <Layout 
-      title="Produtos" 
+    <Layout
+      title="Produtos"
       subtitle="Gerencie seu catálogo de produtos"
       actions={actions}
       showSearch
@@ -1124,75 +1125,75 @@ export default function Produtos() {
                             </div>
                           </div>
                         </td>
-                      <td className="py-4 px-2">
-                        <span className="text-sm font-mono">{product.sku || '-'}</span>
-                      </td>
-                      <td className="py-4 px-2">
-                        {product.category ? (
-                          <Badge variant="outline">{product.category}</Badge>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-2 text-right font-medium">
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL'
-                        }).format(product.price)}
-                      </td>
-                      <td className="py-4 px-2 text-right">
-                        <span className={`font-medium ${product.stock < 20 ? 'text-red-600' : ''}`}>
-                          {product.stock}
-                        </span>
-                      </td>
-                      <td className="py-4 px-2">
-                        <Badge variant={getStatusVariant(product.status || 'active')}>
-                          <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor(product.status || 'active')}`}></div>
-                          {getStatusLabel(product.status || 'active')}
-                        </Badge>
-                      </td>
-                      <td className="py-4 px-2 text-right">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Ações do Produto</DialogTitle>
-                            </DialogHeader>
-                            <div className="grid gap-2">
-                              <Button
-                                variant="ghost"
-                                className="justify-start"
-                                onClick={() => handleViewPurchaseHistory(product)}
-                              >
-                                <History className="w-4 h-4 mr-2" />
-                                Ver Histórico de Compras
+                        <td className="py-4 px-2">
+                          <span className="text-sm font-mono">{product.sku || '-'}</span>
+                        </td>
+                        <td className="py-4 px-2">
+                          {product.category ? (
+                            <Badge variant="outline">{product.category}</Badge>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-2 text-right font-medium">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL'
+                          }).format(product.price)}
+                        </td>
+                        <td className="py-4 px-2 text-right">
+                          <span className={`font-medium ${product.stock < 20 ? 'text-red-600' : ''}`}>
+                            {product.stock}
+                          </span>
+                        </td>
+                        <td className="py-4 px-2">
+                          <Badge variant={getStatusVariant(product.status || 'active')}>
+                            <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor(product.status || 'active')}`}></div>
+                            {getStatusLabel(product.status || 'active')}
+                          </Badge>
+                        </td>
+                        <td className="py-4 px-2 text-right">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="w-4 h-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                className="justify-start"
-                                onClick={() => handleOpenEdit(product)}
-                              >
-                                <Edit className="w-4 h-4 mr-2" />
-                                Editar Produto
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                className="justify-start text-destructive"
-                                onClick={() => handleDeleteClick(product.id)}
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Excluir Produto
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </td>
-                    </tr>
-                  );
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Ações do Produto</DialogTitle>
+                              </DialogHeader>
+                              <div className="grid gap-2">
+                                <Button
+                                  variant="ghost"
+                                  className="justify-start"
+                                  onClick={() => handleViewPurchaseHistory(product)}
+                                >
+                                  <History className="w-4 h-4 mr-2" />
+                                  Ver Histórico de Compras
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  className="justify-start"
+                                  onClick={() => handleOpenEdit(product)}
+                                >
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Editar Produto
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  className="justify-start text-destructive"
+                                  onClick={() => handleDeleteClick(product.id)}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Excluir Produto
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </td>
+                      </tr>
+                    );
                   })
                 )}
               </tbody>
@@ -1682,11 +1683,10 @@ export default function Produtos() {
                 <button
                   type="button"
                   onClick={() => setSyncDirection('send')}
-                  className={`p-4 border-2 rounded-lg transition-colors text-left ${
-                    syncDirection === 'send'
+                  className={`p-4 border-2 rounded-lg transition-colors text-left ${syncDirection === 'send'
                       ? 'border-primary bg-primary/10'
                       : 'border-border hover:border-primary/50'
-                  }`}
+                    }`}
                 >
                   <div className="font-medium mb-1">Enviar</div>
                   <div className="text-xs text-muted-foreground">
@@ -1696,11 +1696,10 @@ export default function Produtos() {
                 <button
                   type="button"
                   onClick={() => setSyncDirection('receive')}
-                  className={`p-4 border-2 rounded-lg transition-colors text-left ${
-                    syncDirection === 'receive'
+                  className={`p-4 border-2 rounded-lg transition-colors text-left ${syncDirection === 'receive'
                       ? 'border-primary bg-primary/10'
                       : 'border-border hover:border-primary/50'
-                  }`}
+                    }`}
                 >
                   <div className="font-medium mb-1">Receber</div>
                   <div className="text-xs text-muted-foreground">
@@ -1710,11 +1709,10 @@ export default function Produtos() {
                 <button
                   type="button"
                   onClick={() => setSyncDirection('both')}
-                  className={`p-4 border-2 rounded-lg transition-colors text-left ${
-                    syncDirection === 'both'
+                  className={`p-4 border-2 rounded-lg transition-colors text-left ${syncDirection === 'both'
                       ? 'border-primary bg-primary/10'
                       : 'border-border hover:border-primary/50'
-                  }`}
+                    }`}
                 >
                   <div className="font-medium mb-1">Ambos</div>
                   <div className="text-xs text-muted-foreground">

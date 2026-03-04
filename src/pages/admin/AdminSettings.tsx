@@ -177,99 +177,22 @@ export default function AdminSettings() {
                 </TabsContent>
 
                 <TabsContent value="email" className="space-y-4">
-                    <Card className="border-border/60 shadow-sm">
+                    <Card className="border-border/60 shadow-sm opacity-80 bg-muted/20">
                         <CardHeader>
-                            <CardTitle className="text-xl">Servidor de E-mail (SMTP)</CardTitle>
+                            <CardTitle className="text-xl">Teste de E-mail (SMTP)</CardTitle>
                             <CardDescription>
-                                Configure as credenciais de envio de e-mails transacionais e campanhas automáticas.
+                                Dispare um e-mail de teste utilizando as configurações atuais do servidor.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="SMTP_HOST" className="text-sm font-semibold">SMTP Host</Label>
-                                    <Input
-                                        id="SMTP_HOST"
-                                        value={localSettings['SMTP_HOST'] || ''}
-                                        onChange={(e) => handleInputChange('SMTP_HOST', e.target.value)}
-                                        placeholder="Ex: smtp.gmail.com"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="SMTP_PORT" className="text-sm font-semibold">Porta</Label>
-                                    <Input
-                                        id="SMTP_PORT"
-                                        type="number"
-                                        value={localSettings['SMTP_PORT'] || ''}
-                                        onChange={(e) => handleInputChange('SMTP_PORT', e.target.value)}
-                                        placeholder="Ex: 587 ou 465"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="SMTP_USER" className="text-sm font-semibold">Usuário</Label>
-                                    <Input
-                                        id="SMTP_USER"
-                                        value={localSettings['SMTP_USER'] || ''}
-                                        onChange={(e) => handleInputChange('SMTP_USER', e.target.value)}
-                                        placeholder="Ex: seu_email@gmail.com"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="SMTP_PASS" className="text-sm font-semibold">Senha</Label>
-                                    <Input
-                                        id="SMTP_PASS"
-                                        type="password"
-                                        value={localSettings['SMTP_PASS'] || ''}
-                                        onChange={(e) => handleInputChange('SMTP_PASS', e.target.value)}
-                                        placeholder="Senha do e-mail ou App Password"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="SMTP_SECURE" className="text-sm font-semibold">Criptografia / SSL</Label>
-                                    <Select
-                                        value={localSettings['SMTP_SECURE'] || 'tls'}
-                                        onValueChange={(v) => handleInputChange('SMTP_SECURE', v)}
-                                    >
-                                        <SelectTrigger id="SMTP_SECURE" className="w-full">
-                                            <SelectValue placeholder="Selecione..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="tls">TLS/STARTTLS (Porta 587)</SelectItem>
-                                            <SelectItem value="ssl">SSL (Porta 465)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            <div className="border-t pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="SMTP_FROM_NAME" className="text-sm font-semibold">Nome do Remetente</Label>
-                                    <Input
-                                        id="SMTP_FROM_NAME"
-                                        value={localSettings['SMTP_FROM_NAME'] || ''}
-                                        onChange={(e) => handleInputChange('SMTP_FROM_NAME', e.target.value)}
-                                        placeholder="Ex: Suporte Núcleo CRM"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="SMTP_FROM_EMAIL" className="text-sm font-semibold">E-mail do Remetente</Label>
-                                    <Input
-                                        id="SMTP_FROM_EMAIL"
-                                        value={localSettings['SMTP_FROM_EMAIL'] || ''}
-                                        onChange={(e) => handleInputChange('SMTP_FROM_EMAIL', e.target.value)}
-                                        placeholder="Ex: suporte@nucleocrm.com"
-                                    />
-                                </div>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="bg-muted/30 border-t mt-6 flex justify-between py-4">
-                            <Button variant="outline" onClick={() => setTestEmailModalOpen(true)} className="flex items-center gap-2">
+                        <CardContent className="space-y-4 py-8 text-center flex flex-col items-center">
+                            <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                                As configurações de servidor SMTP devem ser definidas através de variáveis de ambiente do sistema.
+                            </p>
+                            <Button variant="outline" onClick={() => setTestEmailModalOpen(true)} className="flex items-center gap-2 mt-4">
                                 <Mail className="w-4 h-4" /> Testar Conexão
                             </Button>
-                            <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
-                                {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                Salvar Configurações
-                            </Button>
-                        </CardFooter>
+                        </CardContent>
                     </Card>
                 </TabsContent>
 
@@ -313,8 +236,7 @@ export default function AdminSettings() {
                     <DialogHeader>
                         <DialogTitle>Testar Conexão SMTP</DialogTitle>
                         <DialogDescription>
-                            Um e-mail de teste será disparado utilizando as configurações de SMTP salvas no banco de dados.
-                            <strong>Atenção: Salve as configurações antes de testar.</strong>
+                            Um e-mail de teste será disparado utilizando as configurações de SMTP atuais.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">

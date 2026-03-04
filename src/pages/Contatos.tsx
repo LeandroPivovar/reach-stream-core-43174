@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { api, Contact as ApiContact } from '@/lib/api';
@@ -27,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
-import { 
+import {
   MoreHorizontal,
   Eye,
   Edit,
@@ -151,7 +152,7 @@ export default function Contatos() {
   const [isNewGroupOpen, setIsNewGroupOpen] = useState(false);
   const [isEditGroupOpen, setIsEditGroupOpen] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
-  const [newGroup, setNewGroup] = useState({
+  const [newGroup, setNewGroup] = useLocalStorage('contatos_newGroup', {
     name: '',
     description: '',
     color: '#667eea',
@@ -159,13 +160,13 @@ export default function Contatos() {
   const [isNewTagOpen, setIsNewTagOpen] = useState(false);
   const [isEditTagOpen, setIsEditTagOpen] = useState(false);
   const [editingTagId, setEditingTagId] = useState<number | null>(null);
-  const [newTag, setNewTag] = useState({
+  const [newTag, setNewTag] = useLocalStorage('contatos_newTag', {
     name: '',
     color: '#667eea',
   });
-  
+
   // Estados de Filtro
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useLocalStorage('contatos_filters', {
     name: '',
     campaign: '',
     scoreMin: 0,
@@ -186,8 +187,8 @@ export default function Contatos() {
     segmentations: [] as string[], // segmentações
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
-  const [newContact, setNewContact] = useState({
+
+  const [newContact, setNewContact] = useLocalStorage('contatos_newContact', {
     name: '',
     phone: '',
     email: '',
@@ -361,30 +362,30 @@ export default function Contatos() {
     const loadPurchases = async () => {
       try {
         const allPurchases = await api.getContactPurchases();
-        
+
         // Agrupar compras por contato e calcular LTV
         const purchasesByContact: Record<number, { purchases: Purchase[]; ltv: number }> = {};
-        
+
         allPurchases.forEach((purchase) => {
           const contactId = purchase.contactId;
           if (!purchasesByContact[contactId]) {
             purchasesByContact[contactId] = { purchases: [], ltv: 0 };
           }
-          
-          const purchaseValue = typeof purchase.value === 'string' 
-            ? parseFloat(purchase.value) 
+
+          const purchaseValue = typeof purchase.value === 'string'
+            ? parseFloat(purchase.value)
             : purchase.value;
-          
+
           purchasesByContact[contactId].purchases.push({
             id: purchase.id,
             date: purchase.purchaseDate,
             value: purchaseValue,
             product: purchase.productName || purchase.product?.name || 'Produto',
           });
-          
+
           purchasesByContact[contactId].ltv += purchaseValue;
         });
-        
+
         setContactPurchases(purchasesByContact);
       } catch (error) {
         console.error('Erro ao carregar compras:', error);
@@ -400,66 +401,66 @@ export default function Contatos() {
   const calculateScore = (contactId: number) => {
     const purchaseData = contactPurchases[contactId];
     if (!purchaseData) return 0;
-    
+
     // Por enquanto, considerar apenas vendas (compras e LTV)
     const purchases = purchaseData.purchases.length || 0;
     const ltv = purchaseData.ltv || 0;
-    
+
     const { purchases: purchaseWeight, ltvDivisor } = scoreConfig.weights;
-    
+
     const ltvDivisorValue = ltvDivisor || 10; // Evitar divisão por zero
-    
+
     const calculatedScore = Math.min(100, Math.round(
-      (purchases * (purchaseWeight || 0)) + 
+      (purchases * (purchaseWeight || 0)) +
       (ltv / ltvDivisorValue)
     ));
-    
+
     return isNaN(calculatedScore) ? 0 : calculatedScore;
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 70) return { 
-      bg: 'bg-score-hot', 
-      text: 'text-score-hot', 
+    if (score >= 70) return {
+      bg: 'bg-score-hot',
+      text: 'text-score-hot',
       border: 'border-score-hot',
       bgLight: 'bg-score-hot-bg',
-      label: 'Lead Quente', 
-      icon: Flame 
+      label: 'Lead Quente',
+      icon: Flame
     };
-    if (score >= 40) return { 
-      bg: 'bg-score-warm', 
-      text: 'text-score-warm', 
+    if (score >= 40) return {
+      bg: 'bg-score-warm',
+      text: 'text-score-warm',
       border: 'border-score-warm',
       bgLight: 'bg-score-warm-bg',
-      label: 'Lead Morno', 
-      icon: Zap 
+      label: 'Lead Morno',
+      icon: Zap
     };
-    return { 
-      bg: 'bg-score-cold', 
-      text: 'text-score-cold', 
+    return {
+      bg: 'bg-score-cold',
+      text: 'text-score-cold',
       border: 'border-score-cold',
       bgLight: 'bg-score-cold-bg',
-      label: 'Lead Frio', 
-      icon: Snowflake 
+      label: 'Lead Frio',
+      icon: Snowflake
     };
   };
 
   const getLtvColor = (ltv: number) => {
-    if (ltv >= 400) return { 
-      bg: 'bg-ltv-high', 
-      text: 'text-ltv-high', 
+    if (ltv >= 400) return {
+      bg: 'bg-ltv-high',
+      text: 'text-ltv-high',
       border: 'border-ltv-high',
       bgLight: 'bg-ltv-high-bg'
     };
-    if (ltv >= 200) return { 
-      bg: 'bg-ltv-medium', 
-      text: 'text-ltv-medium', 
+    if (ltv >= 200) return {
+      bg: 'bg-ltv-medium',
+      text: 'text-ltv-medium',
       border: 'border-ltv-medium',
       bgLight: 'bg-ltv-medium-bg'
     };
-    return { 
-      bg: 'bg-ltv-low', 
-      text: 'text-ltv-low', 
+    return {
+      bg: 'bg-ltv-low',
+      text: 'text-ltv-low',
       border: 'border-ltv-low',
       bgLight: 'bg-ltv-low-bg'
     };
@@ -577,10 +578,10 @@ export default function Contatos() {
 
     // Filtro por dias sem comprar
     if (filters.daysWithoutPurchase > 0 && purchaseData) {
-      const lastPurchaseDate = purchaseData.purchases.length > 0 
+      const lastPurchaseDate = purchaseData.purchases.length > 0
         ? new Date(purchaseData.purchases[purchaseData.purchases.length - 1].date)
         : null;
-      
+
       if (lastPurchaseDate) {
         const daysSinceLastPurchase = Math.floor((new Date().getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24));
         if (daysSinceLastPurchase < filters.daysWithoutPurchase) return false;
@@ -602,7 +603,7 @@ export default function Contatos() {
 
     // Filtro por segmentações
     if (filters.segmentations.length > 0) {
-      const hasMatchingSegmentation = filters.segmentations.some(seg => 
+      const hasMatchingSegmentation = filters.segmentations.some(seg =>
         contact.segmentations.includes(seg)
       );
       if (!hasMatchingSegmentation) return false;
@@ -611,11 +612,11 @@ export default function Contatos() {
     return true;
   });
 
-  const hasActiveFilters = filters.name !== '' || 
-    filters.campaign !== '' || 
-    filters.scoreMin > 0 || 
-    filters.scoreMax < 100 || 
-    filters.ltvMin > 0 || 
+  const hasActiveFilters = filters.name !== '' ||
+    filters.campaign !== '' ||
+    filters.scoreMin > 0 ||
+    filters.scoreMax < 100 ||
+    filters.ltvMin > 0 ||
     filters.ltvMax < 10000 ||
     filters.purchaseCount !== 'all' ||
     filters.birthday ||
@@ -718,7 +719,7 @@ export default function Contatos() {
         c.city
       ].join(','))
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -733,18 +734,18 @@ export default function Contatos() {
       alert('Selecione uma campanha');
       return;
     }
-    
+
     const selectedContactsData = contacts.filter(c => selectedContacts.has(c.id));
     console.log('Enviando leads para campanha:', {
       campaign: selectedCampaign,
       lead_ids: Array.from(selectedContacts),
       leads: selectedContactsData.map(c => ({ id: c.id, name: c.name, email: c.email }))
     });
-    
+
     // TODO: Quando backend estiver ativo, fazer:
     // POST /campaigns/{selectedCampaign}/add-leads
     // body: { lead_ids: Array.from(selectedContacts) }
-    
+
     alert(`${selectedContacts.size} leads adicionados à campanha "${selectedCampaign}" com sucesso!`);
     setIsBulkCampaignOpen(false);
     setSelectedCampaign('');
@@ -771,8 +772,8 @@ export default function Contatos() {
       // Converter nomes das tags para tagIds
       const tagIds = newContact.tags && newContact.tags.length > 0
         ? newContact.tags
-            .map(tagName => tags.find(t => t.name === tagName)?.id)
-            .filter((id): id is number => id !== undefined)
+          .map(tagName => tags.find(t => t.name === tagName)?.id)
+          .filter((id): id is number => id !== undefined)
         : (newContact.tagIds && newContact.tagIds.length > 0 ? newContact.tagIds : []);
 
       if (editingContactId) {
@@ -817,7 +818,7 @@ export default function Contatos() {
           description: 'O contato foi criado com sucesso',
         });
       }
-      
+
       setIsNewContactOpen(false);
       setNewContact({
         name: '',
@@ -877,7 +878,7 @@ export default function Contatos() {
     const tagIds = contact.tags
       .map(tagName => tags.find(t => t.name === tagName)?.id)
       .filter((id): id is number => id !== undefined);
-    
+
     setNewContact({
       name: contact.name,
       phone: contact.phone,
@@ -933,7 +934,7 @@ export default function Contatos() {
           description: 'O grupo foi criado com sucesso',
         });
       }
-      
+
       setIsNewGroupOpen(false);
       setIsEditGroupOpen(false);
       setNewGroup({
@@ -1025,7 +1026,7 @@ export default function Contatos() {
           description: 'A etiqueta foi criada com sucesso',
         });
       }
-      
+
       setIsNewTagOpen(false);
       setIsEditTagOpen(false);
       setNewTag({
@@ -1092,7 +1093,7 @@ export default function Contatos() {
         c.city
       ].join(','))
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1115,8 +1116,8 @@ export default function Contatos() {
   );
 
   return (
-    <Layout 
-      title="Contatos" 
+    <Layout
+      title="Contatos"
       subtitle="Gerencie sua base de leads e clientes"
       actions={actions}
     >
@@ -1134,7 +1135,7 @@ export default function Contatos() {
                       {selectedContacts.size} {selectedContacts.size === 1 ? 'contato' : 'contatos'}
                     </span>
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button
                       variant="default"
@@ -1145,7 +1146,7 @@ export default function Contatos() {
                       <Send className="w-4 h-4" />
                       Enviar para Campanha
                     </Button>
-                    
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -1155,7 +1156,7 @@ export default function Contatos() {
                       <Download className="w-4 h-4" />
                       Exportar
                     </Button>
-                    
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -1208,7 +1209,7 @@ export default function Contatos() {
 
                   <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                     <PopoverTrigger asChild>
-                      <Button 
+                      <Button
                         variant={hasActiveFilters ? "default" : "outline"}
                         size="sm"
                         className="gap-2"
@@ -1263,8 +1264,8 @@ export default function Contatos() {
                               <Target className="w-3 h-3 inline mr-1" />
                               Campanha de Origem
                             </Label>
-                            <Select 
-                              value={filters.campaign || "all"} 
+                            <Select
+                              value={filters.campaign || "all"}
                               onValueChange={(value) => setFilters({ ...filters, campaign: value === "all" ? "" : value })}
                             >
                               <SelectTrigger id="filter-campaign" className="h-9">
@@ -1314,22 +1315,22 @@ export default function Contatos() {
                               </div>
                             </div>
                             <div className="flex gap-1 mt-1">
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className="text-xs cursor-pointer hover:bg-muted"
                                 onClick={() => setFilters({ ...filters, scoreMin: 70, scoreMax: 100 })}
                               >
                                 🟢 Quentes (70-100)
                               </Badge>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className="text-xs cursor-pointer hover:bg-muted"
                                 onClick={() => setFilters({ ...filters, scoreMin: 40, scoreMax: 69 })}
                               >
                                 🟡 Mornos (40-69)
                               </Badge>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className="text-xs cursor-pointer hover:bg-muted"
                                 onClick={() => setFilters({ ...filters, scoreMin: 0, scoreMax: 39 })}
                               >
@@ -1371,22 +1372,22 @@ export default function Contatos() {
                               </div>
                             </div>
                             <div className="flex gap-1 mt-1">
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className="text-xs cursor-pointer hover:bg-muted"
                                 onClick={() => setFilters({ ...filters, ltvMin: 400, ltvMax: 10000 })}
                               >
                                 Alto (R$ 400+)
                               </Badge>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className="text-xs cursor-pointer hover:bg-muted"
                                 onClick={() => setFilters({ ...filters, ltvMin: 200, ltvMax: 399 })}
                               >
                                 Médio (R$ 200-399)
                               </Badge>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className="text-xs cursor-pointer hover:bg-muted"
                                 onClick={() => setFilters({ ...filters, ltvMin: 0, ltvMax: 199 })}
                               >
@@ -1398,15 +1399,15 @@ export default function Contatos() {
                           {/* Segmentação de Clientes */}
                           <div className="pt-3 border-t space-y-3">
                             <h5 className="font-semibold text-sm">Segmentação de Clientes</h5>
-                            
+
                             {/* Número de Compras */}
                             <div className="space-y-2">
                               <Label htmlFor="filter-purchase-count" className="text-xs font-medium">
                                 <ShoppingCart className="w-3 h-3 inline mr-1" />
                                 Por Número de Compras
                               </Label>
-                              <Select 
-                                value={filters.purchaseCount} 
+                              <Select
+                                value={filters.purchaseCount}
                                 onValueChange={(value) => setFilters({ ...filters, purchaseCount: value })}
                               >
                                 <SelectTrigger id="filter-purchase-count" className="h-9">
@@ -1542,8 +1543,8 @@ export default function Contatos() {
                                 <User2 className="w-3 h-3 inline mr-1" />
                                 Sexo
                               </Label>
-                              <Select 
-                                value={filters.gender} 
+                              <Select
+                                value={filters.gender}
                                 onValueChange={(value) => setFilters({ ...filters, gender: value })}
                               >
                                 <SelectTrigger id="filter-gender" className="h-9">
@@ -1563,8 +1564,8 @@ export default function Contatos() {
                                 <MapPin className="w-3 h-3 inline mr-1" />
                                 Estado
                               </Label>
-                              <Select 
-                                value={filters.state} 
+                              <Select
+                                value={filters.state}
                                 onValueChange={(value) => setFilters({ ...filters, state: value })}
                               >
                                 <SelectTrigger id="filter-state" className="h-9">
@@ -1756,9 +1757,9 @@ export default function Contatos() {
                     {selectedContacts.size} {selectedContacts.size === 1 ? 'contato selecionado' : 'contatos selecionados'}
                   </span>
                 </div>
-                
+
                 <div className="h-8 w-px bg-border" />
-                
+
                 <div className="flex gap-2">
                   <Button
                     variant="default"
@@ -1769,7 +1770,7 @@ export default function Contatos() {
                     <Send className="w-4 h-4" />
                     Adicionar à Campanha
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -1779,7 +1780,7 @@ export default function Contatos() {
                     <Download className="w-4 h-4" />
                     Exportar
                   </Button>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1789,9 +1790,9 @@ export default function Contatos() {
                     <Trash2 className="w-4 h-4" />
                     Remover
                   </Button>
-                  
+
                   <div className="h-8 w-px bg-border" />
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1852,7 +1853,7 @@ export default function Contatos() {
                       const safeScore = isNaN(score) ? 0 : score;
                       const scoreColors = getScoreColor(safeScore);
                       const ScoreIcon = scoreColors.icon;
-                      
+
                       return (
                         <tr key={contact.id} className="border-b border-border last:border-0 hover:bg-muted/50">
                           <td className="py-4 px-2">
@@ -1869,9 +1870,9 @@ export default function Contatos() {
                                   <TooltipTrigger asChild>
                                     <div className="flex-shrink-0">
                                       {contactLtv > 0 ? (
-                                      <div className={`w-8 h-8 rounded-full ${ltvColors.bg} flex items-center justify-center text-white text-xs font-bold shadow-sm`}>
-                                        <TrendingUp className="w-4 h-4" />
-                                      </div>
+                                        <div className={`w-8 h-8 rounded-full ${ltvColors.bg} flex items-center justify-center text-white text-xs font-bold shadow-sm`}>
+                                          <TrendingUp className="w-4 h-4" />
+                                        </div>
                                       ) : (
                                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                                           <Users className="w-4 h-4" />
@@ -1984,15 +1985,15 @@ export default function Contatos() {
                           </td>
                           <td className="py-4 px-2 text-right">
                             <div className="flex justify-end gap-2">
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="icon"
                                 onClick={() => setSelectedContactId(contact.id)}
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="icon"
                                 onClick={() => {
                                   setSelectedContactForSale({ id: contact.id, name: contact.name });
@@ -2012,7 +2013,7 @@ export default function Contatos() {
                                     <DialogTitle>Ações do Contato</DialogTitle>
                                   </DialogHeader>
                                   <div className="grid gap-2">
-                                    <Button 
+                                    <Button
                                       variant="ghost"
                                       className="justify-start"
                                       onClick={() => {
@@ -2022,7 +2023,7 @@ export default function Contatos() {
                                       <Eye className="w-4 h-4 mr-2" />
                                       Visualizar Perfil
                                     </Button>
-                                    <Button 
+                                    <Button
                                       variant="ghost"
                                       className="justify-start"
                                       onClick={() => handleEditContact(contact)}
@@ -2031,8 +2032,8 @@ export default function Contatos() {
                                       <Edit className="w-4 h-4 mr-2" />
                                       Editar Contato
                                     </Button>
-                                    <Button 
-                                      variant="ghost" 
+                                    <Button
+                                      variant="ghost"
                                       className="justify-start"
                                       onClick={() => {
                                         setSelectedContactForSale({ id: contact.id, name: contact.name });
@@ -2042,8 +2043,8 @@ export default function Contatos() {
                                       <ShoppingCart className="w-4 h-4 mr-2" />
                                       Cadastrar Venda
                                     </Button>
-                                    <Button 
-                                      variant="ghost" 
+                                    <Button
+                                      variant="ghost"
                                       className="justify-start text-destructive"
                                       onClick={() => handleDeleteContact(contact.id, contact.name)}
                                       disabled={isLoading}
@@ -2056,9 +2057,9 @@ export default function Contatos() {
                               </Dialog>
                             </div>
                           </td>
-                      </tr>
-                    );
-                  })}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -2078,7 +2079,7 @@ export default function Contatos() {
                   Novo Grupo
                 </Button>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {groups.length === 0 ? (
                   <div className="col-span-full text-center py-12">
@@ -2095,8 +2096,8 @@ export default function Contatos() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               {group.color && (
-                                <div 
-                                  className="w-3 h-3 rounded-full" 
+                                <div
+                                  className="w-3 h-3 rounded-full"
                                   style={{ backgroundColor: group.color }}
                                 />
                               )}
@@ -2110,16 +2111,16 @@ export default function Contatos() {
                             </p>
                           </div>
                           <div className="flex gap-1">
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="icon"
                               onClick={() => handleEditGroup(group)}
                               disabled={isLoading}
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="icon"
                               onClick={() => handleDeleteGroup(group.id, group.name)}
                               disabled={isLoading}
@@ -2150,7 +2151,7 @@ export default function Contatos() {
                   Nova Etiqueta
                 </Button>
               </div>
-              
+
               <div className="flex flex-wrap gap-2">
                 {tags.length === 0 ? (
                   <div className="w-full text-center py-12">
@@ -2160,15 +2161,15 @@ export default function Contatos() {
                   </div>
                 ) : (
                   tags.map((tag) => (
-                    <Badge 
-                      key={tag.id} 
-                      variant="outline" 
+                    <Badge
+                      key={tag.id}
+                      variant="outline"
                       className="cursor-pointer hover:bg-muted flex items-center gap-2 pr-1"
                       style={{ borderColor: tag.color || undefined }}
                     >
                       {tag.color && (
-                        <div 
-                          className="w-2 h-2 rounded-full" 
+                        <div
+                          className="w-2 h-2 rounded-full"
                           style={{ backgroundColor: tag.color }}
                         />
                       )}
@@ -2232,13 +2233,12 @@ export default function Contatos() {
                   ].map((segment) => {
                     const contactsInSegment = contacts.filter(c => c.segmentations.includes(segment.id));
                     const isSelected = selectedSegmentationView === segment.id;
-                    
+
                     return (
                       <Card
                         key={segment.id}
-                        className={`p-4 cursor-pointer hover:border-primary transition-all ${
-                          isSelected ? 'border-primary bg-primary/5 shadow-md' : ''
-                        }`}
+                        className={`p-4 cursor-pointer hover:border-primary transition-all ${isSelected ? 'border-primary bg-primary/5 shadow-md' : ''
+                          }`}
                         onClick={() => setSelectedSegmentationView(isSelected ? null : segment.id)}
                       >
                         <div className="space-y-2">
@@ -2341,15 +2341,15 @@ export default function Contatos() {
                                     </td>
                                     <td className="py-4 px-2 text-right">
                                       <div className="flex justify-end gap-2">
-                                        <Button 
-                                          variant="ghost" 
+                                        <Button
+                                          variant="ghost"
                                           size="icon"
                                           onClick={() => setSelectedContactId(contact.id)}
                                         >
                                           <Eye className="w-4 h-4" />
                                         </Button>
-                                        <Button 
-                                          variant="ghost" 
+                                        <Button
+                                          variant="ghost"
                                           size="icon"
                                           onClick={() => {
                                             setSelectedContactForSale({ id: contact.id, name: contact.name });
@@ -2379,7 +2379,7 @@ export default function Contatos() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="webhook-url">URL do Webhook</Label>
-                  <Input 
+                  <Input
                     id="webhook-url"
                     value="https://api.nucleo.com/webhook/capture"
                     readOnly
@@ -2389,11 +2389,11 @@ export default function Contatos() {
                     Use esta URL para integrar com formulários externos
                   </p>
                 </div>
-                
+
                 <div className="p-4 bg-muted rounded-lg">
                   <h4 className="font-medium mb-2">Exemplo de Payload</h4>
                   <pre className="text-sm text-muted-foreground">
-{`{
+                    {`{
   "name": "João Silva",
   "email": "joao@email.com",
   "phone": "(11) 99999-9999",
@@ -2415,7 +2415,7 @@ export default function Contatos() {
                     Configuração do Sistema de Score
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Ajuste os pesos utilizados no cálculo automático do score dos leads. 
+                    Ajuste os pesos utilizados no cálculo automático do score dos leads.
                     A fórmula aplicada é: <code className="bg-muted px-2 py-1 rounded text-xs">
                       Score = (E-mails × peso) + (Cliques × peso) + (Compras × peso) + (LTV ÷ divisor)
                     </code>
@@ -2429,7 +2429,7 @@ export default function Contatos() {
                       <Activity className="w-4 h-4" />
                       Pesos por Ação
                     </h4>
-                    
+
                     <div className="space-y-3">
                       <div className="grid gap-2">
                         <Label htmlFor="email-weight" className="text-sm">
@@ -2511,7 +2511,7 @@ export default function Contatos() {
                       <TrendingUp className="w-4 h-4" />
                       Exemplo de Cálculo
                     </h4>
-                    
+
                     <Card className="p-4 bg-muted/50">
                       <div className="space-y-3 text-sm">
                         <div className="font-semibold border-b border-border pb-2">
@@ -2539,9 +2539,9 @@ export default function Contatos() {
                           <span className="font-bold">Score Total:</span>
                           <span className="text-2xl font-bold text-primary">
                             {Math.min(100, Math.round(
-                              (5 * (tempWeights.emailOpens || 0)) + 
-                              (3 * (tempWeights.linkClicks || 0)) + 
-                              (2 * (tempWeights.purchases || 0)) + 
+                              (5 * (tempWeights.emailOpens || 0)) +
+                              (3 * (tempWeights.linkClicks || 0)) +
+                              (2 * (tempWeights.purchases || 0)) +
                               (500 / (tempWeights.ltvDivisor || 10))
                             )) || 0}/100
                           </span>
@@ -2569,7 +2569,7 @@ export default function Contatos() {
 
                 {/* Botões de Ação */}
                 <div className="flex justify-between items-center pt-4 border-t border-border">
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={async () => {
                       try {
@@ -2593,8 +2593,8 @@ export default function Contatos() {
                     <RotateCcw className="w-4 h-4" />
                     Restaurar Padrões
                   </Button>
-                  
-                  <Button 
+
+                  <Button
                     onClick={async () => {
                       try {
                         setIsLoading(true);
@@ -2693,8 +2693,8 @@ export default function Contatos() {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="group">Grupo</Label>
-                <Select 
-                  value={newContact.group} 
+                <Select
+                  value={newContact.group}
                   onValueChange={(value) => setNewContact({ ...newContact, group: value })}
                 >
                   <SelectTrigger>
@@ -2709,8 +2709,8 @@ export default function Contatos() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={newContact.status} 
+                <Select
+                  value={newContact.status}
                   onValueChange={(value) => setNewContact({ ...newContact, status: value })}
                 >
                   <SelectTrigger>
@@ -2727,8 +2727,8 @@ export default function Contatos() {
 
             <div className="grid gap-2">
               <Label htmlFor="tags">Etiquetas</Label>
-              <Select 
-                value={newContact.tags[0] || ''} 
+              <Select
+                value={newContact.tags[0] || ''}
                 onValueChange={(value) => {
                   if (!newContact.tags.includes(value)) {
                     setNewContact({ ...newContact, tags: [...newContact.tags, value] });
@@ -2747,13 +2747,13 @@ export default function Contatos() {
               {newContact.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {newContact.tags.map((tag) => (
-                    <Badge 
-                      key={tag} 
+                    <Badge
+                      key={tag}
                       variant="secondary"
                       className="cursor-pointer"
-                      onClick={() => setNewContact({ 
-                        ...newContact, 
-                        tags: newContact.tags.filter(t => t !== tag) 
+                      onClick={() => setNewContact({
+                        ...newContact,
+                        tags: newContact.tags.filter(t => t !== tag)
                       })}
                     >
                       {tag} ×
@@ -2766,8 +2766,8 @@ export default function Contatos() {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="state">Estado</Label>
-                <Select 
-                  value={newContact.state} 
+                <Select
+                  value={newContact.state}
                   onValueChange={(value) => setNewContact({ ...newContact, state: value })}
                 >
                   <SelectTrigger>
@@ -2858,7 +2858,7 @@ export default function Contatos() {
             <p className="text-muted-foreground">
               Faça upload de uma planilha CSV com seus contatos.
             </p>
-            
+
             {/* Download do exemplo */}
             <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
               <div className="flex items-center justify-between">
@@ -2878,7 +2878,7 @@ export default function Contatos() {
                       'Maria Santos,(21) 91234-5678,maria@exemplo.com,Regular,Ativo,Newsletter,RJ,Rio de Janeiro,birthday',
                       'Pedro Oliveira,(31) 99876-5432,pedro@exemplo.com,,Ativo,,MG,Belo Horizonte,',
                     ].join('\n');
-                    
+
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -2921,7 +2921,7 @@ export default function Contatos() {
                   <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="font-medium mb-2">Arraste e solte seu arquivo aqui</p>
                   <p className="text-sm text-muted-foreground mb-4">ou</p>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => document.getElementById('csv-upload')?.click()}
                   >
@@ -2972,8 +2972,8 @@ export default function Contatos() {
             </div>
           </div>
           <div className="flex justify-end gap-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setIsImportOpen(false);
                 setImportFile(null);
@@ -2982,7 +2982,7 @@ export default function Contatos() {
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={async () => {
                 if (!importFile) {
                   toast({
@@ -2996,7 +2996,7 @@ export default function Contatos() {
                 setIsImporting(true);
                 try {
                   const result = await api.importContacts(importFile);
-                  
+
                   toast({
                     title: 'Importação concluída!',
                     description: `${result.created} contato(s) importado(s) com sucesso${result.errors.length > 0 ? `. ${result.errors.length} erro(s) encontrado(s).` : '.'}`,
@@ -3132,7 +3132,7 @@ export default function Contatos() {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Localização:</span>
                         <span className="font-medium">
-                          {contacts.find(c => c.id === selectedContactId)?.city}, 
+                          {contacts.find(c => c.id === selectedContactId)?.city},
                           {contacts.find(c => c.id === selectedContactId)?.state}
                         </span>
                       </div>
@@ -3149,7 +3149,7 @@ export default function Contatos() {
                   const scoreColors = getScoreColor(currentScore);
                   const purchases = purchaseData?.purchases || [];
                   const ltv = purchaseData?.ltv || 0;
-                  
+
                   return (
                     <Card className={`p-4 ${scoreColors.bgLight} border-${scoreColors.border.replace('border-', '')} shadow-score animate-fade-in`}>
                       <div className="flex items-center justify-between mb-3">
@@ -3157,8 +3157,8 @@ export default function Contatos() {
                           <Activity className={`w-4 h-4 ${scoreColors.text}`} />
                           Score do Lead
                         </h3>
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={`text-lg px-3 py-1 ${scoreColors.border} ${scoreColors.text} bg-white dark:bg-card`}
                         >
                           {currentScore}/100
@@ -3217,7 +3217,7 @@ export default function Contatos() {
                     <TrendingUp className="w-4 h-4" />
                     Histórico de LTV
                   </h3>
-                  <LtvHistory 
+                  <LtvHistory
                     purchases={contactPurchases[selectedContactId].purchases}
                     totalLtv={contactPurchases[selectedContactId].ltv}
                   />
@@ -3227,133 +3227,133 @@ export default function Contatos() {
               {/* Histórico Completo - Timeline */}
               {selectedContactId && contactPurchases[selectedContactId] && (
                 <div>
-                    <Card className="p-4">
-                      <h3 className="font-semibold mb-4 flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        Histórico Completo
-                      </h3>
-                      <p className="text-xs text-muted-foreground mb-4">
-                        Linha do tempo com todas as interações do lead
-                      </p>
-                      <div className="relative space-y-4">
-                        {/* Timeline line */}
-                        <div className="absolute left-[15px] top-2 bottom-2 w-[2px] bg-border"></div>
-                        
-                        {contactPurchases[selectedContactId].purchases
-                          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                          .map((purchase) => {
-                            const event = {
-                              id: purchase.id,
-                              type: 'purchase' as const,
-                              date: purchase.date,
-                              description: `Compra realizada: ${purchase.product}`,
-                              metadata: { value: purchase.value, product: purchase.product }
-                            };
-                            const getEventIcon = () => {
-                              switch (event.type) {
-                                case 'purchase':
-                                  return <ShoppingCart className="w-4 h-4 text-white" />;
-                                case 'email_open':
-                                  return <Mail className="w-4 h-4 text-white" />;
-                                case 'link_click':
-                                  return <MousePointerClick className="w-4 h-4 text-white" />;
-                                case 'campaign_participation':
-                                  return <Target className="w-4 h-4 text-white" />;
-                                default:
-                                  return <Activity className="w-4 h-4 text-white" />;
-                              }
-                            };
-
-                            const getEventColor = () => {
-                              switch (event.type) {
-                                case 'purchase':
-                                  return 'bg-green-500';
-                                case 'email_open':
-                                  return 'bg-blue-500';
-                                case 'link_click':
-                                  return 'bg-purple-500';
-                                case 'campaign_participation':
-                                  return 'bg-orange-500';
-                                default:
-                                  return 'bg-gray-500';
-                              }
-                            };
-
-                            const getEventLabel = () => {
-                              switch (event.type) {
-                                case 'purchase':
-                                  return 'Compra';
-                                case 'email_open':
-                                  return 'E-mail Aberto';
-                                case 'link_click':
-                                  return 'Link Clicado';
-                                case 'campaign_participation':
-                                  return 'Campanha';
-                                default:
-                                  return 'Atividade';
-                              }
-                            };
-
-                            return (
-                              <div key={event.id} className="relative flex gap-3 pl-1">
-                                {/* Icon circle */}
-                                <div className={`flex-shrink-0 w-8 h-8 rounded-full ${getEventColor()} flex items-center justify-center shadow-md z-10`}>
-                                  {getEventIcon()}
-                                </div>
-                                
-                                {/* Event content */}
-                                <div className="flex-1 pb-4">
-                                  <div className="flex items-start justify-between mb-1">
-                                    <div className="flex items-center gap-2">
-                                      <Badge variant="outline" className="text-xs">
-                                        {getEventLabel()}
-                                      </Badge>
-                                      <span className="text-xs text-muted-foreground">
-                                        {new Date(event.date).toLocaleDateString('pt-BR')}
-                                      </span>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="text-sm font-medium mb-1">
-                                    {event.description}
-                                  </div>
-                                  
-                                  {event.metadata && (
-                                    <div className="text-xs text-muted-foreground space-y-1">
-                                      {event.metadata.product && (
-                                        <div>Produto: <span className="font-medium">{event.metadata.product}</span></div>
-                                      )}
-                                      {event.metadata.value && (
-                                        <div>Valor: <span className="font-medium text-green-500">R$ {event.metadata.value.toFixed(2)}</span></div>
-                                      )}
-                                      {event.metadata.campaign && (
-                                        <div>Campanha: <span className="font-medium">{event.metadata.campaign}</span></div>
-                                      )}
-                                      {event.metadata.subject && (
-                                        <div>Assunto: <span className="font-medium">{event.metadata.subject}</span></div>
-                                      )}
-                                      {event.metadata.link && (
-                                        <div>Link: <span className="font-medium">{event.metadata.link}</span></div>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </Card>
-                  </div>
-                )}
-
-                {selectedContactId && !contactPurchases[selectedContactId] && (
-                  <Card className="p-6 text-center">
-                    <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-muted-foreground text-sm">
-                      Nenhuma compra registrada ainda
+                  <Card className="p-4">
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Histórico Completo
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Linha do tempo com todas as interações do lead
                     </p>
+                    <div className="relative space-y-4">
+                      {/* Timeline line */}
+                      <div className="absolute left-[15px] top-2 bottom-2 w-[2px] bg-border"></div>
+
+                      {contactPurchases[selectedContactId].purchases
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .map((purchase) => {
+                          const event = {
+                            id: purchase.id,
+                            type: 'purchase' as const,
+                            date: purchase.date,
+                            description: `Compra realizada: ${purchase.product}`,
+                            metadata: { value: purchase.value, product: purchase.product }
+                          };
+                          const getEventIcon = () => {
+                            switch (event.type) {
+                              case 'purchase':
+                                return <ShoppingCart className="w-4 h-4 text-white" />;
+                              case 'email_open':
+                                return <Mail className="w-4 h-4 text-white" />;
+                              case 'link_click':
+                                return <MousePointerClick className="w-4 h-4 text-white" />;
+                              case 'campaign_participation':
+                                return <Target className="w-4 h-4 text-white" />;
+                              default:
+                                return <Activity className="w-4 h-4 text-white" />;
+                            }
+                          };
+
+                          const getEventColor = () => {
+                            switch (event.type) {
+                              case 'purchase':
+                                return 'bg-green-500';
+                              case 'email_open':
+                                return 'bg-blue-500';
+                              case 'link_click':
+                                return 'bg-purple-500';
+                              case 'campaign_participation':
+                                return 'bg-orange-500';
+                              default:
+                                return 'bg-gray-500';
+                            }
+                          };
+
+                          const getEventLabel = () => {
+                            switch (event.type) {
+                              case 'purchase':
+                                return 'Compra';
+                              case 'email_open':
+                                return 'E-mail Aberto';
+                              case 'link_click':
+                                return 'Link Clicado';
+                              case 'campaign_participation':
+                                return 'Campanha';
+                              default:
+                                return 'Atividade';
+                            }
+                          };
+
+                          return (
+                            <div key={event.id} className="relative flex gap-3 pl-1">
+                              {/* Icon circle */}
+                              <div className={`flex-shrink-0 w-8 h-8 rounded-full ${getEventColor()} flex items-center justify-center shadow-md z-10`}>
+                                {getEventIcon()}
+                              </div>
+
+                              {/* Event content */}
+                              <div className="flex-1 pb-4">
+                                <div className="flex items-start justify-between mb-1">
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-xs">
+                                      {getEventLabel()}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">
+                                      {new Date(event.date).toLocaleDateString('pt-BR')}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="text-sm font-medium mb-1">
+                                  {event.description}
+                                </div>
+
+                                {event.metadata && (
+                                  <div className="text-xs text-muted-foreground space-y-1">
+                                    {event.metadata.product && (
+                                      <div>Produto: <span className="font-medium">{event.metadata.product}</span></div>
+                                    )}
+                                    {event.metadata.value && (
+                                      <div>Valor: <span className="font-medium text-green-500">R$ {event.metadata.value.toFixed(2)}</span></div>
+                                    )}
+                                    {event.metadata.campaign && (
+                                      <div>Campanha: <span className="font-medium">{event.metadata.campaign}</span></div>
+                                    )}
+                                    {event.metadata.subject && (
+                                      <div>Assunto: <span className="font-medium">{event.metadata.subject}</span></div>
+                                    )}
+                                    {event.metadata.link && (
+                                      <div>Link: <span className="font-medium">{event.metadata.link}</span></div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
                   </Card>
-                )}
+                </div>
+              )}
+
+              {selectedContactId && !contactPurchases[selectedContactId] && (
+                <Card className="p-6 text-center">
+                  <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-muted-foreground text-sm">
+                    Nenhuma compra registrada ainda
+                  </p>
+                </Card>
+              )}
             </>
           )}
         </DialogContent>
@@ -3412,8 +3412,8 @@ export default function Contatos() {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setIsNewGroupOpen(false);
                 setIsEditGroupOpen(false);
@@ -3473,8 +3473,8 @@ export default function Contatos() {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setIsNewTagOpen(false);
                 setIsEditTagOpen(false);

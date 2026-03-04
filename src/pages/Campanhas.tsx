@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -93,7 +94,7 @@ export default function Campanhas() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const contactsPerPage = 10;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [newCampaign, setNewCampaign] = useState({
+  const [newCampaign, setNewCampaign] = useLocalStorage('campanhas_newCampaign', {
     campaignComplexity: '' as 'simple' | 'advanced' | '',
     name: '',
     groups: [] as string[],
