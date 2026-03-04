@@ -179,20 +179,42 @@ export default function AdminSettings() {
                 <TabsContent value="email" className="space-y-4">
                     <Card className="border-border/60 shadow-sm opacity-80 bg-muted/20">
                         <CardHeader>
-                            <CardTitle className="text-xl">Teste de E-mail (SMTP)</CardTitle>
+                            <CardTitle className="text-xl">Configuração de E-mail (Zenvia)</CardTitle>
                             <CardDescription>
-                                Dispare um e-mail de teste utilizando as configurações atuais do servidor.
+                                Configure o endereço de e-mail que aparecerá como remetente nas mensagens enviadas pelo sistema.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4 py-8 text-center flex flex-col items-center">
-                            <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                                As configurações de servidor SMTP devem ser definidas através de variáveis de ambiente do sistema.
-                            </p>
-                            <Button variant="outline" onClick={() => setTestEmailModalOpen(true)} className="flex items-center gap-2 mt-4">
-                                <Mail className="w-4 h-4" /> Testar Conexão
-                            </Button>
+                        <CardContent className="space-y-6 pt-4 pb-8">
+                            <div className="space-y-2">
+                                <Label htmlFor="SMTP_FROM_EMAIL" className="text-sm font-semibold">E-mail de Remetente (FROM)</Label>
+                                <Input
+                                    id="SMTP_FROM_EMAIL"
+                                    type="email"
+                                    value={localSettings['SMTP_FROM_EMAIL'] || ''}
+                                    onChange={(e) => handleInputChange('SMTP_FROM_EMAIL', e.target.value)}
+                                    placeholder="contato@nucleocrm.com.br"
+                                />
+                                <p className="text-[12px] text-muted-foreground">O endereço de e-mail que os clientes verão ao receber mensagens.</p>
+                            </div>
+
+                            <Separator />
+
+                            <div className="flex flex-col items-center pt-4 text-center">
+                                <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                                    O envio de e-mails agora é gerenciado oficialmente pela API da Zenvia. Dispare um teste abaixo para verificar a conexão.
+                                </p>
+                                <Button variant="outline" onClick={() => setTestEmailModalOpen(true)} className="flex items-center gap-2 mt-4">
+                                    <Mail className="w-4 h-4" /> Testar Integração Zenvia
+                                </Button>
+                            </div>
                         </CardContent>
+                        <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
+                            <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
+                                {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Salvar Configurações
+                            </Button>
+                        </CardFooter>
                     </Card>
                 </TabsContent>
 
