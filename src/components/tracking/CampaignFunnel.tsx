@@ -2,6 +2,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, MousePointerClick, UserPlus, TrendingDown } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+
+interface CampaignFunnelProps {
+  periodDays?: number;
+}
 
 interface FunnelStage {
   name: string;
@@ -10,27 +16,19 @@ interface FunnelStage {
   color: string;
 }
 
-export function CampaignFunnel() {
-  const funnelData: FunnelStage[] = [
-    {
-      name: 'Visitantes',
-      value: 15847,
-      icon: Users,
-      color: 'bg-blue-500'
-    },
-    {
-      name: 'Cliques',
-      value: 5560,
-      icon: MousePointerClick,
-      color: 'bg-purple-500'
-    },
-    {
-      name: 'Leads Captados',
-      value: 479,
-      icon: UserPlus,
-      color: 'bg-green-500'
-    }
-  ];
+export function CampaignFunnel({ periodDays = 30 }: CampaignFunnelProps) {
+  const { data: metricsData, isLoading } = useQuery({
+    queryKey: ['pixel-metrics', periodDays],
+    queryFn: () => api.getPixelMetrics(periodDays),
+  });
+
+  const funnelData = (metricsData?.funnelData || []).map((stage: any, idx: number) => {
+    const icons = [Users, MousePointerClick, UserPlus];
+    return {
+      ...stage,
+      icon: icons[idx] || Users
+    };
+  });
 
   const calculateConversionRate = (current: number, previous: number) => {
     return ((current / previous) * 100).toFixed(1);
@@ -53,7 +51,13 @@ export function CampaignFunnel() {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {funnelData.map((stage, index) => {
+          {isLoading && (
+            <div className="text-center py-8 text-muted-foreground">Carregando funil...</div>
+          )}
+          {!isLoading && funnelData.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">Sem dados para o período.</div>
+          )}
+          {!isLoading && funnelData.map((stage, index) => {
             const Icon = stage.icon;
             const previousValue = index > 0 ? funnelData[index - 1].value : stage.value;
             const conversionRate = calculateConversionRate(stage.value, previousValue);
@@ -86,7 +90,7 @@ export function CampaignFunnel() {
 
                 {/* Barra de progresso do funil */}
                 <div className="relative h-12 bg-muted rounded-lg overflow-hidden">
-                  <div 
+                  <div
                     className={`h-full ${stage.color} opacity-70 transition-all duration-500 flex items-center justify-center`}
                     style={{ width: `${widthPercentage}%` }}
                   >
@@ -107,19 +111,21 @@ export function CampaignFunnel() {
           })}
 
           {/* Taxa de conversão geral */}
-          <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Taxa de Conversão Total</p>
-                <p className="text-lg font-semibold">Visitante → Lead</p>
-              </div>
-              <div className="text-right">
-                <p className="text-3xl font-bold text-primary">
-                  {calculateConversionRate(funnelData[2].value, funnelData[0].value)}%
-                </p>
+          {funnelData.length >= 3 && (
+            <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Taxa de Conversão Total</p>
+                  <p className="text-lg font-semibold">{funnelData[0].name} → {funnelData[funnelData.length - 1].name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-primary">
+                    {calculateConversionRate(funnelData[funnelData.length - 1].value, funnelData[0].value)}%
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -1,52 +1,38 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  TrendingUp, 
-  MapPin, 
+import {
+  TrendingUp,
+  MapPin,
   CreditCard,
   Package,
   ArrowRight
 } from 'lucide-react';
 
-export function ConversionDetails() {
-  const conversionSources = [
-    { source: 'Facebook Ads', conversions: 189, percentage: 39.5, color: 'bg-blue-500' },
-    { source: 'Google Ads', conversions: 156, percentage: 32.6, color: 'bg-red-500' },
-    { source: 'Instagram', conversions: 89, percentage: 18.6, color: 'bg-pink-500' },
-    { source: 'Orgânico', conversions: 45, percentage: 9.3, color: 'bg-green-500' }
-  ];
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
-  const convertingProducts = [
-    { 
-      name: 'Produto Premium', 
-      conversions: 234, 
-      rate: 5.2,
-      from: 'Landing Page Black Friday',
-      trend: '+12%'
-    },
-    { 
-      name: 'Bundle Completo', 
-      conversions: 156, 
-      rate: 4.8,
-      from: 'Campanha Newsletter',
-      trend: '+8%'
-    },
-    { 
-      name: 'Kit Básico', 
-      conversions: 89, 
-      rate: 3.9,
-      from: 'Facebook Ads',
-      trend: '+5%'
-    }
-  ];
+interface ConversionDetailsProps {
+  periodDays?: number;
+}
 
-  const paymentMethods = [
-    { method: 'PIX', usage: 234, percentage: 48.9, avgTime: '2 min', color: 'bg-teal-500' },
-    { method: 'Cartão de Crédito', usage: 156, percentage: 32.6, avgTime: '5 min', color: 'bg-purple-500' },
-    { method: 'Boleto', usage: 67, percentage: 14.0, avgTime: '8 min', color: 'bg-orange-500' },
-    { method: 'Cartão de Débito', usage: 22, percentage: 4.5, avgTime: '4 min', color: 'bg-blue-500' }
-  ];
+export function ConversionDetails({ periodDays = 30 }: ConversionDetailsProps) {
+  const { data: metricsData, isLoading } = useQuery({
+    queryKey: ['pixel-metrics', periodDays],
+    queryFn: () => api.getPixelMetrics(periodDays),
+  });
+
+  const conversionSources = metricsData?.conversionSources || [];
+
+  const convertingProducts = (metricsData?.clicksBreakdown?.topProducts || []).map((p: any) => ({
+    name: p.name,
+    conversions: p.sales,
+    rate: p.conversion || 0,
+    from: 'Orgânico/UTM',
+    trend: '+0%'
+  }));
+
+  const paymentMethods = metricsData?.paymentMethods || [];
 
   return (
     <Card>
@@ -67,9 +53,9 @@ export function ConversionDetails() {
               <Package className="w-5 h-5 text-primary" />
               <h3 className="font-semibold">O que está convertendo</h3>
             </div>
-            
+
             {convertingProducts.map((product, index) => (
-              <div 
+              <div
                 key={index}
                 className="p-4 bg-muted/30 rounded-lg space-y-2"
               >
@@ -84,17 +70,17 @@ export function ConversionDetails() {
                     {product.trend}
                   </Badge>
                 </div>
-                
+
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Conversões</span>
                   <span className="font-semibold">{product.conversions}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Taxa</span>
                   <Badge variant="outline">{product.rate}%</Badge>
                 </div>
-                
+
                 <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
                   <MapPin className="w-3 h-3" />
                   <span>Origem:</span>
@@ -110,10 +96,10 @@ export function ConversionDetails() {
               <MapPin className="w-5 h-5 text-primary" />
               <h3 className="font-semibold">De onde vieram as conversões</h3>
             </div>
-            
+
             <div className="space-y-3">
               {conversionSources.map((source, index) => (
-                <div 
+                <div
                   key={index}
                   className="space-y-2"
                 >
@@ -129,15 +115,18 @@ export function ConversionDetails() {
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`h-full ${source.color} transition-all duration-500`}
                       style={{ width: `${source.percentage}%` }}
                     />
                   </div>
                 </div>
               ))}
+              {conversionSources.length === 0 && !isLoading && (
+                <p className="text-center text-sm text-muted-foreground py-4">Sem dados de origem.</p>
+              )}
             </div>
 
             {/* Meios de Pagamento */}
@@ -146,10 +135,10 @@ export function ConversionDetails() {
                 <CreditCard className="w-5 h-5 text-primary" />
                 <h3 className="font-semibold">Meios de Pagamento Utilizados</h3>
               </div>
-              
+
               <div className="space-y-3">
                 {paymentMethods.map((payment, index) => (
-                  <div 
+                  <div
                     key={index}
                     className="p-3 bg-muted/30 rounded-lg"
                   >
@@ -162,7 +151,7 @@ export function ConversionDetails() {
                         {payment.percentage}%
                       </Badge>
                     </div>
-                    
+
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{payment.usage} transações</span>
                       <span>Tempo médio: {payment.avgTime}</span>

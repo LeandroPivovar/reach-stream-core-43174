@@ -1287,6 +1287,30 @@ export interface PixelMetrics {
     conversions: number;
     rate: number;
   }>;
+  funnelData: Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>;
+  conversionSources: Array<{
+    source: string;
+    conversions: number;
+    percentage: number;
+    color: string;
+  }>;
+  paymentMethods: Array<{
+    method: string;
+    usage: number;
+    percentage: number;
+    color: string;
+    avgTime: string;
+  }>;
+  topForms: Array<{
+    name: string;
+    submissions: number;
+    rate: number;
+    efficiency: string;
+  }>;
   clicksBreakdown: {
     abandonedCarts: {
       total: number;
