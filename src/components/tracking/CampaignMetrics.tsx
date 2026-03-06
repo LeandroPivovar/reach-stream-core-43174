@@ -51,12 +51,7 @@ export function CampaignMetrics({ periodDays = 30 }: CampaignMetricsProps) {
   ];
 
 
-  const topForms = [
-    { name: 'Formulário Landing Page Principal', submissions: 234, rate: 48.9, efficiency: 'Alta' },
-    { name: 'Newsletter Sidebar', submissions: 156, rate: 32.6, efficiency: 'Média' },
-    { name: 'Pop-up Exit Intent', submissions: 89, rate: 18.5, efficiency: 'Alta' },
-    { name: 'Formulário Footer', submissions: 67, rate: 14.0, efficiency: 'Baixa' }
-  ];
+  const topForms = metricsData?.topForms || [];
 
   return (
     <div className="space-y-6">

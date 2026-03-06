@@ -41,6 +41,7 @@ import { ConversionDetails } from '@/components/tracking/ConversionDetails';
 import { CampaignFilters } from '@/components/tracking/CampaignFilters';
 import { api, Pixel } from '@/lib/api';
 import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Rastreamento() {
   const navigate = useNavigate();
@@ -91,6 +92,19 @@ export default function Rastreamento() {
     fetchPixels();
     fetchProducts();
   }, []);
+
+  const periodDays = filters.period === 'hoje' ? 1 :
+    filters.period === '7dias' ? 7 :
+      filters.period === '30dias' ? 30 :
+        filters.period === '90dias' ? 90 :
+          filters.period === 'custom' && filters.dateRange?.from && filters.dateRange?.to
+            ? Math.ceil((new Date(filters.dateRange.to).getTime() - new Date(filters.dateRange.from).getTime()) / (1000 * 60 * 60 * 24)) || 1
+            : 30;
+
+  const { data: metricsData, isLoading: isLoadingMetrics } = useQuery({
+    queryKey: ['pixel-metrics', periodDays],
+    queryFn: () => api.getPixelMetrics(periodDays),
+  });
 
   const handleProductSelect = (productId: string) => {
     const product = products.find(p => p.id.toString() === productId);
@@ -215,15 +229,6 @@ export default function Rastreamento() {
       Novo Pixel
     </HeaderActions.Add>
   );
-
-  const periodDays = filters.period === 'hoje' ? 1 :
-    filters.period === '7dias' ? 7 :
-      filters.period === '30dias' ? 30 :
-        filters.period === '90dias' ? 90 :
-          filters.period === 'custom' && filters.dateRange?.from && filters.dateRange?.to
-            ? Math.ceil((new Date(filters.dateRange.to).getTime() - new Date(filters.dateRange.from).getTime()) / (1000 * 60 * 60 * 24)) || 1
-            : 30;
-
   return (
     <Layout
       title="Rastreamento"
@@ -370,38 +375,39 @@ export default function Rastreamento() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-medium mb-3">Eventos por Fonte</h4>
+                    <h4 className="font-medium mb-3">Eventos por Fonte (Visitas)</h4>
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-muted/30 rounded">
-                        <span>Facebook Ads</span>
-                        <span className="font-semibold">1.247</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted/30 rounded">
-                        <span>Google Analytics</span>
-                        <span className="font-semibold">3.421</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted/30 rounded">
-                        <span>Landing Pages</span>
-                        <span className="font-semibold">892</span>
-                      </div>
+                      {isLoadingMetrics ? (
+                        <p className="text-center py-4 text-muted-foreground">Carregando...</p>
+                      ) : (metricsData?.conversionSources || []).map((source: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center p-3 bg-muted/30 rounded">
+                          <span>{source.source}</span>
+                          <span className="font-semibold">{source.visits?.toLocaleString() || 0}</span>
+                        </div>
+                      ))}
+                      {(!metricsData?.conversionSources || metricsData.conversionSources.length === 0) && !isLoadingMetrics && (
+                        <p className="text-sm text-muted-foreground py-2">Sem dados de fonte.</p>
+                      )}
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="font-medium mb-3">Conversões por Canal</h4>
+                    <h4 className="font-medium mb-3">Conversões por Fonte</h4>
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-muted/30 rounded">
-                        <span>WhatsApp</span>
-                        <span className="font-semibold">234 (48.9%)</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted/30 rounded">
-                        <span>E-mail</span>
-                        <span className="font-semibold">156 (32.6%)</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted/30 rounded">
-                        <span>SMS</span>
-                        <span className="font-semibold">89 (18.5%)</span>
-                      </div>
+                      {isLoadingMetrics ? (
+                        <p className="text-center py-4 text-muted-foreground">Carregando...</p>
+                      ) : (metricsData?.conversionSources || []).map((source: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center p-3 bg-muted/30 rounded">
+                          <span>{source.source}</span>
+                          <span className="font-semibold">
+                            {source.conversions?.toLocaleString() || 0}
+                            {source.visits > 0 && ` (${((source.conversions / source.visits) * 100).toFixed(1)}%)`}
+                          </span>
+                        </div>
+                      ))}
+                      {(!metricsData?.conversionSources || metricsData.conversionSources.length === 0) && !isLoadingMetrics && (
+                        <p className="text-sm text-muted-foreground py-2">Sem dados de conversão.</p>
+                      )}
                     </div>
                   </div>
                 </div>
