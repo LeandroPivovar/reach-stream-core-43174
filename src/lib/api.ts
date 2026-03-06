@@ -1312,6 +1312,17 @@ class ApiService {
     });
   }
 
+  async getNotificationPreferences(): Promise<{ type: string, enabled: boolean }[]> {
+    return this.get<{ type: string, enabled: boolean }[]>('/notifications/preferences');
+  }
+
+  async updateNotificationPreferences(preferences: { type: string, enabled: boolean }[]): Promise<void> {
+    return this.request<void>('/notifications/preferences', {
+      method: 'POST',
+      body: JSON.stringify(preferences),
+    });
+  }
+
   // Admin Notificações
   async getAdminNotifications(): Promise<Notification[]> {
     return this.get<Notification[]>('/admin/notifications');
@@ -1449,10 +1460,10 @@ export interface Notification {
   id: number;
   title: string;
   message: string;
-  type: 'system' | 'info' | 'success' | 'warning' | 'error';
+  type: 'system' | 'info' | 'success' | 'warning' | 'error' | 'campaign' | 'billing' | 'security' | 'marketing';
   link?: string;
   userId?: number;
-  read: boolean;
+  read?: boolean;
   readAt?: string;
   createdAt: string;
 }

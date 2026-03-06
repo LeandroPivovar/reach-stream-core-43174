@@ -65,6 +65,7 @@ export default function MinhaConta() {
         confirmPassword: ''
       });
       setTwoFactorEnabled(userData.twoFactorEnabled || false);
+      loadNotificationPreferences();
     } catch (error) {
       toast({
         title: 'Erro ao carregar dados',
@@ -73,6 +74,21 @@ export default function MinhaConta() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadNotificationPreferences = async () => {
+    try {
+      const prefs = await api.getNotificationPreferences();
+      setNotifications(prev => ({
+        ...prev,
+        campaignUpdates: prefs.find(p => p.type === 'campaign')?.enabled ?? true,
+        billing: prefs.find(p => p.type === 'billing')?.enabled ?? true,
+        security: prefs.find(p => p.type === 'security')?.enabled ?? true,
+        marketing: prefs.find(p => p.type === 'marketing')?.enabled ?? true,
+      }));
+    } catch (error) {
+      console.error('Error loading notification preferences:', error);
     }
   };
 
@@ -203,9 +219,30 @@ export default function MinhaConta() {
     }
   };
 
-  const handleNotificationsSave = () => {
-    console.log('Saving notifications:', notifications);
-    // Handle notifications save
+  const handleNotificationsSave = async () => {
+    try {
+      setIsSaving(true);
+      const preferences = [
+        { type: 'campaign', enabled: notifications.campaignUpdates },
+        { type: 'billing', enabled: notifications.billing },
+        { type: 'security', enabled: notifications.security },
+        { type: 'marketing', enabled: notifications.marketing },
+      ];
+      await api.updateNotificationPreferences(preferences);
+
+      toast({
+        title: 'Preferências Salvas',
+        description: 'Suas preferências de notificação foram atualizadas com sucesso.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao salvar preferências',
+        description: error instanceof Error ? error.message : 'Não foi possível salvar as configurações',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleToggle2fa = async (checked: boolean) => {
@@ -596,8 +633,8 @@ export default function MinhaConta() {
                   />
                 </div>
 
-                <Button onClick={handleNotificationsSave}>
-                  Salvar Preferências
+                <Button onClick={handleNotificationsSave} disabled={isSaving}>
+                  {isSaving ? 'Salvando...' : 'Salvar Preferências'}
                 </Button>
               </div>
             </Card>

@@ -8,7 +8,10 @@ import {
     AlertTriangle,
     CheckCircle2,
     XCircle,
-    Megaphone
+    Megaphone,
+    Target,
+    CreditCard,
+    ShieldCheck
 } from 'lucide-react';
 import { api, Notification } from '@/lib/api';
 import { AdminLayout } from '@/components/layout/AdminLayout';
@@ -99,6 +102,10 @@ export default function AdminNotifications() {
             case 'warning': return <AlertTriangle className="w-4 h-4 text-amber-500" />;
             case 'error': return <XCircle className="w-4 h-4 text-rose-500" />;
             case 'info': return <Info className="w-4 h-4 text-blue-500" />;
+            case 'campaign': return <Target className="w-4 h-4 text-purple-500" />;
+            case 'billing': return <CreditCard className="w-4 h-4 text-green-500" />;
+            case 'security': return <ShieldCheck className="w-4 h-4 text-orange-500" />;
+            case 'marketing': return <Megaphone className="w-4 h-4 text-pink-500" />;
             default: return <Megaphone className="w-4 h-4 text-slate-500" />;
         }
     };
@@ -231,6 +238,10 @@ export default function AdminNotifications() {
                                         <SelectItem value="success">Sucesso</SelectItem>
                                         <SelectItem value="warning">Aviso</SelectItem>
                                         <SelectItem value="error">Erro</SelectItem>
+                                        <SelectItem value="campaign">Campanha</SelectItem>
+                                        <SelectItem value="billing">Faturamento</SelectItem>
+                                        <SelectItem value="security">Segurança</SelectItem>
+                                        <SelectItem value="marketing">Marketing</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
