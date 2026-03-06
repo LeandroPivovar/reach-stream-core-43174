@@ -19,11 +19,11 @@ nano .env.production
 ```env
 # URL do Backend API em produção
 # ⚠️ SUBSTITUA pela URL real do seu backend!
-VITE_API_URL=http://api.nucleocrm.shop:3000
+VITE_API_URL=http://api.nucleocrm.com.br:3000
 # OU se o backend estiver na mesma máquina mas em porta diferente:
-# VITE_API_URL=http://nucleocrm.shop:3000
+# VITE_API_URL=http://nucleocrm.com.br:3000
 # OU se usar HTTPS:
-# VITE_API_URL=https://api.nucleocrm.shop
+# VITE_API_URL=https://api.nucleocrm.com.br
 ```
 
 **Salvar:** `Ctrl+X`, depois `Y`, depois `Enter`
@@ -55,10 +55,10 @@ O backend também precisa permitir requisições do frontend.
 app.enableCors({
   origin: [
     'http://localhost:8080',           // Desenvolvimento
-    'http://nucleocrm.shop',           // Produção HTTP
-    'https://nucleocrm.shop',          // Produção HTTPS
-    'http://www.nucleocrm.shop',       // Produção com www
-    'https://www.nucleocrm.shop',      // Produção HTTPS com www
+    'http://nucleocrm.com.br',           // Produção HTTP
+    'https://nucleocrm.com.br',          // Produção HTTPS
+    'http://www.nucleocrm.com.br',       // Produção com www
+    'https://www.nucleocrm.com.br',      // Produção HTTPS com www
   ],
   credentials: true,
 });
@@ -78,7 +78,7 @@ sudo systemctl restart nucleo-backend
 
 ## Verificar se funcionou
 
-1. Abra o site: `http://nucleocrm.shop`
+1. Abra o site: `http://nucleocrm.com.br`
 2. Abra o Console (F12)
 3. Tente fazer login/registro
 4. Não deve mais aparecer erro de CORS

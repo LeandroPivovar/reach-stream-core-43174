@@ -2,8 +2,8 @@
 
 ## Problema
 ```
-Mixed Content: The page at 'https://nucleocrm.shop' was loaded over HTTPS, 
-but requested an insecure resource 'http://nucleocrm.shop:3010'
+Mixed Content: The page at 'https://nucleocrm.com.br' was loaded over HTTPS, 
+but requested an insecure resource 'http://nucleocrm.com.br:3010'
 ```
 
 O frontend está em HTTPS mas a API está em HTTP. Navegadores bloqueiam isso.
@@ -23,7 +23,7 @@ Adicione um bloco de proxy para a API:
 ```nginx
 server {
     listen 80;
-    server_name nucleocrm.shop www.nucleocrm.shop;
+    server_name nucleocrm.com.br www.nucleocrm.com.br;
     
     # Redirecionar HTTP para HTTPS
     return 301 https://$server_name$request_uri;
@@ -31,11 +31,11 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name nucleocrm.shop www.nucleocrm.shop;
+    server_name nucleocrm.com.br www.nucleocrm.com.br;
 
     # Certificados SSL (já configurados pelo Certbot)
-    ssl_certificate /etc/letsencrypt/live/nucleocrm.shop/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/nucleocrm.shop/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/nucleocrm.com.br/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/nucleocrm.com.br/privkey.pem;
 
     # Caminho para os arquivos do frontend
     root /var/www/nucleo-crm/frontend/dist;
@@ -94,7 +94,7 @@ nano .env.production
 
 Altere para:
 ```env
-VITE_API_URL=https://nucleocrm.shop/api
+VITE_API_URL=https://nucleocrm.com.br/api
 ```
 
 ### 4. Fazer novo build do frontend
@@ -113,7 +113,7 @@ sudo systemctl reload nginx
 
 ## Alternativa: Subdomínio separado para API
 
-Se preferir usar `api.nucleocrm.shop`:
+Se preferir usar `api.nucleocrm.com.br`:
 
 ### 1. Criar configuração Nginx para API
 
@@ -124,16 +124,16 @@ sudo nano /etc/nginx/sites-available/nucleo-api
 ```nginx
 server {
     listen 80;
-    server_name api.nucleocrm.shop;
+    server_name api.nucleocrm.com.br;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name api.nucleocrm.shop;
+    server_name api.nucleocrm.com.br;
 
-    ssl_certificate /etc/letsencrypt/live/api.nucleocrm.shop/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.nucleocrm.shop/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/api.nucleocrm.com.br/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.nucleocrm.com.br/privkey.pem;
 
     location / {
         proxy_pass http://localhost:3010;
@@ -153,7 +153,7 @@ server {
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/nucleo-api /etc/nginx/sites-enabled/
-sudo certbot --nginx -d api.nucleocrm.shop
+sudo certbot --nginx -d api.nucleocrm.com.br
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -161,16 +161,16 @@ sudo systemctl reload nginx
 ### 3. Atualizar `.env.production`
 
 ```env
-VITE_API_URL=https://api.nucleocrm.shop
+VITE_API_URL=https://api.nucleocrm.com.br
 ```
 
 ---
 
 ## Verificar se funcionou
 
-1. Abra: `https://nucleocrm.shop`
+1. Abra: `https://nucleocrm.com.br`
 2. Console (F12) → Network
 3. Tente fazer login/registro
-4. As requisições devem ir para `https://nucleocrm.shop/api/...` ou `https://api.nucleocrm.shop/...`
+4. As requisições devem ir para `https://nucleocrm.com.br/api/...` ou `https://api.nucleocrm.com.br/...`
 
 

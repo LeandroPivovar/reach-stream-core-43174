@@ -9,8 +9,8 @@ var vite_config_default = defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     allowedHosts: [
-      "nucleocrm.shop",
-      "www.nucleocrm.shop",
+      "nucleocrm.com.br",
+      "www.nucleocrm.com.br",
       "localhost",
       ".localhost"
     ]
