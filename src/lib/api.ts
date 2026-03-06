@@ -1290,6 +1290,39 @@ class ApiService {
   async getWebhookLog(id: number): Promise<any> {
     return this.get<any>(`/webhooks/logs/${id}`);
   }
+
+  // Notificações
+  async getNotifications(): Promise<Notification[]> {
+    return this.get<Notification[]>('/notifications');
+  }
+
+  async getUnreadNotificationsCount(): Promise<{ count: number }> {
+    return this.get<{ count: number }>('/notifications/unread-count');
+  }
+
+  async markNotificationAsRead(id: number): Promise<void> {
+    return this.request<void>(`/notifications/${id}/read`, {
+      method: 'POST',
+    });
+  }
+
+  // Admin Notificações
+  async getAdminNotifications(): Promise<Notification[]> {
+    return this.get<Notification[]>('/admin/notifications');
+  }
+
+  async createAdminNotification(data: Partial<Notification>): Promise<Notification> {
+    return this.request<Notification>('/admin/notifications', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAdminNotification(id: number): Promise<void> {
+    return this.request<void>(`/admin/notifications/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export interface PixelMetrics {
@@ -1403,6 +1436,18 @@ export interface Invoice {
   status: string;
   hostedInvoiceUrl?: string;
   pdfUrl?: string;
+  createdAt: string;
+}
+
+export interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: 'system' | 'info' | 'success' | 'warning' | 'error';
+  link?: string;
+  userId?: number;
+  read: boolean;
+  readAt?: string;
   createdAt: string;
 }
 
