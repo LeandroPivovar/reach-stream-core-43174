@@ -21,13 +21,16 @@ export interface User {
   lastName: string;
   email: string;
   phone?: string;
+  twoFactorEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface AuthResponse {
-  user: User;
-  token: string;
+  user?: User;
+  token?: string;
+  twoFactorRequired?: boolean;
+  email?: string;
 }
 
 export interface RegisterResponse {
@@ -40,6 +43,7 @@ export interface UpdateUserData {
   lastName?: string;
   email?: string;
   phone?: string;
+  twoFactorEnabled?: boolean;
 }
 
 export interface ChangePasswordData {
@@ -511,6 +515,17 @@ class ApiService {
     return this.request<{ message: string }>('/users/me/change-password', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  async toggle2fa(enabled: boolean): Promise<User> {
+    return this.updateUser({ twoFactorEnabled: enabled });
+  }
+
+  async verify2fa(email: string, code: string): Promise<AuthResponse> {
+    return this.request<AuthResponse>('/auth/verify-2fa', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
     });
   }
 
