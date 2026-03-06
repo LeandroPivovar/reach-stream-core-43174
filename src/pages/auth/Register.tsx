@@ -24,8 +24,6 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    document: '',
-    address: '',
     referralCode: '',
     acceptTerms: false
   });
@@ -36,15 +34,6 @@ export default function Register() {
       setFormData(prev => ({ ...prev, referralCode: ref }));
     }
   }, [searchParams]);
-
-  const formatCPF = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
-      .replace(/(-\d{2})\d+?$/, '$1');
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,14 +64,12 @@ export default function Register() {
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
-        document: formData.document,
-        address: formData.address,
         referralCode: formData.referralCode,
       });
 
       toast({
         title: 'Conta criada com sucesso!',
-        description: response.message || 'Você já pode fazer o seu login com suas credenciais.',
+        description: response.message || 'Verifique seu e-mail para ativar sua conta.',
       });
 
       // Limpar o formulário
@@ -92,8 +79,6 @@ export default function Register() {
         email: '',
         password: '',
         confirmPassword: '',
-        document: '',
-        address: '',
         referralCode: '',
         acceptTerms: false,
       });
@@ -102,7 +87,7 @@ export default function Register() {
       navigate('/auth/login', {
         replace: true,
         state: {
-          message: 'Conta criada! Você já pode fazer o login com suas credenciais.'
+          message: response.message || 'Conta criada! Verifique seu e-mail para ativar sua conta.'
         }
       });
     } catch (error) {
@@ -172,39 +157,16 @@ export default function Register() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="document">CPF</Label>
-                <Input
-                  id="document"
-                  type="text"
-                  placeholder="000.000.000-00"
-                  value={formData.document}
-                  onChange={(e) => setFormData(prev => ({ ...prev, document: formatCPF(e.target.value) }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="referralCode">Código de Indicação</Label>
-                <Input
-                  id="referralCode"
-                  type="text"
-                  placeholder="Opcional"
-                  value={formData.referralCode}
-                  onChange={(e) => setFormData(prev => ({ ...prev, referralCode: e.target.value.toUpperCase() }))}
-                  readOnly={!!searchParams.get('ref')}
-                  className={searchParams.get('ref') ? 'bg-muted' : ''}
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="address">Endereço</Label>
+              <Label htmlFor="referralCode">Código de Indicação</Label>
               <Input
-                id="address"
+                id="referralCode"
                 type="text"
-                placeholder="Rua, Número, Bairro, Cidade - UF"
-                value={formData.address}
-                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="Opcional"
+                value={formData.referralCode}
+                onChange={(e) => setFormData(prev => ({ ...prev, referralCode: e.target.value.toUpperCase() }))}
+                readOnly={!!searchParams.get('ref')}
+                className={searchParams.get('ref') ? 'bg-muted' : ''}
               />
             </div>
 

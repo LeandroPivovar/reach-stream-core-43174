@@ -5,8 +5,6 @@ export interface RegisterData {
   lastName: string;
   email: string;
   password: string;
-  document?: string;
-  address?: string;
   referralCode?: string;
 }
 
