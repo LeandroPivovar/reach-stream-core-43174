@@ -8,10 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
@@ -771,6 +770,9 @@ export default function Integracoes() {
               {selectedEcommerce && `Conectar ${selectedEcommerce}`}
               {integrationType === 'webhook' && 'Novo Webhook'}
             </DialogTitle>
+            <DialogDescription>
+              Configure uma nova integração para ampliar as funcionalidades do seu CRM.
+            </DialogDescription>
           </DialogHeader>
 
           {/* Seleção de Tipo */}
@@ -1537,6 +1539,9 @@ export default function Integracoes() {
               </div>
               Conectar Shopify
             </DialogTitle>
+            <DialogDescription>
+              Sincronize sua loja Shopify para importar produtos, pedidos e clientes.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -1605,6 +1610,9 @@ export default function Integracoes() {
               </div>
               Conectar Nuvemshop
             </DialogTitle>
+            <DialogDescription>
+              Conecte sua conta Nuvemshop para automatizar processos de venda e estoque.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
