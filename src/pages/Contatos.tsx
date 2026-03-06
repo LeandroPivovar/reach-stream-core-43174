@@ -2873,13 +2873,13 @@ export default function Contatos() {
                   size="sm"
                   onClick={() => {
                     const csvContent = [
-                      'Nome,Telefone,Email,Grupo,Status,Etiquetas,Estado,Cidade,Segmentações',
-                      'João Silva,(11) 98765-4321,joao@exemplo.com,VIP,Ativo,Cliente Premium;Fidelidade,SP,São Paulo,by_purchase_count;high_ticket',
-                      'Maria Santos,(21) 91234-5678,maria@exemplo.com,Regular,Ativo,Newsletter,RJ,Rio de Janeiro,birthday',
-                      'Pedro Oliveira,(31) 99876-5432,pedro@exemplo.com,,Ativo,,MG,Belo Horizonte,',
+                      'Nome;Telefone;Email;Grupo;Status;Etiquetas;Estado;Cidade;Segmentações',
+                      'João Silva;(11) 98765-4321;joao@exemplo.com;VIP;Ativo;"Cliente Premium;Fidelidade";SP;São Paulo;"by_purchase_count;high_ticket"',
+                      'Maria Santos;(21) 91234-5678;maria@exemplo.com;Regular;Ativo;Newsletter;RJ;Rio de Janeiro;birthday',
+                      'Pedro Oliveira;(31) 99876-5432;pedro@exemplo.com;;Ativo;;MG;Belo Horizonte;',
                     ].join('\n');
 
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -2958,7 +2958,7 @@ export default function Contatos() {
             <div className="p-4 bg-muted rounded-lg">
               <p className="font-medium mb-2 text-sm">Formato esperado do CSV:</p>
               <p className="text-xs text-muted-foreground font-mono mb-2">
-                Nome,Telefone,Email,Grupo,Status,Etiquetas,Estado,Cidade,Segmentações
+                Nome;Telefone;Email;Grupo;Status;Etiquetas;Estado;Cidade;Segmentações
               </p>
               <div className="text-xs text-muted-foreground space-y-1 mt-2">
                 <p>• <strong>Nome</strong>: Obrigatório</p>
