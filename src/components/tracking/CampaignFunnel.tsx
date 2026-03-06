@@ -31,10 +31,12 @@ export function CampaignFunnel({ periodDays = 30 }: CampaignFunnelProps) {
   });
 
   const calculateConversionRate = (current: number, previous: number) => {
+    if (!previous || previous === 0) return '0.0';
     return ((current / previous) * 100).toFixed(1);
   };
 
   const calculateDropoff = (current: number, previous: number) => {
+    if (!previous || previous === 0) return '0.0';
     return ((1 - current / previous) * 100).toFixed(1);
   };
 
@@ -62,7 +64,9 @@ export function CampaignFunnel({ periodDays = 30 }: CampaignFunnelProps) {
             const previousValue = index > 0 ? funnelData[index - 1].value : stage.value;
             const conversionRate = calculateConversionRate(stage.value, previousValue);
             const dropoffRate = calculateDropoff(stage.value, previousValue);
-            const widthPercentage = (stage.value / funnelData[0].value) * 100;
+            const widthPercentage = funnelData[0].value > 0
+              ? (stage.value / funnelData[0].value) * 100
+              : 0;
 
             return (
               <div key={stage.name} className="space-y-2">
