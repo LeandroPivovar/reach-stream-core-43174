@@ -164,36 +164,44 @@ export function ConversionDetails({ periodDays = 30 }: ConversionDetailsProps) {
         </div>
 
         {/* Insights de Conversão */}
-        <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-              <TrendingUp className="w-4 h-4 text-primary" />
-            </div>
-            <div className="flex-1">
-              <p className="font-semibold mb-1">Insights de Conversão</p>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <ArrowRight className="w-3 h-3" />
-                  <span>
-                    <strong className="text-foreground">PIX</strong> é o método preferido, com <strong className="text-foreground">48.9%</strong> das conversões
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ArrowRight className="w-3 h-3" />
-                  <span>
-                    <strong className="text-foreground">Facebook Ads</strong> gera mais conversões, representando <strong className="text-foreground">39.5%</strong> do total
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ArrowRight className="w-3 h-3" />
-                  <span>
-                    <strong className="text-foreground">Produto Premium</strong> lidera com <strong className="text-foreground">234 conversões</strong> e tendência de <strong className="text-green-600">+12%</strong>
-                  </span>
+        {((paymentMethods.length > 0) || (conversionSources.length > 0) || (convertingProducts.length > 0)) && (
+          <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold mb-1">Insights de Conversão</p>
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  {paymentMethods.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <ArrowRight className="w-3 h-3" />
+                      <span>
+                        <strong className="text-foreground">{paymentMethods[0].method}</strong> é o método preferido, com <strong className="text-foreground">{paymentMethods[0].percentage}%</strong> das conversões
+                      </span>
+                    </div>
+                  )}
+                  {conversionSources.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <ArrowRight className="w-3 h-3" />
+                      <span>
+                        <strong className="text-foreground">{conversionSources[0].source}</strong> gera mais conversões, representando <strong className="text-foreground">{conversionSources[0].percentage}%</strong> do total
+                      </span>
+                    </div>
+                  )}
+                  {convertingProducts.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <ArrowRight className="w-3 h-3" />
+                      <span>
+                        <strong className="text-foreground">{convertingProducts[0].name}</strong> lidera com <strong className="text-foreground">{convertingProducts[0].conversions} conversões</strong> e taxa de <strong className="text-foreground">{convertingProducts[0].rate}%</strong>
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
