@@ -1306,6 +1306,12 @@ class ApiService {
     });
   }
 
+  async deleteNotification(id: number): Promise<void> {
+    return this.request<void>(`/notifications/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Admin Notificações
   async getAdminNotifications(): Promise<Notification[]> {
     return this.get<Notification[]>('/admin/notifications');
