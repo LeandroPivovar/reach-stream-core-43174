@@ -31,6 +31,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog";
+import { Badge } from '@/components/ui/badge';
 
 export function NotificationCenter() {
     const [open, setOpen] = useState(false);
