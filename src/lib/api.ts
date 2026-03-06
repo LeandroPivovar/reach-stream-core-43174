@@ -1097,6 +1097,20 @@ class ApiService {
     });
   }
 
+  async syncShopifyCustomers(shop: string): Promise<{ success: boolean; imported: number; updated: number }> {
+    return this.request<{ success: boolean; imported: number; updated: number }>('/shopify/sync/customers', {
+      method: 'POST',
+      body: JSON.stringify({ shop }),
+    });
+  }
+
+  async syncShopifyOrders(shop: string): Promise<{ success: boolean; imported: number; updated: number }> {
+    return this.request<{ success: boolean; imported: number; updated: number }>('/shopify/sync/orders', {
+      method: 'POST',
+      body: JSON.stringify({ shop }),
+    });
+  }
+
   async createNuvemshopWebhook(storeId: string, event: string, url: string): Promise<any> {
     return this.request<any>('/nuvemshop/webhooks', {
       method: 'POST',
