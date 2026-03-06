@@ -19,11 +19,11 @@ nano .env.production
 ```env
 # URL do Backend API em produção
 # ⚠️ SUBSTITUA pela URL real do seu backend!
-VITE_API_URL=http://api.nucleocrm.com.br:3000
+VITE_API_URL=http://nucleocrm.com.brcrm.com.br:3000
 # OU se o backend estiver na mesma máquina mas em porta diferente:
 # VITE_API_URL=http://nucleocrm.com.br:3000
 # OU se usar HTTPS:
-# VITE_API_URL=https://api.nucleocrm.com.br
+# VITE_API_URL=https://nucleocrm.com.brcrm.com.br
 ```
 
 **Salvar:** `Ctrl+X`, depois `Y`, depois `Enter`

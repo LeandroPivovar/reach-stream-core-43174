@@ -113,7 +113,7 @@ sudo systemctl reload nginx
 
 ## Alternativa: Subdomínio separado para API
 
-Se preferir usar `api.nucleocrm.com.br`:
+Se preferir usar `nucleocrm.com.brcrm.com.br`:
 
 ### 1. Criar configuração Nginx para API
 
@@ -124,16 +124,16 @@ sudo nano /etc/nginx/sites-available/nucleo-api
 ```nginx
 server {
     listen 80;
-    server_name api.nucleocrm.com.br;
+    server_name nucleocrm.com.brcrm.com.br;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name api.nucleocrm.com.br;
+    server_name nucleocrm.com.brcrm.com.br;
 
-    ssl_certificate /etc/letsencrypt/live/api.nucleocrm.com.br/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.nucleocrm.com.br/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/nucleocrm.com.brcrm.com.br/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/nucleocrm.com.brcrm.com.br/privkey.pem;
 
     location / {
         proxy_pass http://localhost:3010;
@@ -153,7 +153,7 @@ server {
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/nucleo-api /etc/nginx/sites-enabled/
-sudo certbot --nginx -d api.nucleocrm.com.br
+sudo certbot --nginx -d nucleocrm.com.brcrm.com.br
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -161,7 +161,7 @@ sudo systemctl reload nginx
 ### 3. Atualizar `.env.production`
 
 ```env
-VITE_API_URL=https://api.nucleocrm.com.br
+VITE_API_URL=https://nucleocrm.com.brcrm.com.br
 ```
 
 ---
@@ -171,6 +171,6 @@ VITE_API_URL=https://api.nucleocrm.com.br
 1. Abra: `https://nucleocrm.com.br`
 2. Console (F12) → Network
 3. Tente fazer login/registro
-4. As requisições devem ir para `https://nucleocrm.com.br/api/...` ou `https://api.nucleocrm.com.br/...`
+4. As requisições devem ir para `https://nucleocrm.com.br/api/...` ou `https://nucleocrm.com.brcrm.com.br/...`
 
 

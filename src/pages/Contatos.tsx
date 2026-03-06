@@ -2383,7 +2383,7 @@ export default function Contatos() {
                   <Label htmlFor="webhook-url">URL do Webhook</Label>
                   <Input
                     id="webhook-url"
-                    value="https://api.nucleo.com/webhook/capture"
+                    value="https://nucleocrm.com.br.com/webhook/capture"
                     readOnly
                     className="mt-1"
                   />
