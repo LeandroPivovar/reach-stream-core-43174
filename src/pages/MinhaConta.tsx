@@ -11,8 +11,8 @@ import { SuccessModal } from '@/components/ui/success-modal';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
-import { 
-  User, 
+import {
+  User,
   Lock,
   CreditCard,
   Bell,
@@ -36,7 +36,7 @@ export default function MinhaConta() {
     title: '',
     description: '',
   });
-  
+
   const [profileData, setProfileData] = useState({
     firstName: '',
     lastName: '',
@@ -64,6 +64,7 @@ export default function MinhaConta() {
         newPassword: '',
         confirmPassword: ''
       });
+      setTwoFactorEnabled(userData.twoFactorEnabled || false);
     } catch (error) {
       toast({
         title: 'Erro ao carregar dados',
@@ -207,9 +208,40 @@ export default function MinhaConta() {
     // Handle notifications save
   };
 
+  const handleToggle2fa = async (checked: boolean) => {
+    try {
+      setIsSaving(true);
+      const updatedUser = await api.toggle2fa(checked);
+      setTwoFactorEnabled(updatedUser.twoFactorEnabled || false);
+
+      // Atualizar contexto de autenticação
+      const token = localStorage.getItem('token');
+      if (token) {
+        login(token, updatedUser);
+      }
+
+      toast({
+        title: checked ? '2FA Ativado' : '2FA Desativado',
+        description: checked
+          ? 'Sua conta agora está protegida com autenticação de dois fatores.'
+          : 'A autenticação de dois fatores foi desativada.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao alterar 2FA',
+        description: error instanceof Error ? error.message : 'Não foi possível alterar a configuração de 2FA',
+        variant: 'destructive',
+      });
+      // Revert switch state on error
+      setTwoFactorEnabled(!checked);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
-    <Layout 
-      title="Minha Conta" 
+    <Layout
+      title="Minha Conta"
       subtitle="Gerencie suas informações pessoais e configurações"
     >
       <div className="space-y-6">
@@ -245,9 +277,9 @@ export default function MinhaConta() {
                     <Input
                       id="firstName"
                       value={profileData.firstName}
-                      onChange={(e) => setProfileData(prev => ({ 
-                        ...prev, 
-                        firstName: e.target.value 
+                      onChange={(e) => setProfileData(prev => ({
+                        ...prev,
+                        firstName: e.target.value
                       }))}
                     />
                   </div>
@@ -256,9 +288,9 @@ export default function MinhaConta() {
                     <Input
                       id="lastName"
                       value={profileData.lastName}
-                      onChange={(e) => setProfileData(prev => ({ 
-                        ...prev, 
-                        lastName: e.target.value 
+                      onChange={(e) => setProfileData(prev => ({
+                        ...prev,
+                        lastName: e.target.value
                       }))}
                     />
                   </div>
@@ -270,9 +302,9 @@ export default function MinhaConta() {
                     id="email"
                     type="email"
                     value={profileData.email}
-                    onChange={(e) => setProfileData(prev => ({ 
-                      ...prev, 
-                      email: e.target.value 
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      email: e.target.value
                     }))}
                   />
                 </div>
@@ -282,15 +314,15 @@ export default function MinhaConta() {
                   <Input
                     id="phone"
                     value={profileData.phone}
-                    onChange={(e) => setProfileData(prev => ({ 
-                      ...prev, 
-                      phone: e.target.value 
+                    onChange={(e) => setProfileData(prev => ({
+                      ...prev,
+                      phone: e.target.value
                     }))}
                   />
                 </div>
 
-                <Button 
-                  onClick={handleProfileSave} 
+                <Button
+                  onClick={handleProfileSave}
                   className="w-full md:w-auto"
                   disabled={isSaving || isLoading}
                 >
@@ -308,7 +340,7 @@ export default function MinhaConta() {
                   <Lock className="w-5 h-5 mr-2" />
                   Alterar Senha
                 </h3>
-                
+
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="currentPassword">Senha Atual</Label>
@@ -317,9 +349,9 @@ export default function MinhaConta() {
                         id="currentPassword"
                         type={showPassword ? 'text' : 'password'}
                         value={profileData.currentPassword}
-                        onChange={(e) => setProfileData(prev => ({ 
-                          ...prev, 
-                          currentPassword: e.target.value 
+                        onChange={(e) => setProfileData(prev => ({
+                          ...prev,
+                          currentPassword: e.target.value
                         }))}
                       />
                       <Button
@@ -344,9 +376,9 @@ export default function MinhaConta() {
                       id="newPassword"
                       type={showPassword ? 'text' : 'password'}
                       value={profileData.newPassword}
-                      onChange={(e) => setProfileData(prev => ({ 
-                        ...prev, 
-                        newPassword: e.target.value 
+                      onChange={(e) => setProfileData(prev => ({
+                        ...prev,
+                        newPassword: e.target.value
                       }))}
                     />
                   </div>
@@ -357,14 +389,14 @@ export default function MinhaConta() {
                       id="confirmPassword"
                       type={showPassword ? 'text' : 'password'}
                       value={profileData.confirmPassword}
-                      onChange={(e) => setProfileData(prev => ({ 
-                        ...prev, 
-                        confirmPassword: e.target.value 
+                      onChange={(e) => setProfileData(prev => ({
+                        ...prev,
+                        confirmPassword: e.target.value
                       }))}
                     />
                   </div>
 
-                  <Button 
+                  <Button
                     onClick={handlePasswordChange}
                     disabled={isSaving}
                   >
@@ -389,7 +421,8 @@ export default function MinhaConta() {
                   </div>
                   <Switch
                     checked={twoFactorEnabled}
-                    onCheckedChange={setTwoFactorEnabled}
+                    onCheckedChange={handleToggle2fa}
+                    disabled={isSaving}
                   />
                 </div>
 
@@ -400,12 +433,9 @@ export default function MinhaConta() {
                       <span className="font-medium text-sm">2FA Ativo</span>
                       <Badge variant="default">Ativo</Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">
+                    <p className="text-sm text-muted-foreground">
                       Códigos de verificação serão enviados para seu e-mail
                     </p>
-                    <Button variant="outline" size="sm">
-                      Reconfigurar 2FA
-                    </Button>
                   </div>
                 )}
               </Card>
@@ -439,7 +469,7 @@ export default function MinhaConta() {
                     </div>
                     <p className="text-lg font-semibold">22 de Abril, 2024</p>
                   </div>
-                  
+
                   <div className="flex space-x-2">
                     <Button variant="outline" className="flex-1">
                       Alterar Plano
@@ -454,7 +484,7 @@ export default function MinhaConta() {
               {/* Payment History */}
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-6">Histórico de Pagamentos</h3>
-                
+
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -504,7 +534,7 @@ export default function MinhaConta() {
                 <Bell className="w-5 h-5 mr-2" />
                 Preferências de Notificação
               </h3>
-              
+
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -515,7 +545,7 @@ export default function MinhaConta() {
                   </div>
                   <Switch
                     checked={notifications.campaignUpdates}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setNotifications(prev => ({ ...prev, campaignUpdates: checked }))
                     }
                   />
@@ -530,7 +560,7 @@ export default function MinhaConta() {
                   </div>
                   <Switch
                     checked={notifications.billing}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setNotifications(prev => ({ ...prev, billing: checked }))
                     }
                   />
@@ -545,7 +575,7 @@ export default function MinhaConta() {
                   </div>
                   <Switch
                     checked={notifications.security}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setNotifications(prev => ({ ...prev, security: checked }))
                     }
                   />
@@ -560,7 +590,7 @@ export default function MinhaConta() {
                   </div>
                   <Switch
                     checked={notifications.marketing}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setNotifications(prev => ({ ...prev, marketing: checked }))
                     }
                   />
