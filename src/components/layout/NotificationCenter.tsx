@@ -9,7 +9,11 @@ import {
     ExternalLink,
     Loader2,
     Trash2,
-    Eye
+    Eye,
+    Megaphone,
+    CreditCard,
+    Target,
+    ShieldCheck
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, Notification } from '@/lib/api';
@@ -72,6 +76,10 @@ export function NotificationCenter() {
             case 'warning': return <AlertTriangle className="w-4 h-4 text-amber-500" />;
             case 'error': return <XCircle className="w-4 h-4 text-rose-500" />;
             case 'info': return <Info className="w-4 h-4 text-blue-500" />;
+            case 'campaign': return <Target className="w-4 h-4 text-purple-500" />;
+            case 'billing': return <CreditCard className="w-4 h-4 text-green-500" />;
+            case 'security': return <ShieldCheck className="w-4 h-4 text-orange-500" />;
+            case 'marketing': return <Megaphone className="w-4 h-4 text-pink-500" />;
             default: return <Bell className="w-4 h-4 text-slate-500" />;
         }
     };
