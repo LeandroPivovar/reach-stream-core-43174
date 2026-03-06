@@ -345,7 +345,7 @@ export default function Rastreamento() {
                     <Label>Código HTML Gerado</Label>
                     <div className="mt-2 p-4 bg-muted rounded-lg">
                       <code className="text-sm">
-                        {`<form action="https://api.nucleo.com/forms/capture" method="POST">
+                        {`<form action="https://nucleocrm.com.br.com/forms/capture" method="POST">
   <input type="text" name="name" placeholder="Nome" required>
   <input type="email" name="email" placeholder="E-mail" required>
   <input type="tel" name="phone" placeholder="Telefone">
