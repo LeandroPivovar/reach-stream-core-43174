@@ -10,13 +10,15 @@ import {
     Settings,
     LogOut,
     ArrowLeft,
-    ShieldCheck
+    ShieldCheck,
+    Bell
 } from 'lucide-react';
 
 const adminMenuItems = [
     { title: 'Dashboard Admin', href: '/admin', icon: LayoutDashboard },
     { title: 'Usuários', href: '/admin/users', icon: Users },
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
+    { title: 'Notificações', href: '/admin/notifications', icon: Bell },
     { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];
 

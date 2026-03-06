@@ -1,14 +1,15 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Bell, 
-  Search, 
+import {
+  Bell,
+  Search,
   Settings,
   Plus,
   Download,
   Filter
 } from 'lucide-react';
+import { NotificationCenter } from './NotificationCenter';
 
 interface HeaderProps {
   title: string;
@@ -49,9 +50,7 @@ export function Header({ title, subtitle, actions, showSearch = false, onSearchC
             </div>
           )}
 
-          <Button variant="ghost" size="icon">
-            <Bell className="w-4 h-4" />
-          </Button>
+          <NotificationCenter />
 
           <Button variant="ghost" size="icon">
             <Settings className="w-4 h-4" />
@@ -70,14 +69,14 @@ export const HeaderActions = {
       {children}
     </Button>
   ),
-  
+
   Export: ({ onClick }: { onClick?: () => void }) => (
     <Button variant="outline" onClick={onClick}>
       <Download className="w-4 h-4 mr-2" />
       Exportar
     </Button>
   ),
-  
+
   Filter: ({ onClick }: { onClick?: () => void }) => (
     <Button variant="outline" onClick={onClick}>
       <Filter className="w-4 h-4 mr-2" />
