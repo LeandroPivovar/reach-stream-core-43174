@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const defaultApiUrl = isProd ? `https://api.${window.location.hostname.replace('www.', '')}` : 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
 
 export interface RegisterData {
   firstName: string;
