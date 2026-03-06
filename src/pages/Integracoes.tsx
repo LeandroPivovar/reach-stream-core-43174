@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
-import { 
-  ShoppingBag, 
+import {
+  ShoppingBag,
   Webhook,
   Settings,
   ExternalLink,
@@ -61,7 +61,7 @@ export default function Integracoes() {
     headers: '',
     payloadExample: ''
   });
-  
+
   // Estados para conexões e webhooks
   const [nuvemshopConnections, setNuvemshopConnections] = useState<any[]>([]);
   const [shopifyConnections, setShopifyConnections] = useState<any[]>([]);
@@ -70,6 +70,8 @@ export default function Integracoes() {
   const [loadingConnections, setLoadingConnections] = useState(false);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [isConnectingVtex, setIsConnectingVtex] = useState(false);
+  const [isSyncingCustomers, setIsSyncingCustomers] = useState<string | null>(null);
+  const [isSyncingOrders, setIsSyncingOrders] = useState<string | null>(null);
 
   // Mapeamento de eventos técnicos para nomes amigáveis
   const eventLabels: Record<string, string> = {
@@ -142,18 +144,18 @@ export default function Integracoes() {
         api.getShopifyConnections().catch(() => []),
         api.getVtexConnections().catch(() => []),
       ]);
-      
+
       const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
       const activeShopify = shopify.filter((c: any) => c.isActive);
       const activeVtex = vtex.filter((c: any) => c.isActive);
-      
+
       setNuvemshopConnections(activeNuvemshop);
       setShopifyConnections(activeShopify);
       setVtexConnections(activeVtex);
 
       // Buscar webhooks de todas as conexões ativas
       const allWebhooks: any[] = [];
-      
+
       for (const conn of activeNuvemshop) {
         try {
           const response = await api.listNuvemshopWebhooks(conn.storeId);
@@ -192,7 +194,7 @@ export default function Integracoes() {
   const handleDisconnect = async (platform: 'nuvemshop' | 'shopify' | 'vtex', identifier: string) => {
     try {
       setDisconnecting(`${platform}-${identifier}`);
-      
+
       if (platform === 'nuvemshop') {
         await api.disconnectNuvemshop(identifier);
       } else if (platform === 'shopify') {
@@ -216,6 +218,44 @@ export default function Integracoes() {
       });
     } finally {
       setDisconnecting(null);
+    }
+  };
+
+  const handleSyncShopifyCustomers = async (shop: string) => {
+    try {
+      setIsSyncingCustomers(shop);
+      const result = await api.syncShopifyCustomers(shop);
+      toast({
+        title: 'Sincronização concluída',
+        description: `Clientes sincronizados: ${result.imported} importados, ${result.updated} atualizados.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro na sincronização',
+        description: error instanceof Error ? error.message : 'Não foi possível sincronizar clientes',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSyncingCustomers(null);
+    }
+  };
+
+  const handleSyncShopifyOrders = async (shop: string) => {
+    try {
+      setIsSyncingOrders(shop);
+      const result = await api.syncShopifyOrders(shop);
+      toast({
+        title: 'Sincronização concluída',
+        description: `Pedidos sincronizados: ${result.imported} importados, ${result.updated} atualizados.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro na sincronização',
+        description: error instanceof Error ? error.message : 'Não foi possível sincronizar pedidos',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSyncingOrders(null);
     }
   };
 
@@ -252,11 +292,11 @@ export default function Integracoes() {
 
   const handleTestConnection = async (platform: 'tray' | 'vtex') => {
     setTestingConnection(true);
-    
+
     // Simulate API test
     setTimeout(() => {
       const success = Math.random() > 0.3; // 70% success rate for demo
-      
+
       if (success) {
         toast({
           title: "Conexão bem-sucedida!",
@@ -286,11 +326,11 @@ export default function Integracoes() {
     setIsConnectingShopify(true);
     try {
       const response = await api.initShopifyAuth(shopifyShop);
-      
+
       // Salvar state no localStorage para verificação depois
       localStorage.setItem('shopify_oauth_state', response.state);
       localStorage.setItem('shopify_shop', response.shop);
-      
+
       // Redirecionar para a URL de autorização
       window.location.href = response.authUrl;
     } catch (error) {
@@ -307,10 +347,10 @@ export default function Integracoes() {
     setIsConnectingNuvemshop(true);
     try {
       const response = await api.initNuvemshopAuth();
-      
+
       // Salvar state no localStorage para verificação depois
       localStorage.setItem('nuvemshop_oauth_state', response.state);
-      
+
       // Redirecionar para a URL de autorização
       window.location.href = response.authUrl;
     } catch (error) {
@@ -430,8 +470,8 @@ export default function Integracoes() {
   );
 
   return (
-    <Layout 
-      title="Integrações" 
+    <Layout
+      title="Integrações"
       subtitle="Conecte o Núcleo com suas ferramentas favoritas"
       actions={actions}
     >
@@ -487,7 +527,7 @@ export default function Integracoes() {
               const connectionStatus = isConnected(integration.name);
               const isConnectedPlatform = connectionStatus.connected;
               const connection = connectionStatus.connection;
-              
+
               return (
                 <Card key={integration.id} className="p-6 border-2 border-border hover:border-primary/20 transition-colors">
                   <div className="flex items-start justify-between mb-4">
@@ -518,66 +558,96 @@ export default function Integracoes() {
                     ))}
                   </div>
 
-                  <div className="flex space-x-2">
-                    {isConnectedPlatform ? (
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => {
-                          if (integration.name === 'Nuvemshop' && connection) {
-                            handleDisconnect('nuvemshop', connection.storeId);
-                          } else if (integration.name === 'Shopify' && connection) {
-                            handleDisconnect('shopify', connection.shop);
-                          } else if (integration.name === 'VTEX' && connection) {
-                            handleDisconnect('vtex', connection.accountName);
-                          }
-                        }}
-                        disabled={
-                          (integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
-                          (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
-                          (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`)
-                        }
-                      >
-                        {((integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
-                          (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
-                          (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`)) ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Desconectando...
-                          </>
-                        ) : (
-                          <>
-                            <X className="w-4 h-4 mr-2" />
-                            Desconectar
-                          </>
-                        )}
-                      </Button>
-                    ) : integration.status === 'Em desenvolvimento' ? (
-                      <Button 
-                        size="sm" 
-                        className="flex-1"
-                        disabled
-                      >
-                        Em desenvolvimento
-                      </Button>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => {
-                          if (integration.name === 'Shopify') {
-                            setIsShopifyInfoOpen(true);
-                          } else if (integration.name === 'Nuvemshop') {
-                            setIsNuvemshopInfoOpen(true);
-                          } else {
-                            handleOpenNewIntegration();
-                          }
-                        }}
-                      >
-                        Conectar
-                      </Button>
+                  <div className="flex flex-col space-y-2">
+                    {isConnectedPlatform && integration.name === 'Shopify' && (
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSyncShopifyCustomers(connection.shop)}
+                          disabled={isSyncingCustomers === connection.shop}
+                        >
+                          {isSyncingCustomers === connection.shop ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            'Sinc. Clientes'
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSyncShopifyOrders(connection.shop)}
+                          disabled={isSyncingOrders === connection.shop}
+                        >
+                          {isSyncingOrders === connection.shop ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            'Sinc. Pedidos'
+                          )}
+                        </Button>
+                      </div>
                     )}
+                    <div className="flex space-x-2">
+                      {isConnectedPlatform ? (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            if (integration.name === 'Nuvemshop' && connection) {
+                              handleDisconnect('nuvemshop', connection.storeId);
+                            } else if (integration.name === 'Shopify' && connection) {
+                              handleDisconnect('shopify', connection.shop);
+                            } else if (integration.name === 'VTEX' && connection) {
+                              handleDisconnect('vtex', connection.accountName);
+                            }
+                          }}
+                          disabled={
+                            (integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
+                            (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
+                            (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`)
+                          }
+                        >
+                          {((integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
+                            (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
+                            (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`)) ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Desconectando...
+                            </>
+                          ) : (
+                            <>
+                              <X className="w-4 h-4 mr-2" />
+                              Desconectar
+                            </>
+                          )}
+                        </Button>
+                      ) : integration.status === 'Em desenvolvimento' ? (
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          disabled
+                        >
+                          Em desenvolvimento
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            if (integration.name === 'Shopify') {
+                              setIsShopifyInfoOpen(true);
+                            } else if (integration.name === 'Nuvemshop') {
+                              setIsNuvemshopInfoOpen(true);
+                            } else {
+                              handleOpenNewIntegration();
+                            }
+                          }}
+                        >
+                          Conectar
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </Card>
               );
@@ -589,7 +659,7 @@ export default function Integracoes() {
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Webhooks Personalizados</h3>
-            <Button 
+            <Button
               variant="outline"
               onClick={handleOpenNewIntegration}
             >
@@ -597,7 +667,7 @@ export default function Integracoes() {
               Novo Webhook
             </Button>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -639,8 +709,8 @@ export default function Integracoes() {
                             {webhook.address || webhook.url || 'N/A'}
                           </code>
                           {(webhook.address || webhook.url) && (
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="icon"
                               onClick={() => window.open(webhook.address || webhook.url, '_blank')}
                             >
@@ -711,7 +781,7 @@ export default function Integracoes() {
               </p>
 
               <div className="grid gap-4">
-                <Card 
+                <Card
                   className="p-6 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectIntegrationType('ecommerce')}
                 >
@@ -728,7 +798,7 @@ export default function Integracoes() {
                   </div>
                 </Card>
 
-                <Card 
+                <Card
                   className="p-6 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectIntegrationType('webhook')}
                 >
@@ -764,7 +834,7 @@ export default function Integracoes() {
               </div>
 
               <div className="grid gap-3">
-                <Card 
+                <Card
                   className="p-4 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectEcommerce('Shopify')}
                 >
@@ -781,7 +851,7 @@ export default function Integracoes() {
                   </div>
                 </Card>
 
-                <Card 
+                <Card
                   className="p-4 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => {
                     setIsNuvemshopInfoOpen(true);
@@ -801,7 +871,7 @@ export default function Integracoes() {
                   </div>
                 </Card>
 
-                <Card 
+                <Card
                   className="p-4 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectEcommerce('Loja Integrada')}
                 >
@@ -818,7 +888,7 @@ export default function Integracoes() {
                   </div>
                 </Card>
 
-                <Card 
+                <Card
                   className="p-4 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectEcommerce('WooCommerce')}
                 >
@@ -835,7 +905,7 @@ export default function Integracoes() {
                   </div>
                 </Card>
 
-                <Card 
+                <Card
                   className="p-4 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectEcommerce('Tray')}
                 >
@@ -852,7 +922,7 @@ export default function Integracoes() {
                   </div>
                 </Card>
 
-                <Card 
+                <Card
                   className="p-4 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectEcommerce('VTEX')}
                 >
@@ -938,7 +1008,7 @@ export default function Integracoes() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleConnectShopify}
                   disabled={!shopifyShop || isConnectingShopify}
                 >
@@ -1004,7 +1074,7 @@ export default function Integracoes() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleConnectNuvemshop}
                   disabled={isConnectingNuvemshop}
                 >
@@ -1052,7 +1122,7 @@ export default function Integracoes() {
                     onChange={(e) => setEcommerceData({ ...ecommerceData, domain: e.target.value })}
                     placeholder={
                       selectedEcommerce === 'Nuvemshop' ? 'minhaloja.nuvemshop.com.br' :
-                      'minhaloja.com.br'
+                        'minhaloja.com.br'
                     }
                   />
                 </div>
@@ -1089,7 +1159,7 @@ export default function Integracoes() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleConnect}
                   disabled={!ecommerceData.storeName || !ecommerceData.domain || !ecommerceData.apiKey}
                 >
@@ -1167,14 +1237,14 @@ export default function Integracoes() {
                   Voltar
                 </Button>
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => handleTestConnection('tray')}
                     disabled={!trayData.apiKey || !trayData.secretKey || !trayData.endpoint || testingConnection}
                   >
                     {testingConnection ? 'Testando...' : 'Testar Conexão'}
                   </Button>
-                  <Button 
+                  <Button
                     onClick={handleConnect}
                     disabled={!trayData.apiKey || !trayData.secretKey || !trayData.endpoint}
                   >
@@ -1253,7 +1323,7 @@ export default function Integracoes() {
                   Voltar
                 </Button>
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={async () => {
                       if (!vtexData.accountName || !vtexData.appKey || !vtexData.appToken) {
@@ -1300,7 +1370,7 @@ export default function Integracoes() {
                       'Testar Conexão'
                     )}
                   </Button>
-                  <Button 
+                  <Button
                     onClick={handleConnectVtex}
                     disabled={!vtexData.accountName || !vtexData.appKey || !vtexData.appToken || isConnectingVtex}
                   >
@@ -1324,7 +1394,7 @@ export default function Integracoes() {
               <div className="bg-purple-500/10 p-4 rounded-lg">
                 <h4 className="text-sm font-semibold mb-2">O que são Webhooks?</h4>
                 <p className="text-sm text-muted-foreground">
-                  Os webhooks permitem que seu sistema receba notificações automáticas sempre que um evento ocorrer no Núcleo. 
+                  Os webhooks permitem que seu sistema receba notificações automáticas sempre que um evento ocorrer no Núcleo.
                   Configure a URL do seu sistema que receberá os dados e escolha quais eventos deseja monitorar.
                 </p>
               </div>
@@ -1370,17 +1440,15 @@ export default function Integracoes() {
                       { key: 'form_submitted', label: 'Formulário enviado' },
                       { key: 'purchase_completed', label: 'Compra finalizada' }
                     ].map((event) => (
-                      <Card 
+                      <Card
                         key={event.key}
-                        className={`p-3 cursor-pointer transition-colors ${
-                          webhookData.events.includes(event.key) ? 'border-primary bg-primary/5' : ''
-                        }`}
+                        className={`p-3 cursor-pointer transition-colors ${webhookData.events.includes(event.key) ? 'border-primary bg-primary/5' : ''
+                          }`}
                         onClick={() => toggleEvent(event.key)}
                       >
                         <div className="flex items-center gap-2">
-                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                            webhookData.events.includes(event.key) ? 'border-primary bg-primary' : 'border-muted-foreground'
-                          }`}>
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${webhookData.events.includes(event.key) ? 'border-primary bg-primary' : 'border-muted-foreground'
+                            }`}>
                             {webhookData.events.includes(event.key) && <Check className="w-3 h-3 text-white" />}
                           </div>
                           <span className="text-sm">{event.label}</span>
@@ -1410,7 +1478,7 @@ export default function Integracoes() {
                   <div className="bg-muted p-3 rounded-lg">
                     <p className="text-xs font-medium mb-2">O webhook enviará dados neste formato:</p>
                     <pre className="text-xs overflow-x-auto">
-{`{
+                      {`{
   "event_type": "lead_captured",
   "timestamp": "2025-01-15T10:30:00Z",
   "data": {
@@ -1447,7 +1515,7 @@ export default function Integracoes() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button 
+                <Button
                   onClick={handleConnect}
                   disabled={!webhookData.name || !webhookData.url || webhookData.events.length === 0}
                 >
@@ -1513,7 +1581,7 @@ export default function Integracoes() {
             <Button variant="outline" onClick={() => setIsShopifyInfoOpen(false)}>
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 setIsShopifyInfoOpen(false);
                 setIntegrationType('ecommerce');
@@ -1577,7 +1645,7 @@ export default function Integracoes() {
             <Button variant="outline" onClick={() => setIsNuvemshopInfoOpen(false)}>
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={() => {
                 setIsNuvemshopInfoOpen(false);
                 setIntegrationType('ecommerce');
