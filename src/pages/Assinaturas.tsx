@@ -402,7 +402,12 @@ export default function Assinaturas() {
                         R$ {invoice.amount.toString().replace('.', ',')}
                       </td>
                       <td className="py-4 px-2 text-right">
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={!invoice.hostedInvoiceUrl}
+                          onClick={() => invoice.hostedInvoiceUrl && window.open(invoice.hostedInvoiceUrl, '_blank')}
+                        >
                           <FileText className="w-4 h-4 mr-2" />
                           Fatura
                         </Button>
