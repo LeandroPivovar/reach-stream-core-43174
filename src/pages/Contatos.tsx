@@ -83,6 +83,7 @@ import {
 } from '@/components/ui/popover';
 import { LtvHistory } from '@/components/contacts/LtvHistory';
 import { ManualSaleDialog } from '@/components/contacts/ManualSaleDialog';
+import * as XLSX from 'xlsx';
 
 // Interface para compatibilidade com a estrutura existente do frontend
 interface ContactFrontend {
@@ -706,26 +707,27 @@ export default function Contatos() {
 
   const handleBulkExport = () => {
     const selectedContactsData = contacts.filter(c => selectedContacts.has(c.id));
-    const csvContent = [
-      ['Nome', 'Telefone', 'Email', 'Grupo', 'Status', 'Etiquetas', 'Estado', 'Cidade'].join(','),
-      ...selectedContactsData.map(c => [
-        c.name,
-        c.phone,
-        c.email,
-        c.group,
-        c.status,
-        c.tags.join(';'),
-        c.state,
-        c.city
-      ].join(','))
-    ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `contatos-selecionados-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+    // Preparar dados para o Excel
+    const data = selectedContactsData.map(c => ({
+      Nome: c.name,
+      Telefone: c.phone,
+      Email: c.email,
+      Grupo: c.group,
+      Status: c.status,
+      Etiquetas: c.tags.join('; '),
+      Estado: c.state,
+      Cidade: c.city
+    }));
+
+    // Criar planilha e workbook
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Contatos');
+
+    // Gerar arquivo
+    XLSX.writeFile(workbook, `contatos-selecionados-${new Date().toISOString().split('T')[0]}.xlsx`);
+
     clearSelection();
   };
 
@@ -1080,26 +1082,26 @@ export default function Contatos() {
   };
 
   const handleExport = () => {
-    const csvContent = [
-      ['Nome', 'Telefone', 'Email', 'Grupo', 'Status', 'Etiquetas', 'Estado', 'Cidade'].join(','),
-      ...contacts.map(c => [
-        c.name,
-        c.phone,
-        c.email,
-        c.group,
-        c.status,
-        c.tags.join(';'),
-        c.state,
-        c.city
-      ].join(','))
-    ].join('\n');
+    // Preparar dados para o Excel
+    const data = contacts.map(c => ({
+      Nome: c.name,
+      Telefone: c.phone,
+      Email: c.email,
+      Grupo: c.group,
+      Status: c.status,
+      Etiquetas: c.tags.join('; '),
+      Estado: c.state,
+      Cidade: c.city
+    }));
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'contatos.csv';
-    a.click();
+    // Criar planilha e workbook
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Contatos');
+
+    // Gerar arquivo
+    XLSX.writeFile(workbook, 'contatos.xlsx');
+
     setIsExportOpen(false);
   };
 
@@ -2818,12 +2820,12 @@ export default function Contatos() {
           </DialogHeader>
           <div className="py-4">
             <p className="text-muted-foreground mb-4">
-              Baixe todos os seus contatos em formato CSV (planilha).
+              Baixe todos os seus contatos em formato Excel (XLSX).
             </p>
             <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
               <FileSpreadsheet className="w-8 h-8 text-primary" />
               <div>
-                <p className="font-medium">contatos.csv</p>
+                <p className="font-medium">contatos.xlsx</p>
                 <p className="text-sm text-muted-foreground">{contacts.length} contatos</p>
               </div>
             </div>
@@ -2851,12 +2853,12 @@ export default function Contatos() {
           <DialogHeader>
             <DialogTitle>Importar Contatos</DialogTitle>
             <DialogDescription>
-              Faça upload de uma planilha CSV com seus contatos para importá-los em massa.
+              Faça upload de uma planilha XLSX ou CSV com seus contatos para importá-los em massa.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <p className="text-muted-foreground">
-              Faça upload de uma planilha CSV com seus contatos.
+              Faça upload de uma planilha Excel com seus contatos.
             </p>
 
             {/* Download do exemplo */}
@@ -2872,20 +2874,46 @@ export default function Contatos() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const csvContent = [
-                      'Nome;Telefone;Email;Grupo;Status;Etiquetas;Estado;Cidade;Segmentações',
-                      'João Silva;(11) 98765-4321;joao@exemplo.com;VIP;Ativo;"Cliente Premium;Fidelidade";SP;São Paulo;"by_purchase_count;high_ticket"',
-                      'Maria Santos;(21) 91234-5678;maria@exemplo.com;Regular;Ativo;Newsletter;RJ;Rio de Janeiro;birthday',
-                      'Pedro Oliveira;(31) 99876-5432;pedro@exemplo.com;;Ativo;;MG;Belo Horizonte;',
-                    ].join('\n');
+                    const data = [
+                      {
+                        Nome: 'João Silva',
+                        Telefone: '(11) 98765-4321',
+                        Email: 'joao@exemplo.com',
+                        Grupo: 'VIP',
+                        Status: 'Ativo',
+                        Etiquetas: 'Cliente Premium; Fidelidade',
+                        Estado: 'SP',
+                        Cidade: 'São Paulo',
+                        Segmentações: 'by_purchase_count; high_ticket'
+                      },
+                      {
+                        Nome: 'Maria Santos',
+                        Telefone: '(21) 91234-5678',
+                        Email: 'maria@exemplo.com',
+                        Grupo: 'Regular',
+                        Status: 'Ativo',
+                        Etiquetas: 'Newsletter',
+                        Estado: 'RJ',
+                        Cidade: 'Rio de Janeiro',
+                        Segmentações: 'birthday'
+                      },
+                      {
+                        Nome: 'Pedro Oliveira',
+                        Telefone: '(31) 99876-5432',
+                        Email: 'pedro@exemplo.com',
+                        Grupo: '',
+                        Status: 'Ativo',
+                        Etiquetas: '',
+                        Estado: 'MG',
+                        Cidade: 'Belo Horizonte',
+                        Segmentações: ''
+                      }
+                    ];
 
-                    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'exemplo-contatos.csv';
-                    a.click();
-                    window.URL.revokeObjectURL(url);
+                    const worksheet = XLSX.utils.json_to_sheet(data);
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, 'Modelo de Contatos');
+                    XLSX.writeFile(workbook, 'exemplo-contatos.xlsx');
                   }}
                 >
                   <Download className="w-4 h-4 mr-2" />
@@ -2898,7 +2926,7 @@ export default function Contatos() {
             <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
               <input
                 type="file"
-                accept=".csv"
+                accept=".xlsx, .xls, .csv"
                 id="csv-upload"
                 className="hidden"
                 onChange={(e) => {
@@ -2950,15 +2978,15 @@ export default function Contatos() {
                 </div>
               )}
               <p className="text-xs text-muted-foreground mt-4">
-                Formatos aceitos: CSV (até 5MB)
+                Formatos aceitos: XLSX e CSV (até 5MB)
               </p>
             </div>
 
             {/* Formato esperado */}
             <div className="p-4 bg-muted rounded-lg">
-              <p className="font-medium mb-2 text-sm">Formato esperado do CSV:</p>
+              <p className="font-medium mb-2 text-sm">Formato esperado da Planilha:</p>
               <p className="text-xs text-muted-foreground font-mono mb-2">
-                Nome;Telefone;Email;Grupo;Status;Etiquetas;Estado;Cidade;Segmentações
+                As seguintes colunas devem estar presentes (em qualquer ordem):
               </p>
               <div className="text-xs text-muted-foreground space-y-1 mt-2">
                 <p>• <strong>Nome</strong>: Obrigatório</p>
@@ -2987,7 +3015,7 @@ export default function Contatos() {
                 if (!importFile) {
                   toast({
                     title: 'Selecione um arquivo',
-                    description: 'Por favor, selecione um arquivo CSV para importar',
+                    description: 'Por favor, selecione uma planilha para importar',
                     variant: 'destructive',
                   });
                   return;
