@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import {
   Bell,
   Search,
-  Settings,
   Plus,
   Download,
   Filter
@@ -51,10 +50,6 @@ export function Header({ title, subtitle, actions, showSearch = false, onSearchC
           )}
 
           <NotificationCenter />
-
-          <Button variant="ghost" size="icon">
-            <Settings className="w-4 h-4" />
-          </Button>
         </div>
       </div>
     </div>
