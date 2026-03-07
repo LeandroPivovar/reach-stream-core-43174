@@ -32,8 +32,8 @@ export function LtvHistory({ purchases, totalLtv }: LtvHistoryProps) {
     }, []);
 
   // Calcular métricas
-  const averagePurchase = purchases.length > 0 
-    ? totalLtv / purchases.length 
+  const averagePurchase = purchases.length > 0
+    ? totalLtv / purchases.length
     : 0;
 
   const firstPurchase = purchases.length > 0
@@ -54,89 +54,97 @@ export function LtvHistory({ purchases, totalLtv }: LtvHistoryProps) {
 
   // Calcular tendência (comparar última compra com a média)
   const lastPurchaseValue = purchases.length > 0
-    ? purchases.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].value
+    ? [...purchases].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].value
     : 0;
-  
-  const trend = lastPurchaseValue > averagePurchase ? 'up' : 'down';
+
+  const trend = lastPurchaseValue >= averagePurchase ? 'up' : 'down';
   const trendPercentage = averagePurchase > 0
     ? Math.abs(((lastPurchaseValue - averagePurchase) / averagePurchase) * 100).toFixed(1)
-    : 0;
+    : "0.0";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        {/* LTV Total */}
+        <Card className="shadow-sm border-border/50">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">LTV Total</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  R$ {totalLtv.toFixed(2)}
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">LTV Total</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-500">
+                  R$ {totalLtv.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
-              <DollarSign className="w-8 h-8 text-green-600 dark:text-green-400 opacity-50" />
+              <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <DollarSign className="w-5 h-5 text-green-600 dark:text-green-500" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Ticket Médio */}
+        <Card className="shadow-sm border-border/50">
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Ticket Médio</p>
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ticket Médio</p>
                 <p className="text-2xl font-bold">
-                  R$ {averagePurchase.toFixed(2)}
+                  R$ {averagePurchase.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
-                {trend === 'up' ? (
-                  <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 mt-1">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>+{trendPercentage}% vs média</span>
-                  </div>
+                <div className={`flex items-center gap-1 text-[11px] font-medium ${trend === 'up' ? 'text-green-600' : 'text-red-500'}`}>
+                  {trend === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  <span>{trend === 'up' ? '+' : '-'}{trendPercentage}% vs média</span>
+                </div>
+              </div>
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total de Compras */}
+        <Card className="shadow-sm border-border/50">
+          <CardContent className="pt-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total de Compras</p>
+                <p className="text-2xl font-bold">{purchases.length}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {purchases.length > 0 ? `Primeira há ${daysSinceFirst} dias` : 'Nenhuma compra realizada'}
+                </p>
+              </div>
+              <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <Calendar className="w-5 h-5 text-purple-600 dark:text-purple-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Última Compra */}
+        <Card className="shadow-sm border-border/50">
+          <CardContent className="pt-6">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Última Compra</p>
+              <p className="text-xl font-bold">R$ {lastPurchaseValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {purchases.length > 0 ? `Há ${daysSinceLast} dias` : 'Nenhuma data registrada'}
+              </p>
+              <div className="pt-1">
+                {purchases.length > 0 && daysSinceLast > 30 ? (
+                  <Badge variant="destructive" className="text-[10px] h-5 py-0">
+                    Risco de churn
+                  </Badge>
+                ) : purchases.length > 0 ? (
+                  <Badge className="text-[10px] h-5 py-0 bg-green-500 hover:bg-green-600 border-none">
+                    Cliente ativo
+                  </Badge>
                 ) : (
-                  <div className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 mt-1">
-                    <TrendingDown className="w-3 h-3" />
-                    <span>-{trendPercentage}% vs média</span>
-                  </div>
+                  <Badge variant="outline" className="text-[10px] h-5 py-0 text-muted-foreground">
+                    Sem atividade
+                  </Badge>
                 )}
               </div>
-              <ShoppingCart className="w-8 h-8 text-primary opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total de Compras</p>
-                <p className="text-2xl font-bold">{purchases.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Primeira há {daysSinceFirst} dias
-                </p>
-              </div>
-              <Calendar className="w-8 h-8 text-primary opacity-50" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div>
-              <p className="text-sm text-muted-foreground mb-2">Última Compra</p>
-              <p className="text-lg font-bold">R$ {lastPurchaseValue.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Há {daysSinceLast} dias
-              </p>
-              {daysSinceLast > 30 && (
-                <Badge variant="destructive" className="mt-2 text-xs">
-                  Risco de churn
-                </Badge>
-              )}
-              {daysSinceLast <= 7 && (
-                <Badge className="mt-2 text-xs bg-green-500">
-                  Cliente ativo
-                </Badge>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -153,22 +161,22 @@ export function LtvHistory({ purchases, totalLtv }: LtvHistoryProps) {
               <AreaChart data={ltvOverTime}>
                 <defs>
                   <linearGradient id="colorLtv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="date" 
+                <XAxis
+                  dataKey="date"
                   stroke="hsl(var(--muted-foreground))"
                   style={{ fontSize: '12px' }}
                 />
-                <YAxis 
+                <YAxis
                   stroke="hsl(var(--muted-foreground))"
                   style={{ fontSize: '12px' }}
                   tickFormatter={(value) => `R$ ${value}`}
                 />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{
                     backgroundColor: 'hsl(var(--popover))',
                     border: '1px solid hsl(var(--border))',
@@ -182,17 +190,17 @@ export function LtvHistory({ purchases, totalLtv }: LtvHistoryProps) {
                   }}
                   labelFormatter={(label) => `Data: ${label}`}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="ltv" 
-                  stroke="hsl(var(--primary))" 
+                <Area
+                  type="monotone"
+                  dataKey="ltv"
+                  stroke="hsl(var(--primary))"
                   fill="url(#colorLtv)"
                   strokeWidth={2}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="purchase" 
-                  stroke="hsl(var(--chart-2))" 
+                <Line
+                  type="monotone"
+                  dataKey="purchase"
+                  stroke="hsl(var(--chart-2))"
                   strokeWidth={2}
                   dot={{ r: 4 }}
                 />
@@ -212,7 +220,7 @@ export function LtvHistory({ purchases, totalLtv }: LtvHistoryProps) {
             {purchases
               .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
               .map((purchase) => (
-                <div 
+                <div
                   key={purchase.id}
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                 >
