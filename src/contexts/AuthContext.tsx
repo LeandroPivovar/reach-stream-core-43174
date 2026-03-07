@@ -7,6 +7,9 @@ interface User {
   email: string;
   phone?: string;
   planName?: string;
+  document?: string;
+  address?: string;
+  postalCode?: string;
   createdAt: string;
   updatedAt: string;
 }
