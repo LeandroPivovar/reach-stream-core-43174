@@ -22,6 +22,7 @@ export interface User {
   email: string;
   phone?: string;
   twoFactorEnabled?: boolean;
+  planName?: string;
   createdAt: string;
   updatedAt: string;
 }
