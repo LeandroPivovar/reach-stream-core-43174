@@ -23,10 +23,15 @@ import {
 export default function Conexoes() {
   const { toast } = useToast();
   const [isNewConnectionOpen, setIsNewConnectionOpen] = useState(false);
-  const [isWhatsappConnected, setIsWhatsappConnected] = useState(true); // Mocked for now
+  const [isWhatsappConnected, setIsWhatsappConnected] = useState(false); // Mocked as disconnected
 
   const handleOpenNewConnection = () => {
-    setIsNewConnectionOpen(true);
+    toast({
+      title: "Em desenvolvimento",
+      description: "Esta ferramenta ainda está em fase de desenvolvimento e estará disponível em breve.",
+      variant: "default",
+    });
+    // setIsNewConnectionOpen(true); // Comentado por enquanto conforme solicitado
   };
 
   const handleCloseConnection = () => {
@@ -76,7 +81,7 @@ export default function Conexoes() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total de Canais</p>
-                <p className="text-2xl font-bold text-foreground">1</p>
+                <p className="text-2xl font-bold text-foreground">{isWhatsappConnected ? 1 : 0}</p>
               </div>
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-primary" />
@@ -87,44 +92,51 @@ export default function Conexoes() {
 
         {/* Connections Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isWhatsappConnected ? 'bg-green-500/10' : 'bg-red-500/10'
-                  }`}>
-                  <MessageSquare className={`w-6 h-6 ${isWhatsappConnected ? 'text-green-500' : 'text-red-500'
-                    }`} />
+          {isWhatsappConnected ? (
+            <Card className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isWhatsappConnected ? 'bg-green-500/10' : 'bg-red-500/10'
+                    }`}>
+                    <MessageSquare className={`w-6 h-6 ${isWhatsappConnected ? 'text-green-500' : 'text-red-500'
+                      }`} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">WhatsApp Business</h3>
+                    <p className="text-sm text-muted-foreground">Zenvia API</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold">WhatsApp Business</h3>
-                  <p className="text-sm text-muted-foreground">Zenvia API</p>
-                </div>
+
+                <Badge variant={isWhatsappConnected ? 'default' : 'secondary'}>
+                  <div className={`w-2 h-2 rounded-full mr-2 ${isWhatsappConnected ? 'bg-green-500' : 'bg-red-500'
+                    }`}></div>
+                  {isWhatsappConnected ? 'Conectado' : 'Desconectado'}
+                </Badge>
               </div>
 
-              <Badge variant={isWhatsappConnected ? 'default' : 'secondary'}>
-                <div className={`w-2 h-2 rounded-full mr-2 ${isWhatsappConnected ? 'bg-green-500' : 'bg-red-500'
-                  }`}></div>
-                {isWhatsappConnected ? 'Conectado' : 'Desconectado'}
-              </Badge>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Status da API</p>
-                <p className="text-sm font-medium text-green-600">Serviço operacional</p>
+              <div className="space-y-4 mb-6">
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Status da API</p>
+                  <p className="text-sm font-medium text-green-600">Serviço operacional</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  O WhatsApp está configurado via Zenvia API para envio automático de campanhas e notificações.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                O WhatsApp está configurado via Zenvia API para envio automático de campanhas e notificações.
-              </p>
-            </div>
 
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm" className="flex-1" onClick={handleOpenNewConnection}>
-                <Settings className="w-4 h-4 mr-2" />
-                Sincronizar
-              </Button>
+              <div className="flex space-x-2">
+                <Button variant="outline" size="sm" className="flex-1" onClick={handleOpenNewConnection}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Sincronizar
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="lg:col-span-2 xl:col-span-3 py-12 text-center bg-muted/20 border border-dashed border-border rounded-xl">
+              <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground italic">Nenhuma conexão ativa encontrada no momento.</p>
             </div>
-          </Card>
+          )}
         </div>
 
         {/* Quick Setup */}
