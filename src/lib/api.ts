@@ -23,6 +23,9 @@ export interface User {
   phone?: string;
   twoFactorEnabled?: boolean;
   planName?: string;
+  document?: string;
+  address?: string;
+  postalCode?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -1233,7 +1236,13 @@ class ApiService {
     });
   }
 
-  async buyCredits(data: { type: 'email' | 'sms', amount: number, billingType: 'PIX' | 'CREDIT_CARD' }): Promise<any> {
+  async buyCredits(data: {
+    type: 'email' | 'sms',
+    amount: number,
+    billingType: 'PIX' | 'CREDIT_CARD',
+    creditCard?: any,
+    creditCardHolderInfo?: any
+  }): Promise<any> {
     return this.request<any>('/subscriptions/buy-credits', {
       method: 'POST',
       body: JSON.stringify(data),
