@@ -42,6 +42,7 @@ export default function MinhaConta() {
     lastName: '',
     email: '',
     phone: '',
+    planName: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
@@ -60,6 +61,7 @@ export default function MinhaConta() {
         lastName: userData.lastName || '',
         email: userData.email || '',
         phone: userData.phone || '',
+        planName: userData.planName || 'Plano gratuito',
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
@@ -302,7 +304,7 @@ export default function MinhaConta() {
                   </h3>
                   <p className="text-muted-foreground">{isLoading ? '...' : profileData.email}</p>
                   <Badge variant="default" className="mt-1">
-                    Plano Pro
+                    {isLoading ? '...' : profileData.planName}
                   </Badge>
                 </div>
               </div>
@@ -491,7 +493,7 @@ export default function MinhaConta() {
                     <div>
                       <h3 className="text-lg font-semibold">Plano Atual</h3>
                       <p className="text-sm text-muted-foreground">
-                        Plano Pro - R$ 97,00/mês
+                        {isLoading ? '...' : profileData.planName}
                       </p>
                     </div>
                   </div>

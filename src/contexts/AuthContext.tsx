@@ -6,6 +6,7 @@ interface User {
   lastName: string;
   email: string;
   phone?: string;
+  planName?: string;
   createdAt: string;
   updatedAt: string;
 }
