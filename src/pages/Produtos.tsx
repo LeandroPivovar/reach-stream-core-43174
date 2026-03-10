@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { SuccessModal } from '@/components/ui/success-modal';
 import { useToast } from '@/hooks/use-toast';
-import { api, Product as ApiProduct, Sale } from '@/lib/api';
+import { api, API_URL, Product as ApiProduct, Sale } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -300,8 +300,8 @@ export default function Produtos() {
       setIsSaving(true);
       const response = await api.uploadProductPhoto(file);
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      const fullUrl = response.url.startsWith('http') ? response.url : `${baseUrl}${response.url}`;
+      const baseUrlToUse = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+      const fullUrl = response.url.startsWith('http') ? response.url : `${baseUrlToUse}${response.url}`;
 
       if (isEdit) {
         if (type === 'cover') {
@@ -1487,6 +1487,8 @@ export default function Produtos() {
                 category: '',
                 sku: '',
                 active: true,
+                coverPhoto: undefined,
+                gallery: [],
               });
             }}>
               Cancelar
