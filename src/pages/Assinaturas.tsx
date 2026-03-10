@@ -184,7 +184,7 @@ export default function Assinaturas() {
               const isCurrent = subscription?.planId === plan.id;
               const isPro = plan.name.toLowerCase().includes('pro');
               const features = Array.isArray(plan.features) ? plan.features : [];
-              const limits = plan.limits || { contacts: 0, emails: 0 };
+              const limits = plan.limits || { contacts: 0, emails: 0, sms: 0 };
 
               return (
                 <Card
@@ -218,6 +218,10 @@ export default function Assinaturas() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-slate-400 font-medium">Envios de E-mail</span>
                       <span className="text-slate-900 font-black">{limits.emails.toLocaleString('pt-BR')}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-400 font-medium">Envios de SMS</span>
+                      <span className="text-slate-900 font-black">{limits.sms?.toLocaleString('pt-BR') || '0'}</span>
                     </div>
                   </div>
 
