@@ -300,8 +300,8 @@ export default function Produtos() {
       setIsSaving(true);
       const response = await api.uploadProductPhoto(file);
 
-      const baseUrlToUse = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
-      const fullUrl = response.url.startsWith('http') ? response.url : `${baseUrlToUse}${response.url}`;
+      const baseUrl = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
+      const fullUrl = response.url.startsWith('http') ? response.url : `${baseUrl}${response.url}`;
 
       if (isEdit) {
         if (type === 'cover') {
