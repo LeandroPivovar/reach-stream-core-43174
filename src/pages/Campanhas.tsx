@@ -609,7 +609,7 @@ export default function Campanhas() {
                           return (
                             <div key={campaign.channel} className="flex items-center space-x-1 bg-muted/50 rounded-full px-2 py-1">
                               <Icon className="w-3 h-3" />
-                              <span className="text-xs">{campaign.channel}</span>
+                              <span className="text-xs uppercase">{campaign.channel}</span>
                             </div>
                           );
                         })()}

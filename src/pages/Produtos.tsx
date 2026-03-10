@@ -48,6 +48,7 @@ import {
   Filter,
   RefreshCw,
   Check,
+  ImagePlus,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -98,7 +99,17 @@ export default function Produtos() {
     maxPrice: '',
     stockFilter: 'all', // 'all', 'with_stock', 'without_stock'
   });
-  const [newProduct, setNewProduct] = useLocalStorage('produtos_newProduct', {
+  const [newProduct, setNewProduct] = useLocalStorage<{
+    name: string;
+    description: string;
+    price: string;
+    stock: string;
+    category: string;
+    sku: string;
+    active: boolean;
+    coverPhoto?: string;
+    gallery: string[];
+  }>('produtos_newProduct', {
     name: '',
     description: '',
     price: '',
@@ -106,8 +117,19 @@ export default function Produtos() {
     category: '',
     sku: '',
     active: true,
+    gallery: [],
   });
-  const [editProduct, setEditProduct] = useLocalStorage('produtos_editProduct', {
+  const [editProduct, setEditProduct] = useLocalStorage<{
+    name: string;
+    description: string;
+    price: string;
+    stock: string;
+    category: string;
+    sku: string;
+    active: boolean;
+    coverPhoto?: string;
+    gallery: string[];
+  }>('produtos_editProduct', {
     name: '',
     description: '',
     price: '',
@@ -115,6 +137,7 @@ export default function Produtos() {
     category: '',
     sku: '',
     active: true,
+    gallery: [],
   });
 
   useEffect(() => {
@@ -134,16 +157,16 @@ export default function Produtos() {
       // Adicionar status calculado baseado em active e stock
       const productsWithStatus = data.map(p => {
         const stock = typeof p.stock === 'string' ? parseInt(p.stock, 10) : (typeof p.stock === 'number' ? p.stock : 0);
-        const active = p.active === true || p.active === 1;
+        const active = Boolean(p.active);
         return {
           ...p,
           stock: stock,
           active: active,
-          status: !active ? 'inactive' : (stock === 0 ? 'out_of_stock' : 'active'),
-          sales: p.sales || 0, // Placeholder, pode ser implementado depois
+          status: (!active ? 'inactive' : (stock === 0 ? 'out_of_stock' : 'active')) as 'active' | 'inactive' | 'out_of_stock',
+          sales: (p as any).sales || 0, // Placeholder, pode ser implementado depois
         };
       });
-      setAllProducts(productsWithStatus);
+      setAllProducts(productsWithStatus as Product[]);
       // Aplicar filtros após carregar produtos
       applyFilters(productsWithStatus, searchTerm, filters);
     } catch (error) {
@@ -181,6 +204,8 @@ export default function Produtos() {
         category: newProduct.category || undefined,
         sku: newProduct.sku || undefined,
         active: newProduct.active,
+        coverPhoto: newProduct.coverPhoto,
+        gallery: newProduct.gallery.length > 0 ? newProduct.gallery : undefined,
       });
 
       setSuccessModalContent({
@@ -198,6 +223,8 @@ export default function Produtos() {
         category: '',
         sku: '',
         active: true,
+        coverPhoto: undefined,
+        gallery: [],
       });
 
       await loadProducts();
@@ -232,6 +259,8 @@ export default function Produtos() {
         category: editProduct.category || undefined,
         sku: editProduct.sku || undefined,
         active: editProduct.active,
+        coverPhoto: editProduct.coverPhoto,
+        gallery: editProduct.gallery.length > 0 ? editProduct.gallery : undefined,
       });
 
       setSuccessModalContent({
@@ -242,12 +271,59 @@ export default function Produtos() {
 
       setIsEditProductOpen(false);
       setSelectedProduct(null);
+      setEditProduct({
+        name: '',
+        description: '',
+        price: '',
+        stock: '0',
+        category: '',
+        sku: '',
+        active: true,
+        coverPhoto: undefined,
+        gallery: [],
+      });
 
       await loadProducts();
     } catch (error) {
       toast({
         title: 'Erro ao atualizar produto',
         description: error instanceof Error ? error.message : 'Não foi possível atualizar o produto',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleUploadImage = async (file: File, type: 'cover' | 'gallery', isEdit: boolean) => {
+    try {
+      setIsSaving(true);
+      const response = await api.uploadProductPhoto(file);
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const fullUrl = response.url.startsWith('http') ? response.url : `${baseUrl}${response.url}`;
+
+      if (isEdit) {
+        if (type === 'cover') {
+          setEditProduct(prev => ({ ...prev, coverPhoto: fullUrl }));
+        } else {
+          setEditProduct(prev => ({ ...prev, gallery: [...prev.gallery, fullUrl].slice(0, 5) }));
+        }
+      } else {
+        if (type === 'cover') {
+          setNewProduct(prev => ({ ...prev, coverPhoto: fullUrl }));
+        } else {
+          setNewProduct(prev => ({ ...prev, gallery: [...prev.gallery, fullUrl].slice(0, 5) }));
+        }
+      }
+      toast({
+        title: 'Foto enviada',
+        description: 'A foto foi enviada com sucesso.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Erro ao enviar foto',
+        description: error instanceof Error ? error.message : 'Não foi possível enviar a foto.',
         variant: 'destructive',
       });
     } finally {
@@ -291,6 +367,8 @@ export default function Produtos() {
       category: product.category || '',
       sku: product.sku || '',
       active: product.active,
+      coverPhoto: product.coverPhoto,
+      gallery: product.gallery?.length ? product.gallery : [],
     });
     setIsEditProductOpen(true);
   };
@@ -1114,8 +1192,12 @@ export default function Produtos() {
                       <tr key={product.id} className="border-b border-border last:border-0">
                         <td className="py-4 px-2">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-muted rounded flex items-center justify-center">
-                              <Package className="w-5 h-5 text-muted-foreground" />
+                            <div className="w-10 h-10 bg-muted rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                              {product.coverPhoto ? (
+                                <img src={product.coverPhoto} alt={product.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <Package className="w-5 h-5 text-muted-foreground" />
+                              )}
                             </div>
                             <div>
                               <div className="font-medium">{product.name}</div>
@@ -1139,7 +1221,7 @@ export default function Produtos() {
                           {new Intl.NumberFormat('pt-BR', {
                             style: 'currency',
                             currency: 'BRL'
-                          }).format(product.price)}
+                          }).format(Number(product.price))}
                         </td>
                         <td className="py-4 px-2 text-right">
                           <span className={`font-medium ${product.stock < 20 ? 'text-red-600' : ''}`}>
@@ -1287,7 +1369,102 @@ export default function Produtos() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="space-y-4 pt-2 border-t">
+              <div className="grid gap-2">
+                <Label>Foto de Capa</Label>
+                <div className="flex items-center gap-4">
+                  {newProduct.coverPhoto && (
+                    <div className="relative w-24 h-24 rounded-lg overflow-hidden border">
+                      <img src={newProduct.coverPhoto} alt="Capa" className="w-full h-full object-cover" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 w-6 h-6 rounded-full"
+                        onClick={() => setNewProduct({ ...newProduct, coverPhoto: undefined })}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <Label
+                      htmlFor="new-cover-photo"
+                      className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-6 h-6 mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-semibold">Clique para enviar a capa</span>
+                        </p>
+                      </div>
+                      <Input
+                        id="new-cover-photo"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadImage(file, 'cover', false);
+                        }}
+                        disabled={isSaving}
+                      />
+                    </Label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Galeria de Fotos (até 5)</Label>
+                <div className="flex flex-wrap items-center gap-4">
+                  {newProduct.gallery.map((url, index) => (
+                    <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border">
+                      <img src={url} alt={`Galeria ${index + 1}`} className="w-full h-full object-cover" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 w-6 h-6 rounded-full"
+                        onClick={() => {
+                          const newGallery = [...newProduct.gallery];
+                          newGallery.splice(index, 1);
+                          setNewProduct({ ...newProduct, gallery: newGallery });
+                        }}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  {newProduct.gallery.length < 5 && (
+                    <Label
+                      htmlFor="new-gallery-photos"
+                      className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center">
+                        <ImagePlus className="w-6 h-6 mb-1 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground text-center px-1">Adicionar</span>
+                      </div>
+                      <Input
+                        id="new-gallery-photos"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          files.slice(0, 5 - newProduct.gallery.length).forEach(file => {
+                            handleUploadImage(file, 'gallery', false);
+                          });
+                        }}
+                        disabled={isSaving}
+                      />
+                    </Label>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-2 border-t">
               <Switch
                 id="new-product-active"
                 checked={newProduct.active}
@@ -1526,7 +1703,102 @@ export default function Produtos() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="space-y-4 pt-2 border-t">
+              <div className="grid gap-2">
+                <Label>Foto de Capa</Label>
+                <div className="flex items-center gap-4">
+                  {editProduct.coverPhoto && (
+                    <div className="relative w-24 h-24 rounded-lg overflow-hidden border">
+                      <img src={editProduct.coverPhoto} alt="Capa" className="w-full h-full object-cover" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 w-6 h-6 rounded-full"
+                        onClick={() => setEditProduct({ ...editProduct, coverPhoto: undefined })}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <Label
+                      htmlFor="edit-cover-photo"
+                      className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-6 h-6 mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">
+                          <span className="font-semibold">Clique para enviar a capa</span>
+                        </p>
+                      </div>
+                      <Input
+                        id="edit-cover-photo"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadImage(file, 'cover', true);
+                        }}
+                        disabled={isSaving}
+                      />
+                    </Label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Galeria de Fotos (até 5)</Label>
+                <div className="flex flex-wrap items-center gap-4">
+                  {editProduct.gallery.map((url, index) => (
+                    <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border">
+                      <img src={url} alt={`Galeria ${index + 1}`} className="w-full h-full object-cover" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 w-6 h-6 rounded-full"
+                        onClick={() => {
+                          const newGallery = [...editProduct.gallery];
+                          newGallery.splice(index, 1);
+                          setEditProduct({ ...editProduct, gallery: newGallery });
+                        }}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  {editProduct.gallery.length < 5 && (
+                    <Label
+                      htmlFor="edit-gallery-photos"
+                      className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center">
+                        <ImagePlus className="w-6 h-6 mb-1 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground text-center px-1">Adicionar</span>
+                      </div>
+                      <Input
+                        id="edit-gallery-photos"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          files.slice(0, 5 - editProduct.gallery.length).forEach(file => {
+                            handleUploadImage(file, 'gallery', true);
+                          });
+                        }}
+                        disabled={isSaving}
+                      />
+                    </Label>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 pt-2 border-t">
               <Switch
                 id="edit-product-active"
                 checked={editProduct.active}
@@ -1684,8 +1956,8 @@ export default function Produtos() {
                   type="button"
                   onClick={() => setSyncDirection('send')}
                   className={`p-4 border-2 rounded-lg transition-colors text-left ${syncDirection === 'send'
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-primary/50'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
                     }`}
                 >
                   <div className="font-medium mb-1">Enviar</div>
@@ -1697,8 +1969,8 @@ export default function Produtos() {
                   type="button"
                   onClick={() => setSyncDirection('receive')}
                   className={`p-4 border-2 rounded-lg transition-colors text-left ${syncDirection === 'receive'
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-primary/50'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
                     }`}
                 >
                   <div className="font-medium mb-1">Receber</div>
@@ -1710,8 +1982,8 @@ export default function Produtos() {
                   type="button"
                   onClick={() => setSyncDirection('both')}
                   className={`p-4 border-2 rounded-lg transition-colors text-left ${syncDirection === 'both'
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-primary/50'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
                     }`}
                 >
                   <div className="font-medium mb-1">Ambos</div>
