@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
     LayoutDashboard,
     Users,
+    Tags,
     Terminal,
     Settings,
     LogOut,
@@ -16,6 +17,7 @@ import {
 
 const adminMenuItems = [
     { title: 'Dashboard Admin', href: '/admin', icon: LayoutDashboard },
+    { title: 'Categorias', href: '/admin/categories', icon: Tags },
     { title: 'Usuários', href: '/admin/users', icon: Users },
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
     { title: 'Notificações', href: '/admin/notifications', icon: Bell },
