@@ -253,9 +253,6 @@ export default function Vendas() {
                   <XAxis
                     dataKey="stage"
                     className="text-xs"
-                    angle={-15}
-                    textAnchor="end"
-                    height={80}
                   />
                   <YAxis className="text-xs" />
                   <Tooltip

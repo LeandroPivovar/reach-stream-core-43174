@@ -324,6 +324,8 @@ export interface Product {
   sku?: string;
   category?: string;
   active: boolean;
+  coverPhoto?: string;
+  gallery?: string[];
   userId: number;
   createdAt: string;
   updatedAt: string;
@@ -364,6 +366,8 @@ export interface CreateProductData {
   sku?: string;
   category?: string;
   active?: boolean;
+  coverPhoto?: string;
+  gallery?: string[];
 }
 
 export interface UpdateProductData {
@@ -374,6 +378,8 @@ export interface UpdateProductData {
   sku?: string;
   category?: string;
   active?: boolean;
+  coverPhoto?: string;
+  gallery?: string[];
 }
 
 export interface Pixel {
@@ -609,6 +615,28 @@ class ApiService {
     return this.request<void>(`/products/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  async uploadProductPhoto(file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = this.getAuthToken();
+    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+    const response = await fetch(`${baseUrl}/api/products/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Erro ao enviar foto' }));
+      throw new Error(error.message || 'Erro ao enviar foto');
+    }
+
+    return response.json();
   }
 
   // Sales
