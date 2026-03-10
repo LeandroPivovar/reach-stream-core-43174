@@ -402,6 +402,27 @@ export interface SystemSetting {
   updatedAt: string;
 }
 
+export interface Category {
+  id: number;
+  name: string;
+  description?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCategoryData {
+  name: string;
+  description?: string;
+  active?: boolean;
+}
+
+export interface UpdateCategoryData {
+  name?: string;
+  description?: string;
+  active?: boolean;
+}
+
 class ApiService {
   private getAuthToken(): string | null {
     return localStorage.getItem('token');
@@ -689,6 +710,35 @@ class ApiService {
 
   async getCampaignDashboardPerformance(period: string): Promise<any> {
     return this.get<any>(`/campaigns/dashboard/performance?period=${period}`);
+  }
+
+  // --- Categories ---
+  async getCategories(): Promise<Category[]> {
+    return this.get<Category[]>('/categories');
+  }
+
+  async getCategory(id: number): Promise<Category> {
+    return this.get<Category>(`/categories/${id}`);
+  }
+
+  async createCategory(data: CreateCategoryData): Promise<Category> {
+    return this.request<Category>('/categories', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async updateCategory(id: number, data: UpdateCategoryData): Promise<Category> {
+    return this.request<Category>(`/categories/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    });
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    return this.request<void>(`/categories/${id}`, {
+      method: 'DELETE'
+    });
   }
 
   // --- Admin User Methods ---
