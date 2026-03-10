@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { SuccessModal } from '@/components/ui/success-modal';
 import { useToast } from '@/hooks/use-toast';
-import { api, API_URL, Product as ApiProduct, Sale } from '@/lib/api';
+import { api, API_URL, Product as ApiProduct, Sale, Category } from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -94,17 +94,18 @@ export default function Produtos() {
   const [loadingConnections, setLoadingConnections] = useState(false);
   const [syncDirection, setSyncDirection] = useState<'send' | 'receive' | 'both'>('both');
   const [filters, setFilters] = useLocalStorage('produtos_filters', {
-    category: 'all',
+    categoryId: 'all',
     minPrice: '',
     maxPrice: '',
     stockFilter: 'all', // 'all', 'with_stock', 'without_stock'
   });
+  const [categories, setCategories] = useState<Category[]>([]);
   const [newProduct, setNewProduct] = useLocalStorage<{
     name: string;
     description: string;
     price: string;
     stock: string;
-    category: string;
+    categoryId: string;
     sku: string;
     active: boolean;
     coverPhoto?: string;
@@ -114,7 +115,7 @@ export default function Produtos() {
     description: '',
     price: '',
     stock: '0',
-    category: '',
+    categoryId: '',
     sku: '',
     active: true,
     gallery: [],
@@ -124,7 +125,7 @@ export default function Produtos() {
     description: string;
     price: string;
     stock: string;
-    category: string;
+    categoryId: string;
     sku: string;
     active: boolean;
     coverPhoto?: string;
@@ -134,7 +135,7 @@ export default function Produtos() {
     description: '',
     price: '',
     stock: '0',
-    category: '',
+    categoryId: '',
     sku: '',
     active: true,
     gallery: [],
@@ -142,7 +143,17 @@ export default function Produtos() {
 
   useEffect(() => {
     loadProducts();
+    loadCategories();
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const data = await api.getCategories();
+      setCategories(data.filter(c => c.active));
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+    }
+  };
 
   useEffect(() => {
     if (isSyncModalOpen) {
@@ -201,7 +212,7 @@ export default function Produtos() {
         description: newProduct.description || undefined,
         price: parseFloat(newProduct.price),
         stock: parseInt(newProduct.stock) || 0,
-        category: newProduct.category || undefined,
+        categoryId: newProduct.categoryId ? parseInt(newProduct.categoryId) : undefined,
         sku: newProduct.sku || undefined,
         active: newProduct.active,
         coverPhoto: newProduct.coverPhoto,
@@ -220,7 +231,7 @@ export default function Produtos() {
         description: '',
         price: '',
         stock: '0',
-        category: '',
+        categoryId: '',
         sku: '',
         active: true,
         coverPhoto: undefined,
@@ -256,7 +267,7 @@ export default function Produtos() {
         description: editProduct.description || undefined,
         price: parseFloat(editProduct.price),
         stock: parseInt(editProduct.stock) || 0,
-        category: editProduct.category || undefined,
+        categoryId: editProduct.categoryId ? parseInt(editProduct.categoryId) : undefined,
         sku: editProduct.sku || undefined,
         active: editProduct.active,
         coverPhoto: editProduct.coverPhoto,
@@ -276,7 +287,7 @@ export default function Produtos() {
         description: '',
         price: '',
         stock: '0',
-        category: '',
+        categoryId: '',
         sku: '',
         active: true,
         coverPhoto: undefined,
@@ -364,7 +375,7 @@ export default function Produtos() {
       description: product.description || '',
       price: product.price.toString(),
       stock: product.stock.toString(),
-      category: product.category || '',
+      categoryId: product.categoryId?.toString() || '',
       sku: product.sku || '',
       active: product.active,
       coverPhoto: product.coverPhoto,
@@ -435,13 +446,14 @@ export default function Produtos() {
         p.name.toLowerCase().includes(searchLower) ||
         p.description?.toLowerCase().includes(searchLower) ||
         p.sku?.toLowerCase().includes(searchLower) ||
+        p.categoryEntity?.name?.toLowerCase().includes(searchLower) ||
         p.category?.toLowerCase().includes(searchLower)
       );
     }
 
     // Aplicar filtro de categoria
-    if (filterOptions.category && filterOptions.category !== 'all') {
-      filtered = filtered.filter(p => p.category === filterOptions.category);
+    if (filterOptions.categoryId && filterOptions.categoryId !== 'all') {
+      filtered = filtered.filter(p => p.categoryId?.toString() === filterOptions.categoryId);
     }
 
     // Aplicar filtro de preço
@@ -481,7 +493,7 @@ export default function Produtos() {
   useEffect(() => {
     applyFilters(allProducts, searchTerm, filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, filters.category, filters.minPrice, filters.maxPrice, filters.stockFilter]);
+  }, [searchTerm, filters.categoryId, filters.minPrice, filters.maxPrice, filters.stockFilter]);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -493,7 +505,7 @@ export default function Produtos() {
 
   const handleClearFilters = () => {
     setFilters({
-      category: 'all',
+      categoryId: 'all',
       minPrice: '',
       maxPrice: '',
       stockFilter: 'all',
@@ -508,7 +520,7 @@ export default function Produtos() {
       p.name,
       p.description || '',
       p.sku || '',
-      p.category || '',
+      p.categoryEntity?.name || p.category || '',
       typeof p.price === 'string' ? parseFloat(p.price) : p.price,
       typeof p.stock === 'string' ? parseInt(p.stock, 10) : p.stock,
       p.status || 'active',
@@ -539,7 +551,7 @@ export default function Produtos() {
         p.name,
         p.description || '',
         p.sku || '',
-        p.category || '',
+        p.categoryEntity?.name || p.category || '',
         typeof p.price === 'string' ? parseFloat(p.price) : p.price,
         typeof p.stock === 'string' ? parseInt(p.stock, 10) : p.stock,
         p.status || 'active',
@@ -609,7 +621,7 @@ export default function Produtos() {
                   <td>${p.name}</td>
                   <td>${p.description || '-'}</td>
                   <td>${p.sku || '-'}</td>
-                  <td>${p.category || '-'}</td>
+                  <td>${p.categoryEntity?.name || p.category || '-'}</td>
                   <td>${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(typeof p.price === 'string' ? parseFloat(p.price) : p.price)}</td>
                   <td>${typeof p.stock === 'string' ? parseInt(p.stock, 10) : p.stock}</td>
                   <td>${p.status === 'active' ? 'Ativo' : p.status === 'inactive' ? 'Inativo' : 'Sem Estoque'}</td>
@@ -969,8 +981,7 @@ export default function Produtos() {
     return acc + sales;
   }, 0);
 
-  // Obter categorias únicas dos produtos
-  const categories = Array.from(new Set(allProducts.map(p => p.category).filter(Boolean)));
+
 
   const actions = (
     <>
@@ -999,8 +1010,8 @@ export default function Produtos() {
             <div className="space-y-2">
               <Label>Categoria</Label>
               <Select
-                value={filters.category}
-                onValueChange={(value) => handleFilterChange({ category: value })}
+                value={filters.categoryId}
+                onValueChange={(value) => handleFilterChange({ categoryId: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Todas as categorias" />
@@ -1008,8 +1019,8 @@ export default function Produtos() {
                 <SelectContent>
                   <SelectItem value="all">Todas as categorias</SelectItem>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
+                    <SelectItem key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1211,7 +1222,9 @@ export default function Produtos() {
                           <span className="text-sm font-mono">{product.sku || '-'}</span>
                         </td>
                         <td className="py-4 px-2">
-                          {product.category ? (
+                          {product.categoryEntity ? (
+                            <Badge variant="outline">{product.categoryEntity.name}</Badge>
+                          ) : product.category ? (
                             <Badge variant="outline">{product.category}</Badge>
                           ) : (
                             <span className="text-sm text-muted-foreground">-</span>
@@ -1327,17 +1340,16 @@ export default function Produtos() {
 
             <div className="grid gap-2">
               <Label htmlFor="product-category">Categoria</Label>
-              <Select value={newProduct.category} onValueChange={(value) => setNewProduct({ ...newProduct, category: value })}>
+              <Select value={newProduct.categoryId} onValueChange={(value) => setNewProduct({ ...newProduct, categoryId: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma categoria (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Vestuário">Vestuário</SelectItem>
-                  <SelectItem value="Calçados">Calçados</SelectItem>
-                  <SelectItem value="Acessórios">Acessórios</SelectItem>
-                  <SelectItem value="Eletrônicos">Eletrônicos</SelectItem>
-                  <SelectItem value="Casa">Casa</SelectItem>
-                  <SelectItem value="Esporte">Esporte</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -1484,7 +1496,7 @@ export default function Produtos() {
                 description: '',
                 price: '',
                 stock: '0',
-                category: '',
+                categoryId: '',
                 sku: '',
                 active: true,
                 coverPhoto: undefined,
@@ -1663,17 +1675,16 @@ export default function Produtos() {
 
             <div className="grid gap-2">
               <Label htmlFor="edit-product-category">Categoria</Label>
-              <Select value={editProduct.category} onValueChange={(value) => setEditProduct({ ...editProduct, category: value })}>
+              <Select value={editProduct.categoryId} onValueChange={(value) => setEditProduct({ ...editProduct, categoryId: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma categoria (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Vestuário">Vestuário</SelectItem>
-                  <SelectItem value="Calçados">Calçados</SelectItem>
-                  <SelectItem value="Acessórios">Acessórios</SelectItem>
-                  <SelectItem value="Eletrônicos">Eletrônicos</SelectItem>
-                  <SelectItem value="Casa">Casa</SelectItem>
-                  <SelectItem value="Esporte">Esporte</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

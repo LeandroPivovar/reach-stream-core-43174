@@ -323,6 +323,8 @@ export interface Product {
   stock: number;
   sku?: string;
   category?: string;
+  categoryId?: number;
+  categoryEntity?: Category;
   active: boolean;
   coverPhoto?: string;
   gallery?: string[];
@@ -365,6 +367,7 @@ export interface CreateProductData {
   stock?: number;
   sku?: string;
   category?: string;
+  categoryId?: number;
   active?: boolean;
   coverPhoto?: string;
   gallery?: string[];
@@ -377,6 +380,7 @@ export interface UpdateProductData {
   stock?: number;
   sku?: string;
   category?: string;
+  categoryId?: number;
   active?: boolean;
   coverPhoto?: string;
   gallery?: string[];
