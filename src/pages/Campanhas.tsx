@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils';
 import { WorkflowCanvas, WorkflowStep } from '@/components/workflow/WorkflowCanvas';
 import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
 import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
-import { api, Campaign, Contact, Group } from '@/lib/api';
+import { api, Campaign, Contact, Group, SegmentationParam } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import {
   Table,
@@ -98,7 +98,7 @@ export default function Campanhas() {
     campaignComplexity: '' as 'simple' | 'advanced' | '',
     name: '',
     groups: [] as string[],
-    segmentations: [] as string[],
+    segmentations: [] as (string | import('@/lib/api').SegmentationParam)[],
     channel: '' as 'email' | 'sms' | 'whatsapp' | '',
     campaignType: '' as 'dispatch' | 'coupon' | 'giftback' | '',
     campaignConfig: {
@@ -250,12 +250,13 @@ export default function Campanhas() {
     return contacts.filter(contact => {
       // Verificar se o contato tem alguma das segmentações selecionadas fixas
       const hasSegmentation = contact.contactSegmentations?.some(cs =>
-        newCampaign.segmentations.includes(cs.segmentationId)
+        newCampaign.segmentations.some(s => (typeof s === 'string' ? s : s.id) === cs.segmentationId)
       );
       if (hasSegmentation) return true;
 
       // Lógica dinâmica para segmentações específicas se não estiverem marcadas explicitamente
-      for (const segId of newCampaign.segmentations) {
+      for (const seg of newCampaign.segmentations) {
+        const segId = typeof seg === 'string' ? seg : seg.id;
         // Estado
         if (segId === 'by_state' || segId.startsWith('state_')) {
           if (contact.state) return true;
@@ -341,7 +342,7 @@ export default function Campanhas() {
         campaignComplexity: '',
         name: '',
         groups: [],
-        segmentations: [],
+        segmentations: [] as (string | import('@/lib/api').SegmentationParam)[],
         channel: '',
         campaignType: '',
         campaignConfig: {
@@ -734,7 +735,7 @@ export default function Campanhas() {
             campaignComplexity: '',
             name: '',
             groups: [],
-            segmentations: [],
+            segmentations: [] as (string | import('@/lib/api').SegmentationParam)[],
             channel: '',
             campaignType: '',
             campaignConfig: {
@@ -1384,7 +1385,8 @@ export default function Campanhas() {
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        return sum + (segmentationStats[seg] || 0);
+                        const id = typeof seg === 'string' ? seg : seg.id;
+                        return sum + (segmentationStats[id] || 0);
                       }, 0);
 
                       return total.toLocaleString('pt-BR');
@@ -1400,7 +1402,8 @@ export default function Campanhas() {
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        return sum + (segmentationStats[seg] || 0);
+                        const id = typeof seg === 'string' ? seg : seg.id;
+                        return sum + (segmentationStats[id] || 0);
                       }, 0);
 
                       const credits = Math.ceil(total / 100); // 1 crédito a cada 100 pessoas
@@ -1417,7 +1420,8 @@ export default function Campanhas() {
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        return sum + (segmentationStats[seg] || 0);
+                        const id = typeof seg === 'string' ? seg : seg.id;
+                        return sum + (segmentationStats[id] || 0);
                       }, 0);
 
                       const credits = Math.ceil(total / 100);
@@ -1787,7 +1791,8 @@ export default function Campanhas() {
                   <p className="text-2xl font-bold text-foreground">
                     {(() => {
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        return sum + (segmentationStats[seg] || 0);
+                        const id = typeof seg === 'string' ? seg : seg.id;
+                        return sum + (segmentationStats[id] || 0);
                       }, 0);
 
                       return total.toLocaleString('pt-BR');

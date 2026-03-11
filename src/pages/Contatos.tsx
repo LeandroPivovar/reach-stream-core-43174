@@ -187,7 +187,7 @@ export default function Contatos() {
     daysWithoutPurchase: 0, // dias sem comprar
     gender: 'all', // masculino, feminino, todos
     state: 'all', // estado
-    segmentations: [] as string[], // segmentações
+    segmentations: [] as (string | import('@/lib/api').SegmentationParam)[], // segmentações
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -204,7 +204,7 @@ export default function Contatos() {
     city: '',
     birthDate: '',
     gender: 'all',
-    segmentations: [] as string[]
+    segmentations: [] as (string | import('@/lib/api').SegmentationParam)[]
   });
 
   // Mock data for contact details with LTV information
@@ -1622,12 +1622,12 @@ export default function Contatos() {
                                   <div key={seg.id} className="flex items-center space-x-2">
                                     <Checkbox
                                       id={`seg-${seg.id}`}
-                                      checked={filters.segmentations.includes(seg.id)}
+                                      checked={filters.segmentations.some(s => (typeof s === 'string' ? s : s.id) === seg.id)}
                                       onCheckedChange={(checked) => {
                                         if (checked) {
                                           setFilters({ ...filters, segmentations: [...filters.segmentations, seg.id] });
                                         } else {
-                                          setFilters({ ...filters, segmentations: filters.segmentations.filter(s => s !== seg.id) });
+                                          setFilters({ ...filters, segmentations: filters.segmentations.filter(s => (typeof s === 'string' ? s : s.id) !== seg.id) });
                                         }
                                       }}
                                     />
@@ -1639,7 +1639,8 @@ export default function Contatos() {
                               </div>
                               {filters.segmentations.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
-                                  {filters.segmentations.map((segId) => {
+                                  {filters.segmentations.map((seg) => {
+                                    const segId = typeof seg === 'string' ? seg : seg.id;
                                     const seg = [
                                       { id: 'by_purchase_count', label: 'Por número de compras' },
                                       { id: 'birthday', label: 'Aniversariantes' },
