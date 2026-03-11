@@ -98,7 +98,7 @@ export default function Integracoes() {
       id: 2,
       name: 'Nuvemshop',
       description: 'Integração completa com sua loja Nuvemshop',
-      icon: ShoppingBag,
+      imageUrl: '/icons/nuvemshop.png',
       status: 'Disponível',
       color: 'bg-blue-500',
       features: ['Produtos automáticos', 'Status de pedidos', 'Clientes VIP']
@@ -867,8 +867,8 @@ export default function Integracoes() {
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                      <ShoppingBag className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                      <img src="/icons/nuvemshop.png" alt="Nuvemshop" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-medium">Nuvemshop</p>
@@ -1613,8 +1613,8 @@ export default function Integracoes() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center border bg-white">
+                <img src="/icons/nuvemshop.png" alt="Nuvemshop" className="w-full h-full object-cover" />
               </div>
               Conectar Nuvemshop
             </DialogTitle>
