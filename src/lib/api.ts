@@ -145,6 +145,8 @@ export interface Contact {
   source?: string;
   state?: string;
   city?: string;
+  birthDate?: string;
+  gender?: string;
   groupId?: number;
   group?: {
     id: number;
@@ -181,6 +183,8 @@ export interface CreateContactData {
   source?: string;
   state?: string;
   city?: string;
+  birthDate?: string;
+  gender?: string;
   groupId?: number;
   tagIds?: number[];
   segmentationIds?: string[];
@@ -198,6 +202,8 @@ export interface UpdateContactData {
   source?: string;
   state?: string;
   city?: string;
+  birthDate?: string;
+  gender?: string;
   groupId?: number | null;
   tagIds?: number[];
   segmentationIds?: string[];

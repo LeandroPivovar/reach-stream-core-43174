@@ -96,6 +96,8 @@ interface ContactFrontend {
   tags: string[];
   state: string;
   city: string;
+  birthDate: string;
+  gender: string;
   segmentations: string[];
   lastInteraction: string;
 }
@@ -200,6 +202,8 @@ export default function Contatos() {
     tagIds: [] as number[], // IDs das tags (para envio)
     state: '',
     city: '',
+    birthDate: '',
+    gender: 'all',
     segmentations: [] as string[]
   });
 
@@ -274,6 +278,8 @@ export default function Contatos() {
       tags: apiContact.contactTags?.map(ct => ct.tag.name) || [],
       state: apiContact.state || '',
       city: apiContact.city || '',
+      birthDate: apiContact.birthDate || '',
+      gender: apiContact.gender || 'all',
       segmentations: apiContact.contactSegmentations?.map(cs => cs.segmentationId) || [],
       lastInteraction: apiContact.updatedAt || apiContact.createdAt
     };
@@ -791,6 +797,8 @@ export default function Contatos() {
           groupId: groupId || null,
           tagIds: tagIds.length > 0 ? tagIds : [],
           segmentationIds: newContact.segmentations && newContact.segmentations.length > 0 ? newContact.segmentations : [],
+          birthDate: newContact.birthDate || undefined,
+          gender: newContact.gender !== 'all' ? newContact.gender : undefined,
         });
         const updatedContact = convertApiContactToFrontend(apiContact);
         setContacts(contacts.map(c => c.id === editingContactId ? updatedContact : c));
@@ -812,6 +820,8 @@ export default function Contatos() {
           groupId: groupId,
           tagIds: tagIds.length > 0 ? tagIds : undefined,
           segmentationIds: newContact.segmentations && newContact.segmentations.length > 0 ? newContact.segmentations : undefined,
+          birthDate: newContact.birthDate || undefined,
+          gender: newContact.gender !== 'all' ? newContact.gender : undefined,
         });
         const newContactFrontend = convertApiContactToFrontend(apiContact);
         setContacts([...contacts, newContactFrontend]);
@@ -833,6 +843,8 @@ export default function Contatos() {
         tagIds: [],
         state: '',
         city: '',
+        birthDate: '',
+        gender: 'all',
         segmentations: []
       });
     } catch (error) {
@@ -892,6 +904,8 @@ export default function Contatos() {
       tagIds: tagIds,
       state: contact.state,
       city: contact.city,
+      birthDate: contact.birthDate,
+      gender: contact.gender,
       segmentations: contact.segmentations
     });
     setIsNewContactOpen(true);
@@ -2651,6 +2665,8 @@ export default function Contatos() {
             tagIds: [],
             state: '',
             city: '',
+            birthDate: '',
+            gender: 'all',
             segmentations: []
           });
         }
