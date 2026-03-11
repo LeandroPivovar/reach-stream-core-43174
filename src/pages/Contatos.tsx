@@ -2788,7 +2788,7 @@ export default function Contatos() {
                   value={newContact.state}
                   onValueChange={(value) => setNewContact({ ...newContact, state: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="state-select">
                     <SelectValue placeholder="Selecione o estado" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2806,6 +2806,34 @@ export default function Contatos() {
                   onChange={(e) => setNewContact({ ...newContact, city: e.target.value })}
                   placeholder="Digite a cidade"
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="birthDate">Data de Nascimento</Label>
+                <Input
+                  id="birthDate"
+                  type="date"
+                  value={newContact.birthDate}
+                  onChange={(e) => setNewContact({ ...newContact, birthDate: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="gender">Gênero</Label>
+                <Select
+                  value={newContact.gender}
+                  onValueChange={(value) => setNewContact({ ...newContact, gender: value })}
+                >
+                  <SelectTrigger id="gender">
+                    <SelectValue placeholder="Selecione o gênero" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Não informado</SelectItem>
+                    <SelectItem value="M">Masculino</SelectItem>
+                    <SelectItem value="F">Feminino</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
