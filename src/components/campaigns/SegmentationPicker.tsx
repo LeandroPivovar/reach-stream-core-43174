@@ -100,8 +100,11 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
           <Input
             type="number"
             className="h-8 w-20 text-xs"
-            value={params?.minPurchases || 1}
-            onChange={(e) => updateParams(segmentId, { minPurchases: parseInt(e.target.value) || 1 })}
+            value={params?.minPurchases !== undefined ? params.minPurchases : 1}
+            onChange={(e) => {
+              const val = parseInt(e.target.value);
+              updateParams(segmentId, { minPurchases: isNaN(val) ? 1 : val });
+            }}
           />
         </div>
       );
@@ -114,22 +117,29 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
           <Input
             type="number"
             className="h-8 w-24 text-xs"
-            value={params?.minTicket || 500}
-            onChange={(e) => updateParams(segmentId, { minTicket: parseFloat(e.target.value) || 0 })}
+            value={params?.minTicket !== undefined ? params.minTicket : 500}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value);
+              updateParams(segmentId, { minTicket: isNaN(val) ? 0 : val });
+            }}
           />
         </div>
       );
     }
 
     if (segmentId === 'inactive_customers' || segmentId === 'no_purchase_x_days') {
+      const defaultDays = segmentId === 'inactive_customers' ? 90 : 30;
       return (
         <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Dias:</Label>
           <Input
             type="number"
             className="h-8 w-20 text-xs"
-            value={params?.days || (segmentId === 'inactive_customers' ? 90 : 30)}
-            onChange={(e) => updateParams(segmentId, { days: parseInt(e.target.value) || 0 })}
+            value={params?.days !== undefined ? params.days : defaultDays}
+            onChange={(e) => {
+              const val = parseInt(e.target.value);
+              updateParams(segmentId, { days: isNaN(val) ? defaultDays : val });
+            }}
           />
         </div>
       );
