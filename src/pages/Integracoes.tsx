@@ -116,7 +116,7 @@ export default function Integracoes() {
       id: 4,
       name: 'Tray',
       description: 'Integração com a plataforma Tray para gestão de vendas',
-      icon: Zap,
+      imageUrl: '/icons/tray.png',
       status: 'Em desenvolvimento',
       color: 'bg-orange-500',
       features: ['API de produtos', 'Sincronização de pedidos', 'Webhooks em tempo real']
@@ -918,8 +918,8 @@ export default function Integracoes() {
                   onClick={() => handleSelectEcommerce('Tray')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                      <img src="/icons/tray.png" alt="Tray" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-medium">Tray</p>
