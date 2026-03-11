@@ -385,17 +385,6 @@ export default function Indicacoes() {
             )}
           </div>
 
-          <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
-            <div className="flex items-start space-x-3">
-              <Gift className="w-5 h-5 text-primary mt-0.5" />
-              <div>
-                <p className="font-medium text-sm">Bônus Especial!</p>
-                <p className="text-sm text-muted-foreground">
-                  Ganhe R$ 50 extras na primeira indicação que assinar um plano pago.
-                </p>
-              </div>
-            </div>
-          </div>
         </Card>
 
         {/* Como funciona o acordo */}
