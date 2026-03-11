@@ -1362,6 +1362,12 @@ class ApiService {
     return this.get<{ referralCode: string }>('/referrals/my-code');
   }
 
+  async generateReferralCode(): Promise<{ referralCode: string }> {
+    return this.request<{ referralCode: string }>('/referrals/generate', {
+      method: 'POST',
+    });
+  }
+
   async getMyReferrals(): Promise<any[]> {
     return this.get<any[]>('/referrals/my-referrals');
   }
