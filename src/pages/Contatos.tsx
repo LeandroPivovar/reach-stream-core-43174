@@ -1641,7 +1641,7 @@ export default function Contatos() {
                                 <div className="flex flex-wrap gap-1 mt-2">
                                   {filters.segmentations.map((seg) => {
                                     const segId = typeof seg === 'string' ? seg : seg.id;
-                                    const seg = [
+                                    const segOption = [
                                       { id: 'by_purchase_count', label: 'Por número de compras' },
                                       { id: 'birthday', label: 'Aniversariantes' },
                                       { id: 'inactive_customers', label: 'Clientes inativos' },
@@ -1655,9 +1655,9 @@ export default function Contatos() {
                                       { id: 'gender_female', label: 'Sexo: Feminino' },
                                       { id: 'by_state', label: 'Por estado' },
                                     ].find(s => s.id === segId);
-                                    return seg ? (
+                                    return segOption ? (
                                       <Badge key={segId} variant="secondary" className="text-xs">
-                                        {seg.label}
+                                        {segOption.label}
                                       </Badge>
                                     ) : null;
                                   })}
