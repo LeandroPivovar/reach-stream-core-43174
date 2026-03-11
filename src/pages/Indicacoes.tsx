@@ -35,6 +35,7 @@ export default function Indicacoes() {
   });
   const [referrals, setReferrals] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const referralLink = useMemo(() => {
     if (!referralCode) return '';
@@ -132,6 +133,27 @@ export default function Indicacoes() {
       title: "Link copiado!",
       description: "O link de indicação foi copiado para a área de transferência.",
     });
+  };
+
+  const handleGenerateCode = async () => {
+    try {
+      setIsGenerating(true);
+      const res = await api.generateReferralCode();
+      setReferralCode(res.referralCode);
+      toast({
+        title: "Link gerado!",
+        description: "Seu link de indicação foi gerado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao gerar código de indicação:', error);
+      toast({
+        title: "Erro ao gerar link",
+        description: error instanceof Error ? error.message : "Não foi possível gerar seu link de indicação.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (loading) {
@@ -323,23 +345,44 @@ export default function Indicacoes() {
 
           <div className="space-y-4">
             {/* Referral Link Input */}
-            <div className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg">
-              <div className="flex-1">
-                <Input
-                  value={referralLink}
-                  readOnly
-                  className="font-mono text-sm"
-                />
+            {!referralCode ? (
+              <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-lg border-2 border-dashed border-border text-center">
+                <Gift className="w-12 h-12 text-muted-foreground mb-4" />
+                <h4 className="text-lg font-medium mb-2">Você ainda não tem um link de afiliado</h4>
+                <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+                  Gere seu link agora mesmo para começar a indicar amigos e ganhar comissões recorrentes.
+                </p>
+                <Button
+                  onClick={handleGenerateCode}
+                  disabled={isGenerating}
+                  size="lg"
+                  className="px-8"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Gerando...
+                    </>
+                  ) : (
+                    "Solicitar link de afiliado"
+                  )}
+                </Button>
               </div>
-              <Button onClick={copyReferralLink}>
-                <Copy className="w-4 h-4 mr-2" />
-                Copiar
-              </Button>
-              <Button variant="outline">
-                <Share2 className="w-4 h-4 mr-2" />
-                Compartilhar
-              </Button>
-            </div>
+            ) : (
+              <div className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg">
+                <div className="flex-1">
+                  <Input
+                    value={referralLink}
+                    readOnly
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <Button onClick={copyReferralLink}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copiar
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
