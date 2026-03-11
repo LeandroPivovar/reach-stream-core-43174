@@ -357,6 +357,16 @@ export interface Campaign {
   updatedAt: string;
 }
 
+export interface SegmentationParam {
+  id: string;
+  params?: {
+    days?: number;
+    minPurchases?: number;
+    minTicket?: number;
+    [key: string]: any;
+  };
+}
+
 export interface CreateCampaignData {
   name: string;
   complexity: string;
@@ -720,6 +730,13 @@ class ApiService {
 
   async getCampaignDashboardPerformance(period: string): Promise<any> {
     return this.get<any>(`/campaigns/dashboard/performance?period=${period}`);
+  }
+
+  async getContactsBySegments(segmentations: (string | SegmentationParam)[]): Promise<Contact[]> {
+    return this.request<Contact[]>('/contacts/segments', {
+      method: 'POST',
+      body: JSON.stringify({ segmentations })
+    });
   }
 
   // --- Categories ---
