@@ -125,7 +125,7 @@ export default function Integracoes() {
       id: 5,
       name: 'VTEX',
       description: 'Conecte sua loja VTEX para automação completa',
-      icon: Store,
+      imageUrl: '/icons/vtex.png',
       status: 'Em desenvolvimento',
       color: 'bg-pink-500',
       features: ['Catálogo unificado', 'OMS integrado', 'Checkout personalizado']
@@ -523,7 +523,7 @@ export default function Integracoes() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-6">Integrações E-commerce</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {integrations.map((integration) => {
+            {integrations.map((integration: any) => {
               const Icon = integration.icon;
               const connectionStatus = isConnected(integration.name);
               const isConnectedPlatform = connectionStatus.connected;
@@ -536,9 +536,9 @@ export default function Integracoes() {
                       <div className={`w-12 h-12 ${integration.color} rounded-lg flex items-center justify-center overflow-hidden`}>
                         {integration.imageUrl ? (
                           <img src={integration.imageUrl} alt={integration.name} className="w-full h-full object-cover" />
-                        ) : (
+                        ) : Icon ? (
                           <Icon className="w-6 h-6 text-white" />
-                        )}
+                        ) : null}
                       </div>
                       <div>
                         <h4 className="font-semibold">{integration.name}</h4>
@@ -935,8 +935,8 @@ export default function Integracoes() {
                   onClick={() => handleSelectEcommerce('VTEX')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
-                      <Store className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                      <img src="/icons/vtex.png" alt="VTEX" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-medium">VTEX</p>
