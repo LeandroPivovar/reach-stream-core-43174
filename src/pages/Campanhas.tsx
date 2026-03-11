@@ -310,14 +310,33 @@ export default function Campanhas() {
     try {
       setIsSaving(true);
 
+      let finalStatus = newCampaign.scheduleType === 'schedule' ? 'agendada' : 'ativa';
+      let finalScheduledAt = newCampaign.scheduleType === 'schedule'
+        ? `${newCampaign.scheduleDate}T${newCampaign.scheduleTime}:00`
+        : undefined;
+
+      if (newCampaign.campaignComplexity === 'advanced' && newCampaign.workflow?.nodes) {
+        const scheduleNode = newCampaign.workflow.nodes.find((n: any) => n.type === 'schedule');
+
+        if (scheduleNode && scheduleNode.data?.scheduleDate && scheduleNode.data?.scheduleTime) {
+          finalStatus = 'agendada';
+          const dateObj = new Date(scheduleNode.data.scheduleDate);
+          const yyyy = dateObj.getFullYear();
+          const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+          const dd = String(dateObj.getDate()).padStart(2, '0');
+          finalScheduledAt = `${yyyy}-${mm}-${dd}T${scheduleNode.data.scheduleTime}:00`;
+        } else {
+          finalStatus = 'ativa';
+          finalScheduledAt = undefined;
+        }
+      }
+
       const payload = {
         name: newCampaign.name,
         complexity: newCampaign.campaignComplexity,
         channel: newCampaign.channel,
-        status: newCampaign.scheduleType === 'schedule' ? 'agendada' : 'ativa',
-        scheduledAt: newCampaign.scheduleType === 'schedule'
-          ? `${newCampaign.scheduleDate}T${newCampaign.scheduleTime}:00`
-          : undefined,
+        status: finalStatus,
+        scheduledAt: finalScheduledAt,
         config: {
           campaignType: newCampaign.campaignType,
           campaignConfig: newCampaign.campaignConfig,
@@ -1326,41 +1345,48 @@ export default function Campanhas() {
 
                 <Card className="p-4 border-blue-500/20 bg-blue-500/5">
                   <div className="flex items-center gap-2 mb-2">
-                    <Zap className="w-5 h-5 text-blue-500" />
-                    <span className="text-sm font-medium text-muted-foreground">Créditos</span>
+                    <Mail className="w-5 h-5 text-blue-500" />
+                    <span className="text-sm font-medium text-muted-foreground">E-mails a enviar</span>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {(() => {
-                      const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        const id = typeof seg === 'string' ? seg : seg.id;
-                        return sum + (segmentationStats[id] || 0);
-                      }, 0);
-
-                      const credits = Math.ceil(total / 100); // 1 crédito a cada 100 pessoas
-                      return credits.toLocaleString('pt-BR');
-                    })()}
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-bold text-foreground">
+                      {(() => {
+                        const totalContacts = newCampaign.segmentations.reduce((sum, seg) => {
+                          const id = typeof seg === 'string' ? seg : seg.id;
+                          return sum + (segmentationStats[id] || 0);
+                        }, 0);
+                        const emailNodesCount = newCampaign.workflow?.nodes?.filter((n: any) => n.type === 'email').length || 0;
+                        const estimated = totalContacts * emailNodesCount;
+                        return estimated.toLocaleString('pt-BR');
+                      })()}
+                    </p>
+                    <p className="text-xs text-blue-600/80 font-medium">
+                      LIMITE RESTANTE: {subscriptionStats ? (subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR') : 'Carregando...'}
+                    </p>
+                  </div>
                 </Card>
 
                 <Card className="p-4 border-green-500/20 bg-green-500/5">
                   <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-5 h-5 text-green-500" />
-                    <span className="text-sm font-medium text-muted-foreground">Valor Total</span>
+                    <MessageSquare className="w-5 h-5 text-green-500" />
+                    <span className="text-sm font-medium text-muted-foreground">SMS a enviar</span>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {(() => {
-                      const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        const id = typeof seg === 'string' ? seg : seg.id;
-                        return sum + (segmentationStats[id] || 0);
-                      }, 0);
-
-                      const credits = Math.ceil(total / 100);
-                      const valorPorCredito = 0.10;
-                      const valorTotal = credits * valorPorCredito;
-
-                      return `R$ ${valorTotal.toFixed(2)}`;
-                    })()}
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-bold text-foreground">
+                      {(() => {
+                        const totalContacts = newCampaign.segmentations.reduce((sum, seg) => {
+                          const id = typeof seg === 'string' ? seg : seg.id;
+                          return sum + (segmentationStats[id] || 0);
+                        }, 0);
+                        const smsNodesCount = newCampaign.workflow?.nodes?.filter((n: any) => n.type === 'sms').length || 0;
+                        const estimated = totalContacts * smsNodesCount;
+                        return estimated.toLocaleString('pt-BR');
+                      })()}
+                    </p>
+                    <p className="text-xs text-green-600/80 font-medium">
+                      LIMITE RESTANTE: {subscriptionStats ? (subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR') : 'Carregando...'}
+                    </p>
+                  </div>
                 </Card>
               </div>
 
