@@ -98,7 +98,7 @@ export default function Integracoes() {
       id: 2,
       name: 'Nuvemshop',
       description: 'Integração completa com sua loja Nuvemshop',
-      icon: ShoppingBag,
+      imageUrl: '/icons/nuvemshop.png',
       status: 'Disponível',
       color: 'bg-blue-500',
       features: ['Produtos automáticos', 'Status de pedidos', 'Clientes VIP']
@@ -107,7 +107,7 @@ export default function Integracoes() {
       id: 3,
       name: 'Loja Integrada',
       description: 'Conecte com a Loja Integrada para automações avançadas',
-      icon: ShoppingBag,
+      imageUrl: '/icons/lojaintegrada.png',
       status: 'Em desenvolvimento',
       color: 'bg-purple-500',
       features: ['Catálogo sincronizado', 'Remarketing', 'Análise de vendas']
@@ -116,7 +116,7 @@ export default function Integracoes() {
       id: 4,
       name: 'Tray',
       description: 'Integração com a plataforma Tray para gestão de vendas',
-      icon: Zap,
+      imageUrl: '/icons/tray.png',
       status: 'Em desenvolvimento',
       color: 'bg-orange-500',
       features: ['API de produtos', 'Sincronização de pedidos', 'Webhooks em tempo real']
@@ -125,7 +125,7 @@ export default function Integracoes() {
       id: 5,
       name: 'VTEX',
       description: 'Conecte sua loja VTEX para automação completa',
-      icon: Store,
+      imageUrl: '/icons/vtex.png',
       status: 'Em desenvolvimento',
       color: 'bg-pink-500',
       features: ['Catálogo unificado', 'OMS integrado', 'Checkout personalizado']
@@ -523,7 +523,7 @@ export default function Integracoes() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-6">Integrações E-commerce</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {integrations.map((integration) => {
+            {integrations.map((integration: any) => {
               const Icon = integration.icon;
               const connectionStatus = isConnected(integration.name);
               const isConnectedPlatform = connectionStatus.connected;
@@ -536,9 +536,9 @@ export default function Integracoes() {
                       <div className={`w-12 h-12 ${integration.color} rounded-lg flex items-center justify-center overflow-hidden`}>
                         {integration.imageUrl ? (
                           <img src={integration.imageUrl} alt={integration.name} className="w-full h-full object-cover" />
-                        ) : (
+                        ) : Icon ? (
                           <Icon className="w-6 h-6 text-white" />
-                        )}
+                        ) : null}
                       </div>
                       <div>
                         <h4 className="font-semibold">{integration.name}</h4>
@@ -867,8 +867,8 @@ export default function Integracoes() {
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                      <ShoppingBag className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                      <img src="/icons/nuvemshop.png" alt="Nuvemshop" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-medium">Nuvemshop</p>
@@ -884,8 +884,8 @@ export default function Integracoes() {
                   onClick={() => handleSelectEcommerce('Loja Integrada')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-                      <ShoppingBag className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                      <img src="/icons/lojaintegrada.png" alt="Loja Integrada" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-medium">Loja Integrada</p>
@@ -918,8 +918,8 @@ export default function Integracoes() {
                   onClick={() => handleSelectEcommerce('Tray')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                      <img src="/icons/tray.png" alt="Tray" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-medium">Tray</p>
@@ -935,8 +935,8 @@ export default function Integracoes() {
                   onClick={() => handleSelectEcommerce('VTEX')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
-                      <Store className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                      <img src="/icons/vtex.png" alt="VTEX" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-medium">VTEX</p>
@@ -1613,8 +1613,8 @@ export default function Integracoes() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center border bg-white">
+                <img src="/icons/nuvemshop.png" alt="Nuvemshop" className="w-full h-full object-cover" />
               </div>
               Conectar Nuvemshop
             </DialogTitle>

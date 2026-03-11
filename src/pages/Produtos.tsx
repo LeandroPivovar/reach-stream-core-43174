@@ -2053,8 +2053,8 @@ export default function Produtos() {
                 {nuvemshopConnections.length > 0 && (
                   <div className="space-y-3">
                     <h4 className="font-semibold text-sm flex items-center gap-2">
-                      <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                        <ShoppingCart className="w-4 h-4 text-white" />
+                      <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+                        <img src="/icons/nuvemshop.png" alt="Nuvemshop" className="w-full h-full object-cover" />
                       </div>
                       Nuvemshop
                     </h4>
