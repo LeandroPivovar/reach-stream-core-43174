@@ -625,13 +625,34 @@ export default function Campanhas() {
                     <td className="py-4 px-2">
                       <div className="flex flex-wrap gap-1">
                         {(() => {
-                          const Icon = getChannelIcon(campaign.channel);
-                          return (
-                            <div key={campaign.channel} className="flex items-center space-x-1 bg-muted/50 rounded-full px-2 py-1">
-                              <Icon className="w-3 h-3" />
-                              <span className="text-xs uppercase">{campaign.channel}</span>
-                            </div>
-                          );
+                          let channels: string[] = [];
+
+                          if (campaign.complexity === 'advanced' && campaign.config?.workflow?.nodes) {
+                            const nodes = campaign.config.workflow.nodes;
+                            const hasEmail = nodes.some((n: any) => n.type === 'email');
+                            const hasSms = nodes.some((n: any) => n.type === 'sms');
+                            const hasWhatsapp = nodes.some((n: any) => n.type === 'whatsapp');
+
+                            if (hasEmail) channels.push('email');
+                            if (hasSms) channels.push('sms');
+                            if (hasWhatsapp) channels.push('whatsapp');
+                          } else if (campaign.channel) {
+                            channels.push(campaign.channel);
+                          }
+
+                          if (channels.length === 0) {
+                            return <span className="text-xs text-muted-foreground">-</span>;
+                          }
+
+                          return channels.map((channel, index) => {
+                            const Icon = getChannelIcon(channel);
+                            return (
+                              <div key={`${channel}-${index}`} className="flex items-center space-x-1 bg-muted/50 rounded-full px-2 py-1">
+                                <Icon className="w-3 h-3" />
+                                <span className="text-xs uppercase">{channel}</span>
+                              </div>
+                            );
+                          });
                         })()}
                       </div>
                     </td>
