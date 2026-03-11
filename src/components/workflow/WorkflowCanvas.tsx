@@ -48,8 +48,8 @@ export interface WorkflowStep {
 }
 
 interface WorkflowCanvasProps {
-  workflow: WorkflowStep[];
-  onChange: (workflow: WorkflowStep[]) => void;
+  workflow: any;
+  onChange: (workflow: any) => void;
 }
 
 const nodeTypes: NodeTypes = {
@@ -68,9 +68,33 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   workflow,
   onChange,
 }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [nodeIdCounter, setNodeIdCounter] = useState(1);
+  const [nodes, setNodes, onNodesChange] = useNodesState(workflow?.nodes || []);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(workflow?.edges || []);
+  const [nodeIdCounter, setNodeIdCounter] = useState(() => {
+    // Initialize counter based on existing nodes
+    const maxId = (workflow?.nodes || []).reduce((max: number, node: any) => {
+      if (node.id.startsWith('node-')) {
+        const idNum = parseInt(node.id.replace('node-', ''));
+        return !isNaN(idNum) && idNum > max ? idNum : max;
+      }
+      return max;
+    }, 0);
+    return maxId + 1;
+  });
+
+  const onChangeRef = React.useRef(onChange);
+  React.useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  React.useEffect(() => {
+    // Omit non-serializable data when passing up
+    const cleanNodes = nodes.map(node => {
+      const { onUpdate, onDelete, ...cleanData } = node.data as any;
+      return { ...node, data: cleanData };
+    });
+    onChangeRef.current({ nodes: cleanNodes, edges });
+  }, [nodes, edges]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -87,26 +111,35 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
       position: { x: 250, y: nodes.length * 150 + 50 },
       data: {
         label: type,
-        onUpdate: (data: any) => updateNodeData(id, data),
-        onDelete: () => deleteNode(id),
       },
     };
     setNodes((nds) => [...nds, newNode]);
     setNodeIdCounter(nodeIdCounter + 1);
   };
 
-  const updateNodeData = (nodeId: string, data: any) => {
+  const updateNodeData = useCallback((nodeId: string, data: any) => {
     setNodes((nds) =>
       nds.map((node) =>
         node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
       )
     );
-  };
+  }, [setNodes]);
 
-  const deleteNode = (nodeId: string) => {
+  const deleteNode = useCallback((nodeId: string) => {
     setNodes((nds) => nds.filter((node) => node.id !== nodeId));
     setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
-  };
+  }, [setNodes, setEdges]);
+
+  const nodesWithHandlers = React.useMemo(() => {
+    return nodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        onUpdate: (data: any) => updateNodeData(node.id, data),
+        onDelete: () => deleteNode(node.id),
+      },
+    }));
+  }, [nodes, updateNodeData, deleteNode]);
 
   return (
     <div className="flex flex-col gap-4 h-[600px]">
@@ -212,7 +245,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
       {/* Canvas */}
       <div className="flex-1 border rounded-lg bg-background overflow-hidden">
         <ReactFlow
-          nodes={nodes}
+          nodes={nodesWithHandlers}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}

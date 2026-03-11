@@ -121,7 +121,7 @@ export default function Campanhas() {
       mode: 'text' as 'text' | 'html',
       media: [] as { url: string; type: 'image' | 'video'; name: string }[]
     },
-    workflow: [] as WorkflowStep[],
+    workflow: { nodes: [], edges: [] } as any,
     tracking: {
       type: '' as 'utm' | 'pixel' | 'shortlink' | '',
       utmSource: '',
@@ -365,7 +365,7 @@ export default function Campanhas() {
           mode: 'text',
           media: []
         },
-        workflow: [],
+        workflow: { nodes: [], edges: [] },
         tracking: {
           type: '',
           utmSource: '',
@@ -443,7 +443,7 @@ export default function Campanhas() {
         giftback: { giftValue: '', maxRedemptions: '', validityDate: undefined }
       },
       email: campaign.config?.email || { subject: '', content: '', mode: 'text', media: [] },
-      workflow: campaign.config?.workflow || [],
+      workflow: campaign.config?.workflow?.nodes ? campaign.config.workflow : { nodes: [], edges: [] },
       tracking: campaign.config?.tracking || { type: '', utmSource: '', utmMedium: '', utmCampaign: '' },
       scheduleType: campaign.scheduledAt ? 'schedule' : 'now',
       scheduleDate: campaign.scheduledAt ? campaign.scheduledAt.split('T')[0] : '',
