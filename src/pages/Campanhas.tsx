@@ -873,77 +873,7 @@ export default function Campanhas() {
                 }}
               />
 
-              {/* Tabela de Contatos Impactados */}
-              {newCampaign.segmentations.length > 0 && filteredContacts.length > 0 && (
-                <Card className="p-6">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold mb-1">Contatos que receberão a campanha</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {filteredContacts.length} contato(s) impactado(s)
-                    </p>
-                  </div>
 
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nome</TableHead>
-                          <TableHead>E-mail</TableHead>
-                          <TableHead>Telefone</TableHead>
-                          <TableHead>Segmento</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedContacts.map((contact) => (
-                          <TableRow key={contact.id}>
-                            <TableCell className="font-medium">{contact.name} {contact.lastName}</TableCell>
-                            <TableCell>{contact.email || '-'}</TableCell>
-                            <TableCell>{contact.phone || '-'}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {contact.group?.name || 'Sem grupo'}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  {/* Paginação */}
-                  {totalPages > 1 && (
-                    <div className="mt-4">
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious
-                              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                            />
-                          </PaginationItem>
-                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                            <PaginationItem key={page}>
-                              <PaginationLink
-                                onClick={() => setCurrentPage(page)}
-                                isActive={currentPage === page}
-                                className="cursor-pointer"
-                              >
-                                {page}
-                              </PaginationLink>
-                            </PaginationItem>
-                          ))}
-                          <PaginationItem>
-                            <PaginationNext
-                              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                            />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
-                    </div>
-                  )}
-                </Card>
-              )}
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={handlePrevStep}>
