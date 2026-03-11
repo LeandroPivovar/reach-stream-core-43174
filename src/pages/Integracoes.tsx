@@ -107,7 +107,7 @@ export default function Integracoes() {
       id: 3,
       name: 'Loja Integrada',
       description: 'Conecte com a Loja Integrada para automações avançadas',
-      icon: ShoppingBag,
+      imageUrl: '/icons/lojaintegrada.png',
       status: 'Em desenvolvimento',
       color: 'bg-purple-500',
       features: ['Catálogo sincronizado', 'Remarketing', 'Análise de vendas']
@@ -884,8 +884,8 @@ export default function Integracoes() {
                   onClick={() => handleSelectEcommerce('Loja Integrada')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-                      <ShoppingBag className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                      <img src="/icons/lojaintegrada.png" alt="Loja Integrada" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-medium">Loja Integrada</p>
