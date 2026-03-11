@@ -89,7 +89,7 @@ export default function Integracoes() {
       id: 1,
       name: 'Shopify',
       description: 'Conecte sua loja Shopify para sincronizar produtos e pedidos',
-      icon: ShoppingBag,
+      imageUrl: '/icons/shopify.png',
       status: 'Disponível',
       color: 'bg-green-500',
       features: ['Sincronização de produtos', 'Carrinho abandonado', 'Pedidos em tempo real']
@@ -533,8 +533,12 @@ export default function Integracoes() {
                 <Card key={integration.id} className="p-6 border-2 border-border hover:border-primary/20 transition-colors">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-12 h-12 ${integration.color} rounded-lg flex items-center justify-center`}>
-                        <Icon className="w-6 h-6 text-white" />
+                      <div className={`w-12 h-12 ${integration.color} rounded-lg flex items-center justify-center overflow-hidden`}>
+                        {integration.imageUrl ? (
+                          <img src={integration.imageUrl} alt={integration.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Icon className="w-6 h-6 text-white" />
+                        )}
                       </div>
                       <div>
                         <h4 className="font-semibold">{integration.name}</h4>
@@ -843,8 +847,8 @@ export default function Integracoes() {
                   onClick={() => handleSelectEcommerce('Shopify')}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                      <ShoppingBag className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
+                      <img src="/icons/shopify.png" alt="Shopify" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="font-medium">Shopify</p>
@@ -958,7 +962,9 @@ export default function Integracoes() {
             <div className="space-y-6 py-4">
               <div className="bg-green-500/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
-                  <ShoppingBag className="w-5 h-5 text-green-500" />
+                  <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white border">
+                    <img src="/icons/shopify.png" alt="Shopify" className="w-full h-full object-cover" />
+                  </div>
                   <span className="font-medium">Conectar com Shopify</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -1536,8 +1542,8 @@ export default function Integracoes() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center border bg-white">
+                <img src="/icons/shopify.png" alt="Shopify" className="w-full h-full object-cover" />
               </div>
               Conectar Shopify
             </DialogTitle>
