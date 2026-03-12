@@ -104,7 +104,6 @@ export default function Campanhas() {
     campaignConfig: {
       enableCoupon: false,
       enableGiftback: false,
-      shopifyStore: '',
       coupon: {
         couponName: '',
         discountType: 'percentage' as 'percentage' | 'fixed',
@@ -168,7 +167,6 @@ export default function Campanhas() {
   const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
   const [segmentationStats, setSegmentationStats] = useState<Record<string, number>>({});
   const [subscriptionStats, setSubscriptionStats] = useState<any>(null);
-  const [shopifyConnections, setShopifyConnections] = useState<any[]>([]);
 
   useEffect(() => {
     loadCampaigns();
@@ -177,18 +175,16 @@ export default function Campanhas() {
 
   const loadExternalData = async () => {
     try {
-      const [contactsData, groupsData, statsData, subStats, shopifyData] = await Promise.all([
+      const [contactsData, groupsData, statsData, subStats] = await Promise.all([
         api.getContacts(),
         api.getGroups(),
         api.getContactSegmentationStats(),
-        api.getSubscriptionStats(),
-        api.getShopifyConnections().catch(() => [])
+        api.getSubscriptionStats()
       ]);
       setContacts(contactsData);
       setAvailableGroups(groupsData);
       setSegmentationStats(statsData);
       setSubscriptionStats(subStats);
-      setShopifyConnections(shopifyData);
     } catch (error) {
       console.error('Erro ao carregar dados externos:', error);
     }
@@ -344,7 +340,6 @@ export default function Campanhas() {
         status: finalStatus,
         scheduledAt: finalScheduledAt,
         config: {
-          shopifyStore: newCampaign.campaignConfig.shopifyStore,
           campaignType: newCampaign.campaignType,
           campaignConfig: newCampaign.campaignConfig,
           email: newCampaign.email,
@@ -374,7 +369,6 @@ export default function Campanhas() {
         campaignConfig: {
           enableCoupon: false,
           enableGiftback: false,
-          shopifyStore: '',
           coupon: {
             couponName: '',
             discountType: 'percentage',
@@ -791,7 +785,6 @@ export default function Campanhas() {
             campaignConfig: {
               enableCoupon: false,
               enableGiftback: false,
-              shopifyStore: '',
               coupon: {
                 couponName: '',
                 discountType: 'percentage',
@@ -1505,33 +1498,6 @@ export default function Campanhas() {
                   </div>
                 </div>
               </div>
-
-              {/* Shopify Store Selection */}
-              {(newCampaign.campaignConfig.enableCoupon || newCampaign.campaignConfig.enableGiftback) && shopifyConnections.length > 0 && (
-                <div className="space-y-3 pt-4 border-t border-primary/10">
-                  <Label>Loja Shopify para integração (Opcional)</Label>
-                  <Select
-                    value={newCampaign.campaignConfig.shopifyStore || 'none'}
-                    onValueChange={(val) => setNewCampaign({
-                      ...newCampaign,
-                      campaignConfig: { ...newCampaign.campaignConfig, shopifyStore: val === 'none' ? '' : val }
-                    })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione uma loja Shopify..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Não integrar com Shopify</SelectItem>
-                      {shopifyConnections.map(conn => (
-                        <SelectItem key={conn.shop} value={conn.shop}>{conn.shop}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Se você selecionar uma loja, o sistema criará o cupom ou giftback diretamente na sua Shopify e enviará esse código para o cliente.
-                  </p>
-                </div>
-              )}
 
               {/* Cupom de Desconto */}
               {newCampaign.campaignConfig.enableCoupon && (
