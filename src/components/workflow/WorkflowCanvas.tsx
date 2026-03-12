@@ -40,6 +40,7 @@ export interface WorkflowStep {
   scheduleTime?: string;
   discountType?: 'fixed' | 'percentage';
   discountValue?: string;
+  couponName?: string;
   giftbackValue?: string;
   minPurchaseValue?: string;
   expirationDays?: string;

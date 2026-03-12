@@ -16,6 +16,7 @@ import { Gift, Edit, Trash2 } from 'lucide-react';
 interface GiftbackNodeData {
   label?: string;
   giftbackValue?: string;
+  couponName?: string;
   minPurchaseValue?: string;
   expirationDays?: string;
   onUpdate?: (data: any) => void;
@@ -25,6 +26,7 @@ interface GiftbackNodeData {
 export const GiftbackNode: React.FC<{ data: GiftbackNodeData }> = ({ data }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [giftbackValue, setGiftbackValue] = useState(data.giftbackValue || '');
+  const [couponName, setCouponName] = useState(data.couponName || '');
   const [minPurchaseValue, setMinPurchaseValue] = useState(data.minPurchaseValue || '');
   const [expirationDays, setExpirationDays] = useState(data.expirationDays || '');
 
@@ -32,6 +34,7 @@ export const GiftbackNode: React.FC<{ data: GiftbackNodeData }> = ({ data }) => 
     if (data.onUpdate) {
       data.onUpdate({
         giftbackValue,
+        couponName,
         minPurchaseValue,
         expirationDays,
       });
@@ -39,7 +42,7 @@ export const GiftbackNode: React.FC<{ data: GiftbackNodeData }> = ({ data }) => 
     setIsOpen(false);
   };
 
-  const isConfigured = giftbackValue && minPurchaseValue && expirationDays;
+  const isConfigured = giftbackValue && minPurchaseValue && expirationDays && couponName;
 
   return (
     <>
@@ -66,6 +69,16 @@ export const GiftbackNode: React.FC<{ data: GiftbackNodeData }> = ({ data }) => 
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="giftback-name">Nome do Giftback *</Label>
+                    <Input
+                      id="giftback-name"
+                      value={couponName}
+                      onChange={(e) => setCouponName(e.target.value)}
+                      placeholder="Ex: GIFT20"
+                    />
+                  </div>
+
                   <div className="grid gap-2">
                     <Label htmlFor="giftback-value">Valor do Giftback (R$) *</Label>
                     <Input
@@ -112,7 +125,7 @@ export const GiftbackNode: React.FC<{ data: GiftbackNodeData }> = ({ data }) => 
                   <Button variant="outline" onClick={() => setIsOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button onClick={handleSave} disabled={!giftbackValue || !minPurchaseValue || !expirationDays}>
+                  <Button onClick={handleSave} disabled={!giftbackValue || !minPurchaseValue || !expirationDays || !couponName}>
                     Salvar
                   </Button>
                 </div>
@@ -133,6 +146,10 @@ export const GiftbackNode: React.FC<{ data: GiftbackNodeData }> = ({ data }) => 
 
         {isConfigured ? (
           <div className="mt-3 p-3 bg-background/50 rounded-md border space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Nome:</span>
+              <span className="font-medium text-green-600 font-bold">{couponName}</span>
+            </div>
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Valor:</span>
               <span className="font-medium">R$ {giftbackValue}</span>

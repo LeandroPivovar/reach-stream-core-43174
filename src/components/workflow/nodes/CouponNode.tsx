@@ -24,6 +24,7 @@ interface CouponNodeData {
   label?: string;
   discountType?: 'fixed' | 'percentage';
   discountValue?: string;
+  couponName?: string;
   expirationDays?: string;
   onUpdate?: (data: any) => void;
   onDelete?: () => void;
@@ -33,6 +34,7 @@ export const CouponNode: React.FC<{ data: CouponNodeData }> = ({ data }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>(data.discountType || 'percentage');
   const [discountValue, setDiscountValue] = useState(data.discountValue || '');
+  const [couponName, setCouponName] = useState(data.couponName || '');
   const [expirationDays, setExpirationDays] = useState(data.expirationDays || '');
 
   const handleSave = () => {
@@ -40,13 +42,14 @@ export const CouponNode: React.FC<{ data: CouponNodeData }> = ({ data }) => {
       data.onUpdate({
         discountType,
         discountValue,
+        couponName,
         expirationDays,
       });
     }
     setIsOpen(false);
   };
 
-  const isConfigured = discountValue && expirationDays;
+  const isConfigured = discountValue && expirationDays && couponName;
 
   return (
     <>
@@ -73,6 +76,16 @@ export const CouponNode: React.FC<{ data: CouponNodeData }> = ({ data }) => {
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="coupon-name">Nome do Cupom *</Label>
+                    <Input
+                      id="coupon-name"
+                      value={couponName}
+                      onChange={(e) => setCouponName(e.target.value)}
+                      placeholder="Ex: BEMVINDO10"
+                    />
+                  </div>
+
                   <div className="grid gap-2">
                     <Label>Tipo de Desconto *</Label>
                     <Select value={discountType} onValueChange={(value: 'fixed' | 'percentage') => setDiscountType(value)}>
@@ -118,7 +131,7 @@ export const CouponNode: React.FC<{ data: CouponNodeData }> = ({ data }) => {
                   <Button variant="outline" onClick={() => setIsOpen(false)}>
                     Cancelar
                   </Button>
-                  <Button onClick={handleSave} disabled={!discountValue || !expirationDays}>
+                  <Button onClick={handleSave} disabled={!discountValue || !expirationDays || !couponName}>
                     Salvar
                   </Button>
                 </div>
@@ -139,6 +152,10 @@ export const CouponNode: React.FC<{ data: CouponNodeData }> = ({ data }) => {
 
         {isConfigured ? (
           <div className="mt-3 p-3 bg-background/50 rounded-md border space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-muted-foreground">Nome:</span>
+              <span className="font-medium text-orange-500 font-bold">{couponName}</span>
+            </div>
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Desconto:</span>
               <span className="font-medium">
