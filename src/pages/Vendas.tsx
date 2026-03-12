@@ -94,7 +94,39 @@ export default function Vendas() {
   };
 
   useEffect(() => {
-    fetchData();
+    const syncOrdersInBackground = async () => {
+      try {
+        const [shopify, nuvemshop] = await Promise.all([
+          api.getShopifyConnections().catch(() => []),
+          api.getNuvemshopConnections().catch(() => []),
+        ]);
+
+        const activeShopify = shopify.filter((c: any) => c.isActive);
+        const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
+
+        const syncPromises = [];
+
+        for (const shop of activeShopify) {
+          syncPromises.push(api.syncShopifyOrders(shop.shop).catch(console.error));
+        }
+
+        for (const store of activeNuvemshop) {
+          syncPromises.push(api.syncNuvemshopOrders(store.storeId).catch(console.error));
+        }
+
+        if (syncPromises.length > 0) {
+          await Promise.all(syncPromises);
+          // Atualiza os dados novamente após a sincronização
+          await fetchData();
+        }
+      } catch (error) {
+        console.error('Erro no sync de pedidos em background:', error);
+      }
+    };
+
+    fetchData().then(() => {
+      syncOrdersInBackground();
+    });
   }, [period]);
 
   const stats = [

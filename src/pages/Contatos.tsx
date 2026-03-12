@@ -305,8 +305,39 @@ export default function Contatos() {
       }
     };
 
-    loadContacts();
-  }, [toast]);
+    const syncContactsInBackground = async () => {
+      try {
+        const [shopify, nuvemshop] = await Promise.all([
+          api.getShopifyConnections().catch(() => []),
+          api.getNuvemshopConnections().catch(() => []),
+        ]);
+
+        const activeShopify = shopify.filter((c: any) => c.isActive);
+        const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
+
+        const syncPromises = [];
+
+        for (const shop of activeShopify) {
+          syncPromises.push(api.syncShopifyCustomers(shop.shop).catch(console.error));
+        }
+
+        for (const store of activeNuvemshop) {
+          syncPromises.push(api.syncNuvemshopCustomers(store.storeId).catch(console.error));
+        }
+
+        if (syncPromises.length > 0) {
+          await Promise.all(syncPromises);
+          await loadContacts();
+        }
+      } catch (error) {
+        console.error('Erro no sync de contatos em background:', error);
+      }
+    };
+
+    loadContacts().then(() => {
+      syncContactsInBackground();
+    });
+  }, [toast, convertApiContactToFrontend]);
 
   const [groups, setGroups] = useState<Array<{ id: number; name: string; description?: string; color?: string }>>([]);
 

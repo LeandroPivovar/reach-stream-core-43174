@@ -1445,22 +1445,7 @@ class ApiService {
   }
 
   // Admin Notificações
-  async getAdminNotifications(): Promise<Notification[]> {
-    return this.get<Notification[]>('/admin/notifications');
-  }
 
-  async createAdminNotification(data: Partial<Notification>): Promise<Notification> {
-    return this.request<Notification>('/admin/notifications', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteAdminNotification(id: number): Promise<void> {
-    return this.request<void>(`/admin/notifications/${id}`, {
-      method: 'DELETE',
-    });
-  }
 
   async createCoupon(data: {
     shop?: string;
@@ -1473,6 +1458,35 @@ class ApiService {
     return this.request<any>('/shopify/coupons', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  // Sincronização em Background (Nuvemshop)
+  async syncNuvemshopCustomers(storeId: string): Promise<any> {
+    return this.request<any>('/nuvemshop/sync/customers', {
+      method: 'POST',
+      body: JSON.stringify({ storeId }),
+    });
+  }
+
+  async syncNuvemshopOrders(storeId: string): Promise<any> {
+    return this.request<any>('/nuvemshop/sync/orders', {
+      method: 'POST',
+      body: JSON.stringify({ storeId }),
+    });
+  }
+
+  async syncNuvemshopProductsToCrm(storeId: string): Promise<any> {
+    return this.request<any>('/nuvemshop/sync/products-to-crm', {
+      method: 'POST',
+      body: JSON.stringify({ storeId }),
+    });
+  }
+
+  async syncShopifyProductsToCrm(shop: string): Promise<any> {
+    return this.request<any>('/shopify/sync/products-to-crm', {
+      method: 'POST',
+      body: JSON.stringify({ shop }),
     });
   }
 }

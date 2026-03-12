@@ -144,7 +144,38 @@ export default function Produtos() {
   useEffect(() => {
     loadProducts();
     loadCategories();
+    syncProductsInBackground();
   }, []);
+
+  const syncProductsInBackground = async () => {
+    try {
+      const [shopify, nuvemshop] = await Promise.all([
+        api.getShopifyConnections().catch(() => []),
+        api.getNuvemshopConnections().catch(() => []),
+      ]);
+
+      const activeShopify = shopify.filter((c: any) => c.isActive);
+      const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
+
+      const syncPromises = [];
+
+      for (const shop of activeShopify) {
+        syncPromises.push(api.syncShopifyProductsToCrm(shop.shop).catch(console.error));
+      }
+
+      for (const store of activeNuvemshop) {
+        syncPromises.push(api.syncNuvemshopProductsToCrm(store.storeId).catch(console.error));
+      }
+
+      // Se houver integrações ativas, sincroniza e recarrega os produtos para usar os novos dados
+      if (syncPromises.length > 0) {
+        await Promise.all(syncPromises);
+        await loadProducts();
+      }
+    } catch (error) {
+      console.error('Erro no sync de produtos em background:', error);
+    }
+  };
 
   const loadCategories = async () => {
     try {
