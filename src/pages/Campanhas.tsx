@@ -105,11 +105,13 @@ export default function Campanhas() {
       enableCoupon: false,
       enableGiftback: false,
       coupon: {
+        couponName: '',
         discountType: 'percentage' as 'percentage' | 'fixed',
         discountValue: '',
         validityDate: undefined as Date | undefined
       },
       giftback: {
+        couponName: '',
         giftValue: '',
         maxRedemptions: '',
         validityDate: undefined as Date | undefined
@@ -1492,6 +1494,25 @@ export default function Campanhas() {
                   </div>
 
                   <div className="space-y-4">
+                    {/* Nome do Cupom */}
+                    <div className="grid gap-2">
+                      <Label htmlFor="simple-coupon-name">Nome do Cupom *</Label>
+                      <Input
+                        id="simple-coupon-name"
+                        value={newCampaign.campaignConfig.coupon.couponName}
+                        onChange={(e) => setNewCampaign({
+                          ...newCampaign,
+                          campaignConfig: {
+                            ...newCampaign.campaignConfig,
+                            coupon: {
+                              ...newCampaign.campaignConfig.coupon,
+                              couponName: e.target.value
+                            }
+                          }
+                        })}
+                        placeholder="Ex: PROMO10"
+                      />
+                    </div>
                     {/* Tipo de Desconto */}
                     <div className="grid gap-2">
                       <Label>Tipo de Desconto</Label>
@@ -1633,6 +1654,25 @@ export default function Campanhas() {
                   </div>
 
                   <div className="space-y-4">
+                    {/* Nome do Giftback */}
+                    <div className="grid gap-2">
+                      <Label htmlFor="simple-giftback-name">Nome do Giftback *</Label>
+                      <Input
+                        id="simple-giftback-name"
+                        value={newCampaign.campaignConfig.giftback.couponName}
+                        onChange={(e) => setNewCampaign({
+                          ...newCampaign,
+                          campaignConfig: {
+                            ...newCampaign.campaignConfig,
+                            giftback: {
+                              ...newCampaign.campaignConfig.giftback,
+                              couponName: e.target.value
+                            }
+                          }
+                        })}
+                        placeholder="Ex: CASH20"
+                      />
+                    </div>
                     <div className="grid gap-2">
                       <Label htmlFor="giftback-value">Valor do Giftback (R$)</Label>
                       <Input
