@@ -14,7 +14,8 @@ import {
   Package,
   X,
   CreditCard,
-  Clock
+  Clock,
+  Loader2
 } from 'lucide-react';
 import {
   Select,
@@ -47,6 +48,7 @@ export default function Vendas() {
   const [period, setPeriod] = useState('15');
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncingBackground, setIsSyncingBackground] = useState(false);
 
   // Estados dos dados
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
@@ -95,6 +97,7 @@ export default function Vendas() {
 
   useEffect(() => {
     const syncOrdersInBackground = async () => {
+      setIsSyncingBackground(true);
       try {
         const [shopify, nuvemshop] = await Promise.all([
           api.getShopifyConnections().catch(() => []),
@@ -121,6 +124,8 @@ export default function Vendas() {
         }
       } catch (error) {
         console.error('Erro no sync de pedidos em background:', error);
+      } finally {
+        setIsSyncingBackground(false);
       }
     };
 
@@ -651,6 +656,13 @@ export default function Vendas() {
           )}
         </DialogContent>
       </Dialog>
+
+      {isSyncingBackground && (
+        <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="font-medium text-sm">Buscando novas informações...</span>
+        </div>
+      )}
     </Layout>
   );
 }
