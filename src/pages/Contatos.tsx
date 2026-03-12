@@ -265,6 +265,7 @@ export default function Contatos() {
   };
 
   const [contacts, setContacts] = useState<ContactFrontend[]>([]);
+  const [isSyncingBackground, setIsSyncingBackground] = useState(false);
 
   // Converter contato da API para formato do frontend
   const convertApiContactToFrontend = useCallback((apiContact: ApiContact): ContactFrontend => {
@@ -305,8 +306,42 @@ export default function Contatos() {
       }
     };
 
-    loadContacts();
-  }, [toast]);
+    const syncContactsInBackground = async () => {
+      setIsSyncingBackground(true);
+      try {
+        const [shopify, nuvemshop] = await Promise.all([
+          api.getShopifyConnections().catch(() => []),
+          api.getNuvemshopConnections().catch(() => []),
+        ]);
+
+        const activeShopify = shopify.filter((c: any) => c.isActive);
+        const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
+
+        const syncPromises = [];
+
+        for (const shop of activeShopify) {
+          syncPromises.push(api.syncShopifyCustomers(shop.shop).catch(console.error));
+        }
+
+        for (const store of activeNuvemshop) {
+          syncPromises.push(api.syncNuvemshopCustomers(store.storeId).catch(console.error));
+        }
+
+        if (syncPromises.length > 0) {
+          await Promise.all(syncPromises);
+          await loadContacts();
+        }
+      } catch (error) {
+        console.error('Erro no sync de contatos em background:', error);
+      } finally {
+        setIsSyncingBackground(false);
+      }
+    };
+
+    loadContacts().then(() => {
+      syncContactsInBackground();
+    });
+  }, [toast, convertApiContactToFrontend]);
 
   const [groups, setGroups] = useState<Array<{ id: number; name: string; description?: string; color?: string }>>([]);
 
@@ -3530,6 +3565,13 @@ export default function Contatos() {
           loadContacts();
         }}
       />
+
+      {isSyncingBackground && (
+        <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="font-medium text-sm">Buscando novas informações...</span>
+        </div>
+      )}
     </Layout>
   );
 }

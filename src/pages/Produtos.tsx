@@ -49,6 +49,7 @@ import {
   RefreshCw,
   Check,
   ImagePlus,
+  Loader2,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -68,6 +69,7 @@ export default function Produtos() {
   const [salesHistory, setSalesHistory] = useState<Sale[]>([]);
   const [isLoadingSales, setIsLoadingSales] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncingBackground, setIsSyncingBackground] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successModalContent, setSuccessModalContent] = useState({
@@ -144,7 +146,40 @@ export default function Produtos() {
   useEffect(() => {
     loadProducts();
     loadCategories();
+    syncProductsInBackground();
   }, []);
+
+  const syncProductsInBackground = async () => {
+    setIsSyncingBackground(true);
+    try {
+      const [shopify, nuvemshop] = await Promise.all([
+        api.getShopifyConnections().catch(() => []),
+        api.getNuvemshopConnections().catch(() => []),
+      ]);
+
+      const activeShopify = shopify.filter((c: any) => c.isActive);
+      const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
+
+      const syncPromises = [];
+
+      for (const shop of activeShopify) {
+        syncPromises.push(api.syncShopifyProductsToCrm(shop.shop).catch(console.error));
+      }
+
+      for (const store of activeNuvemshop) {
+        syncPromises.push(api.syncNuvemshopProductsToCrm(store.storeId).catch(console.error));
+      }
+
+      if (syncPromises.length > 0) {
+        await Promise.all(syncPromises);
+        await loadProducts();
+      }
+    } catch (error) {
+      console.error('Erro no sync de produtos em background:', error);
+    } finally {
+      setIsSyncingBackground(false);
+    }
+  };
 
   const loadCategories = async () => {
     try {
@@ -2159,6 +2194,13 @@ export default function Produtos() {
         title={successModalContent.title}
         description={successModalContent.description}
       />
+
+      {isSyncingBackground && (
+        <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="font-medium text-sm">Buscando novas informações...</span>
+        </div>
+      )}
     </Layout>
   );
 }
