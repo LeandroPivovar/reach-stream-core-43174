@@ -25,6 +25,7 @@ import MinhaConta from "./pages/MinhaConta";
 import Produtos from "./pages/Produtos";
 import NotFound from "./pages/NotFound";
 import ShopifyCallback from "./pages/integrations/ShopifyCallback";
+import Cupons from "./pages/Cupons";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="/cancelar-assinatura" element={<ProtectedRoute><CancelarAssinatura /></ProtectedRoute>} />
             <Route path="/indicacoes" element={<ProtectedRoute><Indicacoes /></ProtectedRoute>} />
             <Route path="/conta" element={<ProtectedRoute><MinhaConta /></ProtectedRoute>} />
+            <Route path="/cupons" element={<ProtectedRoute><Cupons /></ProtectedRoute>} />
 
             {/* Rotas Administrativas */}
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />

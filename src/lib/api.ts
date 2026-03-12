@@ -1461,6 +1461,20 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  async createCoupon(data: {
+    shop?: string;
+    title: string;
+    code: string;
+    value: string;
+    valueType: 'percentage' | 'fixed';
+    endsAt?: string;
+  }): Promise<any> {
+    return this.request<any>('/shopify/coupons', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export interface PixelMetrics {
