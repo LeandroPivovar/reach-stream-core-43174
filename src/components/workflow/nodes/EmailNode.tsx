@@ -51,12 +51,12 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
     <>
       <Card className="min-w-[200px] p-4 shadow-lg border-orange-500/50 bg-gradient-to-br from-orange-50 to-white dark:from-orange-950/20 dark:to-background hover:shadow-xl transition-shadow">
         <Handle type="target" position={Position.Top} className="!bg-orange-500 !w-3 !h-3" />
-        
+
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
             <Mail className="w-5 h-5 text-orange-500" />
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <h4 className="font-semibold text-sm mb-1">Enviar E-mail</h4>
             <p className="text-xs text-muted-foreground truncate">
@@ -83,7 +83,7 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
-        
+
         <Handle type="source" position={Position.Bottom} className="!bg-orange-500 !w-3 !h-3" />
       </Card>
 
@@ -112,6 +112,10 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
                 rows={6}
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
+              <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
+                💡 Variáveis disponíveis: <br />
+                <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong> e <strong>{"{{cupom_validade}}"}</strong>
+              </p>
             </div>
             <div className="grid gap-2">
               <Label>Anexar Imagem ou Vídeo</Label>
