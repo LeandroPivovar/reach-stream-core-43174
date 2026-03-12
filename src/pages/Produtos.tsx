@@ -1113,10 +1113,6 @@ export default function Produtos() {
           </div>
         </PopoverContent>
       </Popover>
-      <Button variant="outline" onClick={() => setIsSyncModalOpen(true)}>
-        <RefreshCw className="w-4 h-4 mr-2" />
-        Sincronizar Produtos
-      </Button>
       <HeaderActions.Export onClick={() => setIsExportModalOpen(true)} />
       <HeaderActions.Add onClick={() => setIsNewProductOpen(true)}>
         Novo Produto

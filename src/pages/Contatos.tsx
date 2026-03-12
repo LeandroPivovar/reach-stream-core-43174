@@ -286,62 +286,78 @@ export default function Contatos() {
     };
   }, []);
 
-  // Carregar contatos do backend
-  useEffect(() => {
-    const loadContacts = async () => {
-      setIsLoading(true);
-      try {
-        const apiContacts = await api.getContacts();
-        const frontendContacts = apiContacts.map(convertApiContactToFrontend);
-        setContacts(frontendContacts);
-      } catch (error) {
-        console.error('Erro ao carregar contatos:', error);
-        toast({
-          title: 'Erro ao carregar contatos',
-          description: error instanceof Error ? error.message : 'Não foi possível carregar os contatos',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchContacts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const apiContacts = await api.getContacts();
+      const frontendContacts = apiContacts.map(convertApiContactToFrontend);
+      setContacts(frontendContacts);
+    } catch (error) {
+      console.error('Erro ao carregar contatos:', error);
+      toast({
+        title: 'Erro ao carregar contatos',
+        description: error instanceof Error ? error.message : 'Não foi possível carregar os contatos',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [convertApiContactToFrontend, toast]);
 
-    const syncContactsInBackground = async () => {
-      setIsSyncingBackground(true);
+  const syncContactsInBackground = useCallback(async () => {
+    setIsSyncingBackground(true);
+    try {
+      const [shopify, nuvemshop] = await Promise.all([
+        api.getShopifyConnections().catch(() => []),
+        api.getNuvemshopConnections().catch(() => []),
+      ]);
+
+      const activeShopify = shopify.filter((c: any) => c.isActive);
+      const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
+
+      const syncPromises = [];
+
+      for (const shop of activeShopify) {
+        syncPromises.push(api.syncShopifyCustomers(shop.shop).catch(console.error));
+      }
+
+      for (const store of activeNuvemshop) {
+        syncPromises.push(api.syncNuvemshopCustomers(store.storeId).catch(console.error));
+      }
+
+      if (syncPromises.length > 0) {
+        await Promise.all(syncPromises);
+        await fetchContacts(); // Recarregar contatos após a sincronização
+      }
+    } catch (error) {
+      console.error('Erro no sync de contatos em background:', error);
+    } finally {
+      setIsSyncingBackground(false);
+    }
+  }, [fetchContacts]);
+
+  // Carregar contatos ao montar o componente
+  useEffect(() => {
+    fetchContacts();
+    // Iniciar sincronização em background automaticamente
+    syncContactsInBackground();
+
+    // Check integration status
+    const checkIntegrations = async () => {
       try {
-        const [shopify, nuvemshop] = await Promise.all([
-          api.getShopifyConnections().catch(() => []),
-          api.getNuvemshopConnections().catch(() => []),
+        const [nuvemshopStatus, shopifyStatus, vtexStatus] = await Promise.all([
+          api.getIntegrationStatus('nuvemshop'),
+          api.getIntegrationStatus('shopify'),
+          api.getIntegrationStatus('vtex')
         ]);
 
-        const activeShopify = shopify.filter((c: any) => c.isActive);
-        const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
-
-        const syncPromises = [];
-
-        for (const shop of activeShopify) {
-          syncPromises.push(api.syncShopifyCustomers(shop.shop).catch(console.error));
-        }
-
-        for (const store of activeNuvemshop) {
-          syncPromises.push(api.syncNuvemshopCustomers(store.storeId).catch(console.error));
-        }
-
-        if (syncPromises.length > 0) {
-          await Promise.all(syncPromises);
-          await loadContacts();
-        }
+        setHasActiveIntegration(nuvemshopStatus?.connected || shopifyStatus?.connected || vtexStatus?.connected || false);
       } catch (error) {
-        console.error('Erro no sync de contatos em background:', error);
-      } finally {
-        setIsSyncingBackground(false);
+        console.error('Error checking integrations:', error);
       }
     };
-
-    loadContacts().then(() => {
-      syncContactsInBackground();
-    });
-  }, [toast, convertApiContactToFrontend]);
+    checkIntegrations();
+  }, [fetchContacts, syncContactsInBackground]);
 
   const [groups, setGroups] = useState<Array<{ id: number; name: string; description?: string; color?: string }>>([]);
 
