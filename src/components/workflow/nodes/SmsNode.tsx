@@ -30,12 +30,12 @@ export const SmsNode: React.FC<NodeProps> = ({ data, id }) => {
     <>
       <Card className="min-w-[200px] p-4 shadow-lg border-blue-500/50 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-background hover:shadow-xl transition-shadow">
         <Handle type="target" position={Position.Top} className="!bg-blue-500 !w-3 !h-3" />
-        
+
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
             <MessageSquare className="w-5 h-5 text-blue-500" />
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <h4 className="font-semibold text-sm mb-1">Enviar SMS</h4>
             <p className="text-xs text-muted-foreground truncate">
@@ -62,7 +62,7 @@ export const SmsNode: React.FC<NodeProps> = ({ data, id }) => {
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
-        
+
         <Handle type="source" position={Position.Bottom} className="!bg-blue-500 !w-3 !h-3" />
       </Card>
 
@@ -85,6 +85,9 @@ export const SmsNode: React.FC<NodeProps> = ({ data, id }) => {
               />
               <p className="text-xs text-muted-foreground">
                 {content.length}/160 caracteres
+              </p>
+              <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
+                💡 Variáveis: <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong>
               </p>
             </div>
             <div className="flex justify-end gap-2">

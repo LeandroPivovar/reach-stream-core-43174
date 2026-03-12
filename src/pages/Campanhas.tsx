@@ -370,11 +370,13 @@ export default function Campanhas() {
           enableCoupon: false,
           enableGiftback: false,
           coupon: {
+            couponName: '',
             discountType: 'percentage',
             discountValue: '',
             validityDate: undefined
           },
           giftback: {
+            couponName: '',
             giftValue: '',
             maxRedemptions: '',
             validityDate: undefined
@@ -784,11 +786,13 @@ export default function Campanhas() {
               enableCoupon: false,
               enableGiftback: false,
               coupon: {
+                couponName: '',
                 discountType: 'percentage',
                 discountValue: '',
                 validityDate: undefined
               },
               giftback: {
+                couponName: '',
                 giftValue: '',
                 maxRedemptions: '',
                 validityDate: undefined
@@ -1138,10 +1142,15 @@ export default function Campanhas() {
                   </div>
 
                   {/* WhatsApp Preview */}
-                  <WhatsappPreview
-                    content={newCampaign.email.content}
-                    media={newCampaign.email.media}
-                  />
+                  <div className="flex-1 space-y-4">
+                    <WhatsappPreview
+                      content={newCampaign.email.content}
+                      media={newCampaign.email.media}
+                    />
+                    <p className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10">
+                      💡 <strong>Dica:</strong> Você pode usar as variáveis <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong> e <strong>{"{{cupom_validade}}"}</strong> no texto. Elas serão substituídas automaticamente pelos dados do cupom/giftback selecionado no passo seguinte.
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -1179,6 +1188,9 @@ export default function Campanhas() {
                           placeholder="Digite o conteúdo do e-mail..."
                           rows={12}
                         />
+                        <p className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10">
+                          💡 <strong>Variáveis disponíveis:</strong> <code>{"{{cupom_nome}}"}</code>, <code>{"{{cupom_valor}}"}</code> e <code>{"{{cupom_validade}}"}</code>. Use-as para personalizar sua mensagem com os dados do benefício que será configurado adiante.
+                        </p>
                       </div>
 
                       <div className="grid gap-2">
@@ -1266,6 +1278,10 @@ export default function Campanhas() {
                           rows={4}
                           maxLength={160}
                         />
+                        <p className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10 mt-2">
+                          💡 <strong>Variáveis:</strong> <code>{"{{cupom_nome}}"}</code>, <code>{"{{cupom_valor}}"}</code> e <code>{"{{cupom_validade}}"}</code>. <br />
+                          Caso não utilize as variáveis, os dados do cupom serão adicionados automaticamente ao final do SMS.
+                        </p>
                       </div>
                     </>
                   )}
@@ -1437,6 +1453,11 @@ export default function Campanhas() {
                 <p className="text-sm text-muted-foreground">
                   Selecione quais benefícios deseja adicionar à campanha (opcional)
                 </p>
+                <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <p className="text-xs text-blue-700">
+                    ℹ️ <strong>Informação:</strong> Se você não utilizou as variáveis no texto da mensagem no passo anterior, o sistema adicionará automaticamente os detalhes do benefício ao final da mensagem.
+                  </p>
+                </div>
               </div>
 
               {/* Seleção de Benefícios */}
