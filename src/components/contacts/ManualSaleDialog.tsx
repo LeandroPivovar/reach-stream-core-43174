@@ -16,12 +16,12 @@ interface ManualSaleDialogProps {
   onPurchaseCreated?: () => void;
 }
 
-export function ManualSaleDialog({ 
-  open, 
-  onOpenChange, 
-  contactName, 
+export function ManualSaleDialog({
+  open,
+  onOpenChange,
+  contactName,
   contactId,
-  onPurchaseCreated 
+  onPurchaseCreated
 }: ManualSaleDialogProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
@@ -63,17 +63,17 @@ export function ManualSaleDialog({
   }, [open]);
 
   const selectedProduct = products.find(p => p.id.toString() === selectedProductId);
-  const productPrice = selectedProduct 
+  const productPrice = selectedProduct
     ? (typeof selectedProduct.price === 'string' ? parseFloat(selectedProduct.price) : selectedProduct.price)
     : 0;
-  const calculatedValue = selectedProduct 
+  const calculatedValue = selectedProduct
     ? productPrice * parseFloat(quantity || '1')
     : parseFloat(customValue || '0');
-  const totalValue = selectedProductId && selectedProductId !== 'custom' 
-    ? calculatedValue 
+  const totalValue = selectedProductId && selectedProductId !== 'custom'
+    ? calculatedValue
     : selectedProductId === 'custom'
-    ? parseFloat(customValue || '0')
-    : 0;
+      ? parseFloat(customValue || '0')
+      : 0;
 
   const handleSave = async () => {
     if (!selectedProductId && !customValue) {
@@ -98,24 +98,24 @@ export function ManualSaleDialog({
 
     setIsSaving(true);
     try {
-      await api.createContactPurchase({
+      await api.createSale({
         contactId,
         productId: selectedProductId && selectedProductId !== 'custom' ? parseInt(selectedProductId) : undefined,
-        value: totalValue,
-        quantity: selectedProductId && selectedProductId !== 'custom' ? parseFloat(quantity || '1') : undefined,
-        productName: selectedProduct ? selectedProduct.name : undefined,
-        paymentMethod,
+        quantity: selectedProductId && selectedProductId !== 'custom' ? parseFloat(quantity || '1') : 1,
+        totalValue: totalValue,
+        unitPrice: selectedProductId && selectedProductId !== 'custom' ? productPrice : totalValue,
+        customerName: contactName,
         status: 'completed',
-        purchaseDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+        channel: 'manual',
       });
 
       toast.success('Venda cadastrada com sucesso!');
-      
+
       // Notificar componente pai para atualizar dados
       if (onPurchaseCreated) {
         onPurchaseCreated();
       }
-      
+
       onOpenChange(false);
     } catch (error) {
       console.error('Erro ao cadastrar venda:', error);
@@ -268,8 +268,8 @@ export function ManualSaleDialog({
 
           {/* Botões */}
           <div className="flex justify-end gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setSelectedProductId('');
                 setQuantity('1');
@@ -281,7 +281,7 @@ export function ManualSaleDialog({
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={handleSave}
               disabled={isSaving || isLoadingProducts || totalValue <= 0}
             >

@@ -100,6 +100,7 @@ interface ContactFrontend {
   gender: string;
   segmentations: string[];
   lastInteraction: string;
+  sales: import('@/lib/api').Sale[];
 }
 
 interface Purchase {
@@ -282,7 +283,8 @@ export default function Contatos() {
       birthDate: apiContact.birthDate || '',
       gender: apiContact.gender || 'all',
       segmentations: apiContact.contactSegmentations?.map(cs => cs.segmentationId) || [],
-      lastInteraction: apiContact.updatedAt || apiContact.createdAt
+      lastInteraction: apiContact.updatedAt || apiContact.createdAt,
+      sales: apiContact.sales || []
     };
   }, []);
 
@@ -415,43 +417,39 @@ export default function Contatos() {
   // Estado para armazenar compras e LTV dos contatos
   const [contactPurchases, setContactPurchases] = useState<Record<number, { purchases: Purchase[]; ltv: number }>>({});
 
-  // Carregar compras de todos os contatos
+  // Carregar compras de todos os contatos (Derivado do objeto contact)
   useEffect(() => {
-    const loadPurchases = async () => {
-      try {
-        const allPurchases = await api.getContactPurchases();
+    const processPurchases = () => {
+      // Agrupar compras por contato e calcular LTV
+      const purchasesByContact: Record<number, { purchases: Purchase[]; ltv: number }> = {};
 
-        // Agrupar compras por contato e calcular LTV
-        const purchasesByContact: Record<number, { purchases: Purchase[]; ltv: number }> = {};
+      contacts.forEach((contact) => {
+        if (!purchasesByContact[contact.id]) {
+          purchasesByContact[contact.id] = { purchases: [], ltv: 0 };
+        }
 
-        allPurchases.forEach((purchase) => {
-          const contactId = purchase.contactId;
-          if (!purchasesByContact[contactId]) {
-            purchasesByContact[contactId] = { purchases: [], ltv: 0 };
-          }
+        // Usar as vendas que já vieram no contato
+        (contact.sales || []).forEach((sale) => {
+          const purchaseValue = typeof sale.totalValue === 'string'
+            ? parseFloat(sale.totalValue)
+            : sale.totalValue;
 
-          const purchaseValue = typeof purchase.value === 'string'
-            ? parseFloat(purchase.value)
-            : purchase.value;
-
-          purchasesByContact[contactId].purchases.push({
-            id: purchase.id,
-            date: purchase.purchaseDate,
+          purchasesByContact[contact.id].purchases.push({
+            id: sale.id,
+            date: sale.createdAt,
             value: purchaseValue,
-            product: purchase.productName || purchase.product?.name || 'Produto',
+            product: sale.product?.name || 'Produto',
           });
 
-          purchasesByContact[contactId].ltv += purchaseValue;
+          purchasesByContact[contact.id].ltv += purchaseValue;
         });
+      });
 
-        setContactPurchases(purchasesByContact);
-      } catch (error) {
-        console.error('Erro ao carregar compras:', error);
-      }
+      setContactPurchases(purchasesByContact);
     };
 
     if (contacts.length > 0) {
-      loadPurchases();
+      processPurchases();
     }
   }, [contacts]);
 

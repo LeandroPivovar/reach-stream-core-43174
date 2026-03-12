@@ -66,6 +66,10 @@ export interface Sale {
   customerEmail?: string;
   status: string;
   createdAt: string;
+  product?: {
+    id: number;
+    name: string;
+  };
 }
 
 export interface CreateSaleData {
@@ -74,6 +78,10 @@ export interface CreateSaleData {
   customerName?: string;
   customerEmail?: string;
   status?: string;
+  contactId?: number;
+  unitPrice?: number;
+  totalValue?: number;
+  channel?: string;
 }
 
 export interface DashboardStats {
@@ -169,6 +177,7 @@ export interface Contact {
   userId: number;
   createdAt: string;
   updatedAt: string;
+  sales?: Sale[];
 }
 
 export interface CreateContactData {
