@@ -25,6 +25,7 @@ import MinhaConta from "./pages/MinhaConta";
 import Produtos from "./pages/Produtos";
 import NotFound from "./pages/NotFound";
 import ShopifyCallback from "./pages/integrations/ShopifyCallback";
+import NuvemshopCallback from "./pages/integrations/NuvemshopCallback";
 import Cupons from "./pages/Cupons";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/rastreamento/documentacao" element={<ProtectedRoute><PixelGuide /></ProtectedRoute>} />
             <Route path="/integracoes" element={<ProtectedRoute><Integracoes /></ProtectedRoute>} />
             <Route path="/integrations/shopify/callback" element={<ProtectedRoute><ShopifyCallback /></ProtectedRoute>} />
+            <Route path="/integrations/nuvemshop/callback" element={<ProtectedRoute><NuvemshopCallback /></ProtectedRoute>} />
             <Route path="/assinaturas" element={<ProtectedRoute><Assinaturas /></ProtectedRoute>} />
             <Route path="/checkout/:planId" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
             <Route path="/cancelar-assinatura" element={<ProtectedRoute><CancelarAssinatura /></ProtectedRoute>} />

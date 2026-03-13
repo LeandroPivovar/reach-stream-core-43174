@@ -71,8 +71,6 @@ export default function Integracoes() {
   const [loadingConnections, setLoadingConnections] = useState(false);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [isConnectingVtex, setIsConnectingVtex] = useState(false);
-  const [isSyncingCustomers, setIsSyncingCustomers] = useState<string | null>(null);
-  const [isSyncingOrders, setIsSyncingOrders] = useState<string | null>(null);
 
   // Mapeamento de eventos técnicos para nomes amigáveis
   const eventLabels: Record<string, string> = {
@@ -222,43 +220,6 @@ export default function Integracoes() {
     }
   };
 
-  const handleSyncShopifyCustomers = async (shop: string) => {
-    try {
-      setIsSyncingCustomers(shop);
-      const result = await api.syncShopifyCustomers(shop);
-      toast({
-        title: 'Sincronização concluída',
-        description: `Clientes sincronizados: ${result.imported} importados, ${result.updated} atualizados.`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Erro na sincronização',
-        description: error instanceof Error ? error.message : 'Não foi possível sincronizar clientes',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSyncingCustomers(null);
-    }
-  };
-
-  const handleSyncShopifyOrders = async (shop: string) => {
-    try {
-      setIsSyncingOrders(shop);
-      const result = await api.syncShopifyOrders(shop);
-      toast({
-        title: 'Sincronização concluída',
-        description: `Pedidos sincronizados: ${result.imported} importados, ${result.updated} atualizados.`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Erro na sincronização',
-        description: error instanceof Error ? error.message : 'Não foi possível sincronizar pedidos',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSyncingOrders(null);
-    }
-  };
 
   const isConnected = (platformName: string): { connected: boolean; connection?: any } => {
     if (platformName === 'Nuvemshop') {
@@ -564,34 +525,6 @@ export default function Integracoes() {
                   </div>
 
                   <div className="flex flex-col space-y-2">
-                    {isConnectedPlatform && integration.name === 'Shopify' && (
-                      <div className="grid grid-cols-2 gap-2 mb-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSyncShopifyCustomers(connection.shop)}
-                          disabled={isSyncingCustomers === connection.shop}
-                        >
-                          {isSyncingCustomers === connection.shop ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            'Sinc. Clientes'
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSyncShopifyOrders(connection.shop)}
-                          disabled={isSyncingOrders === connection.shop}
-                        >
-                          {isSyncingOrders === connection.shop ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            'Sinc. Pedidos'
-                          )}
-                        </Button>
-                      </div>
-                    )}
                     <div className="flex space-x-2">
                       {isConnectedPlatform ? (
                         <Button
