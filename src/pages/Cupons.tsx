@@ -22,7 +22,8 @@ export default function Cupons() {
         e.preventDefault();
         setLoading(true);
         try {
-            if (!title || !code || !value) {
+            const isTitleRequired = platform === 'shopify';
+            if ((isTitleRequired && !title) || !code || !value) {
                 toast({ title: 'Erro', description: 'Preencha os campos obrigatórios.', variant: 'destructive' });
                 return;
             }
