@@ -61,7 +61,7 @@ export const CouponNode: React.FC<{ data: CouponNodeData }> = ({ data }) => {
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-sm">Cupom de Desconto</h3>
-            <p className="text-xs text-muted-foreground">Criar cupom promocional</p>
+            <p className="text-xs text-muted-foreground">Shopify / Nuvemshop</p>
           </div>
           <div className="flex gap-1">
             <Dialog open={isOpen} onOpenChange={setIsOpen}>

@@ -54,7 +54,7 @@ export const GiftbackNode: React.FC<{ data: GiftbackNodeData }> = ({ data }) => 
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-sm">Giftback</h3>
-            <p className="text-xs text-muted-foreground">Criar programa de recompensa</p>
+            <p className="text-xs text-muted-foreground">Shopify / Nuvemshop</p>
           </div>
           <div className="flex gap-1">
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
