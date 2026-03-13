@@ -9,6 +9,7 @@ import { Tag, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function Cupons() {
+    const [platform, setPlatform] = useState<'shopify' | 'nuvemshop'>('shopify');
     const [title, setTitle] = useState('');
     const [code, setCode] = useState('');
     const [value, setValue] = useState('');
@@ -25,16 +26,27 @@ export default function Cupons() {
                 toast({ title: 'Erro', description: 'Preencha os campos obrigatórios.', variant: 'destructive' });
                 return;
             }
-            const data = {
-                title, code, value, valueType,
-                ...(endsAt ? { endsAt: new Date(endsAt).toISOString() } : {})
-            };
 
-            await api.createCoupon(data);
+            if (platform === 'shopify') {
+                const data = {
+                    title, code, value, valueType,
+                    ...(endsAt ? { endsAt: new Date(endsAt).toISOString() } : {})
+                };
+                await api.createCoupon(data);
+            } else {
+                const data = {
+                    code,
+                    type: valueType === 'percentage' ? 'percentage' : 'absolute' as any,
+                    value,
+                    start_date: new Date().toISOString(),
+                    ...(endsAt ? { end_date: new Date(endsAt).toISOString() } : {})
+                };
+                await api.createNuvemshopCoupon(data);
+            }
 
             toast({
                 title: 'Sucesso',
-                description: 'Cupom criado com sucesso na Shopify!',
+                description: `Cupom criado com sucesso na ${platform === 'shopify' ? 'Shopify' : 'Nuvemshop'}!`,
             });
             setTitle('');
             setCode('');
@@ -42,7 +54,7 @@ export default function Cupons() {
         } catch (error: any) {
             toast({
                 title: 'Erro ao criar cupom',
-                description: error.message || 'Falha na comunicação com a Shopify.',
+                description: error.message || `Falha na comunicação com a ${platform === 'shopify' ? 'Shopify' : 'Nuvemshop'}.`,
                 variant: 'destructive'
             });
         } finally {
@@ -60,26 +72,41 @@ export default function Cupons() {
                 <CardHeader>
                     <CardTitle className="text-xl flex items-center gap-2">
                         <Tag className="w-5 h-5 text-primary" />
-                        Novo Cupom Shopify
+                        Novo Cupom de Desconto
                     </CardTitle>
                     <CardDescription className="text-gray-400">
-                        Crie um cupom de desconto diretamente na sua loja Shopify.
+                        Crie um cupom de desconto diretamente na sua loja integrada.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleCreateCoupon} className="space-y-6 max-w-2xl">
                         <div className="space-y-2">
-                            <Label className="text-gray-300">Título do Desconto (Interno)</Label>
-                            <Input
-                                placeholder="Ex: PROMO10"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                className="bg-[#1a1d24] border-[#2a2d35]"
-                            />
+                            <Label className="text-gray-300">Plataforma de Destino</Label>
+                            <Select value={platform} onValueChange={(val: 'shopify' | 'nuvemshop') => setPlatform(val)}>
+                                <SelectTrigger className="bg-[#1a1d24] border-[#2a2d35]">
+                                    <SelectValue placeholder="Selecione a plataforma..." />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#1a1d24] border-[#2a2d35] text-white">
+                                    <SelectItem value="shopify">Shopify</SelectItem>
+                                    <SelectItem value="nuvemshop">Nuvemshop / Tiendanube</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
 
+                        {platform === 'shopify' && (
+                            <div className="space-y-2">
+                                <Label className="text-gray-300">Título do Desconto (Interno Shopify)</Label>
+                                <Input
+                                    placeholder="Ex: PROMO10"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    className="bg-[#1a1d24] border-[#2a2d35]"
+                                />
+                            </div>
+                        )}
+
                         <div className="space-y-2">
-                            <Label className="text-gray-300">Código do Cupom (Visível ao cliente)</Label>
+                            <Label className="text-gray-300">Código do Cupom {platform === 'nuvemshop' && '(Interno e para o cliente)'}</Label>
                             <Input
                                 placeholder="Ex: ESPECIAL10"
                                 value={code}
@@ -95,7 +122,7 @@ export default function Cupons() {
                                     <SelectTrigger className="bg-[#1a1d24] border-[#2a2d35]">
                                         <SelectValue placeholder="Selecione..." />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#1a1d24] border-[#2a2d35]">
+                                    <SelectContent className="bg-[#1a1d24] border-[#2a2d35] text-white">
                                         <SelectItem value="percentage">Porcentagem (%)</SelectItem>
                                         <SelectItem value="fixed">Valor Fixo (R$)</SelectItem>
                                     </SelectContent>
@@ -106,6 +133,7 @@ export default function Cupons() {
                                 <Label className="text-gray-300">Valor</Label>
                                 <Input
                                     type="number"
+                                    step="0.01"
                                     placeholder={valueType === 'percentage' ? 'Ex: 15' : 'Ex: 50.00'}
                                     value={value}
                                     onChange={(e) => setValue(e.target.value)}
@@ -125,7 +153,7 @@ export default function Cupons() {
                         </div>
 
                         <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-                            {loading ? 'Criando...' : 'Gerar Cupom Shopify'}
+                            {loading ? 'Criando...' : `Gerar Cupom ${platform === 'shopify' ? 'Shopify' : 'Nuvemshop'}`}
                             {!loading && <CheckCircle2 className="w-4 h-4 ml-2" />}
                         </Button>
                     </form>

@@ -1470,6 +1470,23 @@ class ApiService {
     });
   }
 
+  async createNuvemshopCoupon(data: {
+    storeId?: string;
+    code: string;
+    type: 'percentage' | 'absolute' | 'shipping';
+    value?: string;
+    start_date?: string;
+    end_date?: string;
+    min_price?: string;
+    max_uses?: number;
+    first_consumer_purchase?: boolean;
+  }): Promise<any> {
+    return this.request<any>('/nuvemshop/coupons', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Sincronização em Background (Nuvemshop)
   async syncNuvemshopCustomers(storeId: string): Promise<any> {
     return this.request<any>('/nuvemshop/sync/customers', {
