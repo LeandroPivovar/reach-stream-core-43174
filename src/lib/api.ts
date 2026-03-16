@@ -1520,10 +1520,22 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.request<{ created: number; errors: string[] }>('/sales/import', {
+    const token = localStorage.getItem('token');
+    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+    const response = await fetch(`${baseUrl}/api/sales/import`, {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
       body: formData,
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Erro ao importar vendas' }));
+      throw new Error(error.message || 'Erro ao importar vendas');
+    }
+
+    return response.json();
   }
 }
 
