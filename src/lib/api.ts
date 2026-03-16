@@ -1515,6 +1515,16 @@ class ApiService {
       body: JSON.stringify({ shop }),
     });
   }
+
+  async importSales(file: File): Promise<{ created: number; errors: string[] }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.request<{ created: number; errors: string[] }>('/sales/import', {
+      method: 'POST',
+      body: formData,
+    });
+  }
 }
 
 export interface PixelMetrics {

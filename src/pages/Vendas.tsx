@@ -15,8 +15,12 @@ import {
   X,
   CreditCard,
   Clock,
-  Loader2
+  Loader2,
+  FileUp,
+  Plus
 } from 'lucide-react';
+import { ManualSaleDialog } from '@/components/contacts/ManualSaleDialog';
+import { ImportSalesDialog } from '@/components/sales/ImportSalesDialog';
 import {
   Select,
   SelectContent,
@@ -61,6 +65,9 @@ export default function Vendas() {
   // Datas de comparação
   const [compareStartDate, setCompareStartDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 15)));
   const [compareEndDate, setCompareEndDate] = useState<Date>(new Date());
+
+  const [isManualSaleOpen, setIsManualSaleOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -194,18 +201,37 @@ export default function Vendas() {
       title="Vendas"
       subtitle="Acompanhe o faturamento das suas campanhas"
       actions={
-        <div className="flex items-center gap-3">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-[180px]">
-              <CalendarIcon className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Selecione o período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7">Últimos 7 dias</SelectItem>
-              <SelectItem value="15">Últimos 15 dias</SelectItem>
-              <SelectItem value="30">Últimos 30 dias</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsImportOpen(true)}
+            className="hidden sm:flex"
+          >
+            <FileUp className="w-4 h-4 mr-2" />
+            Importar
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => setIsManualSaleOpen(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Venda
+          </Button>
+          <div className="h-6 w-[1px] bg-border mx-1 hidden sm:block" />
+          <div className="flex items-center gap-3">
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger className="w-[180px]">
+                <CalendarIcon className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Selecione o período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7">Últimos 7 dias</SelectItem>
+                <SelectItem value="15">Últimos 15 dias</SelectItem>
+                <SelectItem value="30">Últimos 30 dias</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       }
     >
@@ -663,6 +689,26 @@ export default function Vendas() {
           <span className="font-medium text-sm">Buscando novas informações...</span>
         </div>
       )}
+
+      <ManualSaleDialog
+        open={isManualSaleOpen}
+        onOpenChange={setIsManualSaleOpen}
+        onPurchaseCreated={() => {
+          fetchData();
+          toast({
+            title: "Venda registrada",
+            description: "A venda foi cadastrada com sucesso.",
+          });
+        }}
+      />
+
+      <ImportSalesDialog
+        open={isImportOpen}
+        onOpenChange={setIsImportOpen}
+        onImportComplete={() => {
+          fetchData();
+        }}
+      />
     </Layout>
   );
 }

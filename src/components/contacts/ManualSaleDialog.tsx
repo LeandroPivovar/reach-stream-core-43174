@@ -6,13 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ShoppingCart, Package, DollarSign, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { api, Product } from '@/lib/api';
+import { api, Product, Contact } from '@/lib/api';
+import { Search, User as UserIcon } from 'lucide-react';
 
 interface ManualSaleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  contactName: string;
-  contactId: number;
+  contactName?: string;
+  contactId?: number;
   onPurchaseCreated?: () => void;
 }
 
@@ -24,21 +25,24 @@ export function ManualSaleDialog({
   onPurchaseCreated
 }: ManualSaleDialogProps) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
+  const [selectedContactId, setSelectedContactId] = useState<string>(contactId?.toString() || '');
   const [quantity, setQuantity] = useState<string>('1');
   const [customValue, setCustomValue] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<string>('credit_card');
   const [isSaving, setIsSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Carregar produtos do backend
+  // Carregar produtos e contatos do backend
   useEffect(() => {
     if (open) {
-      const loadProducts = async () => {
+      const loadData = async () => {
         setIsLoadingProducts(true);
         try {
           const productsList = await api.getProducts();
-          // Filtrar apenas produtos ativos
           setProducts(productsList.filter(p => p.active));
         } catch (error) {
           console.error('Erro ao carregar produtos:', error);
@@ -46,11 +50,24 @@ export function ManualSaleDialog({
         } finally {
           setIsLoadingProducts(false);
         }
+
+        if (!contactId) {
+          setIsLoadingContacts(true);
+          try {
+            const contactsList = await api.getContacts();
+            setContacts(contactsList);
+          } catch (error) {
+            console.error('Erro ao carregar contatos:', error);
+            toast.error('Erro ao carregar contatos');
+          } finally {
+            setIsLoadingContacts(false);
+          }
+        }
       };
 
-      loadProducts();
+      loadData();
     }
-  }, [open]);
+  }, [open, contactId]);
 
   // Reset form quando fechar
   useEffect(() => {
@@ -59,8 +76,14 @@ export function ManualSaleDialog({
       setQuantity('1');
       setCustomValue('');
       setPaymentMethod('credit_card');
+      if (!contactId) {
+        setSelectedContactId('');
+        setSearchTerm('');
+      } else {
+        setSelectedContactId(contactId.toString());
+      }
     }
-  }, [open]);
+  }, [open, contactId]);
 
   const selectedProduct = products.find(p => p.id.toString() === selectedProductId);
   const productPrice = selectedProduct
@@ -76,6 +99,14 @@ export function ManualSaleDialog({
       : 0;
 
   const handleSave = async () => {
+    const finalContactId = contactId || parseInt(selectedContactId);
+    const finalContactName = contactName || contacts.find(c => c.id === finalContactId)?.name || 'Cliente';
+
+    if (!finalContactId) {
+      toast.error('Selecione um cliente');
+      return;
+    }
+
     if (!selectedProductId && !customValue) {
       toast.error('Selecione um produto ou informe um valor personalizado');
       return;
@@ -99,12 +130,12 @@ export function ManualSaleDialog({
     setIsSaving(true);
     try {
       await api.createSale({
-        contactId,
+        contactId: finalContactId,
         productId: selectedProductId && selectedProductId !== 'custom' ? parseInt(selectedProductId) : undefined,
         quantity: selectedProductId && selectedProductId !== 'custom' ? parseFloat(quantity || '1') : 1,
         totalValue: totalValue,
         unitPrice: selectedProductId && selectedProductId !== 'custom' ? productPrice : totalValue,
-        customerName: contactName,
+        customerName: finalContactName,
         status: 'completed',
         channel: 'manual',
       });
@@ -137,9 +168,63 @@ export function ManualSaleDialog({
 
         <div className="space-y-4">
           {/* Cliente Info */}
-          <div className="p-3 bg-muted rounded-lg">
-            <p className="text-sm text-muted-foreground">Cliente</p>
-            <p className="font-medium">{contactName}</p>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <UserIcon className="w-4 h-4" />
+              Cliente
+            </Label>
+            {contactId ? (
+              <div className="p-3 bg-muted rounded-lg border">
+                <p className="font-medium">{contactName}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar cliente por nome ou email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+                <Select value={selectedContactId} onValueChange={setSelectedContactId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o cliente" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover max-h-[200px]">
+                    {isLoadingContacts ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        <span className="text-sm text-muted-foreground">Carregando contatos...</span>
+                      </div>
+                    ) : (
+                      contacts
+                        .filter(c =>
+                          c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
+                        )
+                        .slice(0, 50) // Limit to avoid performance issues
+                        .map(contact => (
+                          <SelectItem key={contact.id} value={contact.id.toString()}>
+                            <div className="flex flex-col">
+                              <span>{contact.name}</span>
+                              {contact.email && (
+                                <span className="text-xs text-muted-foreground">{contact.email}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                    )}
+                    {!isLoadingContacts && contacts.length === 0 && (
+                      <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                        Nenhum contato encontrado
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* Produto */}
