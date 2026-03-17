@@ -517,7 +517,14 @@ class ApiService {
       if (!text) {
         return undefined as any;
       }
-      return JSON.parse(text);
+      const data = JSON.parse(text);
+
+      // Log para APIs de vendas conforme solicitado pelo usuário
+      if (apiEndpoint.includes('/sales')) {
+        console.log(`[Sales API] ${options.method || 'GET'} ${apiEndpoint} - Response:`, data);
+      }
+
+      return data;
     } catch (error) {
       console.error('Erro ao parsear resposta JSON:', error);
       // Se não conseguir parsear, retornar undefined (pode ser resposta vazia válida)
