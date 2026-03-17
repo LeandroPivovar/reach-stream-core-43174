@@ -9,18 +9,23 @@ import {
   ShoppingCart,
   TrendingUp,
   Calendar as CalendarIcon,
+  Plus,
+  Search,
+  ChevronLeft,
   ChevronRight,
+  ChevronRight as ChevronRightIcon,
   Lightbulb,
   Package,
   X,
   CreditCard,
   Clock,
   Loader2,
-  FileUp,
-  Plus
+  FileUp
 } from 'lucide-react';
 import { ManualSaleDialog } from '@/components/contacts/ManualSaleDialog';
 import { ImportSalesDialog } from '@/components/sales/ImportSalesDialog';
+import { SaleDetailsDialog } from '@/components/sales/SaleDetailsDialog';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -45,7 +50,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 
-import { api, DashboardStats, SalesByCampaign, SalesByChannel, TopProduct, PaymentMethodStats, FunnelStage } from '@/lib/api';
+import { api, DashboardStats, SalesByCampaign, SalesByChannel, TopProduct, PaymentMethodStats, FunnelStage, Sale } from '@/lib/api';
 import { toast } from '@/components/ui/use-toast';
 
 export default function Vendas() {
@@ -61,6 +66,14 @@ export default function Vendas() {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodStats[]>([]);
   const [funnelData, setFunnelData] = useState<FunnelStage[]>([]); // Funnel Data from API
+  const [recentSales, setRecentSales] = useState<Sale[]>([]);
+
+  // Estados para Busca e Paginação
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   // Datas de comparação
   const [compareStartDate, setCompareStartDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 15)));
@@ -89,6 +102,9 @@ export default function Vendas() {
       setTopProducts(products);
       setPaymentMethods(payments);
       setFunnelData(funnel);
+
+      const sales = await api.getAllSales();
+      setRecentSales(sales);
 
     } catch (error) {
       console.error('Erro ao carregar dados de vendas:', error);
@@ -177,6 +193,26 @@ export default function Vendas() {
       default:
         return 'bg-gray-500';
     }
+  };
+
+  // Lógica de Filtro e Paginação
+  const filteredSales = recentSales.filter(venda => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      venda.customerName?.toLowerCase().includes(searchLower) ||
+      venda.customerEmail?.toLowerCase().includes(searchLower) ||
+      venda.couponCode?.toLowerCase().includes(searchLower) ||
+      venda.product?.name?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentSales = filteredSales.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
   };
 
   // Dados detalhados das campanhas (mock - para manter funcionalidade do dialog enquanto não implementamos detalhe profundo)
@@ -578,6 +614,151 @@ export default function Vendas() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Listagem de Vendas com Busca e Paginação */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <CardTitle>Histórico de Vendas</CardTitle>
+              <div className="relative w-full md:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por cliente, e-mail ou cupom..."
+                  className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1); // Reseta para primeira página na busca
+                  }}
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Data</th>
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Cliente</th>
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Produto</th>
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider text-center">Itens</th>
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Cupom / Campanha</th>
+                    <th className="text-right py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Valor Total</th>
+                    <th className="text-right py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentSales.map((venda) => (
+                    <tr
+                      key={venda.id}
+                      className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => {
+                        setSelectedSale(venda);
+                        setIsDetailsOpen(true);
+                      }}
+                    >
+                      <td className="py-4 px-2 text-sm">
+                        {format(new Date(venda.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </td>
+                      <td className="py-4 px-2">
+                        <div className="text-sm font-semibold">{venda.customerName || 'Sem nome'}</div>
+                        <div className="text-xs text-muted-foreground">{venda.customerEmail}</div>
+                      </td>
+                      <td className="py-4 px-2">
+                        <div className="text-sm font-medium max-w-[200px] truncate">
+                          {venda.product?.name || 'Produto Removido'}
+                        </div>
+                      </td>
+                      <td className="py-4 px-2 text-center text-sm">
+                        {venda.quantity || 1}
+                      </td>
+                      <td className="py-4 px-2">
+                        {venda.couponCode ? (
+                          <div className="space-y-1">
+                            <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[10px]">
+                              {venda.couponCode}
+                            </Badge>
+                            {venda.campaign && (
+                              <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <TrendingUp className="w-3 h-3 text-blue-500" />
+                                {venda.campaign.name}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-2 text-right">
+                        <div className="text-sm font-bold text-success">
+                          R$ {Number(venda.totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">
+                          unit. R$ {Number(venda.unitPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                      </td>
+                      <td className="py-4 px-2 text-right">
+                        <Badge variant={venda.status === 'completed' ? 'default' : 'secondary'} className="text-[10px] uppercase font-bold">
+                          {venda.status === 'completed' ? 'Pago' : 'Pendente'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                  {currentSales.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center">
+                        <p className="text-muted-foreground">Nenhuma venda encontrada.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Paginação */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6 border-t pt-4">
+                <div className="text-sm text-muted-foreground">
+                  Mostrando <span className="font-medium">{indexOfFirstItem + 1}</span> a <span className="font-medium">{Math.min(indexOfLastItem, filteredSales.length)}</span> de <span className="font-medium">{filteredSales.length}</span> resultados
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Anterior
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, i) => (
+                      <Button
+                        key={i}
+                        variant={currentPage === i + 1 ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => handlePageChange(i + 1)}
+                      >
+                        {i + 1}
+                      </Button>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Próximo
+                    <ChevronRightIcon className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Dialog de Detalhes da Campanha */}
@@ -708,6 +889,12 @@ export default function Vendas() {
         onImportComplete={() => {
           fetchData();
         }}
+      />
+
+      <SaleDetailsDialog
+        sale={selectedSale}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
       />
     </Layout>
   );

@@ -66,7 +66,13 @@ export interface Sale {
   customerEmail?: string;
   status: string;
   createdAt: string;
+  externalId?: string;
+  couponCode?: string;
   product?: {
+    id: number;
+    name: string;
+  };
+  campaign?: {
     id: number;
     name: string;
   };
