@@ -28,6 +28,7 @@ const menuItems = [
   { title: 'Vendas', href: '/vendas', icon: DollarSign },
   { title: 'Contatos', href: '/contatos', icon: Users },
   { title: 'Produtos', href: '/produtos', icon: Package },
+  { title: 'Categorias', href: '/categorias', icon: Package },
   { title: 'Conexões', href: '/conexoes', icon: Plug },
   { title: 'Integrações', href: '/integracoes', icon: Puzzle },
   { title: 'Assinaturas', href: '/assinaturas', icon: CreditCard },

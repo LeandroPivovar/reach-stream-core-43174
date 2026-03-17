@@ -145,6 +145,55 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
       );
     }
 
+    if (segmentId === 'birthday') {
+      const months = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      ];
+      return (
+        <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Mês:</Label>
+          <select
+            className="h-8 w-32 border rounded text-xs px-2 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            value={params?.month !== undefined ? params.month : new Date().getMonth() + 1}
+            onChange={(e) => {
+              const val = parseInt(e.target.value);
+              updateParams(segmentId, { month: isNaN(val) ? new Date().getMonth() + 1 : val });
+            }}
+          >
+            {months.map((m, i) => (
+              <option key={i + 1} value={i + 1}>{m}</option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    if (segmentId === 'by_state') {
+      const statesList = [
+        'AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+        'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN',
+        'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO'
+      ];
+      return (
+        <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Estado:</Label>
+          <select
+            className="h-8 w-24 border rounded text-xs px-2 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            value={params?.state || ''}
+            onChange={(e) => {
+              updateParams(segmentId, { state: e.target.value });
+            }}
+          >
+            <option value="">Todos</option>
+            {statesList.map(st => (
+              <option key={st} value={st}>{st}</option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
     return null;
   };
 
