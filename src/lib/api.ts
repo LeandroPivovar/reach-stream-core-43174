@@ -436,6 +436,7 @@ export interface Category {
   name: string;
   description?: string;
   active: boolean;
+  userId: number;
   createdAt: string;
   updatedAt: string;
 }
