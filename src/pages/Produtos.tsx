@@ -1373,20 +1373,21 @@ export default function Produtos() {
 
             <div className="grid gap-2">
               <Label htmlFor="product-category">Categoria</Label>
-              <div className="relative">
-                <Input
-                  id="product-category"
-                  list="categories-list"
-                  value={newProduct.categoryId}
-                  onChange={(e) => setNewProduct({ ...newProduct, categoryId: e.target.value })}
-                  placeholder="Selecione ou digite uma nova categoria"
-                />
-                <datalist id="categories-list">
+              <Select
+                value={newProduct.categoryId}
+                onValueChange={(value) => setNewProduct({ ...newProduct, categoryId: value })}
+              >
+                <SelectTrigger id="product-category">
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.name} />
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </SelectItem>
                   ))}
-                </datalist>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -1710,20 +1711,21 @@ export default function Produtos() {
 
             <div className="grid gap-2">
               <Label htmlFor="edit-product-category">Categoria</Label>
-              <div className="relative">
-                <Input
-                  id="edit-product-category"
-                  list="edit-categories-list"
-                  value={editProduct.categoryId}
-                  onChange={(e) => setEditProduct({ ...editProduct, categoryId: e.target.value })}
-                  placeholder="Selecione ou digite uma nova categoria"
-                />
-                <datalist id="edit-categories-list">
+              <Select
+                value={editProduct.categoryId}
+                onValueChange={(value) => setEditProduct({ ...editProduct, categoryId: value })}
+              >
+                <SelectTrigger id="edit-product-category">
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.name} />
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </SelectItem>
                   ))}
-                </datalist>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
