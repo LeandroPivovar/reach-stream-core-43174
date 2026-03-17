@@ -45,7 +45,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 
-import { api, DashboardStats, SalesByCampaign, SalesByChannel, TopProduct, PaymentMethodStats, FunnelStage } from '@/lib/api';
+import { api, DashboardStats, SalesByCampaign, SalesByChannel, TopProduct, PaymentMethodStats, FunnelStage, Sale } from '@/lib/api';
 import { toast } from '@/components/ui/use-toast';
 
 export default function Vendas() {
@@ -61,6 +61,7 @@ export default function Vendas() {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodStats[]>([]);
   const [funnelData, setFunnelData] = useState<FunnelStage[]>([]); // Funnel Data from API
+  const [recentSales, setRecentSales] = useState<Sale[]>([]);
 
   // Datas de comparação
   const [compareStartDate, setCompareStartDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 15)));
@@ -89,6 +90,9 @@ export default function Vendas() {
       setTopProducts(products);
       setPaymentMethods(payments);
       setFunnelData(funnel);
+
+      const sales = await api.getAllSales();
+      setRecentSales(sales);
 
     } catch (error) {
       console.error('Erro ao carregar dados de vendas:', error);
@@ -578,6 +582,77 @@ export default function Vendas() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Listagem de Vendas Recentes */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Últimas Vendas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm">Data</th>
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm">Cliente</th>
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm">Produto</th>
+                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm">Cupom / Campanha</th>
+                    <th className="text-right py-3 px-2 font-medium text-muted-foreground text-sm">Valor</th>
+                    <th className="text-right py-3 px-2 font-medium text-muted-foreground text-sm">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentSales.slice(0, 10).map((venda) => (
+                    <tr key={venda.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="py-4 px-2 text-sm">
+                        {format(new Date(venda.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </td>
+                      <td className="py-4 px-2">
+                        <div className="text-sm font-medium">{venda.customerName || 'Sem nome'}</div>
+                        <div className="text-xs text-muted-foreground">{venda.customerEmail}</div>
+                      </td>
+                      <td className="py-4 px-2 text-sm font-medium">
+                        {venda.product?.name || 'Produto Removido'}
+                      </td>
+                      <td className="py-4 px-2">
+                        {venda.couponCode ? (
+                          <div className="space-y-1">
+                            <Badge variant="secondary" className="bg-primary/10 text-primary border-none">
+                              {venda.couponCode}
+                            </Badge>
+                            {venda.campaign && (
+                              <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <TrendingUp className="w-3 h-3" />
+                                {venda.campaign.name}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-2 text-right font-semibold text-success text-sm">
+                        R$ {Number(venda.totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-4 px-2 text-right">
+                        <Badge variant={venda.status === 'completed' ? 'default' : 'secondary'} className="text-[10px] uppercase">
+                          {venda.status === 'completed' ? 'Pago' : 'Pendente'}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                  {recentSales.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                        Nenhuma venda encontrada no período.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Dialog de Detalhes da Campanha */}
