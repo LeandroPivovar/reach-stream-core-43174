@@ -546,11 +546,11 @@ export default function Campanhas() {
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Taxa de Abertura</p>
+                <p className="text-sm text-muted-foreground">Taxa de Entrega</p>
                 <p className="text-2xl font-bold text-foreground">
                   {(() => {
                     const totalSent = campaigns.reduce((acc, c) => acc + (c.sentCount || 0), 0);
-                    const totalOpens = campaigns.reduce((acc, c) => acc + (c.opensCount || 0), 0);
+                    const totalOpens = campaigns.reduce((acc, c) => acc + (c.deliveredCount || 0), 0);
                     return totalSent > 0 ? ((totalOpens / totalSent) * 100).toFixed(1) : '0';
                   })()}%
                 </p>
@@ -606,7 +606,7 @@ export default function Campanhas() {
                   <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Destinatários</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Enviados</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Aberturas</th>
+                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Recebidos</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Cliques</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Faturamento</th>
                   <th className="text-right py-3 px-2 font-medium text-muted-foreground">Ações</th>
@@ -682,15 +682,15 @@ export default function Campanhas() {
                       {campaign.sentCount.toLocaleString()}
                     </td>
                     <td className="py-4 px-2 text-right">
-                      <div className="font-medium">{campaign.opensCount.toLocaleString()}</div>
+                      <div className="font-medium">{campaign.deliveredCount.toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">
-                        {campaign.sentCount > 0 ? ((campaign.opensCount / campaign.sentCount) * 100).toFixed(1) : 0}%
+                        {campaign.sentCount > 0 ? ((campaign.deliveredCount / campaign.sentCount) * 100).toFixed(1) : 0}%
                       </div>
                     </td>
                     <td className="py-4 px-2 text-right">
                       <div className="font-medium">{campaign.clicksCount.toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">
-                        {campaign.opensCount > 0 ? ((campaign.clicksCount / campaign.opensCount) * 100).toFixed(1) : 0}%
+                        {campaign.deliveredCount > 0 ? ((campaign.clicksCount / campaign.deliveredCount) * 100).toFixed(1) : 0}%
                       </div>
                     </td>
                     <td className="py-4 px-2 text-right">
