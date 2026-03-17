@@ -148,7 +148,9 @@ export default function Vendas() {
         // so we'll focus on Shopify and Nuvemshop for now as requested.
 
         if (syncPromises.length > 0) {
-          await Promise.all(syncPromises);
+          const results = await Promise.all(syncPromises);
+          console.log('[Sync Results] Full API Response:', results);
+
           // Atualiza os dados novamente após a sincronização
           await fetchData();
         }
