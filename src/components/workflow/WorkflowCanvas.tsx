@@ -114,7 +114,23 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         label: type,
       },
     };
+
+    const lastNode = nodes.length > 0 ? nodes[nodes.length - 1] : null;
+
     setNodes((nds) => [...nds, newNode]);
+
+    if (lastNode) {
+      const newEdge: Edge = {
+        id: `edge-${lastNode.id}-${id}`,
+        source: lastNode.id,
+        target: id,
+        animated: true,
+        style: { stroke: '#7255F7', strokeWidth: 2 },
+        sourceHandle: lastNode.type === 'condition' ? 'true' : undefined,
+      };
+      setEdges((eds) => [...eds, newEdge]);
+    }
+
     setNodeIdCounter(nodeIdCounter + 1);
   };
 

@@ -23,6 +23,7 @@ import Assinaturas from "./pages/Assinaturas";
 import Indicacoes from "./pages/Indicacoes";
 import MinhaConta from "./pages/MinhaConta";
 import Produtos from "./pages/Produtos";
+import Categorias from "./pages/Categorias";
 import NotFound from "./pages/NotFound";
 import ShopifyCallback from "./pages/integrations/ShopifyCallback";
 import NuvemshopCallback from "./pages/integrations/NuvemshopCallback";
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/vendas" element={<ProtectedRoute><Vendas /></ProtectedRoute>} />
             <Route path="/contatos" element={<ProtectedRoute><Contatos /></ProtectedRoute>} />
             <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
+            <Route path="/categorias" element={<ProtectedRoute><Categorias /></ProtectedRoute>} />
             <Route path="/conexoes" element={<ProtectedRoute><Conexoes /></ProtectedRoute>} />
             <Route path="/rastreamento" element={<ProtectedRoute><Rastreamento /></ProtectedRoute>} />
             <Route path="/rastreamento/documentacao" element={<ProtectedRoute><PixelGuide /></ProtectedRoute>} />

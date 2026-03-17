@@ -247,7 +247,8 @@ export default function Produtos() {
         description: newProduct.description || undefined,
         price: parseFloat(newProduct.price),
         stock: parseInt(newProduct.stock) || 0,
-        categoryId: newProduct.categoryId ? parseInt(newProduct.categoryId) : undefined,
+        category: newProduct.categoryId || undefined,
+        categoryId: undefined, // Let the backend resolve or create by name
         sku: newProduct.sku || undefined,
         active: newProduct.active,
         coverPhoto: newProduct.coverPhoto,
@@ -302,7 +303,8 @@ export default function Produtos() {
         description: editProduct.description || undefined,
         price: parseFloat(editProduct.price),
         stock: parseInt(editProduct.stock) || 0,
-        categoryId: editProduct.categoryId ? parseInt(editProduct.categoryId) : undefined,
+        category: editProduct.categoryId || undefined,
+        categoryId: undefined, // Let the backend resolve or create by name
         sku: editProduct.sku || undefined,
         active: editProduct.active,
         coverPhoto: editProduct.coverPhoto,
@@ -410,7 +412,7 @@ export default function Produtos() {
       description: product.description || '',
       price: product.price.toString(),
       stock: product.stock.toString(),
-      categoryId: product.categoryId?.toString() || '',
+      categoryId: product.categoryEntity?.name || product.category || '',
       sku: product.sku || '',
       active: product.active,
       coverPhoto: product.coverPhoto,
@@ -1371,18 +1373,20 @@ export default function Produtos() {
 
             <div className="grid gap-2">
               <Label htmlFor="product-category">Categoria</Label>
-              <Select value={newProduct.categoryId} onValueChange={(value) => setNewProduct({ ...newProduct, categoryId: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
+              <div className="relative">
+                <Input
+                  id="product-category"
+                  list="categories-list"
+                  value={newProduct.categoryId}
+                  onChange={(e) => setNewProduct({ ...newProduct, categoryId: e.target.value })}
+                  placeholder="Selecione ou digite uma nova categoria"
+                />
+                <datalist id="categories-list">
                   {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id.toString()}>
-                      {cat.name}
-                    </SelectItem>
+                    <option key={cat.id} value={cat.name} />
                   ))}
-                </SelectContent>
-              </Select>
+                </datalist>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -1706,18 +1710,20 @@ export default function Produtos() {
 
             <div className="grid gap-2">
               <Label htmlFor="edit-product-category">Categoria</Label>
-              <Select value={editProduct.categoryId} onValueChange={(value) => setEditProduct({ ...editProduct, categoryId: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
+              <div className="relative">
+                <Input
+                  id="edit-product-category"
+                  list="edit-categories-list"
+                  value={editProduct.categoryId}
+                  onChange={(e) => setEditProduct({ ...editProduct, categoryId: e.target.value })}
+                  placeholder="Selecione ou digite uma nova categoria"
+                />
+                <datalist id="edit-categories-list">
                   {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id.toString()}>
-                      {cat.name}
-                    </SelectItem>
+                    <option key={cat.id} value={cat.name} />
                   ))}
-                </SelectContent>
-              </Select>
+                </datalist>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

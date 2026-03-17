@@ -1647,71 +1647,19 @@ export default function Contatos() {
                               </Select>
                             </div>
 
-                            {/* Segmentações */}
-                            <div className="space-y-2">
+                            {/* Segmentações Avançadas */}
+                            <div className="space-y-2 mt-4 pt-4 border-t">
                               <Label className="text-xs font-medium">
                                 <Target className="w-3 h-3 inline mr-1" />
-                                Segmentações
+                                Segmentações Avançadas
                               </Label>
-                              <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2">
-                                {[
-                                  { id: 'by_purchase_count', label: 'Por número de compras' },
-                                  { id: 'birthday', label: 'Aniversariantes' },
-                                  { id: 'inactive_customers', label: 'Clientes inativos' },
-                                  { id: 'active_coupon', label: 'Com cupom ativo' },
-                                  { id: 'high_ticket', label: 'Maior ticket médio' },
-                                  { id: 'purchase_value_x', label: 'Valor de compra X' },
-                                  { id: 'lead_captured', label: 'Lead capturado' },
-                                  { id: 'cart_recovered_customer', label: 'Carrinho recuperado' },
-                                  { id: 'no_purchase_x_days', label: 'Sem compra há X dias' },
-                                  { id: 'gender_male', label: 'Sexo: Masculino' },
-                                  { id: 'gender_female', label: 'Sexo: Feminino' },
-                                  { id: 'by_state', label: 'Por estado' },
-                                ].map((seg) => (
-                                  <div key={seg.id} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={`seg-${seg.id}`}
-                                      checked={filters.segmentations.some(s => (typeof s === 'string' ? s : s.id) === seg.id)}
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          setFilters({ ...filters, segmentations: [...filters.segmentations, seg.id] });
-                                        } else {
-                                          setFilters({ ...filters, segmentations: filters.segmentations.filter(s => (typeof s === 'string' ? s : s.id) !== seg.id) });
-                                        }
-                                      }}
-                                    />
-                                    <Label htmlFor={`seg-${seg.id}`} className="text-xs cursor-pointer">
-                                      {seg.label}
-                                    </Label>
-                                  </div>
-                                ))}
+                              <div className="max-h-[400px] overflow-y-auto pr-1">
+                                <SegmentationPicker
+                                  selectedSegments={filters.segmentations}
+                                  onSegmentsChange={(segments) => setFilters({ ...filters, segmentations: segments })}
+                                  stats={{}}
+                                />
                               </div>
-                              {filters.segmentations.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                  {filters.segmentations.map((seg) => {
-                                    const segId = typeof seg === 'string' ? seg : seg.id;
-                                    const segOption = [
-                                      { id: 'by_purchase_count', label: 'Por número de compras' },
-                                      { id: 'birthday', label: 'Aniversariantes' },
-                                      { id: 'inactive_customers', label: 'Clientes inativos' },
-                                      { id: 'active_coupon', label: 'Com cupom ativo' },
-                                      { id: 'high_ticket', label: 'Maior ticket médio' },
-                                      { id: 'purchase_value_x', label: 'Valor de compra X' },
-                                      { id: 'lead_captured', label: 'Lead capturado' },
-                                      { id: 'cart_recovered_customer', label: 'Carrinho recuperado' },
-                                      { id: 'no_purchase_x_days', label: 'Sem compra há X dias' },
-                                      { id: 'gender_male', label: 'Sexo: Masculino' },
-                                      { id: 'gender_female', label: 'Sexo: Feminino' },
-                                      { id: 'by_state', label: 'Por estado' },
-                                    ].find(s => s.id === segId);
-                                    return segOption ? (
-                                      <Badge key={segId} variant="secondary" className="text-xs">
-                                        {segOption.label}
-                                      </Badge>
-                                    ) : null;
-                                  })}
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -1873,20 +1821,22 @@ export default function Contatos() {
         )}
 
         <Tabs defaultValue="contacts" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="contacts">Contatos</TabsTrigger>
-            <TabsTrigger value="groups">Grupos</TabsTrigger>
-            <TabsTrigger value="tags">Etiquetas</TabsTrigger>
-            <TabsTrigger value="segmentations">
-              <Filter className="w-4 h-4 mr-2" />
-              Segmentações
-            </TabsTrigger>
-            <TabsTrigger value="webhook">Webhook</TabsTrigger>
-            <TabsTrigger value="score-config">
-              <Settings className="w-4 h-4 mr-2" />
-              Config. Score
-            </TabsTrigger>
-          </TabsList>
+          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-2 -mx-2 px-2 border-b">
+            <TabsList className="bg-transparent h-auto p-0 gap-6">
+              <TabsTrigger value="contacts" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-2 shadow-none">Contatos</TabsTrigger>
+              <TabsTrigger value="groups" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-2 shadow-none">Grupos</TabsTrigger>
+              <TabsTrigger value="tags" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-2 shadow-none">Etiquetas</TabsTrigger>
+              <TabsTrigger value="segmentations" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-2 shadow-none">
+                <Filter className="w-4 h-4 mr-2" />
+                Segmentações
+              </TabsTrigger>
+              <TabsTrigger value="webhook" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-2 shadow-none">Webhook</TabsTrigger>
+              <TabsTrigger value="score-config" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 pb-2 shadow-none">
+                <Settings className="w-4 h-4 mr-2" />
+                Config. Score
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="contacts">
             <Card className="p-6 shadow-card animate-fade-in">

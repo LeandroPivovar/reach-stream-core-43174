@@ -92,6 +92,8 @@ export default function Campanhas() {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isStatusUpdateOpen, setIsStatusUpdateOpen] = useState(false);
+  const [campaignForStatusUpdate, setCampaignForStatusUpdate] = useState<Campaign | null>(null);
   const contactsPerPage = 10;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [newCampaign, setNewCampaign] = useLocalStorage('campanhas_newCampaign', {
@@ -661,7 +663,14 @@ export default function Campanhas() {
                       </div>
                     </td>
                     <td className="py-4 px-2">
-                      <Badge variant={getStatusVariant(campaign.status)}>
+                      <Badge
+                        variant={getStatusVariant(campaign.status)}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => {
+                          setCampaignForStatusUpdate(campaign);
+                          setIsStatusUpdateOpen(true);
+                        }}
+                      >
                         <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor(campaign.status)}`}></div>
                         {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
                       </Badge>
@@ -804,7 +813,7 @@ export default function Campanhas() {
               mode: 'text',
               media: []
             },
-            workflow: [],
+            workflow: { nodes: [], edges: [] },
             tracking: {
               type: '',
               utmSource: '',
@@ -2121,6 +2130,67 @@ export default function Campanhas() {
           )}
         </DialogContent>
       </Dialog>
-    </Layout>
+
+      {/* Modal de Alteração de Status */}
+      <Dialog open={isStatusUpdateOpen} onOpenChange={setIsStatusUpdateOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Alterar Status da Campanha</DialogTitle>
+          </DialogHeader>
+          {campaignForStatusUpdate && (
+            <div className="py-4 space-y-4">
+              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <span className="text-sm font-medium">Status Atual:</span>
+                <Badge variant={getStatusVariant(campaignForStatusUpdate.status)}>
+                  <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor(campaignForStatusUpdate.status)}`}></div>
+                  {campaignForStatusUpdate.status.charAt(0).toUpperCase() + campaignForStatusUpdate.status.slice(1)}
+                </Badge>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Deseja {campaignForStatusUpdate.status === 'ativa' ? 'pausar' : 'reativar'} a campanha <strong>{campaignForStatusUpdate.name}</strong>?
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {campaignForStatusUpdate.status === 'ativa' && (
+                  <Button
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
+                    onClick={() => {
+                      handleToggleStatus(campaignForStatusUpdate.id, 'ativa');
+                      setIsStatusUpdateOpen(false);
+                    }}
+                  >
+                    <Pause className="w-4 h-4 mr-2" />
+                    Pausar Campanha
+                  </Button>
+                )}
+                {campaignForStatusUpdate.status === 'pausada' && (
+                  <Button
+                    className="w-full bg-green-500 hover:bg-green-600 text-white"
+                    onClick={() => {
+                      handleToggleStatus(campaignForStatusUpdate.id, 'pausada');
+                      setIsStatusUpdateOpen(false);
+                    }}
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Reativar Campanha
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setIsStatusUpdateOpen(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+    </Layout >
   );
 }
