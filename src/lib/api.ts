@@ -362,7 +362,7 @@ export interface Campaign {
   status: string;
   recipientsCount: number;
   sentCount: number;
-  opensCount: number;
+  deliveredCount: number;
   clicksCount: number;
   revenue: number | string;
   config: any;
