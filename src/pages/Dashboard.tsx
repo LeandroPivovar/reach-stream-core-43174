@@ -139,7 +139,7 @@ export default function Dashboard() {
             colorClass: 'bg-blue-500/20 text-blue-900 dark:text-blue-100 border-blue-500/30'
         },
         {
-            title: 'Taxa de Abertura',
+            title: 'Taxa de Entrega',
             value: isLoadingStats ? '...' : `${(dashboardStats?.openRate || 0).toFixed(1)}%`,
             icon: Eye,
             trend: {
@@ -457,7 +457,7 @@ export default function Dashboard() {
                                     <th className="text-left py-3 px-2 font-medium text-muted-foreground">Tipo</th>
                                     <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
                                     <th className="text-right py-3 px-2 font-medium text-muted-foreground">Enviados</th>
-                                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Aberturas</th>
+                                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Recebidos</th>
                                     <th className="text-right py-3 px-2 font-medium text-muted-foreground">Cliques</th>
                                 </tr>
                             </thead>
