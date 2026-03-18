@@ -1339,6 +1339,13 @@ class ApiService {
     });
   }
 
+  async addContactsToCampaign(campaignId: number, contactIds: number[]): Promise<any> {
+    return this.request<any>(`/campaigns/${campaignId}/contacts`, {
+      method: 'POST',
+      body: JSON.stringify({ contactIds }),
+    });
+  }
+
   // Subscriptions
   async getPlans(): Promise<Plan[]> {
     return this.request<Plan[]>('/subscriptions/plans', {
