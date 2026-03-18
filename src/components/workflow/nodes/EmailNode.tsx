@@ -10,13 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Mail, Settings, Trash2, Upload, X } from 'lucide-react';
+import { Mail, Settings, Trash2, Upload, X, Link2, Plus } from 'lucide-react';
 
 interface EmailNodeData {
   subject?: string;
   content?: string;
   media?: { url: string; type: 'image' | 'video'; name: string }[];
-  onUpdate: (data: { subject: string; content: string; media?: { url: string; type: 'image' | 'video'; name: string }[] }) => void;
+  destinationUrl?: string;
+  onUpdate: (data: { subject: string; content: string; media?: { url: string; type: 'image' | 'video'; name: string }[]; destinationUrl?: string }) => void;
   onDelete: () => void;
 }
 
@@ -25,6 +26,7 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
   const [subject, setSubject] = useState((data as any)?.subject || '');
   const [content, setContent] = useState((data as any)?.content || '');
   const [media, setMedia] = useState<{ url: string; type: 'image' | 'video'; name: string }[]>((data as any)?.media || []);
+  const [destinationUrl, setDestinationUrl] = useState((data as any)?.destinationUrl || '');
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -43,7 +45,7 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
   };
 
   const handleSave = () => {
-    (data as any).onUpdate({ subject, content, media });
+    (data as any).onUpdate({ subject, content, media, destinationUrl });
     setIsEditing(false);
   };
 
@@ -114,8 +116,35 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
               />
               <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
                 💡 Variáveis disponíveis: <br />
-                <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong> e <strong>{"{{cupom_validade}}"}</strong>
+                <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong> e <strong>{"{{link_rastreio}}"}</strong>
               </p>
+            </div>
+
+            <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
+              <div className="flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">Link de Redirecionamento</span>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="node-dest-url-email" className="text-xs">URL de Destino</Label>
+                <Input
+                  id="node-dest-url-email"
+                  placeholder="https://seusite.com.br/promo"
+                  value={destinationUrl}
+                  onChange={(e) => setDestinationUrl(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full text-xs h-8"
+                onClick={() => setContent(content + ' {{link_rastreio}}')}
+              >
+                <Plus className="w-3 h-3 mr-2" />
+                Inserir Variável de Link
+              </Button>
             </div>
             <div className="grid gap-2">
               <Label>Anexar Imagem ou Vídeo</Label>
@@ -173,7 +202,7 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
     </>
   );
 };

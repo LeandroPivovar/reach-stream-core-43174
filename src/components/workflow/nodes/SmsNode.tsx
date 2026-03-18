@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -9,20 +10,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { MessageSquare, Settings, Trash2 } from 'lucide-react';
+import { MessageSquare, Settings, Trash2, Link2, Plus } from 'lucide-react';
 
 interface SmsNodeData {
   content?: string;
-  onUpdate: (data: { content: string }) => void;
+  destinationUrl?: string;
+  onUpdate: (data: { content: string; destinationUrl?: string }) => void;
   onDelete: () => void;
 }
 
 export const SmsNode: React.FC<NodeProps> = ({ data, id }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState((data as any)?.content || '');
+  const [destinationUrl, setDestinationUrl] = useState((data as any)?.destinationUrl || '');
 
   const handleSave = () => {
-    (data as any).onUpdate({ content });
+    (data as any).onUpdate({ content, destinationUrl });
     setIsEditing(false);
   };
 
@@ -87,8 +90,35 @@ export const SmsNode: React.FC<NodeProps> = ({ data, id }) => {
                 {content.length}/160 caracteres
               </p>
               <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
-                💡 Variáveis: <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong>
+                💡 Variáveis: <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong> e <strong>{"{{link_rastreio}}"}</strong>
               </p>
+            </div>
+
+            <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
+              <div className="flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">Link de Redirecionamento</span>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="node-dest-url-sms" className="text-xs">URL de Destino</Label>
+                <Input
+                  id="node-dest-url-sms"
+                  placeholder="https://seusite.com.br/promo"
+                  value={destinationUrl}
+                  onChange={(e) => setDestinationUrl(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full text-xs h-8"
+                onClick={() => setContent(content + ' {{link_rastreio}}')}
+              >
+                <Plus className="w-3 h-3 mr-2" />
+                Inserir Variável de Link
+              </Button>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsEditing(false)}>
