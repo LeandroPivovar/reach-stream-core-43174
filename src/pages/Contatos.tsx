@@ -177,7 +177,7 @@ export default function Contatos() {
     scoreMin: 0,
     scoreMax: 100,
     ltvMin: 0,
-    ltvMax: 10000,
+    ltvMax: undefined as number | undefined,
     purchaseCount: 'all', // por número de compras
     birthday: false, // aniversariantes
     inactive: false, // clientes inativos
@@ -326,7 +326,11 @@ export default function Contatos() {
       }
 
       for (const store of activeNuvemshop) {
-        syncPromises.push(api.syncNuvemshopCustomers(store.storeId).catch(console.error));
+        if (store.storeId) {
+          syncPromises.push(api.syncNuvemshopCustomers(store.storeId).catch(console.error));
+        } else {
+          console.warn('Nuvemshop store found without storeId:', store);
+        }
       }
 
       if (syncPromises.length > 0) {
@@ -350,9 +354,9 @@ export default function Contatos() {
     const checkIntegrations = async () => {
       try {
         const [nuvemshopStatus, shopifyStatus, vtexStatus] = await Promise.all([
-          api.getIntegrationStatus('nuvemshop'),
-          api.getIntegrationStatus('shopify'),
-          api.getIntegrationStatus('vtex')
+          api.getIntegrationStatus('nuvemshop').catch(() => ({ connected: false })),
+          api.getIntegrationStatus('shopify').catch(() => ({ connected: false })),
+          api.getIntegrationStatus('vtex').catch(() => ({ connected: false }))
         ]);
 
         setHasActiveIntegration(nuvemshopStatus?.connected || shopifyStatus?.connected || vtexStatus?.connected || false);
@@ -421,9 +425,9 @@ export default function Contatos() {
       try {
         const apiCampaigns = await api.getCampaigns();
         console.log('Campaigns fetched from API:', apiCampaigns);
-        // Mostrar ativas, mas também finalizadas e agendadas para que possam ser reutilizadas ou visualizadas
-        const filtered = apiCampaigns.filter(c => ['ativa', 'finalizada', 'agendada'].includes(c.status));
-        console.log('Campaigns filtered (ativa, finalizada, agendada):', filtered);
+        // Mostrar apenas campanhas ativas conforme solicitado
+        const filtered = apiCampaigns.filter(c => c.status === 'ativa');
+        console.log('Campaigns filtered (ativa):', filtered);
         setCampaigns(filtered);
       } catch (error) {
         console.error('Erro ao carregar campanhas:', error);
@@ -672,7 +676,7 @@ export default function Contatos() {
     }
 
     // Filtro por LTV
-    if (purchaseData && (ltv < filters.ltvMin || ltv > filters.ltvMax)) {
+    if (purchaseData && (ltv < filters.ltvMin || (filters.ltvMax !== undefined && ltv > filters.ltvMax))) {
       return false;
     }
 
@@ -781,7 +785,7 @@ export default function Contatos() {
     filters.scoreMin > 0 ||
     filters.scoreMax < 100 ||
     filters.ltvMin > 0 ||
-    filters.ltvMax < 10000 ||
+    filters.ltvMax !== undefined ||
     filters.purchaseCount !== 'all' ||
     filters.birthday ||
     filters.inactive ||
@@ -802,7 +806,7 @@ export default function Contatos() {
       scoreMin: 0,
       scoreMax: 100,
       ltvMin: 0,
-      ltvMax: 10000,
+      ltvMax: undefined,
       purchaseCount: 'all',
       birthday: false,
       inactive: false,
