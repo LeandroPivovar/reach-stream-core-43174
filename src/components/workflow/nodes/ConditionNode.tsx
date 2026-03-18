@@ -27,7 +27,7 @@ import { GitBranch, Settings, Trash2, Calendar as CalendarIcon } from 'lucide-re
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-type ConditionType = 
+type ConditionType =
   | 'order_placed'
   | 'clicked_link'
   | 'responded'
@@ -108,12 +108,12 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
     <>
       <Card className="min-w-[200px] p-4 shadow-lg border-amber-500/50 bg-gradient-to-br from-amber-50 to-white dark:from-amber-950/20 dark:to-background hover:shadow-xl transition-shadow">
         <Handle type="target" position={Position.Top} className="!bg-amber-500 !w-3 !h-3" />
-        
+
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
             <GitBranch className="w-5 h-5 text-amber-500" />
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <h4 className="font-semibold text-sm mb-1">Condição</h4>
             <p className="text-xs text-muted-foreground truncate">
@@ -140,19 +140,22 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
-        
+
         <Handle
           type="source"
           position={Position.Bottom}
           id="true"
           className="!bg-green-500 !w-3 !h-3 !-bottom-2 !left-[25%]"
         />
+        <div className="absolute -bottom-6 left-[25%] -translate-x-1/2 text-[10px] font-bold text-green-600">SIM</div>
+
         <Handle
           type="source"
           position={Position.Bottom}
           id="false"
           className="!bg-red-500 !w-3 !h-3 !-bottom-2 !left-[75%]"
         />
+        <div className="absolute -bottom-6 left-[75%] -translate-x-1/2 text-[10px] font-bold text-red-600">NÃO</div>
       </Card>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
@@ -324,11 +327,11 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
               <p className="font-medium">Saídas:</p>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span className="text-muted-foreground">Esquerda: Condição verdadeira</span>
+                <span className="text-muted-foreground">Esquerda (Verde): SIM (Condição atendida)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                <span className="text-muted-foreground">Direita: Condição falsa</span>
+                <span className="text-muted-foreground">Direita (Vermelha): NÃO (Condição não atendida)</span>
               </div>
             </div>
 

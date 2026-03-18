@@ -437,6 +437,19 @@ export interface SystemSetting {
   updatedAt: string;
 }
 
+export interface AdminGlobalStats {
+  dau: number;
+  mau: number;
+  activeCompanies: number;
+  mrr: number;
+  growthMoM: number;
+  churnRate: number;
+  defaultRate: number;
+  averageLtv: number;
+  cac: number;
+  ticketByPlan: Record<string, number>;
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -811,7 +824,12 @@ class ApiService {
     });
   }
 
-  // --- Checkout Flow ---
+  async getAdminGlobalStats(): Promise<AdminGlobalStats> {
+    813: return this.get<AdminGlobalStats>('/admin/stats/global');
+    814:
+  }
+  815:
+    816:   // --- Checkout Flow ---
   async checkoutPlan(data: {
     planId: number,
     document: string,
