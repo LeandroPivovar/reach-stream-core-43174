@@ -1487,71 +1487,80 @@ export default function Campanhas() {
                 onChange={(workflow) => setNewCampaign({ ...newCampaign, workflow })}
               />
 
-              {/* Resumo da Campanha */}
-              <div className="grid grid-cols-3 gap-4 mt-6">
-                <Card className="p-4 border-primary/20 bg-primary/5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="w-5 h-5 text-primary" />
-                    <span className="text-sm font-medium text-muted-foreground">Contatos impactados</span>
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {(() => {
-                      const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        const id = typeof seg === 'string' ? seg : seg.id;
-                        return sum + (segmentationStats[id] || 0);
-                      }, 0);
+              {/* Resumo da Campanha - Só mostra se houver pelo menos um nó de disparo */}
+              {(() => {
+                const emailNodesCount = newCampaign.workflow?.nodes?.filter((n: any) => n.type === 'email').length || 0;
+                const smsNodesCount = newCampaign.workflow?.nodes?.filter((n: any) => n.type === 'sms').length || 0;
+                const whatsappNodesCount = newCampaign.workflow?.nodes?.filter((n: any) => n.type === 'whatsapp').length || 0;
+                const hasDispatchNodes = emailNodesCount > 0 || smsNodesCount > 0 || whatsappNodesCount > 0;
 
-                      return total.toLocaleString('pt-BR');
-                    })()}
-                  </p>
-                </Card>
+                if (!hasDispatchNodes) return null;
 
-                <Card className="p-4 border-blue-500/20 bg-blue-500/5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Mail className="w-5 h-5 text-blue-500" />
-                    <span className="text-sm font-medium text-muted-foreground">E-mails a enviar</span>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold text-foreground">
-                      {(() => {
-                        const totalContacts = newCampaign.segmentations.reduce((sum, seg) => {
-                          const id = typeof seg === 'string' ? seg : seg.id;
-                          return sum + (segmentationStats[id] || 0);
-                        }, 0);
-                        const emailNodesCount = newCampaign.workflow?.nodes?.filter((n: any) => n.type === 'email').length || 0;
-                        const estimated = totalContacts * emailNodesCount;
-                        return estimated.toLocaleString('pt-BR');
-                      })()}
-                    </p>
-                    <p className="text-xs text-blue-600/80 font-medium">
-                      LIMITE RESTANTE: {subscriptionStats ? (subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR') : 'Carregando...'}
-                    </p>
-                  </div>
-                </Card>
+                return (
+                  <div className="grid grid-cols-3 gap-4 mt-6">
+                    <Card className="p-4 border-primary/20 bg-primary/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="w-5 h-5 text-primary" />
+                        <span className="text-sm font-medium text-muted-foreground">Contatos impactados</span>
+                      </div>
+                      <p className="text-2xl font-bold text-foreground">
+                        {(() => {
+                          const total = newCampaign.segmentations.reduce((sum, seg) => {
+                            const id = typeof seg === 'string' ? seg : seg.id;
+                            return sum + (segmentationStats[id] || 0);
+                          }, 0);
 
-                <Card className="p-4 border-green-500/20 bg-green-500/5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MessageSquare className="w-5 h-5 text-green-500" />
-                    <span className="text-sm font-medium text-muted-foreground">SMS a enviar</span>
+                          return total.toLocaleString('pt-BR');
+                        })()}
+                      </p>
+                    </Card>
+
+                    <Card className="p-4 border-blue-500/20 bg-blue-500/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Mail className="w-5 h-5 text-blue-500" />
+                        <span className="text-sm font-medium text-muted-foreground">E-mails a enviar</span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-2xl font-bold text-foreground">
+                          {(() => {
+                            const totalContacts = newCampaign.segmentations.reduce((sum, seg) => {
+                              const id = typeof seg === 'string' ? seg : seg.id;
+                              return sum + (segmentationStats[id] || 0);
+                            }, 0);
+                            const estimated = totalContacts * emailNodesCount;
+                            return estimated.toLocaleString('pt-BR');
+                          })()}
+                        </p>
+                        <p className="text-xs text-blue-600/80 font-medium">
+                          LIMITE RESTANTE: {subscriptionStats ? (subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR') : 'Carregando...'}
+                        </p>
+                      </div>
+                    </Card>
+
+                    <Card className="p-4 border-green-500/20 bg-green-500/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageSquare className="w-5 h-5 text-green-500" />
+                        <span className="text-sm font-medium text-muted-foreground">SMS a enviar</span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-2xl font-bold text-foreground">
+                          {(() => {
+                            const totalContacts = newCampaign.segmentations.reduce((sum, seg) => {
+                              const id = typeof seg === 'string' ? seg : seg.id;
+                              return sum + (segmentationStats[id] || 0);
+                            }, 0);
+                            const estimated = totalContacts * smsNodesCount;
+                            return estimated.toLocaleString('pt-BR');
+                          })()}
+                        </p>
+                        <p className="text-xs text-green-600/80 font-medium">
+                          LIMITE RESTANTE: {subscriptionStats ? (subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR') : 'Carregando...'}
+                        </p>
+                      </div>
+                    </Card>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold text-foreground">
-                      {(() => {
-                        const totalContacts = newCampaign.segmentations.reduce((sum, seg) => {
-                          const id = typeof seg === 'string' ? seg : seg.id;
-                          return sum + (segmentationStats[id] || 0);
-                        }, 0);
-                        const smsNodesCount = newCampaign.workflow?.nodes?.filter((n: any) => n.type === 'sms').length || 0;
-                        const estimated = totalContacts * smsNodesCount;
-                        return estimated.toLocaleString('pt-BR');
-                      })()}
-                    </p>
-                    <p className="text-xs text-green-600/80 font-medium">
-                      LIMITE RESTANTE: {subscriptionStats ? (subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR') : 'Carregando...'}
-                    </p>
-                  </div>
-                </Card>
-              </div>
+                );
+              })()}
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={handlePrevStep}>
