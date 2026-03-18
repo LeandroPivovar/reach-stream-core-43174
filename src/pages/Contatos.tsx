@@ -268,6 +268,7 @@ export default function Contatos() {
 
   const [contacts, setContacts] = useState<ContactFrontend[]>([]);
   const [isSyncingBackground, setIsSyncingBackground] = useState(false);
+  const [hasActiveIntegration, setHasActiveIntegration] = useState(false);
 
   // Converter contato da API para formato do frontend
   const convertApiContactToFrontend = useCallback((apiContact: ApiContact): ContactFrontend => {
@@ -419,7 +420,11 @@ export default function Contatos() {
     const loadCampaigns = async () => {
       try {
         const apiCampaigns = await api.getCampaigns();
-        setCampaigns(apiCampaigns.filter(c => c.status === 'ativa'));
+        console.log('Campaigns fetched from API:', apiCampaigns);
+        // Mostrar ativas, mas também finalizadas e agendadas para que possam ser reutilizadas ou visualizadas
+        const filtered = apiCampaigns.filter(c => ['ativa', 'finalizada', 'agendada'].includes(c.status));
+        console.log('Campaigns filtered (ativa, finalizada, agendada):', filtered);
+        setCampaigns(filtered);
       } catch (error) {
         console.error('Erro ao carregar campanhas:', error);
       }

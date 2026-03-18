@@ -1523,6 +1523,24 @@ class ApiService {
     });
   }
 
+  async getIntegrationStatus(type: 'nuvemshop' | 'shopify' | 'vtex'): Promise<{ connected: boolean }> {
+    try {
+      let connections = [];
+      if (type === 'nuvemshop') {
+        connections = await this.getNuvemshopConnections();
+      } else if (type === 'shopify') {
+        connections = await this.getShopifyConnections();
+      } else if (type === 'vtex') {
+        // VTEX implementation might be missing, returning false
+        return { connected: false };
+      }
+      return { connected: connections.some((c: any) => c.isActive) };
+    } catch (error) {
+      console.error(`Error getting ${type} status:`, error);
+      return { connected: false };
+    }
+  }
+
   async syncShopifyProductsToCrm(shop: string): Promise<any> {
     return this.request<any>('/shopify/sync/products-to-crm', {
       method: 'POST',
