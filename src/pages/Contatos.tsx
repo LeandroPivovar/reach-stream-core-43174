@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
-import { api, Contact as ApiContact } from '@/lib/api';
+import { api, Contact as ApiContact, Campaign } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -413,7 +413,19 @@ export default function Contatos() {
 
   const [states] = useState(['AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO']);
   const [statuses] = useState(['Ativo', 'Inativo', 'Bloqueado', 'Aguardando']);
-  const [campaigns] = useState(['Black Friday 2025', 'Newsletter Semanal', 'Campanha Fidelidade', 'Promoção Verão', 'Lançamento Produto']);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      try {
+        const apiCampaigns = await api.getCampaigns();
+        setCampaigns(apiCampaigns.filter(c => c.status === 'ativa'));
+      } catch (error) {
+        console.error('Erro ao carregar campanhas:', error);
+      }
+    };
+    loadCampaigns();
+  }, []);
 
   // Estado para armazenar compras e LTV dos contatos
   const [contactPurchases, setContactPurchases] = useState<Record<number, { purchases: Purchase[]; ltv: number }>>({});
@@ -877,27 +889,34 @@ export default function Contatos() {
     clearSelection();
   };
 
-  const handleBulkAddToCampaign = () => {
+  const handleBulkAddToCampaign = async () => {
     if (!selectedCampaign) {
-      alert('Selecione uma campanha');
+      toast({ title: 'Atenção', description: 'Selecione uma campanha', variant: 'destructive' });
       return;
     }
 
-    const selectedContactsData = contacts.filter(c => selectedContacts.has(c.id));
-    console.log('Enviando leads para campanha:', {
-      campaign: selectedCampaign,
-      lead_ids: Array.from(selectedContacts),
-      leads: selectedContactsData.map(c => ({ id: c.id, name: c.name, email: c.email }))
-    });
+    const selectedIds = Array.from(selectedContacts);
+    setIsLoading(true);
 
-    // TODO: Quando backend estiver ativo, fazer:
-    // POST /campaigns/{selectedCampaign}/add-leads
-    // body: { lead_ids: Array.from(selectedContacts) }
-
-    alert(`${selectedContacts.size} leads adicionados à campanha "${selectedCampaign}" com sucesso!`);
-    setIsBulkCampaignOpen(false);
-    setSelectedCampaign('');
-    clearSelection();
+    try {
+      const resp = await api.addContactsToCampaign(Number(selectedCampaign), selectedIds);
+      toast({
+        title: 'Sucesso!',
+        description: resp.message || `${selectedIds.length} leads adicionados à campanha com sucesso!`,
+      });
+      setIsBulkCampaignOpen(false);
+      setSelectedCampaign('');
+      clearSelection();
+    } catch (error) {
+      console.error('Erro ao adicionar à campanha:', error);
+      toast({
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Não foi possível adicionar leads à campanha.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
 
@@ -3080,8 +3099,8 @@ export default function Contatos() {
                 </SelectTrigger>
                 <SelectContent>
                   {campaigns.map((campaign) => (
-                    <SelectItem key={campaign} value={campaign}>
-                      {campaign}
+                    <SelectItem key={campaign.id.toString()} value={campaign.id.toString()}>
+                      {campaign.name} ({campaign.channel === 'whatsapp' ? 'WhatsApp' : campaign.channel === 'email' ? 'E-mail' : 'SMS'})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -3092,6 +3111,11 @@ export default function Contatos() {
               <p className="text-sm text-blue-700 dark:text-blue-300">
                 💡 Os leads selecionados serão adicionados à campanha escolhida e poderão receber mensagens conforme configuração da campanha.
               </p>
+              {selectedCampaign && (
+                <p className="text-sm text-blue-700 dark:text-blue-300 font-semibold mt-2">
+                  ℹ️ Essa ação utilizará aproximadamente {selectedContacts.size} créditos de {campaigns.find(c => c.id.toString() === selectedCampaign)?.channel === 'email' ? 'E-mail' : campaigns.find(c => c.id.toString() === selectedCampaign)?.channel === 'whatsapp' ? 'WhatsApp' : 'SMS'} para enviar as mensagens.
+                </p>
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-3">
