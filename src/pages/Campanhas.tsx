@@ -679,19 +679,19 @@ export default function Campanhas() {
                       </Badge>
                     </td>
                     <td className="py-4 px-2 text-right font-medium">
-                      {campaign.recipientsCount.toLocaleString()}
+                      {(campaign.recipientsCount || 0).toLocaleString()}
                     </td>
                     <td className="py-4 px-2 text-right font-medium">
-                      {campaign.sentCount.toLocaleString()}
+                      {(campaign.sentCount || 0).toLocaleString()}
                     </td>
                     <td className="py-4 px-2 text-right">
-                      <div className="font-medium">{campaign.deliveredCount.toLocaleString()}</div>
+                      <div className="font-medium">{(campaign.deliveredCount || 0).toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">
                         {campaign.sentCount > 0 ? ((campaign.deliveredCount / campaign.sentCount) * 100).toFixed(1) : 0}%
                       </div>
                     </td>
                     <td className="py-4 px-2 text-right">
-                      <div className="font-medium">{campaign.clicksCount.toLocaleString()}</div>
+                      <div className="font-medium">{(campaign.clicksCount || 0).toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground">
                         {campaign.deliveredCount > 0 ? ((campaign.clicksCount / campaign.deliveredCount) * 100).toFixed(1) : 0}%
                       </div>
@@ -2187,7 +2187,7 @@ export default function Campanhas() {
                 <Card className="p-4">
                   <div className="flex flex-col">
                     <span className="text-sm text-muted-foreground">Enviados</span>
-                    <span className="text-2xl font-bold">{selectedCampaign.sentCount.toLocaleString()}</span>
+                    <span className="text-2xl font-bold">{(selectedCampaign.sentCount || 0).toLocaleString()}</span>
                     <div className="mt-2 text-xs text-muted-foreground">Total de envios realizados</div>
                   </div>
                 </Card>
@@ -2199,7 +2199,7 @@ export default function Campanhas() {
                         ? ((selectedCampaign.opensCount / selectedCampaign.sentCount) * 100).toFixed(1)
                         : 0}%
                     </span>
-                    <div className="mt-2 text-xs text-muted-foreground">{selectedCampaign.opensCount.toLocaleString()} aberturas</div>
+                    <div className="mt-2 text-xs text-muted-foreground">{(selectedCampaign.opensCount || 0).toLocaleString()} aberturas</div>
                   </div>
                 </Card>
                 <Card className="p-4">
@@ -2210,7 +2210,7 @@ export default function Campanhas() {
                         ? ((selectedCampaign.clicksCount / selectedCampaign.opensCount) * 100).toFixed(1)
                         : 0}%
                     </span>
-                    <div className="mt-2 text-xs text-muted-foreground">{selectedCampaign.clicksCount.toLocaleString()} cliques</div>
+                    <div className="mt-2 text-xs text-muted-foreground">{(selectedCampaign.clicksCount || 0).toLocaleString()} cliques</div>
                   </div>
                 </Card>
                 <Card className="p-4">
