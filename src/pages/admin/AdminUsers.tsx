@@ -92,7 +92,7 @@ export default function AdminUsers() {
         mutationFn: (userId: number) => api.impersonateUser(userId),
         onSuccess: (data) => {
             // Open new tab with the impersonation token
-            const newTab = window.open('/dashboard', '_blank');
+            const newTab = window.open('/', '_blank');
             if (newTab) {
                 newTab.addEventListener('load', () => {
                     newTab.localStorage.setItem('token', data.token);
@@ -101,7 +101,7 @@ export default function AdminUsers() {
                 // Fallback: set token via URL param
                 setTimeout(() => {
                     newTab.localStorage.setItem('token', data.token);
-                    newTab.location.href = '/dashboard';
+                    newTab.location.href = '/';
                 }, 500);
             }
             toast({ title: 'Login Simulado', description: 'Uma nova aba foi aberta com o login do usuário.' });
