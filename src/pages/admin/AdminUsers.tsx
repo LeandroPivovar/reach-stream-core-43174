@@ -66,7 +66,7 @@ export default function AdminUsers() {
     const [showCreditInputs, setShowCreditInputs] = useState(false);
     const [showPasswordInput, setShowPasswordInput] = useState(false);
     const [newPassword, setNewPassword] = useState('');
-    const [impersonationLink, setImpersonationLink] = useState('');
+    const [newPassword, setNewPassword] = useState('');
 
     // --- New Mutations ---
     const resetPasswordMutation = useMutation({
@@ -89,16 +89,7 @@ export default function AdminUsers() {
         onError: () => toast({ title: 'Erro', description: 'Falha ao adicionar créditos.', variant: 'destructive' })
     });
 
-    const impersonateMutation = useMutation({
-        mutationFn: (userId: number) => api.impersonateUser(userId),
-        onSuccess: (data) => {
-            // Generate a link that can be opened in an incognito window
-            const link = `${window.location.origin}/impersonate?token=${data.token}`;
-            setImpersonationLink(link);
-            toast({ title: 'Link de Simulação', description: 'Copie o link e abra em uma janela anônima para logar como o usuário.' });
-        },
-        onError: () => toast({ title: 'Erro', description: 'Falha ao gerar link de simulação.', variant: 'destructive' })
-    });
+
 
     // Mutations
     const updateMutation = useMutation({
@@ -156,7 +147,6 @@ export default function AdminUsers() {
     // Handlers
     const handleOpenDetails = (user: AdminUser) => {
         setSelectedUser(user);
-        setImpersonationLink(''); // Clear stale links
         setIsDetailsModalOpen(true);
     };
 
@@ -290,10 +280,7 @@ export default function AdminUsers() {
             </div>
 
             {/* User Details Modal (Full Screen-ish) */}
-            <Dialog open={isDetailsModalOpen} onOpenChange={(open) => {
-                setIsDetailsModalOpen(open);
-                if (!open) setImpersonationLink(''); // Clear on close
-            }}>
+            <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
                 <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <div className="flex items-center gap-4">
@@ -423,26 +410,7 @@ export default function AdminUsers() {
                                         </div>
                                     </Button>
 
-                                    <Button
-                                        variant="default"
-                                        className="h-auto flex-col gap-2 py-4 items-start bg-primary hover:bg-primary/90"
-                                        onClick={() => impersonateMutation.mutate(selectedUser!.id)}
-                                    >
-                                        <ExternalLink className="h-5 w-5" />
-                                        <div className="text-left">
-                                            <p className="font-bold text-sm">Simular Login</p>
-                                            <p className="text-xs opacity-80">Gerar link para janela anônima</p>
-                                        </div>
-                                    </Button>
-                                    {impersonationLink && (
-                                        <div className="mt-2 p-2 bg-muted/30 rounded border border-border flex items-center space-x-2">
-                                            <Input readOnly value={impersonationLink} />
-                                            <Button variant="outline" onClick={() => navigator.clipboard.writeText(impersonationLink)}>
-                                                Copiar
-                                            </Button>
-                                        </div>
-                                    )}
-                                </div>
+                                 </div>
 
                                 {/* Inline Password Reset */}
                                 {showPasswordInput && (
