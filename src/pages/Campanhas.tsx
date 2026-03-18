@@ -576,7 +576,9 @@ export default function Campanhas() {
               <div>
                 <p className="text-sm text-muted-foreground">Total Enviado</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {campaigns.reduce((acc, c) => acc + (c.sentCount || 0), 0).toLocaleString()}
+                  {(() => {
+                    return campaigns.reduce((acc, c) => acc + (c.sentCount || 0), 0).toLocaleString('pt-BR');
+                  })()}
                 </p>
               </div>
               <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
@@ -592,9 +594,9 @@ export default function Campanhas() {
                 <p className="text-2xl font-bold text-foreground">
                   {(() => {
                     const totalSent = campaigns.reduce((acc, c) => acc + (c.sentCount || 0), 0);
-                    const totalOpens = campaigns.reduce((acc, c) => acc + (c.deliveredCount || 0), 0);
-                    return totalSent > 0 ? ((totalOpens / totalSent) * 100).toFixed(1) : '0';
-                  })}%
+                    const totalDelivered = campaigns.reduce((acc, c) => acc + (c.deliveredCount || 0), 0);
+                    return totalSent > 0 ? ((totalDelivered / totalSent) * 100).toFixed(1) : '0';
+                  })()}%
                 </p>
               </div>
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -1538,74 +1540,82 @@ export default function Campanhas() {
 
                 if (!hasDispatchNodes) return null;
 
+                // Fallback para exibir pelo menos algum número se o filtro local falhar mas houver stats
+                const hasSelection = newCampaign.groups.length > 0 || newCampaign.segmentations.length > 0;
+                const totalContacts = filteredContacts.length > 0 ? filteredContacts.length : (
+                  hasSelection ? newCampaign.segmentations.reduce((acc, seg) => {
+                    const id = typeof seg === 'string' ? seg : seg.id;
+                    return acc + (segmentationStats[id] || 0);
+                  }, 0) : 0
+                );
+
                 return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                    <Card className="p-4 border-primary/20 bg-primary/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="w-5 h-5 text-primary" />
-                        <span className="text-sm font-medium text-muted-foreground">Contatos impactados</span>
+                  <div className="space-y-4 mt-6">
+                    {!hasSelection && (
+                      <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-lg flex items-center gap-3">
+                        <Zap className="w-5 h-5 text-yellow-500" />
+                        <p className="text-sm text-yellow-700 font-medium">
+                          <strong>Atenção:</strong> Você ainda não selecionou um público-alvo na Etapa 2. Os números abaixo refletem 0 contatos.
+                        </p>
                       </div>
-                      <p className="text-2xl font-bold text-foreground">
-                        {calculateTotalContacts().toLocaleString('pt-BR')}
-                      </p>
-                    </Card>
+                    )}
 
-                    <Card className="p-4 border-blue-500/20 bg-blue-500/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Mail className="w-5 h-5 text-blue-500" />
-                        <span className="text-sm font-medium text-muted-foreground">E-mails a enviar</span>
-                      </div>
-                      <div className="space-y-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <Card className="p-4 border-primary/20 bg-primary/5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Users className="w-5 h-5 text-primary" />
+                          <span className="text-sm font-medium text-muted-foreground">Contatos impactados</span>
+                        </div>
                         <p className="text-2xl font-bold text-foreground">
-                          {(() => {
-                            const totalContacts = calculateTotalContacts();
-                            const estimated = totalContacts * emailNodesCount;
-                            return estimated.toLocaleString('pt-BR');
-                          })()}
+                          {totalContacts.toLocaleString('pt-BR')}
                         </p>
-                        <p className="text-xs text-blue-600/80 font-medium">
-                          LIMITE: {subscriptionStats ? (subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR') : '...'}
-                        </p>
-                      </div>
-                    </Card>
+                      </Card>
 
-                    <Card className="p-4 border-green-500/20 bg-green-500/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MessageSquare className="w-5 h-5 text-green-500" />
-                        <span className="text-sm font-medium text-muted-foreground">SMS a enviar</span>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-2xl font-bold text-foreground">
-                          {(() => {
-                            const totalContacts = calculateTotalContacts();
-                            const estimated = totalContacts * smsNodesCount;
-                            return estimated.toLocaleString('pt-BR');
-                          })()}
-                        </p>
-                        <p className="text-xs text-green-600/80 font-medium">
-                          LIMITE: {subscriptionStats ? (subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR') : '...'}
-                        </p>
-                      </div>
-                    </Card>
+                      <Card className="p-4 border-blue-500/20 bg-blue-500/5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Mail className="w-5 h-5 text-blue-500" />
+                          <span className="text-sm font-medium text-muted-foreground">E-mails a enviar</span>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-2xl font-bold text-foreground">
+                            {(totalContacts * emailNodesCount).toLocaleString('pt-BR')}
+                          </p>
+                          <p className="text-xs text-blue-600/80 font-medium">
+                            LIMITE: {subscriptionStats ? (subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR') : '...'}
+                          </p>
+                        </div>
+                      </Card>
 
-                    <Card className="p-4 border-indigo-500/20 bg-indigo-500/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Phone className="w-5 h-5 text-indigo-500" />
-                        <span className="text-sm font-medium text-muted-foreground">WhatsApp a enviar</span>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-2xl font-bold text-foreground">
-                          {(() => {
-                            const totalContacts = calculateTotalContacts();
-                            const estimated = totalContacts * whatsappNodesCount;
-                            return estimated.toLocaleString('pt-BR');
-                          })()}
-                        </p>
-                        <p className="text-xs text-indigo-600/80 font-medium">
-                          LIMITE: {subscriptionStats ? (subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR') : '...'}
-                        </p>
-                      </div>
-                    </Card>
+                      <Card className="p-4 border-green-500/20 bg-green-500/5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MessageSquare className="w-5 h-5 text-green-500" />
+                          <span className="text-sm font-medium text-muted-foreground">SMS a enviar</span>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-2xl font-bold text-foreground">
+                            {(totalContacts * smsNodesCount).toLocaleString('pt-BR')}
+                          </p>
+                          <p className="text-xs text-green-600/80 font-medium">
+                            LIMITE: {subscriptionStats ? (subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR') : '...'}
+                          </p>
+                        </div>
+                      </Card>
+
+                      <Card className="p-4 border-indigo-500/20 bg-indigo-500/5">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Phone className="w-5 h-5 text-indigo-500" />
+                          <span className="text-sm font-medium text-muted-foreground">WhatsApp a enviar</span>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-2xl font-bold text-foreground">
+                            {(totalContacts * whatsappNodesCount).toLocaleString('pt-BR')}
+                          </p>
+                          <p className="text-xs text-indigo-600/80 font-medium">
+                            LIMITE: {subscriptionStats ? (subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR') : '...'}
+                          </p>
+                        </div>
+                      </Card>
+                    </div>
                   </div>
                 );
               })()}
