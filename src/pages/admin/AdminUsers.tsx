@@ -66,7 +66,6 @@ export default function AdminUsers() {
     const [showCreditInputs, setShowCreditInputs] = useState(false);
     const [showPasswordInput, setShowPasswordInput] = useState(false);
     const [newPassword, setNewPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
 
     // --- New Mutations ---
     const resetPasswordMutation = useMutation({
@@ -410,7 +409,7 @@ export default function AdminUsers() {
                                         </div>
                                     </Button>
 
-                                 </div>
+                                </div>
 
                                 {/* Inline Password Reset */}
                                 {showPasswordInput && (
