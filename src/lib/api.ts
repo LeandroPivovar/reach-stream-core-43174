@@ -825,11 +825,10 @@ class ApiService {
   }
 
   async getAdminGlobalStats(): Promise<AdminGlobalStats> {
-    813: return this.get<AdminGlobalStats>('/admin/stats/global');
-    814:
+    return this.get<AdminGlobalStats>('/admin/stats/global');
   }
-  815:
-    816:   // --- Checkout Flow ---
+
+  // --- Checkout Flow ---
   async checkoutPlan(data: {
     planId: number,
     document: string,
