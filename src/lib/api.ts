@@ -1663,6 +1663,18 @@ class ApiService {
   async getAdminFinanceStats(): Promise<AdminFinanceStats> {
     return this.get<AdminFinanceStats>('/admin/finance/stats');
   }
+
+  // --- Admin Settings ---
+  async getAdminSettings(): Promise<any[]> {
+    return this.get<any[]>('/admin/settings');
+  }
+
+  async updateAdminSetting(key: string, value: string, description?: string): Promise<any> {
+    return this.request<any>(`/admin/settings/${key}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ value, description }),
+    });
+  }
 }
 
 export interface PixelMetrics {
@@ -1780,6 +1792,10 @@ export interface AdminFinanceStats {
   ytdRevenue: number;
   avgMargin: number;
   growthRate: number;
+  settings?: {
+    costSms: number;
+    costEmail: number;
+  };
 }
 
 export interface Subscription {

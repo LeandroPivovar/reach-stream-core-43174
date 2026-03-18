@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 import {
     TrendingUp,
     DollarSign,
@@ -11,9 +14,11 @@ import {
     Calendar,
     Target,
     Activity,
-    Zap
+    Zap,
+    Save,
+    Settings as SettingsIcon
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import {
     AreaChart,
@@ -31,10 +36,46 @@ import {
 } from 'recharts';
 
 export default function AdminFinance() {
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
     const { data: stats, isLoading } = useQuery({
         queryKey: ['admin-finance-stats'],
         queryFn: () => api.getAdminFinanceStats()
     });
+
+    const [costSms, setCostSms] = useState('0.05');
+    const [costEmail, setCostEmail] = useState('0.01');
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (stats?.settings) {
+            setCostSms(stats.settings.costSms.toString());
+            setCostEmail(stats.settings.costEmail.toString());
+        }
+    }, [stats]);
+
+    const handleSaveSettings = async () => {
+        setIsSaving(true);
+        try {
+            await Promise.all([
+                api.updateAdminSetting('COST_SMS', costSms, 'Custo unitário por SMS enviado'),
+                api.updateAdminSetting('COST_EMAIL', costEmail, 'Custo unitário por E-mail enviado')
+            ]);
+            queryClient.invalidateQueries({ queryKey: ['admin-finance-stats'] });
+            toast({
+                title: "Configurações salvas",
+                description: "Os custos foram atualizados e o gráfico recalculado.",
+            });
+        } catch (error) {
+            toast({
+                title: "Erro ao salvar",
+                description: "Ocorreu um problema ao salvar as configurações.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -64,20 +105,6 @@ export default function AdminFinance() {
             color: 'text-blue-500',
             trend: '+5.2%' // Mock MoM for now
         },
-        {
-            label: 'Margem Média',
-            value: `${(stats?.avgMargin || 0).toFixed(1)}%`,
-            icon: PieChart,
-            color: 'text-purple-500',
-            trend: 'Estável'
-        },
-        {
-            label: 'Lucro Líquido (Est.)',
-            value: formatCurrency((stats?.ytdRevenue || 0) * 0.7),
-            icon: Target,
-            color: 'text-amber-500',
-            trend: '+12%'
-        },
     ];
 
     return (
@@ -85,8 +112,45 @@ export default function AdminFinance() {
             title="Análise Financeira (CFO)"
             subtitle="Visão estratégica de lucros, faturamento e projeções de crescimento."
         >
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Configurações de Custo */}
+            <Card className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 mb-8">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <SettingsIcon className="w-5 h-5 text-slate-500" /> Configurações de Custo Operacional
+                    </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                    <div>
+                        <p className="text-xs font-medium text-slate-500 mb-2 block">Custo Unitário SMS (R$)</p>
+                        <Input
+                            type="number"
+                            step="0.01"
+                            value={costSms}
+                            onChange={(e) => setCostSms(e.target.value)}
+                            placeholder="0.05"
+                        />
+                    </div>
+                    <div>
+                        <p className="text-xs font-medium text-slate-500 mb-2 block">Custo Unitário E-mail (R$)</p>
+                        <Input
+                            type="number"
+                            step="0.001"
+                            value={costEmail}
+                            onChange={(e) => setCostEmail(e.target.value)}
+                            placeholder="0.01"
+                        />
+                    </div>
+                    <Button onClick={handleSaveSettings} disabled={isSaving} className="gap-2">
+                        {isSaving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> : <Save className="w-4 h-4" />}
+                        Salvar Configurações
+                    </Button>
+                </div>
+                <p className="mt-4 text-[10px] text-slate-400 italic">
+                    * Os custos são calculados com base no volume total de envios da plataforma + 5% fixo de taxas (Asaas/Impostos).
+                </p>
+            </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
                 {kpis.map((kpi, i) => (
                     <Card key={i} className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                         <div className="flex items-center justify-between mb-4">
