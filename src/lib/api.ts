@@ -1658,6 +1658,11 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // --- Admin Finance Stats ---
+  async getAdminFinanceStats(): Promise<AdminFinanceStats> {
+    return this.get<AdminFinanceStats>('/admin/finance/stats');
+  }
 }
 
 export interface PixelMetrics {
@@ -1753,6 +1758,28 @@ export interface Plan {
     advancedCampaigns?: number;
   };
   active: boolean;
+}
+
+export interface AdminFinanceStats {
+  monthlyData: {
+    month: string;
+    monthFull: string;
+    subscriptionRevenue: number;
+    oneTimeRevenue: number;
+    totalRevenue: number;
+    costs: number;
+    netProfit: number;
+    margin: number;
+  }[];
+  projections: {
+    month: string;
+    revenue: number;
+    profit: number;
+  }[];
+  currentMrr: number;
+  ytdRevenue: number;
+  avgMargin: number;
+  growthRate: number;
 }
 
 export interface Subscription {

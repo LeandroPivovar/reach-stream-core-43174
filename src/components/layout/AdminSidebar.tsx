@@ -13,7 +13,8 @@ import {
     ArrowLeft,
     ShieldCheck,
     Bell,
-    Filter
+    Filter,
+    TrendingUp
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -23,6 +24,7 @@ const adminMenuItems = [
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
     { title: 'Segmentações', href: '/admin/segmentations', icon: Filter },
     { title: 'Planos', href: '/admin/plans', icon: ShieldCheck },
+    { title: 'Financeiro', href: '/admin/finance', icon: TrendingUp },
     { title: 'Notificações', href: '/admin/notifications', icon: Bell },
     { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];
