@@ -60,28 +60,26 @@ export default function AdminUsers() {
     const [expiryDate, setExpiryDate] = useState('');
 
     // Form State
-    const [editForm, setEditForm] = useState({ name: '', email: '', phone: '' });
+    const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
     const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+    const [creditForm, setCreditForm] = useState({ email: 0, sms: 0 });
+    const [showCreditInputs, setShowCreditInputs] = useState(false);
+    const [showPasswordInput, setShowPasswordInput] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
 
     // --- New Mutations ---
     const resetPasswordMutation = useMutation({
-        mutationFn: (userId: number) => api.resetAdminUserPassword(userId),
-        onSuccess: (data) => {
-            if (data.tempPassword) {
-                toast({
-                    title: 'Senha Resetada',
-                    description: `A nova senha temporária é: ${data.tempPassword}. Copie-a agora pois não será mostrada novamente.`,
-                    duration: 10000,
-                });
-            } else {
-                toast({ title: 'Sucesso', description: 'O usuário recebeu um e-mail para definir a nova senha.' });
-            }
+        mutationFn: ({ userId, password }: { userId: number, password: string }) => api.resetAdminUserPassword(userId, password),
+        onSuccess: () => {
+            toast({ title: 'Sucesso', description: 'Senha alterada com sucesso.' });
+            setShowPasswordInput(false);
+            setNewPassword('');
         },
         onError: () => toast({ title: 'Erro', description: 'Falha ao resetar senha.', variant: 'destructive' })
     });
 
     const addCreditsMutation = useMutation({
-        mutationFn: ({ userId, type, amount }: { userId: number, type: 'email' | 'sms' | 'whatsapp', amount: number }) =>
+        mutationFn: ({ userId, type, amount }: { userId: number, type: 'email' | 'sms', amount: number }) =>
             api.addAdminUserCredits(userId, type, amount),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-user-stats', selectedUser?.id] });
@@ -93,10 +91,20 @@ export default function AdminUsers() {
     const impersonateMutation = useMutation({
         mutationFn: (userId: number) => api.impersonateUser(userId),
         onSuccess: (data) => {
-            // Save current admin info if needed, but for now just replace token and redirect
-            localStorage.setItem('admin_token', localStorage.getItem('token') || '');
-            localStorage.setItem('token', data.token);
-            window.location.href = '/dashboard';
+            // Open new tab with the impersonation token
+            const newTab = window.open('/dashboard', '_blank');
+            if (newTab) {
+                newTab.addEventListener('load', () => {
+                    newTab.localStorage.setItem('token', data.token);
+                    newTab.location.reload();
+                });
+                // Fallback: set token via URL param
+                setTimeout(() => {
+                    newTab.localStorage.setItem('token', data.token);
+                    newTab.location.href = '/dashboard';
+                }, 500);
+            }
+            toast({ title: 'Login Simulado', description: 'Uma nova aba foi aberta com o login do usuário.' });
         },
         onError: () => toast({ title: 'Erro', description: 'Falha ao simular login.', variant: 'destructive' })
     });
@@ -162,7 +170,7 @@ export default function AdminUsers() {
 
     const handleOpenEdit = (user: AdminUser) => {
         setSelectedUser(user);
-        setEditForm({ name: user.name, email: user.email, phone: user.phone || '' });
+        setEditForm({ firstName: user.firstName, lastName: user.lastName, email: user.email, phone: user.phone || '' });
         setIsEditModalOpen(true);
     };
 
@@ -224,7 +232,7 @@ export default function AdminUsers() {
                     <TableBody>
                         {users?.map((user) => (
                             <TableRow key={user.id}>
-                                <TableCell className="font-medium">{user.name}</TableCell>
+                                <TableCell className="font-medium">{user.firstName} {user.lastName}</TableCell>
                                 <TableCell>{user.email}</TableCell>
                                 <TableCell>
                                     <Badge variant={user.active ? "default" : "destructive"}>
@@ -298,7 +306,7 @@ export default function AdminUsers() {
                                 <User className="h-6 w-6 text-primary" />
                             </div>
                             <div>
-                                <DialogTitle className="text-2xl">{selectedUser?.name}</DialogTitle>
+                                <DialogTitle className="text-2xl">{selectedUser?.firstName} {selectedUser?.lastName}</DialogTitle>
                                 <DialogDescription>{selectedUser?.email}</DialogDescription>
                             </div>
                         </div>
@@ -399,50 +407,110 @@ export default function AdminUsers() {
                                     <Button
                                         variant="outline"
                                         className="h-auto flex-col gap-2 py-4 items-start"
-                                        onClick={() => {
-                                            const amount = prompt('Quantidade de créditos a adicionar (Email):', '1000');
-                                            if (amount) addCreditsMutation.mutate({ userId: selectedUser!.id, type: 'email', amount: parseInt(amount) });
-                                        }}
+                                        onClick={() => setShowCreditInputs(!showCreditInputs)}
                                     >
                                         <CreditCard className="h-5 w-5 text-blue-500" />
                                         <div className="text-left">
                                             <p className="font-bold text-sm">Adicionar Créditos</p>
-                                            <p className="text-xs text-muted-foreground">Email / SMS / WA</p>
+                                            <p className="text-xs text-muted-foreground">Email / SMS extras</p>
                                         </div>
                                     </Button>
 
                                     <Button
                                         variant="outline"
                                         className="h-auto flex-col gap-2 py-4 items-start"
-                                        onClick={() => {
-                                            if (confirm(`Deseja resetar a senha de ${selectedUser?.name}?`)) {
-                                                resetPasswordMutation.mutate(selectedUser!.id);
-                                            }
-                                        }}
+                                        onClick={() => setShowPasswordInput(!showPasswordInput)}
                                     >
                                         <Key className="h-5 w-5 text-red-500" />
                                         <div className="text-left">
                                             <p className="font-bold text-sm">Resetar Senha</p>
-                                            <p className="text-xs text-muted-foreground">Gerar senha temporária</p>
+                                            <p className="text-xs text-muted-foreground">Definir nova senha</p>
                                         </div>
                                     </Button>
 
                                     <Button
                                         variant="default"
                                         className="h-auto flex-col gap-2 py-4 items-start bg-primary hover:bg-primary/90"
-                                        onClick={() => {
-                                            if (confirm(`Simular login como ${selectedUser?.name}? Você será redirecionado.`)) {
-                                                impersonateMutation.mutate(selectedUser!.id);
-                                            }
-                                        }}
+                                        onClick={() => impersonateMutation.mutate(selectedUser!.id)}
                                     >
                                         <ExternalLink className="h-5 w-5" />
                                         <div className="text-left">
                                             <p className="font-bold text-sm">Simular Login</p>
-                                            <p className="text-xs opacity-80">Entrar como cliente</p>
+                                            <p className="text-xs opacity-80">Abre em nova aba</p>
                                         </div>
                                     </Button>
                                 </div>
+
+                                {/* Inline Password Reset */}
+                                {showPasswordInput && (
+                                    <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border space-y-3">
+                                        <h4 className="font-semibold text-sm">Redefinir Senha de {selectedUser?.firstName} {selectedUser?.lastName}</h4>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                type="password"
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                                placeholder="Digite a nova senha"
+                                            />
+                                            <Button
+                                                disabled={!newPassword || newPassword.length < 6 || resetPasswordMutation.isPending}
+                                                onClick={() => resetPasswordMutation.mutate({ userId: selectedUser!.id, password: newPassword })}
+                                            >
+                                                {resetPasswordMutation.isPending ? 'Salvando...' : 'Salvar'}
+                                            </Button>
+                                        </div>
+                                        {newPassword && newPassword.length < 6 && (
+                                            <p className="text-xs text-destructive">A senha deve ter no mínimo 6 caracteres.</p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Inline Credit Inputs */}
+                                {showCreditInputs && (
+                                    <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border space-y-4">
+                                        <h4 className="font-semibold text-sm">Adicionar Créditos Extra</h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="flex items-center gap-2"><Mail className="h-4 w-4 text-blue-500" /> Créditos de Email</Label>
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        value={creditForm.email}
+                                                        onChange={(e) => setCreditForm(prev => ({ ...prev, email: parseInt(e.target.value) || 0 }))}
+                                                        placeholder="Ex: 1000"
+                                                    />
+                                                    <Button
+                                                        size="sm"
+                                                        disabled={!creditForm.email || addCreditsMutation.isPending}
+                                                        onClick={() => addCreditsMutation.mutate({ userId: selectedUser!.id, type: 'email', amount: creditForm.email })}
+                                                    >
+                                                        Adicionar
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="flex items-center gap-2"><Smartphone className="h-4 w-4 text-green-500" /> Créditos de SMS</Label>
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        value={creditForm.sms}
+                                                        onChange={(e) => setCreditForm(prev => ({ ...prev, sms: parseInt(e.target.value) || 0 }))}
+                                                        placeholder="Ex: 500"
+                                                    />
+                                                    <Button
+                                                        size="sm"
+                                                        disabled={!creditForm.sms || addCreditsMutation.isPending}
+                                                        onClick={() => addCreditsMutation.mutate({ userId: selectedUser!.id, type: 'sms', amount: creditForm.sms })}
+                                                    >
+                                                        Adicionar
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -459,17 +527,27 @@ export default function AdminUsers() {
                     <DialogHeader>
                         <DialogTitle>Editar Usuário</DialogTitle>
                         <DialogDescription>
-                            Atualize as informações básicas de {selectedUser?.name}.
+                            Atualize as informações básicas de {selectedUser?.firstName} {selectedUser?.lastName}.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Nome Completo</Label>
-                            <Input
-                                id="name"
-                                value={editForm.name}
-                                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                            />
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="grid gap-2">
+                                <Label htmlFor="firstName">Nome</Label>
+                                <Input
+                                    id="firstName"
+                                    value={editForm.firstName}
+                                    onChange={(e) => setEditForm(prev => ({ ...prev, firstName: e.target.value }))}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="lastName">Sobrenome</Label>
+                                <Input
+                                    id="lastName"
+                                    value={editForm.lastName}
+                                    onChange={(e) => setEditForm(prev => ({ ...prev, lastName: e.target.value }))}
+                                />
+                            </div>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="email">E-mail</Label>
