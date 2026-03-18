@@ -6,9 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 export default function AdminDashboard() {
-    const { data: users, isLoading: isLoadingUsers, isError: isErrorUsers } = useQuery({ queryKey: ['admin-users'], queryFn: api.getAdminUsers });
-    const { data: logs, isLoading: isLoadingLogs, isError: isErrorLogs } = useQuery({ queryKey: ['webhook-logs'], queryFn: api.getWebhookLogs });
-    const { data: globalStats, isLoading: isLoadingStats, isError: isErrorStats } = useQuery({ queryKey: ['admin-global-stats'], queryFn: api.getAdminGlobalStats });
+    const { data: users, isLoading: isLoadingUsers, isError: isErrorUsers } = useQuery({ queryKey: ['admin-users'], queryFn: () => api.getAdminUsers() });
+    const { data: logs, isLoading: isLoadingLogs, isError: isErrorLogs } = useQuery({ queryKey: ['webhook-logs'], queryFn: () => api.getWebhookLogs() });
+    const { data: globalStats, isLoading: isLoadingStats, isError: isErrorStats } = useQuery({ queryKey: ['admin-global-stats'], queryFn: () => api.getAdminGlobalStats() });
 
     if (isLoadingUsers || isLoadingLogs || isLoadingStats) {
         return (
