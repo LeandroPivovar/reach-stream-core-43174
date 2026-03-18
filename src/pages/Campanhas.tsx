@@ -1567,7 +1567,27 @@ export default function Campanhas() {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
                 </Button>
-                <Button onClick={handleCreateCampaign}>
+                <Button
+                  onClick={handleCreateCampaign}
+                  disabled={(() => {
+                    const nodes = newCampaign.workflow?.nodes || [];
+                    const edges = newCampaign.workflow?.edges || [];
+                    const hasStartNode = nodes.some((n: any) => ['sendnow', 'schedule'].includes(n.type));
+                    const dispatchNodes = nodes.filter((n: any) => ['email', 'sms', 'whatsapp'].includes(n.type));
+
+                    if (!hasStartNode || dispatchNodes.length === 0) return true;
+
+                    // Pelo menos um nó de disparo deve estar conectado e definido
+                    const hasConnectedAndDefined = dispatchNodes.some((node: any) => {
+                      const isConnected = edges.some((e: any) => e.target === node.id);
+                      const hasContent = !!node.data?.content;
+                      const hasSubject = node.type === 'email' ? !!node.data?.subject : true;
+                      return isConnected && hasContent && hasSubject;
+                    });
+
+                    return !hasConnectedAndDefined;
+                  })()}
+                >
                   Criar Campanha
                   <Send className="w-4 h-4 ml-2" />
                 </Button>
