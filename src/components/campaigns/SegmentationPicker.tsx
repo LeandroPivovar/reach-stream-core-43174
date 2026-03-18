@@ -39,8 +39,7 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
     { id: 'lead_captured', label: 'Lead capturado', description: 'Lead obtido por formulário', affectedCount: stats['lead_captured'] || 0 },
     { id: 'no_purchase_x_days', label: 'Clientes que não compram há X dias', description: 'Inativos por período específico', affectedCount: stats['no_purchase_x_days'] || 0 },
     { id: 'active_coupon', label: 'Cupom ativo', description: 'Possuem cupons válidos', affectedCount: stats['active_coupon'] || 0 },
-    { id: 'gender_male', label: 'Sexo: Masculino', description: 'Clientes do sexo masculino', affectedCount: stats['gender_male'] || 0 },
-    { id: 'gender_female', label: 'Sexo: Feminino', description: 'Clientes do sexo feminino', affectedCount: stats['gender_female'] || 0 },
+    { id: 'gender', label: 'Sexo', description: 'Filtrar por gênero', affectedCount: (stats['gender_male'] || 0) + (stats['gender_female'] || 0) },
     { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: Object.keys(stats).filter(k => k.startsWith('state_')).reduce((acc, k) => acc + stats[k], 0) || 0 },
   ];
 
@@ -164,6 +163,25 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
             {months.map((m, i) => (
               <option key={i + 1} value={i + 1}>{m}</option>
             ))}
+          </select>
+        </div>
+      );
+    }
+
+    if (segmentId === 'gender') {
+      return (
+        <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Sexo:</Label>
+          <select
+            className="h-8 w-32 border rounded text-xs px-2 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            value={params?.gender || ''}
+            onChange={(e) => {
+              updateParams(segmentId, { gender: e.target.value });
+            }}
+          >
+            <option value="">Ambos</option>
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
           </select>
         </div>
       );

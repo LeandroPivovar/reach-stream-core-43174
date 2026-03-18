@@ -23,19 +23,10 @@ const segmentationRules = [
         color: 'bg-pink-500/10 text-pink-500 border-pink-500/20'
     },
     {
-        id: 'gender_male',
-        name: 'Sexo: Masculino',
-        description: 'Contatos identificados como do sexo masculino.',
-        logic: "gender = 'M'",
-        icon: Users,
-        type: 'Automático',
-        color: 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-    },
-    {
-        id: 'gender_female',
-        name: 'Sexo: Feminino',
-        description: 'Contatos identificados como do sexo feminino.',
-        logic: "gender = 'F'",
+        id: 'gender',
+        name: 'Sexo (M/F)',
+        description: 'Filtrar contatos pelo gênero.',
+        logic: "gender IN ('M', 'F')",
         icon: Users,
         type: 'Automático',
         color: 'bg-purple-500/10 text-purple-500 border-purple-500/20'
