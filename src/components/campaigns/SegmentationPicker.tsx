@@ -39,7 +39,18 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
     { id: 'lead_captured', label: 'Lead capturado', description: 'Lead obtido por formulário', affectedCount: stats['lead_captured'] || 0 },
     { id: 'no_purchase_x_days', label: 'Clientes que não compram há X dias', description: 'Inativos por período específico', affectedCount: stats['no_purchase_x_days'] || 0 },
     { id: 'active_coupon', label: 'Cupom ativo', description: 'Possuem cupons válidos', affectedCount: stats['active_coupon'] || 0 },
-    { id: 'gender', label: 'Sexo', description: 'Filtrar por gênero', affectedCount: (stats['gender_male'] || 0) + (stats['gender_female'] || 0) },
+    {
+      id: 'gender',
+      label: 'Sexo',
+      description: 'Filtrar por gênero',
+      affectedCount: (() => {
+        const seg = selectedSegments.find(s => (typeof s === 'string' ? s : s.id) === 'gender');
+        const p = typeof seg === 'object' ? seg.params : null;
+        if (p?.gender === 'M') return stats['gender_male'] || 0;
+        if (p?.gender === 'F') return stats['gender_female'] || 0;
+        return stats['total'] || 0;
+      })()
+    },
     { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: Object.keys(stats).filter(k => k.startsWith('state_')).reduce((acc, k) => acc + stats[k], 0) || 0 },
   ];
 

@@ -546,6 +546,7 @@ export default function Contatos() {
     };
 
     const stats: Record<string, number> = {
+      total: contacts.length,
       by_purchase_count: 0,
       birthday: 0,
       inactive_customers: 0,
@@ -736,12 +737,10 @@ export default function Contatos() {
       }
     }
 
-    // Filtro por sexo (mock - em produção viria do backend)
+    // Filtro por sexo
     if (filters.gender !== 'all') {
-      // Mock: nomes terminados em 'a' são femininos, outros masculinos
-      const isFemale = contact.name.endsWith('a');
-      if (filters.gender === 'female' && !isFemale) return false;
-      if (filters.gender === 'male' && isFemale) return false;
+      if (filters.gender === 'F' && contact.gender !== 'F') return false;
+      if (filters.gender === 'M' && contact.gender !== 'M') return false;
     }
 
     // Filtro por estado
@@ -1709,8 +1708,8 @@ export default function Contatos() {
                                 </SelectTrigger>
                                 <SelectContent className="bg-popover">
                                   <SelectItem value="all">Todos</SelectItem>
-                                  <SelectItem value="male">Masculino</SelectItem>
-                                  <SelectItem value="female">Feminino</SelectItem>
+                                  <SelectItem value="M">Masculino</SelectItem>
+                                  <SelectItem value="F">Feminino</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
