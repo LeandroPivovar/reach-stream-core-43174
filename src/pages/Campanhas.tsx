@@ -72,6 +72,7 @@ import {
   Clock,
   Download,
   Link2,
+  Plus,
   BarChart2,
   Zap,
   Tag,
@@ -130,7 +131,8 @@ export default function Campanhas() {
       type: '' as 'utm' | 'pixel' | 'shortlink' | '',
       utmSource: '',
       utmMedium: '',
-      utmCampaign: ''
+      utmCampaign: '',
+      destinationUrl: ''
     },
     scheduleType: 'now' as 'now' | 'schedule',
     scheduleDate: '',
@@ -395,7 +397,8 @@ export default function Campanhas() {
           type: '',
           utmSource: '',
           utmMedium: '',
-          utmCampaign: ''
+          utmCampaign: '',
+          destinationUrl: ''
         },
         scheduleType: 'now',
         scheduleDate: '',
@@ -469,7 +472,7 @@ export default function Campanhas() {
       },
       email: campaign.config?.email || { subject: '', content: '', mode: 'text', media: [] },
       workflow: campaign.config?.workflow?.nodes ? campaign.config.workflow : { nodes: [], edges: [] },
-      tracking: campaign.config?.tracking || { type: '', utmSource: '', utmMedium: '', utmCampaign: '' },
+      tracking: campaign.config?.tracking || { type: '', utmSource: '', utmMedium: '', utmCampaign: '', destinationUrl: '' },
       scheduleType: campaign.scheduledAt ? 'schedule' : 'now',
       scheduleDate: campaign.scheduledAt ? campaign.scheduledAt.split('T')[0] : '',
       scheduleTime: campaign.scheduledAt ? campaign.scheduledAt.split('T')[1].substring(0, 5) : ''
@@ -818,7 +821,8 @@ export default function Campanhas() {
               type: '',
               utmSource: '',
               utmMedium: '',
-              utmCampaign: ''
+              utmCampaign: '',
+              destinationUrl: ''
             },
             scheduleType: 'now',
             scheduleDate: '',
@@ -1100,6 +1104,43 @@ export default function Campanhas() {
                       </p>
                     </div>
 
+                    <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Link2 className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium">Link de Redirecionamento</span>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="whatsapp-dest-url" className="text-xs">URL de Destino</Label>
+                        <Input
+                          id="whatsapp-dest-url"
+                          placeholder="https://seusite.com.br/promo"
+                          value={newCampaign.tracking.destinationUrl}
+                          onChange={(e) => setNewCampaign({
+                            ...newCampaign,
+                            tracking: { ...newCampaign.tracking, destinationUrl: e.target.value }
+                          })}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() => {
+                          setNewCampaign({
+                            ...newCampaign,
+                            email: {
+                              ...newCampaign.email,
+                              content: newCampaign.email.content + ' {{link_rastreio}}'
+                            }
+                          });
+                        }}
+                      >
+                        <Plus className="w-3 h-3 mr-2" />
+                        Inserir Variável de Link
+                      </Button>
+                    </div>
+
                     <div className="grid gap-2">
                       <Label>Anexar Imagem ou Vídeo</Label>
                       <div className="flex flex-col gap-3">
@@ -1202,6 +1243,43 @@ export default function Campanhas() {
                         </p>
                       </div>
 
+                      <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Link2 className="w-4 h-4 text-primary" />
+                          <span className="text-sm font-medium">Link de Redirecionamento</span>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email-dest-url" className="text-xs">URL de Destino</Label>
+                          <Input
+                            id="email-dest-url"
+                            placeholder="https://seusite.com.br/promo"
+                            value={newCampaign.tracking.destinationUrl}
+                            onChange={(e) => setNewCampaign({
+                              ...newCampaign,
+                              tracking: { ...newCampaign.tracking, destinationUrl: e.target.value }
+                            })}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs"
+                          onClick={() => {
+                            setNewCampaign({
+                              ...newCampaign,
+                              email: {
+                                ...newCampaign.email,
+                                content: newCampaign.email.content + ' {{link_rastreio}}'
+                              }
+                            });
+                          }}
+                        >
+                          <Plus className="w-3 h-3 mr-2" />
+                          Inserir Variável de Link
+                        </Button>
+                      </div>
+
                       <div className="grid gap-2">
                         <Label>Anexar Imagem ou Vídeo</Label>
                         <div className="flex flex-col gap-3">
@@ -1291,6 +1369,43 @@ export default function Campanhas() {
                           💡 <strong>Variáveis:</strong> <code>{"{{cupom_nome}}"}</code>, <code>{"{{cupom_valor}}"}</code> e <code>{"{{cupom_validade}}"}</code>. <br />
                           Caso não utilize as variáveis, os dados do cupom serão adicionados automaticamente ao final do SMS.
                         </p>
+                      </div>
+
+                      <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4 mt-4">
+                        <div className="flex items-center gap-2">
+                          <Link2 className="w-4 h-4 text-primary" />
+                          <span className="text-sm font-medium">Link de Redirecionamento</span>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="sms-dest-url" className="text-xs">URL de Destino</Label>
+                          <Input
+                            id="sms-dest-url"
+                            placeholder="https://seusite.com.br/promo"
+                            value={newCampaign.tracking.destinationUrl}
+                            onChange={(e) => setNewCampaign({
+                              ...newCampaign,
+                              tracking: { ...newCampaign.tracking, destinationUrl: e.target.value }
+                            })}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs"
+                          onClick={() => {
+                            setNewCampaign({
+                              ...newCampaign,
+                              email: {
+                                ...newCampaign.email,
+                                content: newCampaign.email.content + ' {{link_rastreio}}'
+                              }
+                            });
+                          }}
+                        >
+                          <Plus className="w-3 h-3 mr-2" />
+                          Inserir Variável de Link
+                        </Button>
                       </div>
                     </>
                   )}

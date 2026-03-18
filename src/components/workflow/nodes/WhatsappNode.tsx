@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -9,12 +10,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Phone, Settings, Trash2, Upload, X } from 'lucide-react';
+import { Phone, Settings, Trash2, Upload, X, Link2, Plus } from 'lucide-react';
 
 interface WhatsappNodeData {
   content?: string;
   media?: { url: string; type: 'image' | 'video'; name: string }[];
-  onUpdate: (data: { content: string; media?: { url: string; type: 'image' | 'video'; name: string }[] }) => void;
+  destinationUrl?: string;
+  onUpdate: (data: { content: string; media?: { url: string; type: 'image' | 'video'; name: string }[]; destinationUrl?: string }) => void;
   onDelete: () => void;
 }
 
@@ -22,6 +24,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState((data as any)?.content || '');
   const [media, setMedia] = useState<{ url: string; type: 'image' | 'video'; name: string }[]>((data as any)?.media || []);
+  const [destinationUrl, setDestinationUrl] = useState((data as any)?.destinationUrl || '');
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -40,7 +43,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
   };
 
   const handleSave = () => {
-    (data as any).onUpdate({ content, media });
+    (data as any).onUpdate({ content, media, destinationUrl });
     setIsEditing(false);
   };
 
@@ -102,9 +105,37 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
               />
               <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
                 💡 Variáveis disponíveis: <br />
-                <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong> e <strong>{"{{cupom_validade}}"}</strong>
+                <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong> e <strong>{"{{link_rastreio}}"}</strong>
               </p>
             </div>
+
+            <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
+              <div className="flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium">Link de Redirecionamento</span>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="node-dest-url" className="text-xs">URL de Destino</Label>
+                <Input
+                  id="node-dest-url"
+                  placeholder="https://seusite.com.br/promo"
+                  value={destinationUrl}
+                  onChange={(e) => setDestinationUrl(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full text-xs h-8"
+                onClick={() => setContent(content + ' {{link_rastreio}}')}
+              >
+                <Plus className="w-3 h-3 mr-2" />
+                Inserir Variável de Link
+              </Button>
+            </div>
+
             <div className="grid gap-2">
               <Label>Anexar Imagem ou Vídeo</Label>
               <div className="flex flex-col gap-3">
