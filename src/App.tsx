@@ -34,6 +34,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import WebhookLogs from "./pages/admin/WebhookLogs";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import Impersonate from "./pages/Impersonate";
 import AdminSegmentations from "./pages/admin/AdminSegmentations";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
@@ -89,6 +90,7 @@ const App = () => (
             <Route path="/admin/notifications" element={<ProtectedRoute><AdminNotifications /></ProtectedRoute>} />
             <Route path="/admin/segmentations" element={<ProtectedRoute><AdminSegmentations /></ProtectedRoute>} />
 
+            <Route path="/impersonate" element={<Impersonate />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
