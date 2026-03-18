@@ -1633,6 +1633,31 @@ class ApiService {
 
     return response.json();
   }
+
+  // --- Admin Plan Management ---
+  async getAdminPlans(): Promise<Plan[]> {
+    return this.get<Plan[]>('/admin/plans');
+  }
+
+  async createAdminPlan(data: Partial<Plan>): Promise<Plan> {
+    return this.request<Plan>('/admin/plans', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAdminPlan(id: number, data: Partial<Plan>): Promise<Plan> {
+    return this.request<Plan>(`/admin/plans/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAdminPlan(id: number): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/plans/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export interface PixelMetrics {
