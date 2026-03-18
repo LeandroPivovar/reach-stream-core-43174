@@ -1497,7 +1497,7 @@ export default function Campanhas() {
                 if (!hasDispatchNodes) return null;
 
                 return (
-                  <div className="grid grid-cols-3 gap-4 mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                     <Card className="p-4 border-primary/20 bg-primary/5">
                       <div className="flex items-center gap-2 mb-2">
                         <Users className="w-5 h-5 text-primary" />
@@ -1532,7 +1532,7 @@ export default function Campanhas() {
                           })()}
                         </p>
                         <p className="text-xs text-blue-600/80 font-medium">
-                          LIMITE RESTANTE: {subscriptionStats ? (subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR') : 'Carregando...'}
+                          LIMITE: {subscriptionStats ? (subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR') : '...'}
                         </p>
                       </div>
                     </Card>
@@ -1554,7 +1554,29 @@ export default function Campanhas() {
                           })()}
                         </p>
                         <p className="text-xs text-green-600/80 font-medium">
-                          LIMITE RESTANTE: {subscriptionStats ? (subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR') : 'Carregando...'}
+                          LIMITE: {subscriptionStats ? (subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR') : '...'}
+                        </p>
+                      </div>
+                    </Card>
+
+                    <Card className="p-4 border-indigo-500/20 bg-indigo-500/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Phone className="w-5 h-5 text-indigo-500" />
+                        <span className="text-sm font-medium text-muted-foreground">WhatsApp a enviar</span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-2xl font-bold text-foreground">
+                          {(() => {
+                            const totalContacts = newCampaign.segmentations.reduce((sum, seg) => {
+                              const id = typeof seg === 'string' ? seg : seg.id;
+                              return sum + (segmentationStats[id] || 0);
+                            }, 0);
+                            const estimated = totalContacts * whatsappNodesCount;
+                            return estimated.toLocaleString('pt-BR');
+                          })()}
+                        </p>
+                        <p className="text-xs text-indigo-600/80 font-medium">
+                          LIMITE: {subscriptionStats ? (subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR') : '...'}
                         </p>
                       </div>
                     </Card>
