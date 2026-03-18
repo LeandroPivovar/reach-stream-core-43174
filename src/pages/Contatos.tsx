@@ -567,6 +567,7 @@ export default function Contatos() {
       no_purchase_x_days: getParams('no_purchase_x_days')?.days ?? 30,
       birthday: getParams('birthday')?.month ?? currentMonth,
       by_state: getParams('by_state')?.state ?? '',
+      gender: getParams('gender')?.gender ?? '',
     };
 
     contacts.forEach(c => {
@@ -577,9 +578,13 @@ export default function Contatos() {
       // Pelo menos o número de compras configurado
       if (purchaseCount >= config.by_purchase_count) stats.by_purchase_count++;
 
-      // Aniversariantes do mês configurado
-      const birthMonth = c.birthDate ? new Date(c.birthDate).getMonth() + 1 : (c.name.toLowerCase().includes('a') ? currentMonth : 0);
-      if (birthMonth === config.birthday) stats.birthday++;
+      // Aniversariantes do mês configurado (Apenas se houver data de nascimento)
+      if (c.birthDate) {
+        // Converte para data mantendo o mês correto (YYYY-MM-DD)
+        const birthDateObj = new Date(c.birthDate + 'T00:00:00');
+        const birthMonth = birthDateObj.getMonth() + 1;
+        if (birthMonth === config.birthday) stats.birthday++;
+      }
 
       // Inativo por X dias
       if (purchaseData && purchaseData.purchases.length > 0) {
@@ -590,11 +595,12 @@ export default function Contatos() {
         stats.inactive_customers++;
       }
 
-      // Ticket alto (LTV >= config)
-      if (ltv >= config.high_ticket) stats.high_ticket++;
+      // Ticket alto (Média de compras > config)
+      const avgTicket = purchaseCount > 0 ? ltv / purchaseCount : 0;
+      if (avgTicket > config.high_ticket) stats.high_ticket++;
 
-      // Lead capturado
-      if (c.tags.includes('Newsletter')) stats.lead_captured++;
+      // Lead capturado (Status 'lead')
+      if (c.status?.toLowerCase() === 'lead') stats.lead_captured++;
 
       // Sem compra há X dias
       if (purchaseData && purchaseData.purchases.length > 0) {
@@ -603,17 +609,19 @@ export default function Contatos() {
         if (daysSinceLastPurchase >= config.no_purchase_x_days) stats.no_purchase_x_days++;
       }
 
-      // Cupom ativo (Ex: grupo VIP ou tags específicas)
+      // Cupom ativo (Filtro por grupo ou tag)
       if (c.group === 'VIP' || c.tags.includes('Promocional')) stats.active_coupon++;
 
-      const isFemale = c.gender === 'female' || (!c.gender && c.name.endsWith('a'));
-      if (isFemale) stats.gender_female++;
-      else stats.gender_male++;
+      // Gênero (M ou F conforme padrão do backend)
+      if (!config.gender || c.gender === config.gender) {
+        if (c.gender === 'F') stats.gender_female++;
+        else if (c.gender === 'M') stats.gender_male++;
+      }
 
-      // Por estado (se houver um estado selecionado, conta apenas ele para o "badge" do card de estado)
+      // Por estado
       if (c.state) {
         if (!config.by_state || c.state === config.by_state) {
-          const stateKey = `state_${c.state}`;
+          const stateKey = `state_${c.state.toLowerCase()}`;
           stats[stateKey] = (stats[stateKey] || 0) + 1;
         }
       }
