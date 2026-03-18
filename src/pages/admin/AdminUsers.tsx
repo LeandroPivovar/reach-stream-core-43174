@@ -91,19 +91,15 @@ export default function AdminUsers() {
     const impersonateMutation = useMutation({
         mutationFn: (userId: number) => api.impersonateUser(userId),
         onSuccess: (data) => {
-            // Open new tab with the impersonation token
-            const newTab = window.open('/', '_blank');
-            if (newTab) {
-                newTab.addEventListener('load', () => {
-                    newTab.localStorage.setItem('token', data.token);
-                    newTab.location.reload();
-                });
-                // Fallback: set token via URL param
-                setTimeout(() => {
-                    newTab.localStorage.setItem('token', data.token);
-                    newTab.location.href = '/';
-                }, 500);
-            }
+            // Save admin token and set impersonated user's token
+            const adminToken = localStorage.getItem('token');
+            localStorage.setItem('token', data.token);
+            // Open new tab (it will read the impersonated token from localStorage)
+            window.open('/', '_blank');
+            // Restore admin token after a short delay so admin tab keeps working
+            setTimeout(() => {
+                if (adminToken) localStorage.setItem('token', adminToken);
+            }, 1000);
             toast({ title: 'Login Simulado', description: 'Uma nova aba foi aberta com o login do usuário.' });
         },
         onError: () => toast({ title: 'Erro', description: 'Falha ao simular login.', variant: 'destructive' })
@@ -582,7 +578,7 @@ export default function AdminUsers() {
                     <DialogHeader>
                         <DialogTitle>Atribuir Plano</DialogTitle>
                         <DialogDescription>
-                            Selecione o plano desejado para o usuário {selectedUser?.name}. Assinaturas anteriores serão canceladas.
+                            Selecione o plano desejado para o usuário {selectedUser?.firstName} {selectedUser?.lastName}. Assinaturas anteriores serão canceladas.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -619,7 +615,7 @@ export default function AdminUsers() {
                     <DialogHeader>
                         <DialogTitle>Alterar Vencimento da Assinatura</DialogTitle>
                         <DialogDescription>
-                            Defina a data de vencimento da assinatura ativa de <b>{selectedUser?.name}</b>. Use isto para simular assinaturas expiradas.
+                            Defina a data de vencimento da assinatura ativa de <b>{selectedUser?.firstName} {selectedUser?.lastName}</b>. Use isto para simular assinaturas expiradas.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
