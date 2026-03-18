@@ -66,6 +66,7 @@ export default function AdminUsers() {
     const [showCreditInputs, setShowCreditInputs] = useState(false);
     const [showPasswordInput, setShowPasswordInput] = useState(false);
     const [newPassword, setNewPassword] = useState('');
+    const [impersonationLink, setImpersonationLink] = useState('');
 
     // --- New Mutations ---
     const resetPasswordMutation = useMutation({
@@ -91,18 +92,16 @@ export default function AdminUsers() {
     const impersonateMutation = useMutation({
         mutationFn: (userId: number) => api.impersonateUser(userId),
         onSuccess: (data) => {
-            // Save admin token and set impersonated user's token
-            const adminToken = localStorage.getItem('token');
-            localStorage.setItem('token', data.token);
-            // Open new tab (it will read the impersonated token from localStorage)
-            window.open('/', '_blank');
-            // Restore admin token after a short delay so admin tab keeps working
-            setTimeout(() => {
-                if (adminToken) localStorage.setItem('token', adminToken);
-            }, 1000);
-            toast({ title: 'Login Simulado', description: 'Uma nova aba foi aberta com o login do usuário.' });
+            // Generate impersonation link and open in a new tab (incognito-friendly)
+            const link = `${window.location.origin}/impersonate?token=${data.token}`;
+            const newTab = window.open(link, '_blank');
+            if (newTab) {
+                toast({ title: 'Login Simulado', description: 'A nova aba foi aberta com a conta do usuário.' });
+            } else {
+                toast({ title: 'Erro', description: 'Não foi possível abrir a nova aba.', variant: 'destructive' });
+            }
         },
-        onError: () => toast({ title: 'Erro', description: 'Falha ao simular login.', variant: 'destructive' })
+        onError: () => toast({ title: 'Erro', description: 'Falha ao gerar link de simulação.', variant: 'destructive' })
     });
 
     // Mutations
@@ -432,9 +431,17 @@ export default function AdminUsers() {
                                         <ExternalLink className="h-5 w-5" />
                                         <div className="text-left">
                                             <p className="font-bold text-sm">Simular Login</p>
-                                            <p className="text-xs opacity-80">Abre em nova aba</p>
+                                            <p className="text-xs opacity-80">Gerar link para janela anônima</p>
                                         </div>
                                     </Button>
+                                    {impersonationLink && (
+                                        <div className="mt-2 p-2 bg-muted/30 rounded border border-border flex items-center space-x-2">
+                                            <Input readOnly value={impersonationLink} />
+                                            <Button variant="outline" onClick={() => navigator.clipboard.writeText(impersonationLink)}>
+                                                Copiar
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Inline Password Reset */}
