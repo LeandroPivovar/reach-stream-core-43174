@@ -213,6 +213,10 @@ export default function Campanhas() {
     }
   };
 
+  const calculateTotalContacts = () => {
+    return getFilteredContacts().length;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ativa': return 'bg-green-500';
@@ -253,18 +257,23 @@ export default function Campanhas() {
   };
 
   const getFilteredContacts = () => {
-    if (newCampaign.segmentations.length === 0) return [];
+    if (newCampaign.groups.length === 0 && newCampaign.segmentations.length === 0) return [];
+
+    const selectedGroupIds = newCampaign.groups.map(Number);
+    const selectedSegmentationIds = newCampaign.segmentations.map(s => typeof s === 'string' ? s : s.id);
 
     return contacts.filter(contact => {
-      // Verificar se o contato tem alguma das segmentações selecionadas fixas
+      // 1. Verificar se o contato está em um dos grupos selecionados
+      if (contact.groupId && selectedGroupIds.includes(contact.groupId)) return true;
+
+      // 2. Verificar se o contato tem alguma das segmentações selecionadas fixas
       const hasSegmentation = contact.contactSegmentations?.some(cs =>
-        newCampaign.segmentations.some(s => (typeof s === 'string' ? s : s.id) === cs.segmentationId)
+        selectedSegmentationIds.includes(cs.segmentationId)
       );
       if (hasSegmentation) return true;
 
-      // Lógica dinâmica para segmentações específicas se não estiverem marcadas explicitamente
-      for (const seg of newCampaign.segmentations) {
-        const segId = typeof seg === 'string' ? seg : seg.id;
+      // 3. Lógica dinâmica para segmentações específicas
+      for (const segId of selectedSegmentationIds) {
         // Estado
         if (segId === 'by_state' || segId.startsWith('state_')) {
           if (contact.state) return true;
@@ -557,7 +566,7 @@ export default function Campanhas() {
                     const totalSent = campaigns.reduce((acc, c) => acc + (c.sentCount || 0), 0);
                     const totalOpens = campaigns.reduce((acc, c) => acc + (c.deliveredCount || 0), 0);
                     return totalSent > 0 ? ((totalOpens / totalSent) * 100).toFixed(1) : '0';
-                  })()}%
+                  })}%
                 </p>
               </div>
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -1509,14 +1518,7 @@ export default function Campanhas() {
                         <span className="text-sm font-medium text-muted-foreground">Contatos impactados</span>
                       </div>
                       <p className="text-2xl font-bold text-foreground">
-                        {(() => {
-                          const total = newCampaign.segmentations.reduce((sum, seg) => {
-                            const id = typeof seg === 'string' ? seg : seg.id;
-                            return sum + (segmentationStats[id] || 0);
-                          }, 0);
-
-                          return total.toLocaleString('pt-BR');
-                        })()}
+                        {calculateTotalContacts().toLocaleString('pt-BR')}
                       </p>
                     </Card>
 
@@ -1528,10 +1530,7 @@ export default function Campanhas() {
                       <div className="space-y-1">
                         <p className="text-2xl font-bold text-foreground">
                           {(() => {
-                            const totalContacts = newCampaign.segmentations.reduce((sum, seg) => {
-                              const id = typeof seg === 'string' ? seg : seg.id;
-                              return sum + (segmentationStats[id] || 0);
-                            }, 0);
+                            const totalContacts = calculateTotalContacts();
                             const estimated = totalContacts * emailNodesCount;
                             return estimated.toLocaleString('pt-BR');
                           })()}
@@ -1550,10 +1549,7 @@ export default function Campanhas() {
                       <div className="space-y-1">
                         <p className="text-2xl font-bold text-foreground">
                           {(() => {
-                            const totalContacts = newCampaign.segmentations.reduce((sum, seg) => {
-                              const id = typeof seg === 'string' ? seg : seg.id;
-                              return sum + (segmentationStats[id] || 0);
-                            }, 0);
+                            const totalContacts = calculateTotalContacts();
                             const estimated = totalContacts * smsNodesCount;
                             return estimated.toLocaleString('pt-BR');
                           })()}
@@ -1572,10 +1568,7 @@ export default function Campanhas() {
                       <div className="space-y-1">
                         <p className="text-2xl font-bold text-foreground">
                           {(() => {
-                            const totalContacts = newCampaign.segmentations.reduce((sum, seg) => {
-                              const id = typeof seg === 'string' ? seg : seg.id;
-                              return sum + (segmentationStats[id] || 0);
-                            }, 0);
+                            const totalContacts = calculateTotalContacts();
                             const estimated = totalContacts * whatsappNodesCount;
                             return estimated.toLocaleString('pt-BR');
                           })()}
