@@ -1188,7 +1188,7 @@ export default function Contatos() {
     >
       <div className="space-y-6">
         {/* Barra de Ações em Massa e Filtros */}
-        <Card className={`p-4 ${selectedContacts.size > 0 ? 'bg-primary/10 border-primary/30' : 'bg-card'} shadow-sm sticky top-4 z-10`}>
+        <Card className={`p-4 ${selectedContacts.size > 0 ? 'bg-primary/10 border-primary/30' : 'bg-card'} shadow-sm`}>
           <div className="flex items-center justify-between gap-4">
             {/* Lado Esquerdo - Seleção e Ações */}
             <div className="flex items-center gap-4 flex-1">
