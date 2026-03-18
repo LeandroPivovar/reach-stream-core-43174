@@ -674,7 +674,7 @@ export default function Contatos() {
     }
 
     // Filtro por LTV removido
-    const ltv = contactPurchases[contact.id]?.ltv || 0;
+
 
     // Filtro por número de compras
     if (filters.purchaseCount !== 'all' && purchaseData) {
