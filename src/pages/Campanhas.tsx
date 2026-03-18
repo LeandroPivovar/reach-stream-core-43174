@@ -273,10 +273,38 @@ export default function Campanhas() {
       if (hasSegmentation) return true;
 
       // 3. Lógica dinâmica para segmentações específicas
-      for (const segId of selectedSegmentationIds) {
+      for (const seg of newCampaign.segmentations) {
+        const segId = typeof seg === 'string' ? seg : seg.id;
+        const params = typeof seg === 'object' ? seg.params : {};
+
+        // Todos os Contatos
+        if (segId === 'total') return true;
+
         // Estado
         if (segId === 'by_state' || segId.startsWith('state_')) {
-          if (contact.state) return true;
+          if (contact.state) {
+            if (params?.state && contact.state !== params.state) continue;
+            return true;
+          }
+        }
+
+        // Aniversariantes do Mês
+        if (segId === 'birthday') {
+          if (contact.birthDate) {
+            const bDate = new Date(contact.birthDate);
+            const bMonth = bDate.getMonth() + 1;
+            const filterMonth = params?.month || (new Date().getMonth() + 1);
+            if (bMonth === filterMonth) return true;
+          }
+        }
+
+        // Sexo / Gênero
+        if (segId === 'gender') {
+          if (params?.gender) {
+            if (contact.gender === params.gender) return true;
+          } else {
+            return true; // Todos os gêneros
+          }
         }
 
         // Leads
@@ -284,8 +312,8 @@ export default function Campanhas() {
           if (contact.status?.toLowerCase() === 'lead') return true;
         }
 
-        // Clientes (qualquer um que tenha comprado ou status customer)
-        if (segId === 'by_purchase_count' || segId === 'inactive_customers' || segId === 'high_ticket') {
+        // Clientes (vários IDs)
+        if (segId === 'by_purchase_count' || segId === 'inactive_customers' || segId === 'high_ticket' || segId === 'no_purchase_x_days') {
           if (contact.status?.toLowerCase() === 'customer' || contact.status?.toLowerCase() === 'cliente') return true;
         }
       }

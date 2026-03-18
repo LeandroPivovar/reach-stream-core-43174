@@ -32,6 +32,7 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
   const [isLoadingPreview, setIsLoadingPreview] = React.useState(false);
 
   const audienceFilters: SegmentationOption[] = [
+    { id: 'total', label: 'Todos os Contatos', description: 'Enviar para toda a sua base de contatos', affectedCount: stats['total'] || 0 },
     { id: 'by_purchase_count', label: 'Clientes por número de compras', description: 'Atribua um mínimo de compras', affectedCount: stats['by_purchase_count'] || 0 },
     { id: 'birthday', label: 'Aniversariantes do Mês', description: 'Clientes que fazem aniversário no mês atual', affectedCount: stats['birthday'] || 0 },
     { id: 'inactive_customers', label: 'Clientes inativos', description: 'Defina o período de inatividade (dias)', affectedCount: stats['inactive_customers'] || 0 },
