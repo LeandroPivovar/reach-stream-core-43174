@@ -855,7 +855,7 @@ class ApiService {
     });
   }
 
-  async addAdminUserCredits(userId: number, type: 'email' | 'sms' | 'whatsapp', amount: number): Promise<any> {
+  async addAdminUserCredits(userId: number, type: 'email' | 'sms', amount: number): Promise<any> {
     return this.request<any>(`/admin/stats/users/${userId}/credits`, {
       method: 'POST',
       body: JSON.stringify({ type, amount }),
@@ -1698,7 +1698,8 @@ export interface PixelMetrics {
 
 export interface AdminUser {
   id: number;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   country: string;
@@ -1707,6 +1708,8 @@ export interface AdminUser {
   active: boolean;
   createdAt: string;
   currentPlan?: Plan;
+  extraEmailsBalance?: number;
+  extraSmsBalance?: number;
 }
 
 export const api = new ApiService();
