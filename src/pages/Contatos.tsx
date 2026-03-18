@@ -176,8 +176,6 @@ export default function Contatos() {
     campaign: '',
     scoreMin: 0,
     scoreMax: 100,
-    ltvMin: 0,
-    ltvMax: undefined as number | undefined,
     purchaseCount: 'all', // por número de compras
     birthday: false, // aniversariantes
     inactive: false, // clientes inativos
@@ -675,10 +673,8 @@ export default function Contatos() {
       return false;
     }
 
-    // Filtro por LTV
-    if (purchaseData && (ltv < filters.ltvMin || (filters.ltvMax !== undefined && ltv > filters.ltvMax))) {
-      return false;
-    }
+    // Filtro por LTV removido
+    const ltv = contactPurchases[contact.id]?.ltv || 0;
 
     // Filtro por número de compras
     if (filters.purchaseCount !== 'all' && purchaseData) {
@@ -784,8 +780,6 @@ export default function Contatos() {
     filters.campaign !== '' ||
     filters.scoreMin > 0 ||
     filters.scoreMax < 100 ||
-    filters.ltvMin > 0 ||
-    filters.ltvMax !== undefined ||
     filters.purchaseCount !== 'all' ||
     filters.birthday ||
     filters.inactive ||
@@ -805,8 +799,6 @@ export default function Contatos() {
       campaign: '',
       scoreMin: 0,
       scoreMax: 100,
-      ltvMin: 0,
-      ltvMax: undefined,
       purchaseCount: 'all',
       birthday: false,
       inactive: false,
@@ -1523,62 +1515,7 @@ export default function Contatos() {
                             </div>
                           </div>
 
-                          {/* Filtro por LTV */}
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium">
-                              <TrendingUp className="w-3 h-3 inline mr-1" />
-                              LTV (Lifetime Value)
-                            </Label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <Label htmlFor="ltv-min" className="text-xs text-muted-foreground">Mínimo (R$)</Label>
-                                <Input
-                                  id="ltv-min"
-                                  type="number"
-                                  min="0"
-                                  step="10"
-                                  value={filters.ltvMin}
-                                  onChange={(e) => setFilters({ ...filters, ltvMin: parseFloat(e.target.value) || 0 })}
-                                  className="h-9"
-                                />
-                              </div>
-                              <div>
-                                <Label htmlFor="ltv-max" className="text-xs text-muted-foreground">Máximo (R$)</Label>
-                                <Input
-                                  id="ltv-max"
-                                  type="number"
-                                  min="0"
-                                  step="10"
-                                  value={filters.ltvMax}
-                                  onChange={(e) => setFilters({ ...filters, ltvMax: parseFloat(e.target.value) || 10000 })}
-                                  className="h-9"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-1 mt-1">
-                              <Badge
-                                variant="outline"
-                                className="text-xs cursor-pointer hover:bg-muted"
-                                onClick={() => setFilters({ ...filters, ltvMin: 400, ltvMax: 10000 })}
-                              >
-                                Alto (R$ 400+)
-                              </Badge>
-                              <Badge
-                                variant="outline"
-                                className="text-xs cursor-pointer hover:bg-muted"
-                                onClick={() => setFilters({ ...filters, ltvMin: 200, ltvMax: 399 })}
-                              >
-                                Médio (R$ 200-399)
-                              </Badge>
-                              <Badge
-                                variant="outline"
-                                className="text-xs cursor-pointer hover:bg-muted"
-                                onClick={() => setFilters({ ...filters, ltvMin: 0, ltvMax: 199 })}
-                              >
-                                Baixo (&lt; R$ 200)
-                              </Badge>
-                            </div>
-                          </div>
+
 
                           {/* Segmentação de Clientes */}
                           <div className="pt-3 border-t space-y-3">
