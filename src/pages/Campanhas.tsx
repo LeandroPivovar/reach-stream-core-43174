@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
@@ -58,6 +59,7 @@ import {
   MessageSquare,
   Mail,
   Smartphone,
+  Phone,
   MoreHorizontal,
   Play,
   Pause,
@@ -841,6 +843,9 @@ export default function Campanhas() {
         )}>
           <DialogHeader>
             <DialogTitle>Nova Campanha - Etapa {currentStep} de {getTotalSteps()}</DialogTitle>
+            <DialogDescription className="sr-only">
+              Formulário passo a passo para criação de novas campanhas simples ou avançadas.
+            </DialogDescription>
           </DialogHeader>
 
           {/* Etapa 1: Seleção de Complexidade */}
@@ -2149,6 +2154,9 @@ export default function Campanhas() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Exportar Campanhas</DialogTitle>
+            <DialogDescription className="sr-only">
+              Escolha o formato de arquivo desejado para exportar os dados das suas campanhas.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
@@ -2230,6 +2238,9 @@ export default function Campanhas() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Relatório da Campanha: {selectedCampaign?.name}</DialogTitle>
+            <DialogDescription className="sr-only">
+              Visualização detalhada das métricas de desempenho da campanha selecionada.
+            </DialogDescription>
           </DialogHeader>
 
           {selectedCampaign && (
@@ -2300,6 +2311,9 @@ export default function Campanhas() {
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Alterar Status da Campanha</DialogTitle>
+            <DialogDescription className="sr-only">
+              Confirme a alteração de status (pausar ou reativar) para a campanha selecionada.
+            </DialogDescription>
           </DialogHeader>
           {campaignForStatusUpdate && (
             <div className="py-4 space-y-4">
