@@ -6,9 +6,30 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 export default function AdminDashboard() {
-    const { data: users } = useQuery({ queryKey: ['admin-users'], queryFn: api.getAdminUsers });
-    const { data: logs } = useQuery({ queryKey: ['webhook-logs'], queryFn: api.getWebhookLogs });
-    const { data: globalStats } = useQuery({ queryKey: ['admin-global-stats'], queryFn: api.getAdminGlobalStats });
+    const { data: users, isLoading: isLoadingUsers, isError: isErrorUsers } = useQuery({ queryKey: ['admin-users'], queryFn: api.getAdminUsers });
+    const { data: logs, isLoading: isLoadingLogs, isError: isErrorLogs } = useQuery({ queryKey: ['webhook-logs'], queryFn: api.getWebhookLogs });
+    const { data: globalStats, isLoading: isLoadingStats, isError: isErrorStats } = useQuery({ queryKey: ['admin-global-stats'], queryFn: api.getAdminGlobalStats });
+
+    if (isLoadingUsers || isLoadingLogs || isLoadingStats) {
+        return (
+            <AdminLayout title="Dashboard Administrativo" subtitle="Carregando métricas...">
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+            </AdminLayout>
+        );
+    }
+
+    if (isErrorUsers || isErrorLogs || isErrorStats) {
+        return (
+            <AdminLayout title="Dashboard Administrativo" subtitle="Erro ao carregar dados">
+                <div className="p-8 text-center bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/20">
+                    <p className="text-red-600 dark:text-red-400 font-medium">Não foi possível conectar ao servidor para buscar as métricas.</p>
+                    <p className="text-sm text-red-500 mt-2">Verifique se o backend está rodando e se a conexão com o banco de dados está ativa.</p>
+                </div>
+            </AdminLayout>
+        );
+    }
 
     const stats = [
         { label: 'Usuários Ativos (DAU)', value: globalStats?.dau || 0, icon: Users, color: 'text-blue-500' },
