@@ -450,6 +450,22 @@ export interface AdminGlobalStats {
   ticketByPlan: Record<string, number>;
 }
 
+export interface AdminUserStats {
+  billingAmount: number;
+  contactsCount: number;
+  campaignsCount: number;
+  usage: {
+    emailsSent: number;
+    smsSent: number;
+    whatsappSent: number;
+  };
+  subscription: {
+    planName: string;
+    status: string;
+    createdAt: string;
+  };
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -826,6 +842,30 @@ class ApiService {
 
   async getAdminGlobalStats(): Promise<AdminGlobalStats> {
     return this.get<AdminGlobalStats>('/admin/stats/global');
+  }
+
+  async getAdminUserStats(userId: number): Promise<AdminUserStats> {
+    return this.get<AdminUserStats>(`/admin/stats/users/${userId}`);
+  }
+
+  async resetAdminUserPassword(userId: number, newPassword?: string): Promise<{ tempPassword?: string }> {
+    return this.request<{ tempPassword?: string }>(`/admin/stats/users/${userId}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ newPassword }),
+    });
+  }
+
+  async addAdminUserCredits(userId: number, type: 'email' | 'sms' | 'whatsapp', amount: number): Promise<any> {
+    return this.request<any>(`/admin/stats/users/${userId}/credits`, {
+      method: 'POST',
+      body: JSON.stringify({ type, amount }),
+    });
+  }
+
+  async impersonateUser(userId: number): Promise<{ token: string }> {
+    return this.request<{ token: string }>(`/admin/stats/users/${userId}/impersonate`, {
+      method: 'POST',
+    });
   }
 
   // --- Checkout Flow ---
