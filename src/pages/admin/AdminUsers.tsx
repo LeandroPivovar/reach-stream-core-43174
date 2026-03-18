@@ -92,14 +92,10 @@ export default function AdminUsers() {
     const impersonateMutation = useMutation({
         mutationFn: (userId: number) => api.impersonateUser(userId),
         onSuccess: (data) => {
-            // Generate impersonation link and open in a new tab (incognito-friendly)
+            // Generate a link that can be opened in an incognito window
             const link = `${window.location.origin}/impersonate?token=${data.token}`;
-            const newTab = window.open(link, '_blank');
-            if (newTab) {
-                toast({ title: 'Login Simulado', description: 'A nova aba foi aberta com a conta do usuário.' });
-            } else {
-                toast({ title: 'Erro', description: 'Não foi possível abrir a nova aba.', variant: 'destructive' });
-            }
+            setImpersonationLink(link);
+            toast({ title: 'Link de Simulação', description: 'Copie o link e abra em uma janela anônima para logar como o usuário.' });
         },
         onError: () => toast({ title: 'Erro', description: 'Falha ao gerar link de simulação.', variant: 'destructive' })
     });
@@ -160,6 +156,7 @@ export default function AdminUsers() {
     // Handlers
     const handleOpenDetails = (user: AdminUser) => {
         setSelectedUser(user);
+        setImpersonationLink(''); // Clear stale links
         setIsDetailsModalOpen(true);
     };
 
@@ -293,7 +290,10 @@ export default function AdminUsers() {
             </div>
 
             {/* User Details Modal (Full Screen-ish) */}
-            <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+            <Dialog open={isDetailsModalOpen} onOpenChange={(open) => {
+                setIsDetailsModalOpen(open);
+                if (!open) setImpersonationLink(''); // Clear on close
+            }}>
                 <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <div className="flex items-center gap-4">
