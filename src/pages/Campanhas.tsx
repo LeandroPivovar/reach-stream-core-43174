@@ -2193,21 +2193,19 @@ export default function Campanhas() {
                 </Card>
                 <Card className="p-4">
                   <div className="flex flex-col">
-                    <span className="text-sm text-muted-foreground">Taxa de Abertura</span>
+                    <span className="text-sm text-muted-foreground">Recebidos</span>
                     <span className="text-2xl font-bold text-blue-500">
-                      {selectedCampaign.sentCount > 0
-                        ? ((selectedCampaign.opensCount / selectedCampaign.sentCount) * 100).toFixed(1)
-                        : 0}%
+                      {(selectedCampaign.deliveredCount || 0).toLocaleString()}
                     </span>
-                    <div className="mt-2 text-xs text-muted-foreground">{(selectedCampaign.opensCount || 0).toLocaleString()} aberturas</div>
+                    <div className="mt-2 text-xs text-muted-foreground">Total de mensagens entregues</div>
                   </div>
                 </Card>
                 <Card className="p-4">
                   <div className="flex flex-col">
                     <span className="text-sm text-muted-foreground">Taxa de Cliques</span>
                     <span className="text-2xl font-bold text-green-500">
-                      {selectedCampaign.opensCount > 0
-                        ? ((selectedCampaign.clicksCount / selectedCampaign.opensCount) * 100).toFixed(1)
+                      {selectedCampaign.deliveredCount > 0
+                        ? ((selectedCampaign.clicksCount / selectedCampaign.deliveredCount) * 100).toFixed(1)
                         : 0}%
                     </span>
                     <div className="mt-2 text-xs text-muted-foreground">{(selectedCampaign.clicksCount || 0).toLocaleString()} cliques</div>
