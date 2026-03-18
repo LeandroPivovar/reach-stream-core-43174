@@ -163,32 +163,9 @@ export default function AdminFinance() {
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Revenue Breakdown */}
-                <Card className="lg:col-span-1 p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                    <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                        <PieChart className="w-5 h-5 text-purple-500" /> Origem da Receita
-                    </h3>
-                    <div className="h-[250px] w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={stats?.monthlyData.slice(-6)}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                                <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
-                                    formatter={(value: number) => formatCurrency(value)}
-                                />
-                                <Legend />
-                                <Bar dataKey="subscriptionRevenue" name="Assinaturas" fill="#8884d8" radius={[4, 4, 0, 0]} stackId="a" />
-                                <Bar dataKey="oneTimeRevenue" name="Vendas Avulsas" fill="#82ca9d" radius={[4, 4, 0, 0]} stackId="a" />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </Card>
-
+            <div className="grid grid-cols-1 gap-8">
                 {/* Projections Chart */}
-                <Card className="lg:col-span-2 p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <Card className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold flex items-center gap-2">
                             <Zap className="w-5 h-5 text-amber-500" /> Projeção de Crescimento (Próximos 6 meses)
@@ -197,7 +174,7 @@ export default function AdminFinance() {
                             Algoritmo Preditivo Linear
                         </Badge>
                     </div>
-                    <div className="h-[250px] w-full">
+                    <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={stats?.projections}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
