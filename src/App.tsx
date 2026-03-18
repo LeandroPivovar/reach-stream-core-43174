@@ -35,6 +35,7 @@ import WebhookLogs from "./pages/admin/WebhookLogs";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminPlans from "./pages/admin/AdminPlans";
+import AdminFinance from "./pages/admin/AdminFinance";
 import AdminSegmentations from "./pages/admin/AdminSegmentations";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
@@ -89,6 +90,7 @@ const App = () => (
             <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin/notifications" element={<ProtectedRoute><AdminNotifications /></ProtectedRoute>} />
             <Route path="/admin/plans" element={<ProtectedRoute><AdminPlans /></ProtectedRoute>} />
+            <Route path="/admin/finance" element={<ProtectedRoute><AdminFinance /></ProtectedRoute>} />
             <Route path="/admin/segmentations" element={<ProtectedRoute><AdminSegmentations /></ProtectedRoute>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
