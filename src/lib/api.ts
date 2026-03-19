@@ -456,9 +456,24 @@ export interface AdminUserStats {
   contactsCount: number;
   campaignsCount: number;
   usage: {
-    emailsSent: number;
-    smsSent: number;
-    whatsappSent: number;
+    emails: {
+      used: number;
+      contracted: number;
+      extra: number;
+      total: number;
+      available: number;
+    };
+    sms: {
+      used: number;
+      contracted: number;
+      extra: number;
+      total: number;
+      available: number;
+    };
+    whatsapp: {
+      used: number;
+      unlimited: boolean;
+    };
   };
   subscription: {
     planName: string;
@@ -1789,6 +1804,7 @@ export interface AdminUser {
   currentPlan?: Plan;
   extraEmailsBalance?: number;
   extraSmsBalance?: number;
+  lastLoginAt?: string;
 }
 
 export const api = new ApiService();
