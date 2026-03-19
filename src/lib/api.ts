@@ -448,6 +448,7 @@ export interface AdminGlobalStats {
   averageLtv: number;
   cac: number;
   ticketByPlan: Record<string, number>;
+  totalAverageTicket: number;
 }
 
 export interface AdminUserStats {
@@ -850,8 +851,12 @@ class ApiService {
     });
   }
 
-  async getAdminGlobalStats(): Promise<AdminGlobalStats> {
-    return this.get<AdminGlobalStats>('/admin/stats/global');
+  async getAdminGlobalStats(month?: number, year?: number): Promise<AdminGlobalStats> {
+    const params = new URLSearchParams();
+    if (month) params.append('month', month.toString());
+    if (year) params.append('year', year.toString());
+    const queryString = params.toString();
+    return this.get<AdminGlobalStats>(`/admin/stats/global${queryString ? `?${queryString}` : ''}`);
   }
 
   async getAdminUserStats(userId: number): Promise<AdminUserStats> {
