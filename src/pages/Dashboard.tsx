@@ -85,10 +85,10 @@ export default function Dashboard() {
                 };
 
                 const [statsData, funnelData, segData, campData, heatData] = await Promise.all([
-                    api.getDashboardStats(30),
-                    api.getFunnelData(30),
+                    api.getDashboardStats(30, filters),
+                    api.getFunnelData(30, filters),
                     api.getSegmentationStats(filters),
-                    api.getCampaignDashboardPerformance(chartPeriod),
+                    api.getCampaignDashboardPerformance(chartPeriod, filters),
                     api.getDashboardHeatmap(filters)
                 ]);
 

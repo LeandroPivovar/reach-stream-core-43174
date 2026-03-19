@@ -752,8 +752,13 @@ class ApiService {
     });
   }
 
-  async getDashboardStats(period: number): Promise<DashboardStats> {
-    return this.request<DashboardStats>(`/sales/dashboard/stats?period=${period}`, {
+  async getDashboardStats(period: number, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<DashboardStats> {
+    const params = new URLSearchParams();
+    params.append('period', period.toString());
+    if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters.productId) params.append('productId', filters.productId.toString());
+
+    return this.request<DashboardStats>(`/sales/dashboard/stats?${params.toString()}`, {
       method: 'GET',
     });
   }
@@ -780,8 +785,13 @@ class ApiService {
     return this.get<PaymentMethodStats[]>(`/sales/dashboard/payment-methods?period=${period}`);
   }
 
-  async getCampaignDashboardPerformance(period: string): Promise<any> {
-    return this.get<any>(`/campaigns/dashboard/performance?period=${period}`);
+  async getCampaignDashboardPerformance(period: string, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('period', period);
+    if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters.productId) params.append('productId', filters.productId.toString());
+
+    return this.get<any>(`/campaigns/dashboard/performance?${params.toString()}`);
   }
 
   async getContactsBySegments(segmentations: (string | SegmentationParam)[]): Promise<Contact[]> {
@@ -932,8 +942,13 @@ class ApiService {
 
   // --- Campaign Contacts ---
 
-  async getFunnelData(period: number): Promise<FunnelStage[]> {
-    return this.request<FunnelStage[]>(`/sales/dashboard/funnel?period=${period}`, {
+  async getFunnelData(period: number, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<FunnelStage[]> {
+    const params = new URLSearchParams();
+    params.append('period', period.toString());
+    if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters.productId) params.append('productId', filters.productId.toString());
+
+    return this.request<FunnelStage[]>(`/sales/dashboard/funnel?${params.toString()}`, {
       method: 'GET',
     });
   }
