@@ -83,6 +83,7 @@ import {
 } from '@/components/ui/popover';
 import { LtvHistory } from '@/components/contacts/LtvHistory';
 import { ManualSaleDialog } from '@/components/contacts/ManualSaleDialog';
+import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
 import * as XLSX from 'xlsx';
 
 // Interface para compatibilidade com a estrutura existente do frontend
@@ -1713,6 +1714,7 @@ export default function Contatos() {
                                 <SegmentationPicker
                                   selectedSegments={filters.segmentations}
                                   onSegmentsChange={(segments) => setFilters({ ...filters, segmentations: segments })}
+                                  onViewContact={setSelectedContactId}
                                   stats={{}}
                                 />
                               </div>
@@ -2284,6 +2286,7 @@ export default function Contatos() {
               <SegmentationPicker
                 selectedSegments={tabSegmentations}
                 onSegmentsChange={setTabSegmentations}
+                onViewContact={setSelectedContactId}
                 stats={segmentationStats}
               />
             </Card>
@@ -3075,212 +3078,14 @@ export default function Contatos() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Dialog Detalhes do Contato com LTV */}
-      <Dialog open={selectedContactId !== null} onOpenChange={(open) => !open && setSelectedContactId(null)}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          {selectedContactId && (
-            <>
-              <DialogHeader>
-                <DialogTitle>Perfil Completo do Lead</DialogTitle>
-                <p className="text-sm text-muted-foreground">
-                  {contacts.find(c => c.id === selectedContactId)?.name}
-                </p>
-              </DialogHeader>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                {/* Coluna 1: Informações Básicas */}
-                <div className="space-y-6">
-                  <Card className="p-4 shadow-sm border-border/50">
-                    <h3 className="text-sm font-semibold mb-4 flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-                      <Users className="w-4 h-4" />
-                      Informações de Contato
-                    </h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between items-center py-1 border-b border-border/30 last:border-0">
-                        <span className="text-muted-foreground">Email:</span>
-                        <span className="font-medium text-right break-all">{contacts.find(c => c.id === selectedContactId)?.email || 'Não informado'}</span>
-                      </div>
-                      <div className="flex justify-between items-center py-1 border-b border-border/30 last:border-0">
-                        <span className="text-muted-foreground">Telefone:</span>
-                        <span className="font-medium">{contacts.find(c => c.id === selectedContactId)?.phone || 'Não informado'}</span>
-                      </div>
-                      <div className="flex justify-between items-center py-1 border-b border-border/30 last:border-0">
-                        <span className="text-muted-foreground">Localização:</span>
-                        <span className="font-medium">
-                          {contacts.find(c => c.id === selectedContactId)?.city || 'N/A'}, {contacts.find(c => c.id === selectedContactId)?.state || 'N/A'}
-                        </span>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-
-                {/* Coluna 2: Score */}
-                {(() => {
-                  const purchaseData = contactPurchases[selectedContactId];
-                  const currentScore = calculateScore(selectedContactId);
-                  const scoreColors = getScoreColor(currentScore);
-                  const purchases = purchaseData?.purchases || [];
-                  const ltv = purchaseData?.ltv || 0;
-
-                  return (
-                    <Card className={`p-4 ${scoreColors.bgLight} border-${scoreColors.border.replace('border-', '')} shadow-sm animate-fade-in relative overflow-hidden`}>
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-                          <Activity className={`w-4 h-4 ${scoreColors.text}`} />
-                          Score do Lead
-                        </h3>
-                        <div className={`flex items-center justify-center w-14 h-14 rounded-full border-2 ${scoreColors.border} bg-white dark:bg-card text-xs font-bold ${scoreColors.text} shadow-sm`}>
-                          {currentScore}/100
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className={`w-14 h-14 rounded-xl ${scoreColors.bg} flex items-center justify-center text-white shadow-md`}>
-                          {React.createElement(scoreColors.icon, { className: "w-7 h-7" })}
-                        </div>
-                        <div>
-                          <div className={`text-2xl font-bold ${scoreColors.text}`}>
-                            {scoreColors.label}
-                          </div>
-                          <p className="text-[11px] text-muted-foreground">
-                            Classificação automática
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center p-2.5 bg-background/40 rounded-lg border border-border/20 text-xs">
-                          <span className="text-muted-foreground flex items-center gap-2">
-                            <ShoppingCart className="w-3 h-3" />
-                            Compras × {scoreConfig.weights.purchases || 0}pts
-                          </span>
-                          <span className="font-bold">{(purchases.length * (scoreConfig.weights.purchases || 0)) || 0} pts</span>
-                        </div>
-                        <div className="flex justify-between items-center p-2.5 bg-background/40 rounded-lg border border-border/20 text-xs">
-                          <span className="text-muted-foreground flex items-center gap-2">
-                            <DollarSign className="w-3 h-3" />
-                            LTV ÷ {scoreConfig.weights.ltvDivisor || 10}
-                          </span>
-                          <span className="font-bold">{Math.round(ltv / (scoreConfig.weights.ltvDivisor || 10)) || 0} pts</span>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })()}
-
-                {/* Coluna 3: LTV Total */}
-                {(() => {
-                  const purchaseData = contactPurchases[selectedContactId];
-                  const ltv = purchaseData?.ltv || 0;
-                  return (
-                    <Card className="p-4 bg-blue-50/50 dark:bg-blue-900/10 border-blue-200/50 dark:border-blue-800/50 shadow-sm animate-fade-in">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-                          <TrendingUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                          LTV Total
-                        </h3>
-                        <Badge className="text-sm px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white border-none shadow-sm">
-                          R$ {ltv.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Valor total gerado pelo cliente através de todas as compras capturadas.
-                      </p>
-                    </Card>
-                  );
-                })()}
-              </div>
-
-              {/* Seção Completa: Histórico de LTV */}
-              <div className="space-y-4 pt-4">
-                <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-                  <TrendingUp className="w-4 h-4" />
-                  Histórico de LTV
-                </h3>
-                <LtvHistory
-                  purchases={contactPurchases[selectedContactId]?.purchases || []}
-                  totalLtv={contactPurchases[selectedContactId]?.ltv || 0}
-                />
-              </div>
-
-              {/* Histórico Completo - Timeline */}
-              <div className="pt-4">
-                <Card className="p-4 shadow-sm border-border/50">
-                  <h3 className="text-sm font-semibold mb-4 flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-                    <Clock className="w-4 h-4" />
-                    Histórico Completo
-                  </h3>
-                  <p className="text-xs text-muted-foreground mb-6">
-                    Linha do tempo com todas as interações e compras do lead.
-                  </p>
-
-                  {selectedContactId && contactPurchases[selectedContactId] && contactPurchases[selectedContactId].purchases.length > 0 ? (
-                    <div className="relative space-y-6">
-                      {/* Timeline line */}
-                      <div className="absolute left-[15px] top-2 bottom-2 w-[0.5px] bg-border/60"></div>
-
-                      {[...contactPurchases[selectedContactId].purchases]
-                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                        .map((purchase) => {
-                          const event = {
-                            id: purchase.id,
-                            type: 'purchase' as const,
-                            date: purchase.date,
-                            description: `Compra realizada: ${purchase.product}`,
-                            metadata: { value: purchase.value, product: purchase.product }
-                          };
-
-                          return (
-                            <div key={event.id} className="relative flex gap-4 pl-1">
-                              {/* Icon circle */}
-                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center shadow-sm z-10">
-                                <ShoppingCart className="w-4 h-4 text-white" />
-                              </div>
-
-                              {/* Event content */}
-                              <div className="flex-1 pb-2">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="outline" className="text-[10px] uppercase font-bold text-green-600 border-green-200 bg-green-50/50">
-                                    Compra
-                                  </Badge>
-                                  <span className="text-[11px] text-muted-foreground font-medium">
-                                    {new Date(event.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                  </span>
-                                </div>
-
-                                <div className="text-sm font-semibold text-foreground">
-                                  {event.description}
-                                </div>
-
-                                {event.metadata && (
-                                  <div className="mt-1 text-[11px] text-muted-foreground bg-muted/30 p-2 rounded-md border border-border/20 inline-block min-w-[150px]">
-                                    <div className="flex justify-between gap-4">
-                                      <span>Valor:</span>
-                                      <span className="font-bold text-green-600">R$ {event.metadata.value.toFixed(2)}</span>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  ) : (
-                    <div className="py-12 flex flex-col items-center justify-center text-center opacity-60">
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                        <Activity className="w-6 h-6 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm font-medium text-muted-foreground">Nenhuma interação registrada ainda</p>
-                      <p className="text-xs text-muted-foreground mt-1">As atividades aparecerão aqui à medida que ocorrerem.</p>
-                    </div>
-                  )}
-                </Card>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ContactDetailsModal
+        isOpen={selectedContactId !== null}
+        onClose={() => setSelectedContactId(null)}
+        contactId={selectedContactId}
+        contacts={contacts}
+        contactPurchases={contactPurchases}
+        scoreConfig={scoreConfig}
+      />
 
       {/* Modal Novo/Editar Grupo */}
       <Dialog open={isNewGroupOpen || isEditGroupOpen} onOpenChange={(open) => {

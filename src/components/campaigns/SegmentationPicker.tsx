@@ -24,10 +24,11 @@ interface SegmentationOption {
 interface SegmentationPickerProps {
   selectedSegments: (string | SegmentationParam)[];
   onSegmentsChange: (segments: (string | SegmentationParam)[]) => void;
+  onViewContact?: (contactId: number) => void;
   stats?: Record<string, number>;
 }
 
-export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats = {} }: SegmentationPickerProps) {
+export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewContact, stats = {} }: SegmentationPickerProps) {
   const [previewContacts, setPreviewContacts] = React.useState<Contact[]>([]);
   const [isLoadingPreview, setIsLoadingPreview] = React.useState(false);
 
@@ -109,7 +110,7 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
         <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Mín. Compras:</Label>
           <Input
-            type="number"
+            type="text"
             className="h-8 w-20 text-xs"
             value={params?.minPurchases !== undefined ? params.minPurchases : 1}
             onChange={(e) => {
@@ -126,11 +127,11 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
         <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Ticket Mín. (R$):</Label>
           <Input
-            type="number"
+            type="text"
             className="h-8 w-24 text-xs"
             value={params?.minTicket !== undefined ? params.minTicket : 500}
             onChange={(e) => {
-              const val = parseFloat(e.target.value);
+              const val = parseFloat(e.target.value.replace(',', '.'));
               updateParams(segmentId, { minTicket: isNaN(val) ? 0 : val });
             }}
           />
@@ -144,7 +145,7 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
         <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Dias:</Label>
           <Input
-            type="number"
+            type="text"
             className="h-8 w-20 text-xs"
             value={params?.days !== undefined ? params.days : defaultDays}
             onChange={(e) => {
@@ -338,7 +339,21 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, stats =
                         <TableCell className="py-2 text-xs font-medium">{contact.name}</TableCell>
                         <TableCell className="py-2 text-xs text-muted-foreground">{contact.email || '-'}</TableCell>
                         <TableCell className="py-2 text-xs text-muted-foreground">
-                          {contact.city ? `${contact.city}, ${contact.state}` : contact.state || '-'}
+                          <div className="flex items-center justify-between gap-2">
+                            <span>{contact.city ? `${contact.city}, ${contact.state}` : contact.state || '-'}</span>
+                            {onViewContact && (
+                              <Badge
+                                variant="outline"
+                                className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors text-[10px] py-0 h-5 px-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onViewContact(contact.id);
+                                }}
+                              >
+                                Ver detalhes
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="py-2 text-right">
                           <Badge variant="outline" className="text-[10px] py-0 h-4 px-1.5 uppercase font-bold">
