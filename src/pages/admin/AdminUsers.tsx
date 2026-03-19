@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserCog, MoreVertical, Edit, ShieldAlert, CheckCircle, XCircle, CalendarClock, User, BarChart3, CreditCard, Key, ExternalLink, MessageSquare, Mail, Smartphone } from 'lucide-react';
+import { UserCog, MoreVertical, Edit, ShieldAlert, CheckCircle, XCircle, CalendarClock, User, BarChart3, CreditCard, Key, ExternalLink, MessageSquare, Mail, Smartphone, TrendingUp } from 'lucide-react';
 import { api, AdminUser, Plan, AdminUserStats } from '@/lib/api';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -312,7 +312,7 @@ export default function AdminUsers() {
                     ) : (
                         <div className="grid gap-6 py-4">
                             {/* Stats Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                                 <Card>
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -321,6 +321,17 @@ export default function AdminUsers() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="text-2xl font-bold">R$ {userStats?.billingAmount.toFixed(2)}</div>
+                                    </CardContent>
+                                </Card>
+                                <Card className="bg-green-50/50 border-green-100">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm font-medium text-green-700 flex items-center gap-2">
+                                            <TrendingUp className="h-4 w-4" /> Lucro Gerado
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold text-green-700">R$ {userStats?.lifetimeProfit.toFixed(2)}</div>
+                                        <p className="text-[10px] text-green-600/70 font-medium italic">Faturamento - Custos Ops.</p>
                                     </CardContent>
                                 </Card>
                                 <Card>

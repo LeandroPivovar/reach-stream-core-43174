@@ -453,6 +453,7 @@ export interface AdminGlobalStats {
 
 export interface AdminUserStats {
   billingAmount: number;
+  lifetimeProfit: number;
   contactsCount: number;
   campaignsCount: number;
   usage: {
@@ -1812,7 +1813,8 @@ export const api = new ApiService();
 export interface Plan {
   id: number;
   name: string;
-  price: number; // or string if your db gives back decimal string
+  price: number;
+  priceYearly: number;
   interval: string;
   features: string[];
   limits: {
@@ -1820,6 +1822,7 @@ export interface Plan {
     emails: number;
     whatsapp: boolean;
     sms: number;
+    internalUsers?: number;
     advancedCampaigns?: number;
   };
   active: boolean;

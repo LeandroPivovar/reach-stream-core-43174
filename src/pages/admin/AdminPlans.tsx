@@ -38,6 +38,7 @@ export default function AdminPlans() {
     const [formData, setFormData] = useState<Partial<Plan>>({
         name: '',
         price: 0,
+        priceYearly: 0,
         interval: 'monthly',
         features: [],
         limits: {
@@ -45,6 +46,7 @@ export default function AdminPlans() {
             emails: 5000,
             whatsapp: false,
             sms: 0,
+            internalUsers: 1,
             advancedCampaigns: 0
         },
         active: true
@@ -93,6 +95,7 @@ export default function AdminPlans() {
             setFormData({
                 name: '',
                 price: 0,
+                priceYearly: 0,
                 interval: 'monthly',
                 features: [],
                 limits: {
@@ -100,6 +103,7 @@ export default function AdminPlans() {
                     emails: 5000,
                     whatsapp: false,
                     sms: 0,
+                    internalUsers: 1,
                     advancedCampaigns: 0
                 },
                 active: true
@@ -176,7 +180,10 @@ export default function AdminPlans() {
                                         <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{plan.name}</h3>
                                         <p className="text-2xl font-bold text-primary mt-1">
                                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plan.price)}
-                                            <span className="text-xs text-slate-500 font-normal">/{plan.interval === 'monthly' ? 'mês' : 'ano'}</span>
+                                            <span className="text-xs text-slate-500 font-normal">/mês</span>
+                                        </p>
+                                        <p className="text-sm font-medium text-slate-500">
+                                            Anual: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plan.priceYearly)}
                                         </p>
                                     </div>
                                     <Badge variant={plan.active ? "default" : "secondary"}>
@@ -200,6 +207,10 @@ export default function AdminPlans() {
                                     <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                                         <ShieldCheck className="w-4 h-4 text-purple-500" />
                                         <span>{plan.limits.sms.toLocaleString()} SMS inclusos</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                        <Users className="w-4 h-4 text-teal-500" />
+                                        <span>{plan.limits.internalUsers?.toLocaleString() || '1'} Clientes p/ Cadastro</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
                                         <Zap className="w-4 h-4 text-rose-500" />
@@ -247,15 +258,27 @@ export default function AdminPlans() {
                                     placeholder="Ex: Plano Pro"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="price">Valor (R$)</Label>
-                                <Input
-                                    id="price"
-                                    type="number"
-                                    step="0.01"
-                                    value={formData.price}
-                                    onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="price">Valor Mensal (R$)</Label>
+                                    <Input
+                                        id="price"
+                                        type="number"
+                                        step="0.01"
+                                        value={formData.price}
+                                        onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="priceYearly">Valor Anual (R$)</Label>
+                                    <Input
+                                        id="priceYearly"
+                                        type="number"
+                                        step="0.01"
+                                        value={formData.priceYearly}
+                                        onChange={e => setFormData({ ...formData, priceYearly: parseFloat(e.target.value) })}
+                                    />
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label>Intervalo</Label>
@@ -307,6 +330,15 @@ export default function AdminPlans() {
                                             type="number"
                                             value={formData.limits?.sms}
                                             onChange={e => handleLimitChange('sms', parseInt(e.target.value))}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="limit-users">Nº Usuários Internos (Clientes)</Label>
+                                        <Input
+                                            id="limit-users"
+                                            type="number"
+                                            value={formData.limits?.internalUsers}
+                                            onChange={e => handleLimitChange('internalUsers', parseInt(e.target.value))}
                                         />
                                     </div>
                                     <div className="space-y-2">
