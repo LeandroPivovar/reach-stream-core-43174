@@ -849,8 +849,9 @@ class ApiService {
 
   // --- Admin User Methods ---
 
-  async getAdminUsers(): Promise<AdminUser[]> {
-    return this.get<AdminUser[]>('/admin/users');
+  async getAdminUsers(planId?: number): Promise<AdminUser[]> {
+    const url = planId ? `/admin/users?planId=${planId}` : '/admin/users';
+    return this.get<AdminUser[]>(url);
   }
 
   async updateAdminUser(id: number, data: Partial<AdminUser>): Promise<AdminUser> {
@@ -1848,6 +1849,19 @@ export interface AdminFinanceStats {
   ytdRevenue: number;
   avgMargin: number;
   growthRate: number;
+  revenueByPlan: { name: string; value: number }[];
+  inadimplency: {
+    totalAmount: number;
+    count: number;
+    recentInvoices: {
+      id: number;
+      userName: string;
+      amount: number;
+      status: string;
+      date: string;
+    }[];
+  };
+  cancellationsByReason: { reason: string; count: number }[];
   settings?: {
     costSms: number;
     costEmail: number;
