@@ -37,6 +37,7 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminPlans from "./pages/admin/AdminPlans";
 import AdminFinance from "./pages/admin/AdminFinance";
 import AdminSegmentations from "./pages/admin/AdminSegmentations";
+import AdminCapacity from "./pages/admin/AdminCapacity";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
 
@@ -91,6 +92,7 @@ const App = () => (
             <Route path="/admin/notifications" element={<ProtectedRoute><AdminNotifications /></ProtectedRoute>} />
             <Route path="/admin/plans" element={<ProtectedRoute><AdminPlans /></ProtectedRoute>} />
             <Route path="/admin/finance" element={<ProtectedRoute><AdminFinance /></ProtectedRoute>} />
+            <Route path="/admin/capacity" element={<ProtectedRoute><AdminCapacity /></ProtectedRoute>} />
             <Route path="/admin/segmentations" element={<ProtectedRoute><AdminSegmentations /></ProtectedRoute>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

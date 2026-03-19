@@ -14,7 +14,8 @@ import {
     ShieldCheck,
     Bell,
     Filter,
-    TrendingUp
+    TrendingUp,
+    Activity
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -25,6 +26,7 @@ const adminMenuItems = [
     { title: 'Segmentações', href: '/admin/segmentations', icon: Filter },
     { title: 'Planos', href: '/admin/plans', icon: ShieldCheck },
     { title: 'Financeiro', href: '/admin/finance', icon: TrendingUp },
+    { title: 'Capacidade & Consumo', href: '/admin/capacity', icon: Activity },
     { title: 'Notificações', href: '/admin/notifications', icon: Bell },
     { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];

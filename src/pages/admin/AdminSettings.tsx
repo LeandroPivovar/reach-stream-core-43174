@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Settings, Shield, Globe, CreditCard, Save, RefreshCw, Mail } from 'lucide-react';
+import { Settings, Shield, Globe, CreditCard, Save, RefreshCw, Mail, Cpu } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -116,6 +116,9 @@ export default function AdminSettings() {
                     </TabsTrigger>
                     <TabsTrigger value="security" className="flex items-center gap-2">
                         <Shield className="w-4 h-4" /> Segurança
+                    </TabsTrigger>
+                    <TabsTrigger value="platform" className="flex items-center gap-2">
+                        <Cpu className="w-4 h-4" /> Plataforma
                     </TabsTrigger>
                 </TabsList>
 
@@ -236,20 +239,44 @@ export default function AdminSettings() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="security" className="space-y-4">
-                    <Card className="border-border/60 shadow-sm opacity-80 bg-muted/20">
+                <TabsContent value="platform" className="space-y-4">
+                    <Card className="border-border/60 shadow-sm">
                         <CardHeader>
-                            <CardTitle className="text-xl">Segurança e Tokens de Plataforma</CardTitle>
+                            <CardTitle className="text-xl">Limites Globais da Plataforma</CardTitle>
                             <CardDescription>
-                                Gerencie limites e tokens de segurança globais.
+                                Configure a capacidade total contratada com as provedoras de Email e SMS.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4 py-8 text-center">
-                            <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                                Nenhuma configuração de segurança global pendente para este módulo.
-                            </p>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="PROVIDER_EMAIL_LIMIT" className="text-sm font-semibold">Limite Global de E-mail (Mensal)</Label>
+                                <Input
+                                    id="PROVIDER_EMAIL_LIMIT"
+                                    type="number"
+                                    value={localSettings['PROVIDER_EMAIL_LIMIT'] || '1000000'}
+                                    onChange={(e) => handleInputChange('PROVIDER_EMAIL_LIMIT', e.target.value)}
+                                    placeholder="1000000"
+                                />
+                                <p className="text-[12px] text-muted-foreground">Total de envios contratado com a provedora de e-mail por mês.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="PROVIDER_SMS_LIMIT" className="text-sm font-semibold">Limite Global de SMS (Mensal)</Label>
+                                <Input
+                                    id="PROVIDER_SMS_LIMIT"
+                                    type="number"
+                                    value={localSettings['PROVIDER_SMS_LIMIT'] || '100000'}
+                                    onChange={(e) => handleInputChange('PROVIDER_SMS_LIMIT', e.target.value)}
+                                    placeholder="100000"
+                                />
+                                <p className="text-[12px] text-muted-foreground">Total de mensagens contratado com a provedora de SMS por mês.</p>
+                            </div>
                         </CardContent>
+                        <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
+                            <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
+                                {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Salvar Configurações
+                            </Button>
+                        </CardFooter>
                     </Card>
                 </TabsContent>
             </Tabs>
