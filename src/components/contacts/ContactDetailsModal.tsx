@@ -145,7 +145,7 @@ export function ContactDetailsModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-none w-screen h-screen p-6 rounded-none left-0 top-0 translate-x-0 translate-y-0 overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Perfil Completo do Lead</DialogTitle>
                     <p className="text-sm text-muted-foreground">{contact.name}</p>
