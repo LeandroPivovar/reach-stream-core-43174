@@ -82,7 +82,8 @@ import {
   DollarSign,
   Upload,
   X,
-  Image
+  Image,
+  Filter
 } from 'lucide-react';
 
 export default function Campanhas() {
@@ -2468,23 +2469,6 @@ export default function Campanhas() {
                     <p className="font-medium">Excel</p>
                     <p className="text-xs text-muted-foreground">
                       Planilha do Microsoft Excel (.xlsx)
-                    </p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card
-                className="p-4 cursor-pointer hover:border-primary transition-colors"
-                onClick={() => handleExport('pdf')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center">
-                    <Download className="w-5 h-5 text-red-500" />
-                  </div>
-                  <div>
-                    <p className="font-medium">PDF</p>
-                    <p className="text-xs text-muted-foreground">
-                      Documento portátil para impressão
                     </p>
                   </div>
                 </div>
