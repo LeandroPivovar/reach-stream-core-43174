@@ -50,6 +50,7 @@ import {
   Check,
   ImagePlus,
   Loader2,
+  Plus,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -142,6 +143,10 @@ export default function Produtos() {
     active: true,
     gallery: [],
   });
+
+  const [isNewCategoryInputVisible, setIsNewCategoryInputVisible] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -283,6 +288,52 @@ export default function Produtos() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleCreateCategory = async (isEdit: boolean) => {
+    if (!newCategoryName.trim()) {
+      toast({
+        title: 'Atenção',
+        description: 'Digite um nome para a categoria',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setIsCreatingCategory(true);
+      const category = await api.createCategory({
+        name: newCategoryName.trim(),
+        active: true
+      });
+
+      toast({
+        title: 'Categoria criada',
+        description: `A categoria "${category.name}" foi criada com sucesso.`,
+      });
+
+      // Recarregar categorias
+      await loadCategories();
+
+      // Selecionar a nova categoria no produto
+      if (isEdit) {
+        setEditProduct(prev => ({ ...prev, categoryId: category.name }));
+      } else {
+        setNewProduct(prev => ({ ...prev, categoryId: category.name }));
+      }
+
+      // Limpar estados
+      setNewCategoryName('');
+      setIsNewCategoryInputVisible(false);
+    } catch (error) {
+      toast({
+        title: 'Erro ao criar categoria',
+        description: error instanceof Error ? error.message : 'Não foi possível criar a categoria',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingCategory(false);
     }
   };
 
@@ -1372,7 +1423,48 @@ export default function Produtos() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="product-category">Categoria</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="product-category">Categoria</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-primary"
+                  onClick={() => setIsNewCategoryInputVisible(!isNewCategoryInputVisible)}
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Nova Categoria
+                </Button>
+              </div>
+
+              {isNewCategoryInputVisible && (
+                <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/10 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Input
+                    placeholder="Nome da nova categoria"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    className="h-8 text-sm"
+                    autoFocus
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 px-3"
+                    onClick={() => handleCreateCategory(false)}
+                    disabled={isCreatingCategory || !newCategoryName.trim()}
+                  >
+                    {isCreatingCategory ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Criar'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2"
+                    onClick={() => setIsNewCategoryInputVisible(false)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+
               <Select
                 value={newProduct.categoryId}
                 onValueChange={(value) => setNewProduct({ ...newProduct, categoryId: value })}
@@ -1710,7 +1802,48 @@ export default function Produtos() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="edit-product-category">Categoria</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="edit-product-category">Categoria</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs text-primary"
+                  onClick={() => setIsNewCategoryInputVisible(!isNewCategoryInputVisible)}
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Nova Categoria
+                </Button>
+              </div>
+
+              {isNewCategoryInputVisible && (
+                <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/10 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <Input
+                    placeholder="Nome da nova categoria"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    className="h-8 text-sm"
+                    autoFocus
+                  />
+                  <Button
+                    size="sm"
+                    className="h-8 px-3"
+                    onClick={() => handleCreateCategory(true)}
+                    disabled={isCreatingCategory || !newCategoryName.trim()}
+                  >
+                    {isCreatingCategory ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Criar'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2"
+                    onClick={() => setIsNewCategoryInputVisible(false)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+
               <Select
                 value={editProduct.categoryId}
                 onValueChange={(value) => setEditProduct({ ...editProduct, categoryId: value })}
