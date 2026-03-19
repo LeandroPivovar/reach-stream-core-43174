@@ -141,6 +141,17 @@ export default function Campanhas() {
     scheduleTime: ''
   });
 
+  const [filters, setFilters] = useState({
+    startDate: undefined as Date | undefined,
+    endDate: undefined as Date | undefined,
+    minSends: '',
+    maxSends: '',
+    channel: 'all',
+    minRevenue: '',
+    maxRevenue: ''
+  });
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -177,7 +188,7 @@ export default function Campanhas() {
   useEffect(() => {
     loadCampaigns();
     loadExternalData();
-  }, []);
+  }, [filters]);
 
   const loadExternalData = async () => {
     try {
@@ -199,7 +210,15 @@ export default function Campanhas() {
   const loadCampaigns = async () => {
     try {
       setIsLoading(true);
-      const data = await api.getCampaigns();
+      const data = await api.getCampaigns({
+        startDate: filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : undefined,
+        endDate: filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : undefined,
+        minSends: filters.minSends ? parseInt(filters.minSends) : undefined,
+        maxSends: filters.maxSends ? parseInt(filters.maxSends) : undefined,
+        channel: filters.channel !== 'all' ? filters.channel : undefined,
+        minRevenue: filters.minRevenue ? parseFloat(filters.minRevenue) : undefined,
+        maxRevenue: filters.maxRevenue ? parseFloat(filters.maxRevenue) : undefined,
+      });
       setCampaigns(data);
     } catch (error) {
       console.error('Erro ao carregar campanhas:', error);
@@ -532,15 +551,239 @@ export default function Campanhas() {
     setIsReportOpen(true);
   };
 
-  const handleExport = (format: 'csv' | 'excel' | 'pdf') => {
-    console.log('Exporting campaigns as:', format);
+  const handleExport = (format: 'csv' | 'excel') => {
+    try {
+      if (campaigns.length === 0) {
+        toast({
+          title: 'Aviso',
+          description: 'Não há dados para exportar com os filtros atuais.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const dataToExport = campaigns.map(c => ({
+        'Nome': c.name,
+        'Canais': c.channel,
+        'Status': c.status,
+        'Destinatários': c.recipientsCount || 0,
+        'Enviados': c.sentCount || 0,
+        'Recebidos': c.deliveredCount || 0,
+        'Cliques': c.clicksCount || 0,
+        'Faturamento': Number(c.revenue || 0),
+        'Data de Criação': new Date(c.createdAt).toLocaleDateString('pt-BR'),
+        'Complexidade': c.complexity
+      }));
+
+      const XLSX = (window as any).XLSX || import('xlsx');
+
+      import('xlsx').then((XLSX) => {
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+        // Formacting (Excel only)
+        if (format === 'excel') {
+          // Add some basic column widths
+          ws['!cols'] = [
+            { wch: 30 }, // Nome
+            { wch: 15 }, // Canais
+            { wch: 15 }, // Status
+            { wch: 15 }, // Destinatários
+            { wch: 15 }, // Enviados
+            { wch: 15 }, // Recebidos
+            { wch: 15 }, // Cliques
+            { wch: 15 }, // Faturamento
+            { wch: 20 }, // Data
+            { wch: 15 }, // Complexidade
+          ];
+        }
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Campanhas');
+
+        const fileName = `campanhas_${new Date().toISOString().slice(0, 10)}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+        XLSX.writeFile(wb, fileName, { bookType: format === 'excel' ? 'xlsx' : 'csv' });
+
+        toast({
+          title: 'Exportação concluída',
+          description: `O arquivo ${fileName} foi gerado com sucesso.`,
+        });
+      });
+
+    } catch (error) {
+      console.error('Erro na exportação:', error);
+      toast({
+        title: 'Erro na exportação',
+        description: 'Não foi possível gerar o arquivo.',
+        variant: 'destructive',
+      });
+    }
     setIsExportOpen(false);
   };
 
   const actions = (
     <>
-      <HeaderActions.Filter onClick={() => console.log('Filter clicked')} />
-      <HeaderActions.Export onClick={() => setIsExportOpen(true)} />
+      <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm" className="h-9">
+            <Filter className={cn("w-4 h-4 mr-2", (filters.startDate || filters.channel !== 'all' || filters.minSends || filters.minRevenue) && "text-primary")} />
+            Filtros
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 p-4" align="end">
+          <div className="space-y-4">
+            <h4 className="font-medium leading-none mb-2">Filtrar Campanhas</h4>
+
+            <div className="space-y-2">
+              <Label>Período</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full text-xs">
+                      {filters.startDate ? format(filters.startDate, 'dd/MM/yy') : "Início"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={filters.startDate}
+                      onSelect={(date) => setFilters({ ...filters, startDate: date })}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full text-xs">
+                      {filters.endDate ? format(filters.endDate, 'dd/MM/yy') : "Fim"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={filters.endDate}
+                      onSelect={(date) => setFilters({ ...filters, endDate: date })}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Canal</Label>
+              <Select value={filters.channel} onValueChange={(val) => setFilters({ ...filters, channel: val })}>
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Todos os canais" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os canais</SelectItem>
+                  <SelectItem value="email">E-mail</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Quantidade de Envios</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Min"
+                  className="h-8 text-xs"
+                  type="number"
+                  value={filters.minSends}
+                  onChange={(e) => setFilters({ ...filters, minSends: e.target.value })}
+                />
+                <Input
+                  placeholder="Max"
+                  className="h-8 text-xs"
+                  type="number"
+                  value={filters.maxSends}
+                  onChange={(e) => setFilters({ ...filters, maxSends: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Faturamento (R$)</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="Min"
+                  className="h-8 text-xs"
+                  type="number"
+                  value={filters.minRevenue}
+                  onChange={(e) => setFilters({ ...filters, minRevenue: e.target.value })}
+                />
+                <Input
+                  placeholder="Max"
+                  className="h-8 text-xs"
+                  type="number"
+                  value={filters.maxRevenue}
+                  onChange={(e) => setFilters({ ...filters, maxRevenue: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-muted-foreground"
+              onClick={() => setFilters({
+                startDate: undefined,
+                endDate: undefined,
+                minSends: '',
+                maxSends: '',
+                channel: 'all',
+                minRevenue: '',
+                maxRevenue: ''
+              })}
+            >
+              <X className="w-3 h-3 mr-1" />
+              Limpar Filtros
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="h-9">
+            <Download className="w-4 h-4 mr-2" />
+            Exportar
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Exportar Campanhas</DialogTitle>
+            <DialogDescription>
+              Escolha o formato oficial para exportar seus dados.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <Button
+              variant="outline"
+              className="flex flex-col items-center justify-center h-24 space-y-2 border-2 hover:border-primary hover:bg-primary/5"
+              onClick={() => handleExport('excel')}
+            >
+              <div className="p-2 bg-green-100 text-green-600 rounded-lg">
+                <Download className="w-6 h-6" />
+              </div>
+              <span>Excel (.xlsx)</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="flex flex-col items-center justify-center h-24 space-y-2 border-2 hover:border-primary hover:bg-primary/5"
+              onClick={() => handleExport('csv')}
+            >
+              <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                <Download className="w-6 h-6" />
+              </div>
+              <span>CSV (.csv)</span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <HeaderActions.Add onClick={() => setIsNewCampaignOpen(true)}>
         Nova Campanha
       </HeaderActions.Add>

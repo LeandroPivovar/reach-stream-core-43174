@@ -39,8 +39,10 @@ import {
 import { CustomerJourney } from '@/components/dashboard/CustomerJourney';
 import { CustomerHeatmap } from '@/components/dashboard/CustomerHeatmap';
 import { api } from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
+    const navigate = useNavigate();
     const [chartPeriod, setChartPeriod] = useState('semanal');
 
     // Simulação de integração ativa - em produção, isso viria de uma API
@@ -444,7 +446,7 @@ export default function Dashboard() {
                 <Card className="p-6">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold">Campanhas Recentes</h3>
-                        <Button variant="outline">
+                        <Button variant="outline" onClick={() => navigate('/campanhas')}>
                             Ver todas
                         </Button>
                     </div>

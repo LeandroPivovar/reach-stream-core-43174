@@ -1379,8 +1379,25 @@ class ApiService {
   }
 
   // Campaigns
-  async getCampaigns(): Promise<Campaign[]> {
-    return this.request<Campaign[]>('/campaigns', {
+  async getCampaigns(filters: {
+    startDate?: string;
+    endDate?: string;
+    minSends?: number;
+    maxSends?: number;
+    channel?: string;
+    minRevenue?: number;
+    maxRevenue?: number;
+  } = {}): Promise<Campaign[]> {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.append('startDate', filters.startDate);
+    if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.minSends !== undefined) params.append('minSends', filters.minSends.toString());
+    if (filters.maxSends !== undefined) params.append('maxSends', filters.maxSends.toString());
+    if (filters.channel) params.append('channel', filters.channel);
+    if (filters.minRevenue !== undefined) params.append('minRevenue', filters.minRevenue.toString());
+    if (filters.maxRevenue !== undefined) params.append('maxRevenue', filters.maxRevenue.toString());
+
+    return this.request<Campaign[]>(`/campaigns?${params.toString()}`, {
       method: 'GET',
     });
   }
