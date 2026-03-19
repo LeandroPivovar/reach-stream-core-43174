@@ -428,6 +428,29 @@ export interface Pixel {
   updatedAt: string;
 }
 
+export interface AdminCapacityStats {
+  email: {
+    consumed: number;
+    providerLimit: number;
+    clientsContracted: number;
+    usagePercent: number;
+    daysRemaining: number;
+    projection: number;
+    marginOfSafety: number;
+    isAlert: boolean;
+  };
+  sms: {
+    consumed: number;
+    providerLimit: number;
+    clientsContracted: number;
+    usagePercent: number;
+    daysRemaining: number;
+    projection: number;
+    marginOfSafety: number;
+    isAlert: boolean;
+  };
+}
+
 export interface SystemSetting {
   id: number;
   key: string;
@@ -848,6 +871,10 @@ class ApiService {
   }
 
   // --- Admin User Methods ---
+
+  async getAdminCapacityStats(): Promise<AdminCapacityStats> {
+    return this.get<AdminCapacityStats>('/admin/capacity/stats');
+  }
 
   async getAdminUsers(planId?: number): Promise<AdminUser[]> {
     const url = planId ? `/admin/users?planId=${planId}` : '/admin/users';
