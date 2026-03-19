@@ -16,7 +16,9 @@ import {
     Activity,
     Zap,
     Save,
-    Settings as SettingsIcon
+    Settings as SettingsIcon,
+    ShieldAlert,
+    XCircle
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -205,23 +207,73 @@ export default function AdminFinance() {
                     </div>
                 </Card>
 
-                {/* MRR Trend Chart */}
+                {/* Revenue by Plan Pie Chart */}
                 <Card className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                     <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-blue-500" /> Tendência de Receita Recorrente (MRR)
+                        <PieChart className="w-5 h-5 text-indigo-500" /> Receita por Plano
                     </h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={stats?.monthlyData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                                <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `R$${value / 1000}k`} />
+                            <BarChart data={stats?.revenueByPlan} layout="vertical">
+                                <XAxis type="number" hide />
+                                <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={12} width={100} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
                                     formatter={(value: number) => formatCurrency(value)}
                                 />
-                                <Line type="stepAfter" dataKey="subscriptionRevenue" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }} />
-                            </LineChart>
+                                <Bar dataKey="value" fill="var(--primary)" radius={[0, 4, 4, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* Inadimplency Table */}
+                <Card className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <ShieldAlert className="w-5 h-5 text-rose-500" /> Relatório de Inadimplência
+                        </h3>
+                        <Badge variant="destructive">
+                            Total: {formatCurrency(stats?.inadimplency.totalAmount || 0)}
+                        </Badge>
+                    </div>
+                    <div className="space-y-4">
+                        {stats?.inadimplency.recentInvoices.map((inv) => (
+                            <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
+                                <div>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{inv.userName}</p>
+                                    <p className="text-xs text-slate-500">{new Date(inv.date).toLocaleDateString('pt-BR')}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-bold text-rose-500">{formatCurrency(inv.amount)}</p>
+                                    <Badge variant="outline" className="text-[10px] uppercase">{inv.status}</Badge>
+                                </div>
+                            </div>
+                        ))}
+                        {stats?.inadimplency.recentInvoices.length === 0 && (
+                            <p className="text-center text-sm text-slate-500 py-8">Nenhuma fatura pendente encontrada.</p>
+                        )}
+                    </div>
+                </Card>
+
+                {/* Cancellations Chart */}
+                <Card className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                        <XCircle className="w-5 h-5 text-amber-500" /> Cancelamentos por Motivo
+                    </h3>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={stats?.cancellationsByReason}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                                <XAxis dataKey="reason" stroke="#94a3b8" fontSize={10} angle={-45} textAnchor="end" height={60} />
+                                <YAxis stroke="#94a3b8" fontSize={12} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: '#fff' }}
+                                />
+                                <Bar dataKey="count" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                            </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </Card>

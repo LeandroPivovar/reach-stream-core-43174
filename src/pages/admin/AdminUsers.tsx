@@ -40,10 +40,12 @@ export default function AdminUsers() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
 
+    const [planFilter, setPlanFilter] = useState<string>('all');
+
     // Queries
     const { data: users, isLoading } = useQuery({
-        queryKey: ['admin-users'],
-        queryFn: () => api.getAdminUsers(),
+        queryKey: ['admin-users', planFilter],
+        queryFn: () => api.getAdminUsers(planFilter !== 'all' ? parseInt(planFilter) : undefined),
     });
 
     const { data: plans } = useQuery({
@@ -198,6 +200,24 @@ export default function AdminUsers() {
             title="Administração de Usuários"
             subtitle="Gerencie os usuários cadastrados na plataforma e seus respectivos planos."
         >
+            <div className="flex justify-end mb-4">
+                <div className="w-64">
+                    <Select value={planFilter} onValueChange={setPlanFilter}>
+                        <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                            <SelectValue placeholder="Filtrar por Plano" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos os Planos</SelectItem>
+                            {plans?.map((plan: any) => (
+                                <SelectItem key={plan.id} value={plan.id.toString()}>
+                                    {plan.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
             <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <Table>
                     <TableHeader>
@@ -699,6 +719,6 @@ export default function AdminUsers() {
                 </DialogContent>
             </Dialog>
 
-        </AdminLayout>
+        </AdminLayout >
     );
 }
