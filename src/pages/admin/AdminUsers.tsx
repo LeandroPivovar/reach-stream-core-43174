@@ -206,6 +206,7 @@ export default function AdminUsers() {
                             <TableHead>Email</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Plano Atual</TableHead>
+                            <TableHead>Último Login</TableHead>
                             <TableHead>Data Cadastro</TableHead>
                             <TableHead className="text-right">Ações</TableHead>
                         </TableRow>
@@ -227,6 +228,19 @@ export default function AdminUsers() {
                                         </Badge>
                                     ) : (
                                         <span className="text-muted-foreground text-sm">Sem plano</span>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    {user.lastLoginAt ? (
+                                        new Date(user.lastLoginAt).toLocaleString('pt-BR', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })
+                                    ) : (
+                                        <span className="text-muted-foreground italic">Nunca</span>
                                     )}
                                 </TableCell>
                                 <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
@@ -345,28 +359,87 @@ export default function AdminUsers() {
                             </div>
 
                             {/* Usage Volumes */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg border border-border">
-                                    <Mail className="h-5 w-5 text-blue-500" />
-                                    <div>
-                                        <p className="text-xs text-muted-foreground uppercase font-bold">Emails Enviados (Mês)</p>
-                                        <p className="text-xl font-mono">{userStats?.usage.emailsSent}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg border border-border">
-                                    <Smartphone className="h-5 w-5 text-green-500" />
-                                    <div>
-                                        <p className="text-xs text-muted-foreground uppercase font-bold">SMS Enviados (Mês)</p>
-                                        <p className="text-xl font-mono">{userStats?.usage.smsSent}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg border border-border">
-                                    <MessageSquare className="h-5 w-5 text-purple-500" />
-                                    <div>
-                                        <p className="text-xs text-muted-foreground uppercase font-bold">WhatsApp (Mês)</p>
-                                        <p className="text-xl font-mono">{userStats?.usage.whatsappSent}</p>
-                                    </div>
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Email Usage */}
+                                <Card className="bg-muted/10">
+                                    <CardHeader className="pb-2 border-b mb-4">
+                                        <CardTitle className="text-sm font-bold flex items-center gap-2 text-blue-500">
+                                            <Mail className="h-4 w-4" /> EMAILS (MÊS ATUAL)
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                            <span className="text-muted-foreground">Contratado:</span>
+                                            <span className="font-mono text-right">{userStats?.usage.emails.contracted.toLocaleString()}</span>
+
+                                            <span className="text-muted-foreground">Extra:</span>
+                                            <span className="font-mono text-right text-green-600">+{userStats?.usage.emails.extra.toLocaleString()}</span>
+
+                                            <div className="col-span-2 border-t pt-2 mt-2 flex justify-between font-bold">
+                                                <span>Total:</span>
+                                                <span className="font-mono">{userStats?.usage.emails.total.toLocaleString()}</span>
+                                            </div>
+
+                                            <span className="text-muted-foreground">Usado:</span>
+                                            <span className="font-mono text-right text-red-500">-{userStats?.usage.emails.used.toLocaleString()}</span>
+                                        </div>
+
+                                        <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/20 flex justify-between items-center">
+                                            <span className="text-xs font-bold text-blue-700 uppercase">Saldo Disponível</span>
+                                            <span className="text-xl font-bold font-mono text-blue-700">{userStats?.usage.emails.available.toLocaleString()}</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* SMS Usage */}
+                                <Card className="bg-muted/10">
+                                    <CardHeader className="pb-2 border-b mb-4">
+                                        <CardTitle className="text-sm font-bold flex items-center gap-2 text-green-500">
+                                            <Smartphone className="h-4 w-4" /> SMS (MÊS ATUAL)
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                            <span className="text-muted-foreground">Contratado:</span>
+                                            <span className="font-mono text-right">{userStats?.usage.sms.contracted.toLocaleString()}</span>
+
+                                            <span className="text-muted-foreground">Extra:</span>
+                                            <span className="font-mono text-right text-green-600">+{userStats?.usage.sms.extra.toLocaleString()}</span>
+
+                                            <div className="col-span-2 border-t pt-2 mt-2 flex justify-between font-bold">
+                                                <span>Total:</span>
+                                                <span className="font-mono">{userStats?.usage.sms.total.toLocaleString()}</span>
+                                            </div>
+
+                                            <span className="text-muted-foreground">Usado:</span>
+                                            <span className="font-mono text-right text-red-500">-{userStats?.usage.sms.used.toLocaleString()}</span>
+                                        </div>
+
+                                        <div className="bg-green-500/10 p-3 rounded-lg border border-green-500/20 flex justify-between items-center">
+                                            <span className="text-xs font-bold text-green-700 uppercase">Saldo Disponível</span>
+                                            <span className="text-xl font-bold font-mono text-green-700">{userStats?.usage.sms.available.toLocaleString()}</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* WhatsApp Usage */}
+                                <Card className="bg-muted/10">
+                                    <CardHeader className="pb-2 border-b mb-4">
+                                        <CardTitle className="text-sm font-bold flex items-center gap-2 text-purple-500">
+                                            <MessageSquare className="h-4 w-4" /> WHATSAPP
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="flex flex-col items-center justify-center py-4 text-center">
+                                            <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Total de Disparos (Mês)</p>
+                                            <p className="text-4xl font-bold font-mono text-purple-600">{userStats?.usage.whatsapp.used.toLocaleString()}</p>
+
+                                            <Badge variant="outline" className="mt-4 bg-purple-50 text-purple-700 border-purple-200">
+                                                {userStats?.usage.whatsapp.unlimited ? 'Ilimitado no Plano' : 'Limitado'}
+                                            </Badge>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             </div>
 
                             {/* Quick Actions Section */}
