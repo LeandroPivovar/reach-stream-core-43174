@@ -38,6 +38,8 @@ import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
 import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
 import { api, Campaign, Contact, Group, SegmentationParam } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { useScoreConfig } from '@/hooks/use-score-config';
+import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
 import {
   Table,
   TableBody,
@@ -98,6 +100,7 @@ export default function Campanhas() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isStatusUpdateOpen, setIsStatusUpdateOpen] = useState(false);
   const [campaignForStatusUpdate, setCampaignForStatusUpdate] = useState<Campaign | null>(null);
+  const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const contactsPerPage = 10;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [newCampaign, setNewCampaign] = useLocalStorage('campanhas_newCampaign', {
@@ -185,11 +188,57 @@ export default function Campanhas() {
   const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
   const [segmentationStats, setSegmentationStats] = useState<Record<string, number>>({});
   const [subscriptionStats, setSubscriptionStats] = useState<any>(null);
+  const { config: scoreConfig } = useScoreConfig();
+
+  // Estado para armazenar compras e LTV dos contatos (necessário para o modal)
+  const [contactPurchases, setContactPurchases] = useState<Record<number, { purchases: any[]; ltv: number }>>({});
 
   useEffect(() => {
     loadCampaigns();
     loadExternalData();
   }, [filters]);
+
+  // Carregar contatos para o modal de detalhes
+  useEffect(() => {
+    const loadContacts = async () => {
+      try {
+        const data = await api.getContacts();
+        setContacts(data);
+      } catch (error) {
+        console.error('Erro ao carregar contatos em Campanhas:', error);
+      }
+    };
+    loadContacts();
+  }, []);
+
+  useEffect(() => {
+    const processPurchases = () => {
+      const purchasesByContact: Record<number, { purchases: any[]; ltv: number }> = {};
+      contacts.forEach((contact) => {
+        if (!purchasesByContact[contact.id]) {
+          purchasesByContact[contact.id] = { purchases: [], ltv: 0 };
+        }
+        (contact.sales || []).forEach((sale: any) => {
+          const purchaseValue = typeof sale.totalValue === 'string'
+            ? parseFloat(sale.totalValue)
+            : sale.totalValue;
+
+          purchasesByContact[contact.id].purchases.push({
+            id: sale.id,
+            date: sale.createdAt,
+            value: purchaseValue,
+            product: sale.product?.name || 'Produto',
+          });
+          purchasesByContact[contact.id].ltv += purchaseValue;
+        });
+      });
+      setContactPurchases(purchasesByContact);
+    };
+
+    if (contacts.length > 0) {
+      processPurchases();
+    }
+  }, [contacts]);
 
   const loadExternalData = async () => {
     try {
@@ -538,9 +587,9 @@ export default function Campanhas() {
     });
 
     // Set editing mode (this logic might need refinement if 'update' endpoint differs significantly from 'create')
-    // For now, we reuse the create modal but logic needs to handle update vs create. 
-    // Ideally we should have an editing ID state, but for simplicity we might just open it as "New" pre-filled 
-    // and handle "Update" if we had an ID. 
+    // For now, we reuse the create modal but logic needs to handle update vs create.
+    // Ideally we should have an editing ID state, but for simplicity we might just open it as "New" pre-filled
+    // and handle "Update" if we had an ID.
     // Given the current structure, let's just pre-fill to allow ease of "Cloning/Editing" or add an 'isEditing' state if strict editing is required.
     // The requirement says "Editar Campanha", implying modification.
     // I will add an `editingId` to the state to distinguish.
@@ -1212,12 +1261,13 @@ export default function Campanhas() {
           {currentStep === 2 && (
             <div className="space-y-6 py-4">
               <SegmentationPicker
-                selectedSegments={newCampaign.segmentations}
+                selectedSegments={newCampaign.segmentations || []}
                 stats={segmentationStats}
                 onSegmentsChange={(segments) => {
                   setNewCampaign({ ...newCampaign, segmentations: segments });
                   setCurrentPage(1); // Reset pagination when segmentation changes
                 }}
+                onViewContact={setSelectedContactId}
               />
 
 
@@ -2626,6 +2676,15 @@ export default function Campanhas() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ContactDetailsModal
+        isOpen={selectedContactId !== null}
+        onClose={() => setSelectedContactId(null)}
+        contactId={selectedContactId}
+        contacts={contacts as any}
+        contactPurchases={contactPurchases as any}
+        scoreConfig={scoreConfig}
+      />
 
     </Layout >
   );
