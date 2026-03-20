@@ -16,7 +16,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Mail, MessageSquare, Phone, Clock, GitBranch, Send, Calendar, Tag, Gift } from 'lucide-react';
+import { Mail, MessageSquare, Phone, Clock, GitBranch, Send, Calendar, Tag, Gift, Eraser } from 'lucide-react';
 import { EmailNode } from './nodes/EmailNode';
 import { SmsNode } from './nodes/SmsNode';
 import { WhatsappNode } from './nodes/WhatsappNode';
@@ -71,6 +71,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(workflow?.nodes || []);
   const [edges, setEdges, onEdgesChange] = useEdgesState(workflow?.edges || []);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [nodeIdCounter, setNodeIdCounter] = useState(() => {
     // Initialize counter based on existing nodes
     const maxId = (workflow?.nodes || []).reduce((max: number, node: any) => {
@@ -256,6 +257,18 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               Condição
             </Button>
           </div>
+          <div className="flex items-center gap-3 flex-wrap border-t pt-4">
+            <span className="text-sm font-semibold mr-2">Ferramentas:</span>
+            <Button
+              variant={isDeleteMode ? "destructive" : "outline"}
+              size="sm"
+              onClick={() => setIsDeleteMode(!isDeleteMode)}
+              className="gap-2"
+            >
+              <Eraser className="w-4 h-4" />
+              {isDeleteMode ? "Modo Remoção Ativo (Clique na linha)" : "Ferramenta Tesoura (Remover Linhas)"}
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -267,14 +280,20 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onEdgeClick={(_, edge) => {
+            if (isDeleteMode) {
+              setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+            }
+          }}
           onEdgeDoubleClick={(_, edge) => {
             setEdges((eds) => eds.filter((e) => e.id !== edge.id));
           }}
+          deleteKeyCode={['Backspace', 'Delete']}
           nodeTypes={nodeTypes}
           defaultViewport={{ x: 50, y: 50, zoom: 0.45 }}
           minZoom={0.2}
           maxZoom={2}
-          className="bg-muted/30"
+          className={`bg-muted/30 ${isDeleteMode ? '!cursor-crosshair' : ''}`}
         >
           <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
           <Controls />
