@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { api, Product } from '@/lib/api';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,9 +27,13 @@ import { Calendar } from '@/components/ui/calendar';
 import { GitBranch, Settings, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-
 type ConditionType =
   | 'order_placed'
+  | 'order_cancelled'
+  | 'order_delivered'
+  | 'order_awaiting_payment'
+  | 'cart_abandoned'
+  | 'cart_recovered'
   | 'clicked_link'
   | 'responded'
   | 'order_value'
@@ -66,6 +71,23 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
   const [paymentMethod, setPaymentMethod] = useState((data as any)?.paymentMethod || '');
   const [dateFrom, setDateFrom] = useState<Date | undefined>((data as any)?.dateFrom);
   const [dateTo, setDateTo] = useState<Date | undefined>((data as any)?.dateTo);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoadingProducts(true);
+        const data = await api.getProducts();
+        setProducts(data || []);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const handleSave = () => {
     (data as any).onUpdate({
@@ -84,6 +106,11 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
   const getConditionLabel = () => {
     const labels: Record<ConditionType, string> = {
       order_placed: 'Pedido feito',
+      order_cancelled: 'Pedido cancelado',
+      order_delivered: 'Pedido entregue',
+      order_awaiting_payment: 'Pedido aguardando pagamento',
+      cart_abandoned: 'Carrinho abandonado',
+      cart_recovered: 'Carrinho recuperado',
       clicked_link: 'Clicou no link',
       responded: 'Respondeu',
       order_value: 'Valor do pedido',
@@ -100,7 +127,16 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
   };
 
   const needsValueInput = ['order_value', 'giftback_value', 'min_value', 'total_sales_value'].includes(conditionType);
-  const needsProductSelector = ['product_purchased', 'last_purchase_product', 'first_purchase_product'].includes(conditionType);
+  const needsProductSelector = [
+    'product_purchased',
+    'last_purchase_product',
+    'first_purchase_product',
+    'order_cancelled',
+    'order_delivered',
+    'order_awaiting_payment',
+    'cart_abandoned',
+    'cart_recovered'
+  ].includes(conditionType);
   const needsPaymentMethod = conditionType === 'payment_method';
   const needsDateRange = conditionType === 'date_condition';
 
@@ -172,6 +208,11 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="order_placed">Pedido feito?</SelectItem>
+                  <SelectItem value="order_cancelled">Pedido cancelado?</SelectItem>
+                  <SelectItem value="order_delivered">Pedido entregue?</SelectItem>
+                  <SelectItem value="order_awaiting_payment">Pedido aguardando pag.?</SelectItem>
+                  <SelectItem value="cart_abandoned">Carrinho abandonado?</SelectItem>
+                  <SelectItem value="cart_recovered">Carrinho recuperado?</SelectItem>
                   <SelectItem value="clicked_link">Clicou no link?</SelectItem>
                   <SelectItem value="responded">Respondeu?</SelectItem>
                   <SelectItem value="order_value">Valor do pedido</SelectItem>
@@ -240,9 +281,17 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
                     <SelectValue placeholder="Selecione um produto" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="prod-1">Produto Demo 1</SelectItem>
-                    <SelectItem value="prod-2">Produto Demo 2</SelectItem>
-                    <SelectItem value="prod-3">Produto Demo 3</SelectItem>
+                    {isLoadingProducts ? (
+                      <SelectItem value="loading" disabled>Carregando produtos...</SelectItem>
+                    ) : products.length === 0 ? (
+                      <SelectItem value="none" disabled>Nenhum produto encontrado</SelectItem>
+                    ) : (
+                      products.map((product) => (
+                        <SelectItem key={product.id} value={product.id.toString()}>
+                          {product.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
