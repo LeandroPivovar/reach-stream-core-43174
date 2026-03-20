@@ -267,6 +267,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onEdgeDoubleClick={(_, edge) => {
+            setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+          }}
           nodeTypes={nodeTypes}
           defaultViewport={{ x: 50, y: 50, zoom: 0.45 }}
           minZoom={0.2}
