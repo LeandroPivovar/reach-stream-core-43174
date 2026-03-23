@@ -100,8 +100,8 @@ export function useSegmentationStats(
             lead_captured: 0,
             no_purchase_x_days: 0,
             active_coupon: 0,
-            gender_male: 0,
-            gender_female: 0,
+            gender: 0,
+            by_state: 0,
         };
 
         contacts.forEach(c => {
@@ -116,15 +116,8 @@ export function useSegmentationStats(
             if (evaluateSegmentation(c, purchaseData, 'no_purchase_x_days', getParams('no_purchase_x_days'))) stats.no_purchase_x_days++;
             if (evaluateSegmentation(c, purchaseData, 'active_coupon', {})) stats.active_coupon++;
 
-            // Gênero specific counters (M and F)
-            if (evaluateSegmentation(c, purchaseData, 'gender', { gender: 'M' })) stats.gender_male++;
-            if (evaluateSegmentation(c, purchaseData, 'gender', { gender: 'F' })) stats.gender_female++;
-
-            // Por estado (State specific counters)
-            if (c.state) {
-                const stateKey = `state_${c.state.toLowerCase()}`;
-                stats[stateKey] = (stats[stateKey] || 0) + 1;
-            }
+            if (evaluateSegmentation(c, purchaseData, 'gender', getParams('gender'))) stats.gender++;
+            if (evaluateSegmentation(c, purchaseData, 'by_state', getParams('by_state'))) stats.by_state++;
         });
 
         return stats;
