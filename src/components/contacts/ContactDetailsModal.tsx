@@ -207,8 +207,8 @@ export function ContactDetailsModal({
                                 <div className="space-y-2">
                                     <span className="text-xs text-muted-foreground">Etiquetas</span>
                                     <div className="flex flex-wrap gap-1">
-                                        {contact.tags.length > 0 ? (
-                                            contact.tags.map(tag => (
+                                        {(contact.tags || []).length > 0 ? (
+                                            (contact.tags || []).map(tag => (
                                                 <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
                                                     {tag}
                                                 </Badge>
@@ -248,7 +248,7 @@ export function ContactDetailsModal({
                             </Card>
                             <Card className="p-4 shadow-sm border-border/50">
                                 <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-semibold">Nº Compras</p>
-                                <p className="text-xl font-bold">{purchaseData.purchases.length}</p>
+                                <p className="text-xl font-bold">{(purchaseData?.purchases || []).length}</p>
                                 <p className="text-[10px] text-muted-foreground mt-1">Vendas confirmadas</p>
                             </Card>
                         </div>
@@ -259,8 +259,8 @@ export function ContactDetailsModal({
                                 Histórico de Vendas
                             </h3>
                             <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2">
-                                {purchaseData.purchases.length > 0 ? (
-                                    purchaseData.purchases.map(purchase => (
+                                {(purchaseData?.purchases || []).length > 0 ? (
+                                    (purchaseData?.purchases || []).map(purchase => (
                                         <div key={purchase.id} className="flex justify-between items-center p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors border border-border/20">
                                             <div>
                                                 <p className="text-xs font-bold truncate max-w-[120px]">{purchase.product}</p>
@@ -306,12 +306,12 @@ export function ContactDetailsModal({
                                         Início do relacionamento com o lead
                                     </p>
                                 </div>
-                                {purchaseData.purchases.length > 0 && (
+                                {(purchaseData?.purchases || []).length > 0 && (
                                     <div className="relative">
                                         <div className="absolute -left-[22px] top-1 w-3 h-3 rounded-full bg-green-500 border-2 border-background z-10" />
                                         <p className="text-xs font-semibold">Primeira Compra Realizada</p>
                                         <p className="text-[10px] text-muted-foreground">
-                                            {new Date(Math.min(...purchaseData.purchases.map(p => new Date(p.date).getTime()))).toLocaleDateString('pt-BR')}
+                                            {new Date(Math.min(...(purchaseData?.purchases || []).map(p => new Date(p.date).getTime()))).toLocaleDateString('pt-BR')}
                                         </p>
                                     </div>
                                 )}
@@ -319,7 +319,7 @@ export function ContactDetailsModal({
                                     <div className="absolute -left-[22px] top-1 w-3 h-3 rounded-full bg-blue-500 border-2 border-background z-10" />
                                     <p className="text-xs font-semibold">Última Interação</p>
                                     <p className="text-[10px] text-muted-foreground">
-                                        {new Date(contact.lastInteraction).toLocaleDateString('pt-BR')}
+                                        {contact.lastInteraction ? new Date(contact.lastInteraction).toLocaleDateString('pt-BR') : 'Não disponível'}
                                     </p>
                                 </div>
                             </div>

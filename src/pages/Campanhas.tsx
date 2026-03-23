@@ -88,6 +88,23 @@ import {
   Filter
 } from 'lucide-react';
 
+interface ContactFrontend {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+  group: string;
+  status: string;
+  tags: string[];
+  state: string;
+  city: string;
+  birthDate: string;
+  gender: string;
+  segmentations: string[];
+  lastInteraction: string;
+  sales: any[];
+}
+
 export default function Campanhas() {
   const { toast } = useToast();
   const [isNewCampaignOpen, setIsNewCampaignOpen] = useState(false);
@@ -184,7 +201,7 @@ export default function Campanhas() {
     });
   };
 
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contacts, setContacts] = useState<ContactFrontend[]>([]);
   const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
   const [segmentationStats, setSegmentationStats] = useState<Record<string, number>>({});
   const [subscriptionStats, setSubscriptionStats] = useState<any>(null);
@@ -192,6 +209,25 @@ export default function Campanhas() {
 
   // Estado para armazenar compras e LTV dos contatos (necessário para o modal)
   const [contactPurchases, setContactPurchases] = useState<Record<number, { purchases: any[]; ltv: number }>>({});
+
+  const convertApiContactToFrontend = (apiContact: Contact): ContactFrontend => {
+    return {
+      id: apiContact.id,
+      name: apiContact.name,
+      phone: apiContact.phone || '',
+      email: apiContact.email || '',
+      group: apiContact.group?.name || apiContact.company || 'Regular',
+      status: apiContact.status || 'Ativo',
+      tags: apiContact.contactTags?.map(ct => ct.tag.name) || [],
+      state: apiContact.state || '',
+      city: apiContact.city || '',
+      birthDate: apiContact.birthDate || '',
+      gender: apiContact.gender || 'all',
+      segmentations: apiContact.contactSegmentations?.map(cs => cs.segmentationId) || [],
+      lastInteraction: apiContact.updatedAt || apiContact.createdAt,
+      sales: apiContact.sales || []
+    };
+  };
 
   useEffect(() => {
     loadCampaigns();
@@ -203,7 +239,7 @@ export default function Campanhas() {
     const loadContacts = async () => {
       try {
         const data = await api.getContacts();
-        setContacts(data);
+        setContacts(data.map(convertApiContactToFrontend));
       } catch (error) {
         console.error('Erro ao carregar contatos em Campanhas:', error);
       }
@@ -248,7 +284,7 @@ export default function Campanhas() {
         api.getContactSegmentationStats(),
         api.getSubscriptionStats()
       ]);
-      setContacts(contactsData);
+      setContacts(contactsData.map(convertApiContactToFrontend));
       setAvailableGroups(groupsData);
       setSegmentationStats(statsData);
       setSubscriptionStats(subStats);
