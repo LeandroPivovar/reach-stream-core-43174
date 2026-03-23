@@ -70,6 +70,8 @@ import {
   User2,
   Loader2
 } from 'lucide-react';
+
+
 import {
   Tooltip,
   TooltipContent,
@@ -103,7 +105,9 @@ interface ContactFrontend {
   segmentations: string[];
   lastInteraction: string;
   sales: import('@/lib/api').Sale[];
+  hasActiveCoupon: boolean;
 }
+
 
 interface Purchase {
   id: number;
@@ -173,7 +177,7 @@ export default function Contatos() {
   const [tabSegmentations, setTabSegmentations] = useState<(string | import('@/lib/api').SegmentationParam)[]>([]);
 
   // Estados de Filtro
-  const [filters, setFilters] = useLocalStorage('contatos_filters', {
+  const [filters, setFilters] = useState({
     name: '',
     campaign: '',
     scoreMin: 0,
@@ -191,6 +195,10 @@ export default function Contatos() {
     state: 'all', // estado
     segmentations: [] as (string | import('@/lib/api').SegmentationParam)[], // segmentações
   });
+
+
+
+
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [newContact, setNewContact] = useLocalStorage('contatos_newContact', {
@@ -206,8 +214,8 @@ export default function Contatos() {
     city: '',
     birthDate: '',
     gender: 'all',
-    segmentations: [] as (string | import('@/lib/api').SegmentationParam)[]
   });
+
 
   // Mock data for contact details with LTV information
   const contactDetails: Record<number, ContactDetail> = {
@@ -286,9 +294,11 @@ export default function Contatos() {
       gender: apiContact.gender || 'all',
       segmentations: apiContact.contactSegmentations?.map(cs => cs.segmentationId) || [],
       lastInteraction: apiContact.updatedAt || apiContact.createdAt,
-      sales: apiContact.sales || []
+      sales: apiContact.sales || [],
+      hasActiveCoupon: !!apiContact.hasActiveCoupon
     };
   }, []);
+
 
   const fetchContacts = useCallback(async () => {
     setIsLoading(true);
@@ -628,11 +638,11 @@ export default function Contatos() {
       return false;
     }
 
-    // Filtro por cupom ativo (mock - em produção viria do backend)
+    // Filtro por cupom ativo
     if (filters.hasCoupon) {
-      // Mock: considera contatos do grupo VIP como tendo cupons
-      if (contact.group !== 'VIP') return false;
+      if (!contact.hasActiveCoupon) return false;
     }
+
 
     // Filtro por maior ticket médio
     if (filters.highTicket && purchaseData) {
@@ -711,6 +721,8 @@ export default function Contatos() {
     filters.state !== 'all' ||
     filters.segmentations.length > 0;
 
+
+
   const clearFilters = () => {
     setFilters({
       name: '',
@@ -731,6 +743,8 @@ export default function Contatos() {
       segmentations: [],
     });
   };
+
+
 
   // Funções de seleção múltipla
   const toggleContactSelection = (contactId: number) => {
@@ -874,8 +888,8 @@ export default function Contatos() {
           city: newContact.city || undefined,
           groupId: groupId || null,
           tagIds: tagIds.length > 0 ? tagIds : [],
-          segmentationIds: newContact.segmentations && newContact.segmentations.length > 0 ? newContact.segmentations : [],
           birthDate: newContact.birthDate || undefined,
+
           gender: newContact.gender !== 'all' ? newContact.gender : undefined,
         });
         const updatedContact = convertApiContactToFrontend(apiContact);
@@ -897,8 +911,8 @@ export default function Contatos() {
           city: newContact.city || undefined,
           groupId: groupId,
           tagIds: tagIds.length > 0 ? tagIds : undefined,
-          segmentationIds: newContact.segmentations && newContact.segmentations.length > 0 ? newContact.segmentations : undefined,
           birthDate: newContact.birthDate || undefined,
+
           gender: newContact.gender !== 'all' ? newContact.gender : undefined,
         });
         const newContactFrontend = convertApiContactToFrontend(apiContact);
@@ -923,8 +937,8 @@ export default function Contatos() {
         city: '',
         birthDate: '',
         gender: 'all',
-        segmentations: []
       });
+
     } catch (error) {
       console.error('Erro ao salvar contato:', error);
       toast({
@@ -984,8 +998,8 @@ export default function Contatos() {
       city: contact.city,
       birthDate: contact.birthDate,
       gender: contact.gender,
-      segmentations: contact.segmentations
     });
+
     setIsNewContactOpen(true);
   };
 
@@ -1368,10 +1382,11 @@ export default function Contatos() {
                               <SelectContent className="bg-popover">
                                 <SelectItem value="all">Todas as campanhas</SelectItem>
                                 {campaigns.map((campaign) => (
-                                  <SelectItem key={campaign} value={campaign}>
-                                    {campaign}
+                                  <SelectItem key={campaign.id} value={campaign.name}>
+                                    {campaign.name}
                                   </SelectItem>
                                 ))}
+
                               </SelectContent>
                             </Select>
                           </div>
@@ -2487,8 +2502,8 @@ export default function Contatos() {
             city: '',
             birthDate: '',
             gender: 'all',
-            segmentations: []
           });
+
         }
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -2628,7 +2643,6 @@ export default function Contatos() {
                 />
               </div>
             </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="birthDate">Data de Nascimento</Label>
@@ -2657,27 +2671,26 @@ export default function Contatos() {
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label>Segmentações</Label>
-              <SegmentationPicker
-                selectedSegments={newContact.segmentations}
-                onSegmentsChange={(segments) => setNewContact({ ...newContact, segmentations: segments })}
-              />
+            <div className="flex justify-end gap-3 mt-4">
+              <Button variant="outline" onClick={() => setIsNewContactOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveContact} disabled={isLoading}>
+                {isLoading ? 'Salvando...' : editingContactId ? 'Atualizar Contato' : 'Salvar Contato'}
+              </Button>
             </div>
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setIsNewContactOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSaveContact} disabled={isLoading}>
-              {isLoading ? 'Salvando...' : editingContactId ? 'Atualizar Contato' : 'Salvar Contato'}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
+
+
+
+
+
       {/* Modal Exportar */}
-      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+
+      < Dialog open={isExportOpen} onOpenChange={setIsExportOpen} >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Exportar Contatos</DialogTitle>
@@ -2704,15 +2717,16 @@ export default function Contatos() {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Modal Importar */}
-      <Dialog open={isImportOpen} onOpenChange={(open) => {
+      < Dialog open={isImportOpen} onOpenChange={(open) => {
         setIsImportOpen(open);
         if (!open) {
           setImportFile(null);
         }
-      }}>
+      }
+      }>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Importar Contatos</DialogTitle>
@@ -2932,10 +2946,10 @@ export default function Contatos() {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Dialog Adicionar à Campanha */}
-      <Dialog open={isBulkCampaignOpen} onOpenChange={setIsBulkCampaignOpen}>
+      < Dialog open={isBulkCampaignOpen} onOpenChange={setIsBulkCampaignOpen} >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Adicionar Leads à Campanha</DialogTitle>
@@ -2994,7 +3008,7 @@ export default function Contatos() {
             </Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
       <ContactDetailsModal
         isOpen={selectedContactId !== null}
         onClose={() => setSelectedContactId(null)}
@@ -3157,12 +3171,14 @@ export default function Contatos() {
         }}
       />
 
-      {isSyncingBackground && (
-        <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="font-medium text-sm">Buscando novas informações...</span>
-        </div>
-      )}
-    </Layout>
+      {
+        isSyncingBackground && (
+          <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="font-medium text-sm">Buscando novas informações...</span>
+          </div>
+        )
+      }
+    </Layout >
   );
 }

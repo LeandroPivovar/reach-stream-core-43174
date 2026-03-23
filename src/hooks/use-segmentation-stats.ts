@@ -59,7 +59,8 @@ export function evaluateSegmentation(
         }
 
         case 'active_coupon':
-            return contact.group === 'VIP' || (contact.tags && contact.tags.includes('Promocional'));
+            return !!contact.hasActiveCoupon;
+
 
         case 'gender': {
             if (!params?.gender) return true;

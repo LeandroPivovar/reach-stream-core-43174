@@ -141,6 +141,7 @@ export default function Vendas() {
 
         for (const store of activeNuvemshop) {
           syncPromises.push(api.syncNuvemshopOrders(store.storeId).catch(console.error));
+          syncPromises.push(api.syncNuvemshopCheckouts(store.storeId).catch(console.error));
         }
 
         // VTEX sync is usually automatic via webhooks or background, 

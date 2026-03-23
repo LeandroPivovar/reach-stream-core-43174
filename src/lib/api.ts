@@ -146,6 +146,7 @@ export interface HeatmapSegment {
   leads: number;
   engaged: number;
   cart: number;
+  abandoned: number;
   purchase: number;
   loyal: number;
 }
@@ -188,7 +189,9 @@ export interface Contact {
   createdAt: string;
   updatedAt: string;
   sales?: Sale[];
+  hasActiveCoupon?: boolean;
 }
+
 
 export interface CreateContactData {
   name: string;
@@ -206,8 +209,8 @@ export interface CreateContactData {
   gender?: string;
   groupId?: number;
   tagIds?: number[];
-  segmentationIds?: string[];
 }
+
 
 export interface UpdateContactData {
   name?: string;
@@ -225,8 +228,8 @@ export interface UpdateContactData {
   gender?: string;
   groupId?: number | null;
   tagIds?: number[];
-  segmentationIds?: string[];
 }
+
 
 export interface Group {
   id: number;
@@ -1673,6 +1676,13 @@ class ApiService {
 
   async syncNuvemshopOrders(storeId: string): Promise<any> {
     return this.request<any>('/nuvemshop/sync/orders', {
+      method: 'POST',
+      body: JSON.stringify({ storeId }),
+    });
+  }
+
+  async syncNuvemshopCheckouts(storeId: string): Promise<any> {
+    return this.request<any>('/nuvemshop/sync/checkouts', {
       method: 'POST',
       body: JSON.stringify({ storeId }),
     });

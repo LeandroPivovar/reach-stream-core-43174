@@ -7,6 +7,7 @@ interface CustomerSegment {
   leads: number;
   engaged: number;
   cart: number;
+  abandoned: number;
   purchase: number;
   loyal: number;
 }
@@ -20,21 +21,22 @@ export function CustomerHeatmap({ segments }: CustomerHeatmapProps) {
     { key: 'leads', name: 'Leads' },
     { key: 'engaged', name: 'Engajados' },
     { key: 'cart', name: 'Carrinho' },
+    { key: 'abandoned', name: 'Abandonado' },
     { key: 'purchase', name: 'Compradores' },
     { key: 'loyal', name: 'Fiéis' }
   ];
 
   // Encontrar o valor máximo para normalizar as cores
   const allValues = segments.flatMap(seg => [
-    seg.leads, seg.engaged, seg.cart, seg.purchase, seg.loyal
+    seg.leads, seg.engaged, seg.cart, seg.abandoned, seg.purchase, seg.loyal
   ]);
   const maxValue = Math.max(...allValues);
   const minValue = Math.min(...allValues);
 
   // Função para obter a cor baseada no valor (vermelho -> amarelo -> verde)
   const getHeatColor = (value: number) => {
-    const normalized = (value - minValue) / (maxValue - minValue);
-    
+    const normalized = maxValue === minValue ? 1 : (value - minValue) / (maxValue - minValue);
+
     if (normalized < 0.33) {
       // Vermelho para valores baixos
       return 'bg-red-500/80 text-white';
@@ -89,6 +91,9 @@ export function CustomerHeatmap({ segments }: CustomerHeatmapProps) {
                     </td>
                     <td className={cn("px-4 py-3 text-center text-sm font-bold", getHeatColor(segment.cart))}>
                       {segment.cart}
+                    </td>
+                    <td className={cn("px-4 py-3 text-center text-sm font-bold", getHeatColor(segment.abandoned))}>
+                      {segment.abandoned}
                     </td>
                     <td className={cn("px-4 py-3 text-center text-sm font-bold", getHeatColor(segment.purchase))}>
                       {segment.purchase}
