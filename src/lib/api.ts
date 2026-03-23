@@ -892,6 +892,12 @@ class ApiService {
     });
   }
 
+  async impersonateAdminUser(userId: number): Promise<{ token: string; user: any }> {
+    return this.request<{ token: string; user: any }>(`/admin/stats/users/${userId}/impersonate`, {
+      method: 'POST'
+    });
+  }
+
   async assignAdminUserPlan(userId: number, planId: number | null): Promise<any> {
     return this.request<any>(`/admin/users/${userId}/plan`, {
       method: 'POST',

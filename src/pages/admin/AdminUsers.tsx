@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserCog, MoreVertical, Edit, ShieldAlert, CheckCircle, XCircle, CalendarClock, User, BarChart3, CreditCard, Key, ExternalLink, MessageSquare, Mail, Smartphone, TrendingUp } from 'lucide-react';
+import { UserCog, MoreVertical, Edit, ShieldAlert, CheckCircle, XCircle, CalendarClock, User, BarChart3, CreditCard, Key, ExternalLink, MessageSquare, Mail, Smartphone, TrendingUp, Link as LinkIcon } from 'lucide-react';
 import { api, AdminUser, Plan, AdminUserStats } from '@/lib/api';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -135,6 +135,30 @@ export default function AdminUsers() {
         },
         onError: () => {
             toast({ title: 'Erro', description: 'Falha ao atualizar vencimento. O usuário precisa ter um plano ativo.', variant: 'destructive' });
+        }
+    });
+
+    const impersonateMutation = useMutation({
+        mutationFn: (userId: number) => api.impersonateAdminUser(userId),
+        onSuccess: (data) => {
+            const url = `${window.location.origin}/impersonate?t=${data.token}&u=${btoa(JSON.stringify(data.user))}`;
+
+            // Tenta copiar para a área de transferência
+            navigator.clipboard.writeText(url).then(() => {
+                toast({
+                    title: 'Link Gerado!',
+                    description: 'O link de acesso remoto foi copiado para sua área de transferência. Cole em uma guia anônima ou envie para o usuário.'
+                });
+            }).catch(() => {
+                toast({
+                    title: 'Link Gerado!',
+                    description: 'Não foi possível copiar automaticamente. Acesse os detalhes do usuário para ver o link.',
+                    variant: 'default'
+                });
+            });
+        },
+        onError: () => {
+            toast({ title: 'Erro', description: 'Falha ao gerar o link de impersonate.', variant: 'destructive' });
         }
     });
 
@@ -293,6 +317,11 @@ export default function AdminUsers() {
                                                 <DropdownMenuItem onClick={() => handleOpenExpiry(user)}>
                                                     <CalendarClock className="mr-2 h-4 w-4" />
                                                     Alterar Vencimento
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => impersonateMutation.mutate(user.id)}>
+                                                    <LinkIcon className="mr-2 h-4 w-4" />
+                                                    Gerar Link de Acesso
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem onClick={() => handleToggleActive(user)}>
