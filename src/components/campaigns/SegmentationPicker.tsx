@@ -112,10 +112,10 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
           <Input
             type="text"
             className="h-8 w-20 text-xs"
-            value={params?.minPurchases !== undefined ? params.minPurchases : 1}
+            value={params?.minPurchases !== undefined ? params.minPurchases : 0}
             onChange={(e) => {
               const val = parseInt(e.target.value);
-              updateParams(segmentId, { minPurchases: isNaN(val) ? 1 : val });
+              updateParams(segmentId, { minPurchases: isNaN(val) ? 0 : val });
             }}
           />
         </div>
@@ -129,7 +129,7 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
           <Input
             type="text"
             className="h-8 w-24 text-xs"
-            value={params?.minTicket !== undefined ? params.minTicket : 500}
+            value={params?.minTicket !== undefined ? params.minTicket : 0}
             onChange={(e) => {
               const val = parseFloat(e.target.value.replace(',', '.'));
               updateParams(segmentId, { minTicket: isNaN(val) ? 0 : val });
@@ -147,10 +147,10 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
           <Input
             type="text"
             className="h-8 w-20 text-xs"
-            value={params?.days !== undefined ? params.days : defaultDays}
+            value={params?.days !== undefined ? params.days : 0}
             onChange={(e) => {
               const val = parseInt(e.target.value);
-              updateParams(segmentId, { days: isNaN(val) ? defaultDays : val });
+              updateParams(segmentId, { days: isNaN(val) ? 0 : val });
             }}
           />
         </div>
