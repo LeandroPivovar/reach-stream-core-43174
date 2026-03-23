@@ -45,15 +45,9 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
       id: 'gender',
       label: 'Sexo',
       description: 'Filtrar por gênero',
-      affectedCount: (() => {
-        const seg = selectedSegments.find(s => (typeof s === 'string' ? s : s.id) === 'gender');
-        const p = typeof seg === 'object' ? seg.params : null;
-        if (p?.gender === 'M') return stats['gender_male'] || 0;
-        if (p?.gender === 'F') return stats['gender_female'] || 0;
-        return stats['total'] || 0;
-      })()
+      affectedCount: stats['gender'] || 0
     },
-    { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: Object.keys(stats).filter(k => k.startsWith('state_')).reduce((acc, k) => acc + stats[k], 0) || 0 },
+    { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: stats['by_state'] || 0 },
   ];
 
   const toggleSegment = (segmentId: string) => {
