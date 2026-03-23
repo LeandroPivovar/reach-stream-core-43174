@@ -39,6 +39,8 @@ import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
 import { api, Campaign, Contact, Group, SegmentationParam } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useScoreConfig } from '@/hooks/use-score-config';
+import { useSegmentationStats } from '@/hooks/use-segmentation-stats';
+import { evaluateSegmentation } from '@/lib/segmentation-utils';
 import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
 import {
   Table,
@@ -203,9 +205,14 @@ export default function Campanhas() {
 
   const [contacts, setContacts] = useState<ContactFrontend[]>([]);
   const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
-  const [segmentationStats, setSegmentationStats] = useState<Record<string, number>>({});
   const [subscriptionStats, setSubscriptionStats] = useState<any>(null);
   const { config: scoreConfig } = useScoreConfig();
+
+  const dynamicStats = useSegmentationStats(
+    contacts,
+    contactPurchases,
+    newCampaign.segmentations || []
+  );
 
   // Estado para armazenar compras e LTV dos contatos (necessário para o modal)
   const [contactPurchases, setContactPurchases] = useState<Record<number, { purchases: any[]; ltv: number }>>({});
@@ -286,7 +293,6 @@ export default function Campanhas() {
       ]);
       setContacts(contactsData.map(convertApiContactToFrontend));
       setAvailableGroups(groupsData);
-      setSegmentationStats(statsData);
       setSubscriptionStats(subStats);
     } catch (error) {
       console.error('Erro ao carregar dados externos:', error);
@@ -365,62 +371,19 @@ export default function Campanhas() {
     if (newCampaign.groups.length === 0 && newCampaign.segmentations.length === 0) return [];
 
     const selectedGroupIds = newCampaign.groups.map(Number);
-    const selectedSegmentationIds = newCampaign.segmentations.map(s => typeof s === 'string' ? s : s.id);
 
     return contacts.filter(contact => {
       // 1. Verificar se o contato está em um dos grupos selecionados
       if (contact.groupId && selectedGroupIds.includes(contact.groupId)) return true;
 
-      // 2. Verificar se o contato tem alguma das segmentações selecionadas fixas
-      const hasSegmentation = contact.contactSegmentations?.some(cs =>
-        selectedSegmentationIds.includes(cs.segmentationId)
-      );
-      if (hasSegmentation) return true;
+      const purchaseData = contactPurchases[contact.id];
 
-      // 3. Lógica dinâmica para segmentações específicas
+      // 2. Verificar se o contato tem alguma das segmentações selecionadas (avaliando dinamicamente)
       for (const seg of newCampaign.segmentations) {
         const segId = typeof seg === 'string' ? seg : seg.id;
         const params = typeof seg === 'object' ? seg.params : {};
 
-        // Todos os Contatos
-        if (segId === 'total') return true;
-
-        // Estado
-        if (segId === 'by_state' || segId.startsWith('state_')) {
-          if (contact.state) {
-            if (params?.state && contact.state !== params.state) continue;
-            return true;
-          }
-        }
-
-        // Aniversariantes do Mês
-        if (segId === 'birthday') {
-          if (contact.birthDate) {
-            const bDate = new Date(contact.birthDate);
-            const bMonth = bDate.getMonth() + 1;
-            const filterMonth = params?.month || (new Date().getMonth() + 1);
-            if (bMonth === filterMonth) return true;
-          }
-        }
-
-        // Sexo / Gênero
-        if (segId === 'gender') {
-          if (params?.gender) {
-            if (contact.gender === params.gender) return true;
-          } else {
-            return true; // Todos os gêneros
-          }
-        }
-
-        // Leads
-        if (segId === 'lead_captured') {
-          if (contact.status?.toLowerCase() === 'lead') return true;
-        }
-
-        // Clientes (vários IDs)
-        if (segId === 'by_purchase_count' || segId === 'inactive_customers' || segId === 'high_ticket' || segId === 'no_purchase_x_days') {
-          if (contact.status?.toLowerCase() === 'customer' || contact.status?.toLowerCase() === 'cliente') return true;
-        }
+        if (evaluateSegmentation(contact, purchaseData, segId, params)) return true;
       }
 
       return false;
@@ -1298,7 +1261,7 @@ export default function Campanhas() {
             <div className="space-y-6 py-4">
               <SegmentationPicker
                 selectedSegments={newCampaign.segmentations || []}
-                stats={segmentationStats}
+                stats={dynamicStats}
                 onSegmentsChange={(segments) => {
                   setNewCampaign({ ...newCampaign, segmentations: segments });
                   setCurrentPage(1); // Reset pagination when segmentation changes
@@ -2371,7 +2334,7 @@ export default function Campanhas() {
                     {(() => {
                       const total = newCampaign.segmentations.reduce((sum, seg) => {
                         const id = typeof seg === 'string' ? seg : seg.id;
-                        return sum + (segmentationStats[id] || 0);
+                        return sum + (dynamicStats[id] || 0);
                       }, 0);
 
                       return total.toLocaleString('pt-BR');

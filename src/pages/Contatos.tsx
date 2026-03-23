@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useScoreConfig } from '@/hooks/use-score-config';
+import { useSegmentationStats } from '@/hooks/use-segmentation-stats';
+import { evaluateSegmentation } from '@/lib/segmentation-utils';
 import {
   Dialog,
   DialogContent,
@@ -559,97 +561,11 @@ export default function Contatos() {
     }
   };
 
-  const segmentationStats = React.useMemo(() => {
-    const getParams = (id: string) => {
-      const seg = tabSegmentations.find(s => (typeof s === 'string' ? s : s.id) === id);
-      return typeof seg === 'object' ? seg.params : {};
-    };
-
-    const stats: Record<string, number> = {
-      total: contacts.length,
-      by_purchase_count: 0,
-      birthday: 0,
-      inactive_customers: 0,
-      high_ticket: 0,
-      lead_captured: 0,
-      no_purchase_x_days: 0,
-      active_coupon: 0,
-      gender_male: 0,
-      gender_female: 0,
-    };
-
-    const currentMonth = new Date().getMonth() + 1;
-
-    // Parâmetros para o cálculo dinâmico das estatísticas
-    const config = {
-      by_purchase_count: getParams('by_purchase_count')?.minPurchases ?? 1,
-      high_ticket: getParams('high_ticket')?.minTicket ?? 500,
-      inactive_customers: getParams('inactive_customers')?.days ?? 90,
-      no_purchase_x_days: getParams('no_purchase_x_days')?.days ?? 30,
-      birthday: getParams('birthday')?.month ?? currentMonth,
-      by_state: getParams('by_state')?.state ?? '',
-      gender: getParams('gender')?.gender ?? '',
-    };
-
-    contacts.forEach(c => {
-      const purchaseData = contactPurchases[c.id];
-      const ltv = purchaseData?.ltv || 0;
-      const purchaseCount = purchaseData?.purchases.length || 0;
-
-      // Pelo menos o número de compras configurado
-      if (purchaseCount >= config.by_purchase_count) stats.by_purchase_count++;
-
-      // Aniversariantes do mês configurado (Apenas se houver data de nascimento)
-      if (c.birthDate) {
-        // Converte para data mantendo o mês correto (YYYY-MM-DD)
-        const birthDateObj = new Date(c.birthDate + 'T00:00:00');
-        const birthMonth = birthDateObj.getMonth() + 1;
-        if (birthMonth === config.birthday) stats.birthday++;
-      }
-
-      // Inativo por X dias
-      if (purchaseData && purchaseData.purchases.length > 0) {
-        const lastPurchaseDate = new Date(purchaseData.purchases[purchaseData.purchases.length - 1].date);
-        const daysSinceLastPurchase = Math.floor((new Date().getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysSinceLastPurchase >= config.inactive_customers) stats.inactive_customers++;
-      } else if (c.status === 'Inativo') {
-        stats.inactive_customers++;
-      }
-
-      // Ticket alto (Média de compras > config)
-      const avgTicket = purchaseCount > 0 ? ltv / purchaseCount : 0;
-      if (avgTicket > config.high_ticket) stats.high_ticket++;
-
-      // Lead capturado (Status 'lead')
-      if (c.status?.toLowerCase() === 'lead') stats.lead_captured++;
-
-      // Sem compra há X dias
-      if (purchaseData && purchaseData.purchases.length > 0) {
-        const lastPurchaseDate = new Date(purchaseData.purchases[purchaseData.purchases.length - 1].date);
-        const daysSinceLastPurchase = Math.floor((new Date().getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysSinceLastPurchase >= config.no_purchase_x_days) stats.no_purchase_x_days++;
-      }
-
-      // Cupom ativo (Filtro por grupo ou tag)
-      if (c.group === 'VIP' || c.tags.includes('Promocional')) stats.active_coupon++;
-
-      // Gênero (M ou F conforme padrão do backend)
-      if (!config.gender || c.gender === config.gender) {
-        if (c.gender === 'F') stats.gender_female++;
-        else if (c.gender === 'M') stats.gender_male++;
-      }
-
-      // Por estado
-      if (c.state) {
-        if (!config.by_state || c.state === config.by_state) {
-          const stateKey = `state_${c.state.toLowerCase()}`;
-          stats[stateKey] = (stats[stateKey] || 0) + 1;
-        }
-      }
-    });
-
-    return stats;
-  }, [contacts, contactPurchases, tabSegmentations]);
+  const segmentationStats = useSegmentationStats(
+    contacts,
+    contactPurchases,
+    tabSegmentations
+  );
 
   // Aplicar filtros
   const filteredContacts = contacts.filter(contact => {
@@ -768,9 +684,11 @@ export default function Contatos() {
 
     // Filtro por segmentações
     if (filters.segmentations.length > 0) {
-      const hasMatchingSegmentation = filters.segmentations.some(seg =>
-        contact.segmentations.includes(seg)
-      );
+      const hasMatchingSegmentation = filters.segmentations.some(seg => {
+        const segId = typeof seg === 'string' ? seg : seg.id;
+        const params = typeof seg === 'object' ? seg.params : {};
+        return evaluateSegmentation(contact, purchaseData, segId, params);
+      });
       if (!hasMatchingSegmentation) return false;
     }
 
@@ -1715,7 +1633,7 @@ export default function Contatos() {
                                   selectedSegments={filters.segmentations}
                                   onSegmentsChange={(segments) => setFilters({ ...filters, segmentations: segments })}
                                   onViewContact={setSelectedContactId}
-                                  stats={{}}
+                                  stats={segmentationStats}
                                 />
                               </div>
                             </div>
