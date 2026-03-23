@@ -2,6 +2,10 @@ const isProd = typeof window !== 'undefined' && window.location.hostname !== 'lo
 const defaultApiUrl = isProd ? window.location.origin : 'http://localhost:3000';
 export const API_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
 
+
+
+
+
 export interface RegisterData {
   firstName: string;
   lastName: string;
@@ -1758,6 +1762,8 @@ class ApiService {
   }
 }
 
+export const api = new ApiService();
+
 export interface PixelMetrics {
   clicks: { value: number; change: number };
   leads: { value: number; change: number };
@@ -1836,7 +1842,7 @@ export interface AdminUser {
   lastLoginAt?: string;
 }
 
-export const api = new ApiService();
+
 
 export interface Plan {
   id: number;
