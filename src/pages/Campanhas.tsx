@@ -39,8 +39,7 @@ import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
 import { api, Campaign, Contact, Group, SegmentationParam } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useScoreConfig } from '@/hooks/use-score-config';
-import { useSegmentationStats } from '@/hooks/use-segmentation-stats';
-import { evaluateSegmentation } from '@/lib/segmentation-utils';
+import { useSegmentationStats, evaluateSegmentation } from '@/hooks/use-segmentation-stats';
 import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
 import {
   Table,

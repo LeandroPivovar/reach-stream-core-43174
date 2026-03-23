@@ -11,8 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useScoreConfig } from '@/hooks/use-score-config';
-import { useSegmentationStats } from '@/hooks/use-segmentation-stats';
-import { evaluateSegmentation } from '@/lib/segmentation-utils';
+import { useSegmentationStats, evaluateSegmentation } from '@/hooks/use-segmentation-stats';
 import {
   Dialog,
   DialogContent,
