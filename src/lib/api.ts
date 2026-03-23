@@ -146,6 +146,7 @@ export interface HeatmapSegment {
   leads: number;
   engaged: number;
   cart: number;
+  abandoned: number;
   purchase: number;
   loyal: number;
 }
@@ -1673,6 +1674,13 @@ class ApiService {
 
   async syncNuvemshopOrders(storeId: string): Promise<any> {
     return this.request<any>('/nuvemshop/sync/orders', {
+      method: 'POST',
+      body: JSON.stringify({ storeId }),
+    });
+  }
+
+  async syncNuvemshopCheckouts(storeId: string): Promise<any> {
+    return this.request<any>('/nuvemshop/sync/checkouts', {
       method: 'POST',
       body: JSON.stringify({ storeId }),
     });

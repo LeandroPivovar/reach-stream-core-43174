@@ -99,7 +99,7 @@ export default function Integracoes() {
       imageUrl: '/icons/nuvemshop.png',
       status: 'Disponível',
       color: 'bg-blue-500',
-      features: ['Produtos automáticos', 'Status de pedidos', 'Clientes VIP']
+      features: ['Produtos automáticos', 'Status de pedidos', 'Carrinho abandonado']
     },
     {
       id: 3,
