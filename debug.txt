@@ -1,0 +1,1 @@
+_.email,media:_.email.media.filter((De,We)=>We!==ee)}})},[F,O]=w.useState([]),[U,Z]=w.useState([]),[P,V]=w.useState(null),{config:W}=RH(),q=LH(F,te,_.segmentations||[]),[te,ne]=w.useState({}),ce=ee=>{var De,We,Re;return{id:ee.id,name:ee.name,phone:ee.phone||"",email:ee.email||"",group:((De=ee.group)
