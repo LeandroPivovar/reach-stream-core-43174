@@ -61,6 +61,14 @@ export function evaluateSegmentation(
         case 'active_coupon':
             return !!contact.hasActiveCoupon;
 
+        case 'clicked_campaign':
+            return !!contact.hasClickedCampaign;
+
+        case 'opened_campaign':
+            return !!contact.hasOpenedCampaign;
+
+
+
 
         case 'gender': {
             if (!params?.gender) return true;
@@ -116,6 +124,9 @@ export function useSegmentationStats(
             if (evaluateSegmentation(c, purchaseData, 'lead_captured', {})) stats.lead_captured++;
             if (evaluateSegmentation(c, purchaseData, 'no_purchase_x_days', getParams('no_purchase_x_days'))) stats.no_purchase_x_days++;
             if (evaluateSegmentation(c, purchaseData, 'active_coupon', {})) stats.active_coupon++;
+            if (evaluateSegmentation(c, purchaseData, 'clicked_campaign', {})) stats.clicked_campaign = (stats.clicked_campaign || 0) + 1;
+            if (evaluateSegmentation(c, purchaseData, 'opened_campaign', {})) stats.opened_campaign = (stats.opened_campaign || 0) + 1;
+
 
             if (evaluateSegmentation(c, purchaseData, 'gender', getParams('gender'))) stats.gender++;
             if (evaluateSegmentation(c, purchaseData, 'by_state', getParams('by_state'))) stats.by_state++;

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
@@ -106,7 +107,10 @@ interface ContactFrontend {
   lastInteraction: string;
   sales: import('@/lib/api').Sale[];
   hasActiveCoupon: boolean;
+  hasClickedCampaign: boolean;
+  hasOpenedCampaign: boolean;
 }
+
 
 
 interface Purchase {
@@ -275,7 +279,9 @@ export default function Contatos() {
   };
 
   const [contacts, setContacts] = useState<ContactFrontend[]>([]);
+  const [backendStats, setBackendStats] = useState<Record<string, number>>({});
   const [isSyncingBackground, setIsSyncingBackground] = useState(false);
+
   const [hasActiveIntegration, setHasActiveIntegration] = useState(false);
 
   // Converter contato da API para formato do frontend
@@ -295,18 +301,26 @@ export default function Contatos() {
       segmentations: apiContact.contactSegmentations?.map(cs => cs.segmentationId) || [],
       lastInteraction: apiContact.updatedAt || apiContact.createdAt,
       sales: apiContact.sales || [],
-      hasActiveCoupon: !!apiContact.hasActiveCoupon
+      hasActiveCoupon: !!apiContact.hasActiveCoupon,
+      hasClickedCampaign: !!apiContact.hasClickedCampaign,
+      hasOpenedCampaign: !!apiContact.hasOpenedCampaign
     };
   }, []);
+
 
 
   const fetchContacts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const apiContacts = await api.getContacts();
+      const [apiContacts, stats] = await Promise.all([
+        api.getContacts(),
+        api.getSegmentationStats()
+      ]);
       const frontendContacts = apiContacts.map(convertApiContactToFrontend);
       setContacts(frontendContacts);
+      setBackendStats(stats || {});
     } catch (error) {
+
       console.error('Erro ao carregar contatos:', error);
       toast({
         title: 'Erro ao carregar contatos',
@@ -570,11 +584,19 @@ export default function Contatos() {
     }
   };
 
-  const segmentationStats = useSegmentationStats(
+  const clientStats = useSegmentationStats(
     contacts,
     contactPurchases,
     tabSegmentations
   );
+
+  const segmentationStats = useMemo(() => {
+    return {
+      ...clientStats,
+      ...backendStats
+    };
+  }, [clientStats, backendStats]);
+
 
   // Aplicar filtros
   const filteredContacts = contacts.filter(contact => {

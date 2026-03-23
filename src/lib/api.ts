@@ -190,7 +190,10 @@ export interface Contact {
   updatedAt: string;
   sales?: Sale[];
   hasActiveCoupon?: boolean;
+  hasClickedCampaign?: boolean;
+  hasOpenedCampaign?: boolean;
 }
+
 
 
 export interface CreateContactData {
