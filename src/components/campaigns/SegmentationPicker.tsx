@@ -245,9 +245,11 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
                   <div className="font-medium text-sm">{segment.label}</div>
-                  <Badge variant="secondary" className="text-xs">
-                    {segment.affectedCount.toLocaleString('pt-BR')} pessoas
-                  </Badge>
+                  {isSelected && (
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      {segment.affectedCount.toLocaleString('pt-BR')} pessoas
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">{segment.description}</p>
                 {isSelected && renderConfigUI(segment.id)}

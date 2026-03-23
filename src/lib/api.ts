@@ -1383,6 +1383,13 @@ class ApiService {
     });
   }
 
+  async syncShopifyCheckouts(shop: string): Promise<{ success: boolean; imported: number; updated: number }> {
+    return this.request<{ success: boolean; imported: number; updated: number }>('/shopify/sync/checkouts', {
+      method: 'POST',
+      body: JSON.stringify({ shop }),
+    });
+  }
+
   async createNuvemshopWebhook(storeId: string, event: string, url: string): Promise<any> {
     return this.request<any>('/nuvemshop/webhooks', {
       method: 'POST',
