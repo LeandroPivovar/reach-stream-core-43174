@@ -189,7 +189,9 @@ export interface Contact {
   createdAt: string;
   updatedAt: string;
   sales?: Sale[];
+  hasActiveCoupon?: boolean;
 }
+
 
 export interface CreateContactData {
   name: string;
@@ -207,8 +209,8 @@ export interface CreateContactData {
   gender?: string;
   groupId?: number;
   tagIds?: number[];
-  segmentationIds?: string[];
 }
+
 
 export interface UpdateContactData {
   name?: string;
@@ -226,8 +228,8 @@ export interface UpdateContactData {
   gender?: string;
   groupId?: number | null;
   tagIds?: number[];
-  segmentationIds?: string[];
 }
+
 
 export interface Group {
   id: number;
