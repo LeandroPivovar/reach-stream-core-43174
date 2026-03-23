@@ -136,6 +136,7 @@ export default function Vendas() {
 
         for (const shop of activeShopify) {
           syncPromises.push(api.syncShopifyOrders(shop.shop).catch(console.error));
+          syncPromises.push(api.syncShopifyCheckouts(shop.shop).catch(console.error));
         }
 
         for (const store of activeNuvemshop) {

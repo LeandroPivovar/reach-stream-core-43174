@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { PublicRoute } from "@/components/auth/PublicRoute";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/auth/Login";
+import Impersonate from "./pages/auth/Impersonate";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import VerifyEmail from "./pages/auth/VerifyEmail";
@@ -58,6 +59,7 @@ const App = () => (
           <Routes>
             {/* Rotas públicas (apenas para não autenticados) */}
             <Route path="/auth/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/impersonate" element={<PublicRoute><Impersonate /></PublicRoute>} />
             <Route path="/auth/register" element={<PublicRoute><Register /></PublicRoute>} />
             <Route path="/auth/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
             <Route path="/auth/verify-email" element={<PublicRoute><VerifyEmail /></PublicRoute>} />

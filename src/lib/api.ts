@@ -892,6 +892,12 @@ class ApiService {
     });
   }
 
+  async impersonateAdminUser(userId: number): Promise<{ token: string; user: any }> {
+    return this.request<{ token: string; user: any }>(`/admin/stats/users/${userId}/impersonate`, {
+      method: 'POST'
+    });
+  }
+
   async assignAdminUserPlan(userId: number, planId: number | null): Promise<any> {
     return this.request<any>(`/admin/users/${userId}/plan`, {
       method: 'POST',
@@ -1378,6 +1384,13 @@ class ApiService {
 
   async syncShopifyOrders(shop: string): Promise<{ success: boolean; imported: number; updated: number }> {
     return this.request<{ success: boolean; imported: number; updated: number }>('/shopify/sync/orders', {
+      method: 'POST',
+      body: JSON.stringify({ shop }),
+    });
+  }
+
+  async syncShopifyCheckouts(shop: string): Promise<{ success: boolean; imported: number; updated: number }> {
+    return this.request<{ success: boolean; imported: number; updated: number }>('/shopify/sync/checkouts', {
       method: 'POST',
       body: JSON.stringify({ shop }),
     });
