@@ -207,14 +207,15 @@ export default function Campanhas() {
   const [subscriptionStats, setSubscriptionStats] = useState<any>(null);
   const { config: scoreConfig } = useScoreConfig();
 
+  // Estado para armazenar compras e LTV dos contatos (necessário para o modal)
+  const [contactPurchases, setContactPurchases] = useState<Record<number, { purchases: any[]; ltv: number }>>({});
+
   const dynamicStats = useSegmentationStats(
     contacts,
     contactPurchases,
     newCampaign.segmentations || []
   );
 
-  // Estado para armazenar compras e LTV dos contatos (necessário para o modal)
-  const [contactPurchases, setContactPurchases] = useState<Record<number, { purchases: any[]; ltv: number }>>({});
 
   const convertApiContactToFrontend = (apiContact: Contact): ContactFrontend => {
     return {
