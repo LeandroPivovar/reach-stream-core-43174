@@ -592,10 +592,12 @@ export default function Contatos() {
 
   const segmentationStats = useMemo(() => {
     return {
+      total: contacts.length,
       ...backendStats,
       ...clientStats
     };
-  }, [clientStats, backendStats]);
+  }, [clientStats, backendStats, contacts.length]);
+
 
 
 
