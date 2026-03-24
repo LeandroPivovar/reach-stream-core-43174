@@ -671,6 +671,12 @@ class ApiService {
     });
   }
 
+  async wipeData(): Promise<void> {
+    await this.request('/users/me/wipe-data', {
+      method: 'POST',
+    });
+  }
+
   async toggle2fa(enabled: boolean): Promise<User> {
     return this.updateUser({ twoFactorEnabled: enabled });
   }
