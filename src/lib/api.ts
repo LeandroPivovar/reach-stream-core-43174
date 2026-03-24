@@ -844,10 +844,10 @@ class ApiService {
     return this.get<any>(`/campaigns/dashboard/performance?${params.toString()}`);
   }
 
-  async getContactsBySegments(segmentations: (string | SegmentationParam)[]): Promise<Contact[]> {
+  async getContactsBySegments(segmentations: (string | SegmentationParam)[], groupIds?: number[]): Promise<Contact[]> {
     return this.request<Contact[]>('/contacts/segments', {
       method: 'POST',
-      body: JSON.stringify({ segmentations })
+      body: JSON.stringify({ segmentations, groupIds })
     });
   }
 
