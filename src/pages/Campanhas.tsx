@@ -104,6 +104,8 @@ interface ContactFrontend {
   segmentations: string[];
   lastInteraction: string;
   sales: any[];
+  hasActiveCoupon?: boolean;
+  hasClickedCampaign?: boolean;
 }
 
 export default function Campanhas() {
@@ -232,7 +234,9 @@ export default function Campanhas() {
       gender: apiContact.gender || 'all',
       segmentations: apiContact.contactSegmentations?.map(cs => cs.segmentationId) || [],
       lastInteraction: apiContact.updatedAt || apiContact.createdAt,
-      sales: apiContact.sales || []
+      sales: apiContact.sales || [],
+      hasActiveCoupon: !!apiContact.hasActiveCoupon,
+      hasClickedCampaign: !!apiContact.hasClickedCampaign
     };
   };
 
