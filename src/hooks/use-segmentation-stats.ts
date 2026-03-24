@@ -14,49 +14,59 @@ export function evaluateSegmentation(
             return true;
 
         case 'by_purchase_count': {
-            const minPurchases = params?.minPurchases ?? 0;
-            const purchaseCount = purchaseData?.purchases.length || 0;
+            const minPurchases = params?.minPurchases !== undefined ? Number(params.minPurchases) : 1;
+            const purchaseCount = purchaseData?.purchases?.length || 0;
             return purchaseCount >= minPurchases;
         }
 
         case 'birthday': {
             if (!contact.birthDate) return false;
-            const birthDateObj = new Date(contact.birthDate + 'T00:00:00');
-            const birthMonth = birthDateObj.getMonth() + 1;
-            const targetMonth = params?.month ?? currentMonth;
+            // Handle YYYY-MM-DD or similar standard strings, carefully extracting month
+            const monthMatch = String(contact.birthDate).match(/-(\d{2})-/);
+            let birthMonth = -1;
+            if (monthMatch) {
+                birthMonth = parseInt(monthMatch[1], 10);
+            } else {
+                const birthDateObj = new Date(contact.birthDate + 'T00:00:00');
+                birthMonth = birthDateObj.getMonth() + 1;
+            }
+            const targetMonth = params?.month !== undefined ? Number(params.month) : currentMonth;
             return birthMonth === targetMonth;
         }
 
         case 'inactive_customers': {
-            const days = params?.days ?? 0;
-            if (purchaseData && purchaseData.purchases.length > 0) {
-                const lastPurchaseDate = new Date(purchaseData.purchases[purchaseData.purchases.length - 1].date);
-                const daysSinceLastPurchase = Math.floor((new Date().getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24));
-                return daysSinceLastPurchase >= days;
+            // Backend query logic: contact.id NOT IN (SELECT contactId FROM sales WHERE createdAt >= :date)
+            // Meaning: include ANYONE who HAS NOT purchased within the last X days.
+            const days = params?.days !== undefined ? Number(params.days) : 90;
+            if (!purchaseData || !purchaseData.purchases || purchaseData.purchases.length === 0) {
+                return true; // No purchases ever means they haven't purchased in the last X days.
             }
-            return contact.status === 'Inativo';
+            const lastPurchaseDate = new Date(purchaseData.purchases[purchaseData.purchases.length - 1].date);
+            const daysSinceLastPurchase = Math.floor((new Date().getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24));
+            return daysSinceLastPurchase >= days;
+        }
+
+        case 'no_purchase_x_days': {
+            // Identical logic to inactive_customers in backend.
+            const days = params?.days !== undefined ? Number(params.days) : 30;
+            if (!purchaseData || !purchaseData.purchases || purchaseData.purchases.length === 0) {
+                return true;
+            }
+            const lastPurchaseDate = new Date(purchaseData.purchases[purchaseData.purchases.length - 1].date);
+            const daysSinceLastPurchase = Math.floor((new Date().getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24));
+            return daysSinceLastPurchase >= days;
         }
 
         case 'high_ticket': {
-            const minTicket = params?.minTicket ?? 0;
+            const minTicket = params?.minTicket !== undefined ? Number(params.minTicket) : 500;
             const ltv = purchaseData?.ltv || 0;
-            const purchaseCount = purchaseData?.purchases.length || 0;
+            const purchaseCount = purchaseData?.purchases?.length || 0;
             const avgTicket = purchaseCount > 0 ? ltv / purchaseCount : 0;
-            return avgTicket >= minTicket;
+            return avgTicket > minTicket; // Backend uses AVG > minTicket
         }
 
         case 'lead_captured':
             return contact.status?.toLowerCase() === 'lead';
-
-        case 'no_purchase_x_days': {
-            const days = params?.days ?? 0;
-            if (purchaseData && purchaseData.purchases.length > 0) {
-                const lastPurchaseDate = new Date(purchaseData.purchases[purchaseData.purchases.length - 1].date);
-                const daysSinceLastPurchase = Math.floor((new Date().getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24));
-                return daysSinceLastPurchase >= days;
-            }
-            return false;
-        }
 
         case 'active_coupon':
             return !!contact.hasActiveCoupon;
@@ -64,19 +74,20 @@ export function evaluateSegmentation(
         case 'clicked_campaign':
             return !!contact.hasClickedCampaign;
 
-
-
-
-
-
         case 'gender': {
-            if (!params?.gender) return true;
-            return contact.gender === params.gender;
+            if (params?.gender === 'M' || params?.gender === 'F') {
+                return contact.gender === params.gender;
+            }
+            return true; // Ambos ou vazio retorna todos
         }
 
         case 'by_state': {
-            if (!params?.state) return true;
-            return contact.state === params.state;
+            if (params?.state) {
+                return contact.state === params.state;
+            }
+            // Backend "contact.state IS NOT NULL" para quando seleciona Estado sem estado especifico?
+            // "if (!segParams.state) orConditions.push(`contact.state IS NOT NULL`);"
+            return !!contact.state;
         }
 
         default:
