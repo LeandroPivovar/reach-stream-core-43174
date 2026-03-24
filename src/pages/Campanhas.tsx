@@ -128,6 +128,7 @@ export default function Campanhas() {
     name: '',
     groups: [] as string[],
     segmentations: [] as (string | import('@/lib/api').SegmentationParam)[],
+    specificContacts: [] as number[],
     channel: '' as 'email' | 'sms' | 'whatsapp' | '',
     campaignType: '' as 'dispatch' | 'coupon' | 'giftback' | '',
     campaignConfig: {
@@ -372,17 +373,20 @@ export default function Campanhas() {
   };
 
   const getFilteredContacts = () => {
-    if (newCampaign.groups.length === 0 && newCampaign.segmentations.length === 0) return [];
+    if (newCampaign.groups.length === 0 && newCampaign.segmentations.length === 0 && (!newCampaign.specificContacts || newCampaign.specificContacts.length === 0)) return [];
 
     const selectedGroupIds = newCampaign.groups.map(Number);
 
     return contacts.filter(contact => {
-      // 1. Verificar se o contato está em um dos grupos selecionados
+      // 1. Verificar se o contato está na lista de pesquisa específica
+      if (newCampaign.specificContacts?.includes(contact.id)) return true;
+
+      // 2. Verificar se o contato está em um dos grupos selecionados
       if (contact.groupId && selectedGroupIds.includes(contact.groupId)) return true;
 
       const purchaseData = contactPurchases[contact.id];
 
-      // 2. Verificar se o contato tem alguma das segmentações selecionadas (avaliando dinamicamente)
+      // 3. Verificar se o contato tem alguma das segmentações selecionadas (avaliando dinamicamente)
       for (const seg of newCampaign.segmentations) {
         const segId = typeof seg === 'string' ? seg : seg.id;
         const params = typeof seg === 'object' ? seg.params : {};
@@ -461,7 +465,8 @@ export default function Campanhas() {
           workflow: newCampaign.workflow,
           tracking: newCampaign.tracking,
           groups: newCampaign.groups,
-          segmentations: newCampaign.segmentations
+          segmentations: newCampaign.segmentations,
+          specificContacts: newCampaign.specificContacts
         }
       };
 
@@ -1269,6 +1274,9 @@ export default function Campanhas() {
                 availableGroups={availableGroups}
                 selectedGroups={newCampaign.groups}
                 onGroupsChange={(groups) => setNewCampaign({ ...newCampaign, groups })}
+                selectedContactIds={newCampaign.specificContacts || []}
+                onSpecificContactsChange={(specificContacts) => setNewCampaign({ ...newCampaign, specificContacts })}
+                allContacts={contacts}
                 onSegmentsChange={(segments) => {
                   setNewCampaign({ ...newCampaign, segmentations: segments });
                   setCurrentPage(1); // Reset pagination when segmentation changes
