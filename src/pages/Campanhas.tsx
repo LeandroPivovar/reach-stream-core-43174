@@ -1262,6 +1262,9 @@ export default function Campanhas() {
               <SegmentationPicker
                 selectedSegments={newCampaign.segmentations || []}
                 stats={dynamicStats}
+                availableGroups={availableGroups}
+                selectedGroups={newCampaign.groups}
+                onGroupsChange={(groups) => setNewCampaign({ ...newCampaign, groups })}
                 onSegmentsChange={(segments) => {
                   setNewCampaign({ ...newCampaign, segmentations: segments });
                   setCurrentPage(1); // Reset pagination when segmentation changes

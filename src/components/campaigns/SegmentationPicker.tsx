@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Users, Check, X, Search, Loader2 } from 'lucide-react';
-import { api, Contact, SegmentationParam } from '@/lib/api';
+import { api, Contact, SegmentationParam, Group } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -24,11 +24,22 @@ interface SegmentationOption {
 interface SegmentationPickerProps {
   selectedSegments: (string | SegmentationParam)[];
   onSegmentsChange: (segments: (string | SegmentationParam)[]) => void;
+  availableGroups?: Group[];
+  selectedGroups?: string[];
+  onGroupsChange?: (groups: string[]) => void;
   onViewContact?: (contactId: number) => void;
   stats?: Record<string, number>;
 }
 
-export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewContact, stats = {} }: SegmentationPickerProps) {
+export function SegmentationPicker({
+  selectedSegments,
+  onSegmentsChange,
+  availableGroups = [],
+  selectedGroups = [],
+  onGroupsChange,
+  onViewContact,
+  stats = {}
+}: SegmentationPickerProps) {
   const [previewContacts, setPreviewContacts] = React.useState<Contact[]>([]);
   const [isLoadingPreview, setIsLoadingPreview] = React.useState(false);
 
@@ -73,6 +84,16 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
     onSegmentsChange(newSegments);
   };
 
+  const toggleGroup = (groupId: string) => {
+    if (!onGroupsChange) return;
+    const isSelected = selectedGroups.includes(groupId);
+    if (isSelected) {
+      onGroupsChange(selectedGroups.filter(g => g !== groupId));
+    } else {
+      onGroupsChange([...selectedGroups, groupId]);
+    }
+  };
+
   const getSegmentParams = (segmentId: string) => {
     const seg = selectedSegments.find(s => (typeof s === 'string' ? s : s.id) === segmentId);
     return typeof seg === 'object' ? seg.params : {};
@@ -80,13 +101,14 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
 
   React.useEffect(() => {
     const fetchPreview = async () => {
-      if (selectedSegments.length === 0) {
+      if (selectedSegments.length === 0 && selectedGroups.length === 0) {
         setPreviewContacts([]);
         return;
       }
       setIsLoadingPreview(true);
       try {
-        const data = await api.getContactsBySegments(selectedSegments);
+        const groupIds = selectedGroups.map(Number).filter(id => !isNaN(id));
+        const data = await api.getContactsBySegments(selectedSegments, groupIds);
         setPreviewContacts(data);
       } catch (error) {
         console.error('Erro ao buscar preview:', error);
@@ -97,7 +119,7 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
 
     const timeoutId = setTimeout(fetchPreview, 500);
     return () => clearTimeout(timeoutId);
-  }, [selectedSegments]);
+  }, [selectedSegments, selectedGroups]);
 
   const renderConfigUI = (segmentId: string) => {
     const params = getSegmentParams(segmentId);
@@ -272,6 +294,37 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
         </p>
       </div>
 
+      {availableGroups && availableGroups.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-base">Filtros de Grupo</h3>
+            <Badge variant="secondary" className="ml-auto">
+              {selectedGroups.length} ativos
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {availableGroups.map((group) => {
+              const isSelected = selectedGroups.includes(group.id.toString());
+              return (
+                <Card
+                  key={group.id}
+                  className={`p-4 cursor-pointer hover:border-primary transition-all ${isSelected ? 'border-primary bg-primary/5 shadow-md' : ''}`}
+                  onClick={() => toggleGroup(group.id.toString())}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${isSelected ? 'bg-primary border-primary' : 'border-input'}`}>
+                      {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                    </div>
+                    <div className="font-medium text-sm">{group.name}</div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-primary" />
@@ -283,11 +336,26 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
         {renderFilters(audienceFilters)}
       </div>
 
-      {selectedSegments.length > 0 && (
+      {(selectedSegments.length > 0 || selectedGroups.length > 0) && (
         <div className="space-y-4">
           <div className="bg-muted/50 p-4 rounded-lg">
             <p className="text-sm font-semibold mb-3">Filtros selecionados:</p>
             <div className="flex flex-wrap gap-2">
+              {selectedGroups.map(groupId => {
+                const group = availableGroups.find(g => g.id.toString() === groupId);
+                return group ? (
+                  <Badge key={`group-${groupId}`} variant="default" className="gap-1 pl-2 pr-1 h-7 bg-primary text-primary-foreground">
+                    {group.name}
+                    <X
+                      className="w-3 h-3 cursor-pointer hover:text-primary-foreground/80 ml-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleGroup(groupId);
+                      }}
+                    />
+                  </Badge>
+                ) : null;
+              })}
               {selectedSegments.map(s => {
                 const id = typeof s === 'string' ? s : s.id;
                 const segment = audienceFilters.find(opt => opt.id === id);
