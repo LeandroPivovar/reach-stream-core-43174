@@ -12,6 +12,17 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   User,
   Lock,
   CreditCard,
@@ -21,7 +32,9 @@ import {
   EyeOff,
   Smartphone,
   Mail,
-  Calendar
+  Calendar,
+  AlertTriangle,
+  Trash2
 } from 'lucide-react';
 
 export default function MinhaConta() {
@@ -278,6 +291,29 @@ export default function MinhaConta() {
     }
   };
 
+  const handleWipeData = async () => {
+    try {
+      setIsSaving(true);
+      await api.wipeData();
+
+      setSuccessModalContent({
+        title: 'Dados Limpos com Sucesso!',
+        description: 'Todos os seus dados operacionais foram removidos permanentemente.',
+      });
+      setShowSuccessModal(true);
+
+      // Recarregar dados para limpar listas locais se necessário (opcional)
+    } catch (error) {
+      toast({
+        title: 'Erro ao limpar dados',
+        description: error instanceof Error ? error.message : 'Não foi possível completar a operação',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Layout
       title="Minha Conta"
@@ -477,6 +513,59 @@ export default function MinhaConta() {
                     </p>
                   </div>
                 )}
+              </Card>
+
+              {/* Danger Zone */}
+              <Card className="p-6 border-red-200 bg-red-50/30">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-red-900">Zona de Perigo</h3>
+                    <p className="text-sm text-red-700">
+                      Ações irreversíveis para sua conta
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-white border border-red-100 rounded-lg gap-4">
+                    <div className="space-y-1">
+                      <p className="font-medium text-red-900">Limpar todos os dados</p>
+                      <p className="text-sm text-red-700/80">
+                        Apaga permanentemente todos os clientes, vendas, produtos e eventos de rastreamento.
+                      </p>
+                    </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="whitespace-nowrap">
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Limpar Dados
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. Isso excluirá permanentemente todos os seus
+                            contatos, histórico de vendas, produtos cadastrados e dados de rastreamento (pixel)
+                            de nossos servidores.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleWipeData}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Sim, limpar tudo
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
               </Card>
             </div>
           </TabsContent>
