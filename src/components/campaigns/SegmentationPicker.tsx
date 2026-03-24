@@ -48,7 +48,7 @@ export function SegmentationPicker({ selectedSegments, onSegmentsChange, onViewC
       affectedCount: stats['gender'] || 0
     },
     { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: stats['by_state'] || 0 },
-    { id: 'opened_campaign', label: 'Abriram campanhas', description: 'Contatos que receberam/abriram campanhas', affectedCount: stats['opened_campaign'] || 0 },
+
     { id: 'clicked_campaign', label: 'Engajados (cliques)', description: 'Contatos que clicaram em links de campanhas', affectedCount: stats['clicked_campaign'] || 0 },
 
   ];

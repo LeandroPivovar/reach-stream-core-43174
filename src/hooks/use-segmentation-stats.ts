@@ -64,8 +64,7 @@ export function evaluateSegmentation(
         case 'clicked_campaign':
             return !!contact.hasClickedCampaign;
 
-        case 'opened_campaign':
-            return !!contact.hasOpenedCampaign;
+
 
 
 
@@ -109,6 +108,7 @@ export function useSegmentationStats(
             lead_captured: 0,
             no_purchase_x_days: 0,
             active_coupon: 0,
+            clicked_campaign: 0,
             gender: 0,
             by_state: 0,
         };
@@ -116,21 +116,21 @@ export function useSegmentationStats(
         contacts.forEach(c => {
             const purchaseData = contactPurchases[c.id];
 
-            // Standard stats
-            if (evaluateSegmentation(c, purchaseData, 'by_purchase_count', getParams('by_purchase_count'))) stats.by_purchase_count++;
-            if (evaluateSegmentation(c, purchaseData, 'birthday', getParams('birthday'))) stats.birthday++;
-            if (evaluateSegmentation(c, purchaseData, 'inactive_customers', getParams('inactive_customers'))) stats.inactive_customers++;
-            if (evaluateSegmentation(c, purchaseData, 'high_ticket', getParams('high_ticket'))) stats.high_ticket++;
+            // Standard stats - Independent of horizontal filter/selection
+            // We use default params for counting purposes if not selected
+            if (evaluateSegmentation(c, purchaseData, 'by_purchase_count', getParams('by_purchase_count') || { minPurchases: 1 })) stats.by_purchase_count++;
+            if (evaluateSegmentation(c, purchaseData, 'birthday', getParams('birthday') || { month: new Date().getMonth() + 1 })) stats.birthday++;
+            if (evaluateSegmentation(c, purchaseData, 'inactive_customers', getParams('inactive_customers') || { days: 30 })) stats.inactive_customers++;
+            if (evaluateSegmentation(c, purchaseData, 'high_ticket', getParams('high_ticket') || { minTicket: 500 })) stats.high_ticket++;
             if (evaluateSegmentation(c, purchaseData, 'lead_captured', {})) stats.lead_captured++;
-            if (evaluateSegmentation(c, purchaseData, 'no_purchase_x_days', getParams('no_purchase_x_days'))) stats.no_purchase_x_days++;
+            if (evaluateSegmentation(c, purchaseData, 'no_purchase_x_days', getParams('no_purchase_x_days') || { days: 30 })) stats.no_purchase_x_days++;
             if (evaluateSegmentation(c, purchaseData, 'active_coupon', {})) stats.active_coupon++;
-            if (evaluateSegmentation(c, purchaseData, 'clicked_campaign', {})) stats.clicked_campaign = (stats.clicked_campaign || 0) + 1;
-            if (evaluateSegmentation(c, purchaseData, 'opened_campaign', {})) stats.opened_campaign = (stats.opened_campaign || 0) + 1;
-
+            if (evaluateSegmentation(c, purchaseData, 'clicked_campaign', {})) stats.clicked_campaign++;
 
             if (evaluateSegmentation(c, purchaseData, 'gender', getParams('gender'))) stats.gender++;
             if (evaluateSegmentation(c, purchaseData, 'by_state', getParams('by_state'))) stats.by_state++;
         });
+
 
         return stats;
     }, [contacts, contactPurchases, selectedSegments]);
