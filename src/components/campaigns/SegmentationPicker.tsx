@@ -3,7 +3,9 @@ import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Users, Check, X, Search, Loader2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { api, Contact, SegmentationParam, Group } from '@/lib/api';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -27,6 +29,9 @@ interface SegmentationPickerProps {
   availableGroups?: Group[];
   selectedGroups?: string[];
   onGroupsChange?: (groups: string[]) => void;
+  selectedContactIds?: number[];
+  onSpecificContactsChange?: (contactIds: number[]) => void;
+  allContacts?: any[];
   onViewContact?: (contactId: number) => void;
   stats?: Record<string, number>;
 }
@@ -37,11 +42,16 @@ export function SegmentationPicker({
   availableGroups = [],
   selectedGroups = [],
   onGroupsChange,
+  selectedContactIds = [],
+  onSpecificContactsChange,
+  allContacts = [],
   onViewContact,
   stats = {}
 }: SegmentationPickerProps) {
-  const [previewContacts, setPreviewContacts] = React.useState<Contact[]>([]);
+  const [previewContacts, setPreviewContacts] = React.useState<any[]>([]);
   const [isLoadingPreview, setIsLoadingPreview] = React.useState(false);
+  const [contactSearch, setContactSearch] = React.useState('');
+  const [isContactPopoverOpen, setIsContactPopoverOpen] = React.useState(false);
 
   const audienceFilters: SegmentationOption[] = [
     { id: 'total', label: 'Todos os Contatos', description: 'Enviar para toda a sua base de contatos', affectedCount: stats['total'] || 0 },
@@ -84,6 +94,15 @@ export function SegmentationPicker({
     onSegmentsChange(newSegments);
   };
 
+  const toggleSpecificContact = (id: number) => {
+    if (!onSpecificContactsChange) return;
+    if (selectedContactIds.includes(id)) {
+      onSpecificContactsChange(selectedContactIds.filter(cid => cid !== id));
+    } else {
+      onSpecificContactsChange([...selectedContactIds, id]);
+    }
+  };
+
   const toggleGroup = (groupId: string) => {
     if (!onGroupsChange) return;
     const isSelected = selectedGroups.includes(groupId);
@@ -101,15 +120,43 @@ export function SegmentationPicker({
 
   React.useEffect(() => {
     const fetchPreview = async () => {
-      if (selectedSegments.length === 0 && selectedGroups.length === 0) {
+      if (selectedSegments.length === 0 && selectedGroups.length === 0 && selectedContactIds.length === 0) {
         setPreviewContacts([]);
         return;
       }
       setIsLoadingPreview(true);
       try {
         const groupIds = selectedGroups.map(Number).filter(id => !isNaN(id));
-        const data = await api.getContactsBySegments(selectedSegments, groupIds);
-        setPreviewContacts(data);
+        let data: any[] = [];
+
+        // Só chama API se tiver grupos ou segmentações selecionados
+        if (selectedSegments.length > 0 || groupIds.length > 0) {
+          data = await api.getContactsBySegments(selectedSegments, groupIds);
+        }
+
+        let mergedContacts: any[] = data.map(c => ({
+          ...c,
+          _origin: c.groupId && groupIds.includes(c.groupId)
+            ? 'Grupo'
+            : (selectedSegments.length > 0 ? 'Segmentação' : 'Outro')
+        }));
+
+        if (selectedContactIds.length > 0 && allContacts && allContacts.length > 0) {
+          const specificContactsData = allContacts.filter(c => selectedContactIds.includes(c.id));
+          const existingIds = new Set(mergedContacts.map(c => c.id));
+          const toAdd = specificContactsData
+            .filter(c => !existingIds.has(c.id))
+            .map(c => ({ ...c, _origin: 'Pesquisa' }));
+
+          mergedContacts = [...mergedContacts.map(c => {
+            if (selectedContactIds.includes(c.id)) {
+              return { ...c, _origin: 'Pesquisa' };
+            }
+            return c;
+          }), ...toAdd];
+        }
+
+        setPreviewContacts(mergedContacts);
       } catch (error) {
         console.error('Erro ao buscar preview:', error);
       } finally {
@@ -119,7 +166,7 @@ export function SegmentationPicker({
 
     const timeoutId = setTimeout(fetchPreview, 500);
     return () => clearTimeout(timeoutId);
-  }, [selectedSegments, selectedGroups]);
+  }, [selectedSegments, selectedGroups, selectedContactIds, allContacts]);
 
   const renderConfigUI = (segmentId: string) => {
     const params = getSegmentParams(segmentId);
@@ -294,6 +341,72 @@ export function SegmentationPicker({
         </p>
       </div>
 
+      <div className="space-y-3 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold text-base">Contatos Específicos</h3>
+          </div>
+          <Badge variant="secondary">
+            {selectedContactIds.length} selecionado{selectedContactIds.length !== 1 ? 's' : ''}
+          </Badge>
+        </div>
+
+        <Popover open={isContactPopoverOpen} onOpenChange={setIsContactPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-full justify-start text-left font-normal" disabled={!allContacts || allContacts.length === 0}>
+              <Search className="mr-2 h-4 w-4 text-muted-foreground" />
+              {selectedContactIds.length > 0
+                ? `${selectedContactIds.length} contato(s) selecionado(s)`
+                : "Buscar e adicionar contatos específicos..."}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[400px] p-0" align="start">
+            <div className="p-2 border-b">
+              <Input
+                placeholder="Buscar por nome, email ou telefone..."
+                value={contactSearch}
+                onChange={(e) => setContactSearch(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="max-h-[300px] overflow-y-auto p-1">
+              {allContacts && allContacts
+                .filter((c: any) =>
+                  c.name?.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                  c.email?.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                  c.phone?.includes(contactSearch)
+                )
+                .slice(0, 20)
+                .map((contact: any) => {
+                  const isSelected = selectedContactIds.includes(contact.id);
+                  return (
+                    <div
+                      key={contact.id}
+                      className={`flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer ${isSelected ? 'bg-primary/5' : ''}`}
+                      onClick={() => toggleSpecificContact(contact.id)}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm">{contact.name}</span>
+                        <span className="text-xs text-muted-foreground">{contact.email || contact.phone || 'Sem contato'}</span>
+                      </div>
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-input'}`}>
+                        {isSelected && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                    </div>
+                  );
+                })
+              }
+              {(!allContacts || allContacts.length === 0) && (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Nenhum contato disponível
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+
       {availableGroups && availableGroups.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -336,11 +449,26 @@ export function SegmentationPicker({
         {renderFilters(audienceFilters)}
       </div>
 
-      {(selectedSegments.length > 0 || selectedGroups.length > 0) && (
+      {(selectedSegments.length > 0 || selectedGroups.length > 0 || selectedContactIds.length > 0) && (
         <div className="space-y-4">
           <div className="bg-muted/50 p-4 rounded-lg">
             <p className="text-sm font-semibold mb-3">Filtros selecionados:</p>
             <div className="flex flex-wrap gap-2">
+              {selectedContactIds.map(contactId => {
+                const contact = allContacts.find(c => c.id === contactId);
+                return contact ? (
+                  <Badge key={`contact-${contactId}`} variant="outline" className="gap-1 pl-2 pr-1 h-7 border-primary text-primary">
+                    {contact.name.split(' ')[0]} {/* Primeiro nome */}
+                    <X
+                      className="w-3 h-3 cursor-pointer hover:text-primary/80 ml-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSpecificContact(contactId);
+                      }}
+                    />
+                  </Badge>
+                ) : null;
+              })}
               {selectedGroups.map(groupId => {
                 const group = availableGroups.find(g => g.id.toString() === groupId);
                 return group ? (
@@ -403,7 +531,16 @@ export function SegmentationPicker({
                   ) : previewContacts.length > 0 ? (
                     previewContacts.map((contact) => (
                       <TableRow key={contact.id} className="hover:bg-muted/40 transition-colors">
-                        <TableCell className="py-2 text-xs font-medium">{contact.name}</TableCell>
+                        <TableCell className="py-2 text-xs font-medium">
+                          <div className="flex flex-col gap-1">
+                            <span>{contact.name}</span>
+                            {contact._origin && (
+                              <Badge variant={contact._origin === 'Pesquisa' ? 'secondary' : contact._origin === 'Grupo' ? 'default' : 'outline'} className="w-fit text-[9px] h-4 py-0 px-1 opacity-80">
+                                {contact._origin}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="py-2 text-xs text-muted-foreground">{contact.email || '-'}</TableCell>
                         <TableCell className="py-2 text-xs text-muted-foreground">
                           <div className="flex items-center justify-between gap-2">
