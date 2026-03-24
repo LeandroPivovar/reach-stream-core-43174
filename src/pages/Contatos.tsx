@@ -108,8 +108,8 @@ interface ContactFrontend {
   sales: import('@/lib/api').Sale[];
   hasActiveCoupon: boolean;
   hasClickedCampaign: boolean;
-  hasOpenedCampaign: boolean;
 }
+
 
 
 
@@ -302,9 +302,9 @@ export default function Contatos() {
       lastInteraction: apiContact.updatedAt || apiContact.createdAt,
       sales: apiContact.sales || [],
       hasActiveCoupon: !!apiContact.hasActiveCoupon,
-      hasClickedCampaign: !!apiContact.hasClickedCampaign,
-      hasOpenedCampaign: !!apiContact.hasOpenedCampaign
+      hasClickedCampaign: !!apiContact.hasClickedCampaign
     };
+
   }, []);
 
 
@@ -592,10 +592,11 @@ export default function Contatos() {
 
   const segmentationStats = useMemo(() => {
     return {
-      ...clientStats,
-      ...backendStats
+      ...backendStats,
+      ...clientStats
     };
   }, [clientStats, backendStats]);
+
 
 
   // Aplicar filtros
