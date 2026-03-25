@@ -47,6 +47,7 @@ export default function AdminEmailRequests() {
     const [selectedRequest, setSelectedRequest] = useState<any>(null);
     const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
     const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [rejectReason, setRejectReason] = useState('');
 
     // Mutations
@@ -76,15 +77,22 @@ export default function AdminEmailRequests() {
     });
 
     // Handlers
-    const handleOpenApprove = (request: any) => {
+    const handleOpenApprove = (request: any, e?: React.MouseEvent) => {
+        e?.stopPropagation();
         setSelectedRequest(request);
         setIsApproveModalOpen(true);
     };
 
-    const handleOpenReject = (request: any) => {
+    const handleOpenReject = (request: any, e?: React.MouseEvent) => {
+        e?.stopPropagation();
         setSelectedRequest(request);
         setRejectReason('');
         setIsRejectModalOpen(true);
+    };
+
+    const handleOpenDetails = (request: any) => {
+        setSelectedRequest(request);
+        setIsDetailsModalOpen(true);
     };
 
     const submitApprove = () => {
@@ -124,7 +132,11 @@ export default function AdminEmailRequests() {
                             </TableRow>
                         ) : requests?.length ? (
                             requests.map((request: any) => (
-                                <TableRow key={request.id}>
+                                <TableRow
+                                    key={request.id}
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => handleOpenDetails(request)}
+                                >
                                     <TableCell className="font-medium">
                                         <div className="flex flex-col">
                                             <span>{request.user?.firstName} {request.user?.lastName}</span>
@@ -143,7 +155,7 @@ export default function AdminEmailRequests() {
                                             Pendente
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -153,11 +165,11 @@ export default function AdminEmailRequests() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => handleOpenApprove(request)}>
+                                                <DropdownMenuItem onClick={(e) => handleOpenApprove(request, e)}>
                                                     <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                                                     Aprovar
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleOpenReject(request)} className="text-destructive">
+                                                <DropdownMenuItem onClick={(e) => handleOpenReject(request, e)} className="text-destructive">
                                                     <XCircle className="mr-2 h-4 w-4" />
                                                     Rejeitar
                                                 </DropdownMenuItem>
@@ -176,6 +188,67 @@ export default function AdminEmailRequests() {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* Details Modal */}
+            <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Detalhes da Solicitação</DialogTitle>
+                        <DialogDescription>
+                            Informações completas para a verificação do domínio de e-mail.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">Usuário</Label>
+                                <p className="text-sm font-medium">{selectedRequest?.user?.firstName} {selectedRequest?.user?.lastName}</p>
+                                <p className="text-xs text-muted-foreground">{selectedRequest?.user?.email}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">Domínio</Label>
+                                <p className="text-sm font-medium flex items-center gap-1">
+                                    {selectedRequest?.domain}
+                                    <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label className="text-sm">Registros DNS Gerados</Label>
+                            <div className="space-y-4 font-mono text-xs">
+                                <div className="p-3 bg-muted rounded-lg border space-y-2">
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">TXT Record (SPF)</p>
+                                    <code className="block break-all bg-background p-2 rounded border">{selectedRequest?.dnsTxt}</code>
+                                </div>
+                                <div className="p-3 bg-muted rounded-lg border space-y-2">
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">CNAME Record (DKIM)</p>
+                                    <code className="block break-all bg-background p-2 rounded border">{selectedRequest?.dnsCname}</code>
+                                </div>
+                                <div className="p-3 bg-muted rounded-lg border space-y-2">
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">MX Record</p>
+                                    <code className="block break-all bg-background p-2 rounded border">{selectedRequest?.dnsMx}</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-lg">
+                            <p className="text-xs text-amber-600">
+                                <b>Atenção:</b> Verifique se os registros acima foram propagados antes de aprovar.
+                            </p>
+                        </div>
+                    </div>
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setIsDetailsModalOpen(false)}>Fechar</Button>
+                        <div className="flex gap-2">
+                            <Button variant="destructive" onClick={(e) => { setIsDetailsModalOpen(false); handleOpenReject(selectedRequest, e); }}>Rejeitar</Button>
+                            <Button className="bg-green-600 hover:bg-green-700" onClick={(e) => { setIsDetailsModalOpen(false); handleOpenApprove(selectedRequest, e); }}>Aprovar Agora</Button>
+                        </div>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Approve Modal */}
             <Dialog open={isApproveModalOpen} onOpenChange={setIsApproveModalOpen}>
