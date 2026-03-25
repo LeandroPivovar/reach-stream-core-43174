@@ -75,8 +75,7 @@ export default function Integracoes() {
   const [isConnectingLI, setIsConnectingLI] = useState(false);
   const [liData, setLiData] = useState({
     storeName: '',
-    apiKey: '',
-    applicationKey: ''
+    apiKey: ''
   });
 
   // Mapeamento de eventos técnicos para nomes amigáveis
@@ -338,7 +337,7 @@ export default function Integracoes() {
   };
 
   const handleConnectLI = async () => {
-    if (!liData.storeName || !liData.apiKey || !liData.applicationKey) {
+    if (!liData.storeName || !liData.apiKey) {
       toast({
         title: "Erro",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -351,8 +350,7 @@ export default function Integracoes() {
     try {
       await api.lojaIntegradaApi.connect({
         storeName: liData.storeName,
-        apiKey: liData.apiKey,
-        applicationKey: liData.applicationKey,
+        apiKey: liData.apiKey
       });
 
       toast({
@@ -367,7 +365,7 @@ export default function Integracoes() {
       setIsNewIntegrationOpen(false);
       setIntegrationType(null);
       setSelectedEcommerce(null);
-      setLiData({ storeName: '', apiKey: '', applicationKey: '' });
+      setLiData({ storeName: '', apiKey: '' });
     } catch (error) {
       toast({
         title: "Erro ao conectar",
@@ -1705,24 +1703,13 @@ export default function Integracoes() {
               </p>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="li-app-key">Chave da Aplicação *</Label>
-              <Input
-                id="li-app-key"
-                type="password"
-                value={liData.applicationKey}
-                onChange={(e) => setLiData({ ...liData, applicationKey: e.target.value })}
-                placeholder="Chave da aplicação"
-              />
-            </div>
-
             <div className="bg-muted p-3 rounded-lg">
-              <p className="text-xs font-medium mb-1">Passos para encontrar as chaves:</p>
+              <p className="text-xs font-medium mb-1">Passos para encontrar a chave:</p>
               <ol className="text-[11px] text-muted-foreground list-decimal list-inside space-y-0.5">
                 <li>Acesse o painel da Loja Integrada</li>
                 <li>Vá em Configurações &gt; Chave de API</li>
                 <li>Clique em "Gerar nova chave" se ainda não tiver</li>
-                <li>Copie a API Key e a Chave da Aplicação aqui</li>
+                <li>Copie a API Key e cole aqui</li>
               </ol>
             </div>
           </div>
@@ -1733,7 +1720,7 @@ export default function Integracoes() {
             </Button>
             <Button
               onClick={handleConnectLI}
-              disabled={!liData.apiKey || !liData.applicationKey || !liData.storeName || isConnectingLI}
+              disabled={!liData.apiKey || !liData.storeName || isConnectingLI}
             >
               {isConnectingLI ? (
                 <>
