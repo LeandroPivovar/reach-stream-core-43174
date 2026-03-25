@@ -71,6 +71,13 @@ export default function Integracoes() {
   const [loadingConnections, setLoadingConnections] = useState(false);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [isConnectingVtex, setIsConnectingVtex] = useState(false);
+  const [liConnections, setLiConnections] = useState<any[]>([]);
+  const [isConnectingLI, setIsConnectingLI] = useState(false);
+  const [liData, setLiData] = useState({
+    storeName: '',
+    apiKey: '',
+    applicationKey: ''
+  });
 
   // Mapeamento de eventos técnicos para nomes amigáveis
   const eventLabels: Record<string, string> = {
@@ -106,7 +113,7 @@ export default function Integracoes() {
       name: 'Loja Integrada',
       description: 'Conecte com a Loja Integrada para automações avançadas',
       imageUrl: '/icons/lojaintegrada.png',
-      status: 'Em desenvolvimento',
+      status: 'Disponível',
       color: 'bg-purple-500',
       features: ['Catálogo sincronizado', 'Remarketing', 'Análise de vendas']
     },
@@ -138,10 +145,11 @@ export default function Integracoes() {
   const loadConnections = async () => {
     try {
       setLoadingConnections(true);
-      const [nuvemshop, shopify, vtex] = await Promise.all([
+      const [nuvemshop, shopify, vtex, li] = await Promise.all([
         api.getNuvemshopConnections().catch(() => []),
         api.getShopifyConnections().catch(() => []),
         api.getVtexConnections().catch(() => []),
+        api.lojaIntegradaApi.getConnection().catch(() => null),
       ]);
 
       const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
@@ -151,6 +159,7 @@ export default function Integracoes() {
       setNuvemshopConnections(activeNuvemshop);
       setShopifyConnections(activeShopify);
       setVtexConnections(activeVtex);
+      setLiConnections(li ? [li] : []);
 
       // Buscar webhooks de todas as conexões ativas
       const allWebhooks: any[] = [];
@@ -231,12 +240,15 @@ export default function Integracoes() {
     } else if (platformName === 'VTEX') {
       const connection = vtexConnections.find(c => c.isActive);
       return { connected: !!connection, connection };
+    } else if (platformName === 'Loja Integrada') {
+      const connection = liConnections.find(c => c.isActive);
+      return { connected: !!connection, connection };
     }
     return { connected: false };
   };
 
   // Contar integrações ativas
-  const activeIntegrationsCount = nuvemshopConnections.length + shopifyConnections.length + vtexConnections.length;
+  const activeIntegrationsCount = nuvemshopConnections.length + shopifyConnections.length + vtexConnections.length + liConnections.length;
 
   const handleOpenNewIntegration = () => {
     setIntegrationType(null);
@@ -325,6 +337,48 @@ export default function Integracoes() {
     }
   };
 
+  const handleConnectLI = async () => {
+    if (!liData.storeName || !liData.apiKey || !liData.applicationKey) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsConnectingLI(true);
+    try {
+      await api.lojaIntegradaApi.connect({
+        storeName: liData.storeName,
+        apiKey: liData.apiKey,
+        applicationKey: liData.applicationKey,
+      });
+
+      toast({
+        title: "Loja Integrada conectada!",
+        description: "Sua loja foi conectada com sucesso.",
+      });
+
+      // Recarregar conexões
+      await loadConnections();
+
+      // Fechar diálogo e limpar dados
+      setIsNewIntegrationOpen(false);
+      setIntegrationType(null);
+      setSelectedEcommerce(null);
+      setLiData({ storeName: '', apiKey: '', applicationKey: '' });
+    } catch (error) {
+      toast({
+        title: "Erro ao conectar",
+        description: error instanceof Error ? error.message : "Não foi possível conectar com a Loja Integrada",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnectingLI(false);
+    }
+  };
+
   const handleConnectVtex = async () => {
     if (!vtexData.accountName || !vtexData.appKey || !vtexData.appToken) {
       toast({
@@ -382,6 +436,9 @@ export default function Integracoes() {
       } else if (selectedEcommerce === 'VTEX') {
         // VTEX usa conexão direta, não OAuth
         await handleConnectVtex();
+        return;
+      } else if (selectedEcommerce === 'Loja Integrada') {
+        await handleConnectLI();
         return;
       } else {
         console.log('Connecting e-commerce:', { platform: selectedEcommerce, ...ecommerceData });
@@ -1603,6 +1660,92 @@ export default function Integracoes() {
               }}
             >
               Continuar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Configuração Loja Integrada */}
+      <Dialog open={selectedEcommerce === 'Loja Integrada'} onOpenChange={(open) => !open && setSelectedEcommerce(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center border bg-white">
+                <img src="/icons/lojaintegrada.png" alt="Loja Integrada" className="w-full h-full object-cover" />
+              </div>
+              Conectar Loja Integrada
+            </DialogTitle>
+            <DialogDescription>
+              Configure sua chave de API para importar produtos e pedidos da Loja Integrada.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="li-store-name">Nome da Loja *</Label>
+              <Input
+                id="li-store-name"
+                value={liData.storeName}
+                onChange={(e) => setLiData({ ...liData, storeName: e.target.value })}
+                placeholder="Ex: Minha Loja LI"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="li-api-key">API Key *</Label>
+              <Input
+                id="li-api-key"
+                type="password"
+                value={liData.apiKey}
+                onChange={(e) => setLiData({ ...liData, apiKey: e.target.value })}
+                placeholder="Sua chave de API"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Encontre no painel da Loja Integrada em Soluções &gt; API
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="li-app-key">Chave da Aplicação *</Label>
+              <Input
+                id="li-app-key"
+                type="password"
+                value={liData.applicationKey}
+                onChange={(e) => setLiData({ ...liData, applicationKey: e.target.value })}
+                placeholder="Chave da aplicação"
+              />
+            </div>
+
+            <div className="bg-muted p-3 rounded-lg">
+              <p className="text-xs font-medium mb-1">Passos para encontrar as chaves:</p>
+              <ol className="text-[11px] text-muted-foreground list-decimal list-inside space-y-0.5">
+                <li>Acesse o painel da Loja Integrada</li>
+                <li>Vá em Configurações &gt; Chave de API</li>
+                <li>Clique em "Gerar nova chave" se ainda não tiver</li>
+                <li>Copie a API Key e a Chave da Aplicação aqui</li>
+              </ol>
+            </div>
+          </div>
+
+          <div className="flex justify-between gap-2">
+            <Button variant="outline" onClick={() => setSelectedEcommerce(null)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConnectLI}
+              disabled={!liData.apiKey || !liData.applicationKey || !liData.storeName || isConnectingLI}
+            >
+              {isConnectingLI ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Conectando...
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  Conectar Loja
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>
