@@ -50,14 +50,7 @@ export default function Conexoes() {
   const [isWhatsappConnected, setIsWhatsappConnected] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState<EmailConnection | null>(null);
 
-  // Email Connection Form State
   const [emailForm, setEmailForm] = useState({
-    email: '',
-    smtpHost: '',
-    smtpPort: 587,
-    username: '',
-    password: '',
-    secure: true,
     domain: ''
   });
 
@@ -95,12 +88,6 @@ export default function Conexoes() {
 
   const resetEmailForm = () => {
     setEmailForm({
-      email: '',
-      smtpHost: '',
-      smtpPort: 587,
-      username: '',
-      password: '',
-      secure: true,
       domain: ''
     });
   };
@@ -315,8 +302,8 @@ export default function Conexoes() {
             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
               <Plus className="w-6 h-6 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium">Adicionar E-mail</p>
-            <p className="text-xs text-muted-foreground">SMTP ou Domínio Próprio</p>
+            <p className="text-sm font-medium">Adicionar Domínio</p>
+            <p className="text-xs text-muted-foreground">Utilize seu domínio próprio</p>
           </Card>
         </div>
 
@@ -346,87 +333,33 @@ export default function Conexoes() {
             <DialogTitle>Configurar Envio de E-mail</DialogTitle>
           </DialogHeader>
 
-          <Tabs defaultValue="smtp" value={emailConnType} onValueChange={(v: any) => setEmailConnType(v)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="smtp">SMTP Customizado</TabsTrigger>
-              <TabsTrigger value="domain">Domínio Próprio</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="smtp" className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2 col-span-2">
-                  <Label>E-mail de Envio</Label>
-                  <Input
-                    placeholder="contato@empresa.com"
-                    value={emailForm.email}
-                    onChange={(e) => setEmailForm({ ...emailForm, email: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Servidor SMTP</Label>
-                  <Input
-                    placeholder="smtp.gmail.com"
-                    value={emailForm.smtpHost}
-                    onChange={(e) => setEmailForm({ ...emailForm, smtpHost: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Porta</Label>
-                  <Input
-                    type="number"
-                    placeholder="587"
-                    value={emailForm.smtpPort}
-                    onChange={(e) => setEmailForm({ ...emailForm, smtpPort: parseInt(e.target.value) })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Usuário</Label>
-                  <Input
-                    placeholder="contato@empresa.com"
-                    value={emailForm.username}
-                    onChange={(e) => setEmailForm({ ...emailForm, username: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Senha</Label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={emailForm.password}
-                    onChange={(e) => setEmailForm({ ...emailForm, password: e.target.value })}
-                  />
-                </div>
+          <div className="space-y-4 py-4">
+            <div className="bg-blue-500/5 border border-blue-500/10 p-4 rounded-lg mb-4">
+              <p className="text-xs text-blue-600 flex items-center gap-2">
+                <Info className="w-4 h-4" />
+                Utilize seu próprio domínio para maior taxa de entrega e autoridade.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Seu Domínio</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="empresa.com"
+                  className="flex-1"
+                  value={emailForm.domain}
+                  onChange={(e) => setEmailForm({ ...emailForm, domain: e.target.value })}
+                />
               </div>
-            </TabsContent>
-
-            <TabsContent value="domain" className="space-y-4 py-4">
-              <div className="bg-blue-500/5 border border-blue-500/10 p-4 rounded-lg mb-4">
-                <p className="text-xs text-blue-600 flex items-center gap-2">
-                  <Info className="w-4 h-4" />
-                  Utilize seu próprio domínio para maior taxa de entrega e autoridade.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label>Seu Domínio</Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="empresa.com"
-                    className="flex-1"
-                    value={emailForm.domain}
-                    onChange={(e) => setEmailForm({ ...emailForm, domain: e.target.value })}
-                  />
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Após adicionar, você precisará configurar registros DNS em seu provedor.
-                </p>
-              </div>
-            </TabsContent>
-          </Tabs>
+              <p className="text-[11px] text-muted-foreground">
+                Após adicionar, você precisará configurar registros DNS em seu provedor.
+              </p>
+            </div>
+          </div>
 
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setIsEmailModalOpen(false)}>Cancelar</Button>
             <Button
-              onClick={() => createEmailMutation.mutate({ ...emailForm, type: emailConnType })}
+              onClick={() => createEmailMutation.mutate({ ...emailForm, type: 'domain' })}
               disabled={createEmailMutation.isPending}
             >
               {createEmailMutation.isPending ? 'Salvando...' : 'Confirmar Configuração'}
