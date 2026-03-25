@@ -1092,8 +1092,83 @@ export default function Integracoes() {
             </div>
           )}
 
+          {/* Configuração Loja Integrada */}
+          {selectedEcommerce === 'Loja Integrada' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-orange-500/10 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white border">
+                    <img src="/icons/lojaintegrada.png" alt="Loja Integrada" className="w-full h-full object-cover" />
+                  </div>
+                  <span className="font-medium">Conectar com Loja Integrada</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Configure sua chave de API para importar produtos e pedidos da Loja Integrada.
+                </p>
+                <div className="bg-muted p-3 rounded-lg mt-3">
+                  <p className="text-[11px] font-medium mb-1">Passos para encontrar a chave:</p>
+                  <ol className="text-[10px] text-muted-foreground list-decimal list-inside space-y-0.5">
+                    <li>Acesse o painel da Loja Integrada</li>
+                    <li>Vá em Configurações &gt; Chave de API</li>
+                    <li>Clique em "Gerar nova chave" se ainda não tiver</li>
+                    <li>Copie a API Key e cole abaixo</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="li-store-name">Nome da Loja *</Label>
+                  <Input
+                    id="li-store-name"
+                    value={liData.storeName}
+                    onChange={(e) => setLiData({ ...liData, storeName: e.target.value })}
+                    placeholder="Ex: Minha Loja LI"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="li-api-key">API Key *</Label>
+                  <Input
+                    id="li-api-key"
+                    type="password"
+                    value={liData.apiKey}
+                    onChange={(e) => setLiData({ ...liData, apiKey: e.target.value })}
+                    placeholder="Sua chave de API"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Encontre no painel da Loja Integrada em Soluções &gt; API
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setSelectedEcommerce(null)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button
+                  onClick={handleConnectLI}
+                  disabled={!liData.apiKey || !liData.storeName || isConnectingLI}
+                >
+                  {isConnectingLI ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Conectando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Conectar Loja
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Configuração E-commerce (outros) */}
-          {selectedEcommerce && selectedEcommerce !== 'Shopify' && selectedEcommerce !== 'Nuvemshop' && selectedEcommerce !== 'Tray' && selectedEcommerce !== 'VTEX' && (
+          {selectedEcommerce && selectedEcommerce !== 'Shopify' && selectedEcommerce !== 'Nuvemshop' && selectedEcommerce !== 'Tray' && selectedEcommerce !== 'VTEX' && selectedEcommerce !== 'Loja Integrada' && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
@@ -1663,80 +1738,6 @@ export default function Integracoes() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Configuração Loja Integrada */}
-      <Dialog open={selectedEcommerce === 'Loja Integrada'} onOpenChange={(open) => !open && setSelectedEcommerce(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center border bg-white">
-                <img src="/icons/lojaintegrada.png" alt="Loja Integrada" className="w-full h-full object-cover" />
-              </div>
-              Conectar Loja Integrada
-            </DialogTitle>
-            <DialogDescription>
-              Configure sua chave de API para importar produtos e pedidos da Loja Integrada.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="li-store-name">Nome da Loja *</Label>
-              <Input
-                id="li-store-name"
-                value={liData.storeName}
-                onChange={(e) => setLiData({ ...liData, storeName: e.target.value })}
-                placeholder="Ex: Minha Loja LI"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="li-api-key">API Key *</Label>
-              <Input
-                id="li-api-key"
-                type="password"
-                value={liData.apiKey}
-                onChange={(e) => setLiData({ ...liData, apiKey: e.target.value })}
-                placeholder="Sua chave de API"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Encontre no painel da Loja Integrada em Soluções &gt; API
-              </p>
-            </div>
-
-            <div className="bg-muted p-3 rounded-lg">
-              <p className="text-xs font-medium mb-1">Passos para encontrar a chave:</p>
-              <ol className="text-[11px] text-muted-foreground list-decimal list-inside space-y-0.5">
-                <li>Acesse o painel da Loja Integrada</li>
-                <li>Vá em Configurações &gt; Chave de API</li>
-                <li>Clique em "Gerar nova chave" se ainda não tiver</li>
-                <li>Copie a API Key e cole aqui</li>
-              </ol>
-            </div>
-          </div>
-
-          <div className="flex justify-between gap-2">
-            <Button variant="outline" onClick={() => setSelectedEcommerce(null)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleConnectLI}
-              disabled={!liData.apiKey || !liData.storeName || isConnectingLI}
-            >
-              {isConnectingLI ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Conectando...
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4 mr-2" />
-                  Conectar Loja
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </Layout>
   );
 }
