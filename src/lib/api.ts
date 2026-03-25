@@ -277,23 +277,30 @@ export interface UpdateTagData {
 
 export interface EmailConnection {
   id: number;
-  email: string;
-  smtpHost: string;
-  smtpPort: number;
-  username: string;
+  type: 'smtp' | 'domain';
+  email?: string;
+  smtpHost?: string;
+  smtpPort?: number;
+  username?: string;
   secure: boolean;
-  userId: number;
+  domain?: string;
+  status: 'pending' | 'verified' | 'rejected';
+  dnsTxt?: string;
+  dnsCname?: string;
+  dnsMx?: string;
+  adminNote?: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateEmailConnectionData {
-  email: string;
-  smtpHost: string;
-  smtpPort: number;
-  username: string;
-  password: string;
+  type: 'smtp' | 'domain';
+  email?: string;
+  smtpHost?: string;
+  smtpPort?: number;
+  username?: string;
+  password?: string;
   secure?: boolean;
+  domain?: string;
 }
 
 export interface ScoreConfig {
@@ -940,6 +947,23 @@ class ApiService {
     return this.request<any>(`/admin/stats/users/${userId}/credits`, {
       method: 'POST',
       body: JSON.stringify({ type, amount }),
+    });
+  }
+
+  async getPendingEmailConnections(): Promise<any[]> {
+    return this.get<any[]>('/admin/email-connections/pending');
+  }
+
+  async approveEmailConnection(id: number): Promise<any> {
+    return this.request<any>(`/admin/email-connections/${id}/approve`, {
+      method: 'POST'
+    });
+  }
+
+  async rejectEmailConnection(id: number, adminNote: string): Promise<any> {
+    return this.request<any>(`/admin/email-connections/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ adminNote })
     });
   }
 
@@ -1981,4 +2005,5 @@ export interface SubscriptionStats {
   currentPlan: string;
   price: number;
 }
+
 
