@@ -293,14 +293,8 @@ export interface EmailConnection {
 }
 
 export interface CreateEmailConnectionData {
-  type: 'smtp' | 'domain';
-  email?: string;
-  smtpHost?: string;
-  smtpPort?: number;
-  username?: string;
-  password?: string;
-  secure?: boolean;
-  domain?: string;
+  type: 'domain';
+  domain: string;
 }
 
 export interface ScoreConfig {
