@@ -15,7 +15,8 @@ import {
     Bell,
     Filter,
     TrendingUp,
-    Activity
+    Activity,
+    MailSearch
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -28,6 +29,7 @@ const adminMenuItems = [
     { title: 'Financeiro', href: '/admin/finance', icon: TrendingUp },
     { title: 'Capacidade & Consumo', href: '/admin/capacity', icon: Activity },
     { title: 'Notificações', href: '/admin/notifications', icon: Bell },
+    { title: 'Solicitações Email', href: '/admin/email-requests', icon: MailSearch },
     { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];
 
