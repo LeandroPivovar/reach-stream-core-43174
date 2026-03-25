@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Users, Check, X, Search, Loader2 } from 'lucide-react';
+import { Users, Check, X, Search, Loader2, Filter } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { api, Contact, SegmentationParam, Group } from '@/lib/api';
 import { Button } from '@/components/ui/button';
