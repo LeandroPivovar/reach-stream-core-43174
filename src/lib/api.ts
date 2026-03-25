@@ -544,6 +544,23 @@ class ApiService {
     return localStorage.getItem('token');
   }
 
+  // Loja Integrada Integration
+  public lojaIntegradaApi = {
+    connect: (data: { storeName: string; apiKey: string; applicationKey: string }) =>
+      this.request<LojaIntegradaConnection>('/loja-integrada/connect', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    getConnection: () =>
+      this.request<LojaIntegradaConnection>('/loja-integrada/connection', {
+        method: 'GET',
+      }),
+    sync: () =>
+      this.request<{ products: any; orders: any; checkouts: any }>('/loja-integrada/sync', {
+        method: 'POST',
+      }),
+  };
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -1999,5 +2016,14 @@ export interface SubscriptionStats {
   currentPlan: string;
   price: number;
 }
+
+export interface LojaIntegradaConnection {
+  id: number;
+  storeName: string;
+  isActive: boolean;
+  lastSyncAt?: string;
+}
+
+
 
 
