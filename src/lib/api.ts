@@ -546,7 +546,7 @@ class ApiService {
 
   // Loja Integrada Integration
   public lojaIntegradaApi = {
-    connect: (data: { storeName: string; apiKey: string; applicationKey: string }) =>
+    connect: (data: { storeName: string; apiKey: string; applicationKey?: string }) =>
       this.request<LojaIntegradaConnection>('/loja-integrada/connect', {
         method: 'POST',
         body: JSON.stringify(data),
