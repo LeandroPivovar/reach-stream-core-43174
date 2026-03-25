@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SegmentationOption {
   id: string;
@@ -337,117 +338,128 @@ export function SegmentationPicker({
     <div className="space-y-6">
       <div className="bg-primary/10 p-4 rounded-lg">
         <p className="text-sm text-muted-foreground font-medium">
-          Personalize seu público-alvo configurando os critérios abaixo.
+          Personalize seu público-alvo alternando entre as abas abaixo.
         </p>
       </div>
 
-      <div className="space-y-3 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-base">Contatos Específicos</h3>
-          </div>
-          <Badge variant="secondary">
-            {selectedContactIds.length} selecionado{selectedContactIds.length !== 1 ? 's' : ''}
-          </Badge>
-        </div>
+      <Tabs defaultValue="segmentations" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="segmentations" className="gap-2">
+            <Filter className="w-4 h-4" />
+            Segmentações
+          </TabsTrigger>
+          <TabsTrigger value="groups" className="gap-2">
+            <Users className="w-4 h-4" />
+            Grupos
+          </TabsTrigger>
+          <TabsTrigger value="specific" className="gap-2">
+            <Search className="w-4 h-4" />
+            Unitário
+          </TabsTrigger>
+        </TabsList>
 
-        <Popover open={isContactPopoverOpen} onOpenChange={setIsContactPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-full justify-start text-left font-normal" disabled={!allContacts || allContacts.length === 0}>
-              <Search className="mr-2 h-4 w-4 text-muted-foreground" />
-              {selectedContactIds.length > 0
-                ? `${selectedContactIds.length} contato(s) selecionado(s)`
-                : "Buscar e adicionar contatos específicos..."}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[400px] p-0" align="start">
-            <div className="p-2 border-b">
-              <Input
-                placeholder="Buscar por nome, email ou telefone..."
-                value={contactSearch}
-                onChange={(e) => setContactSearch(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div className="max-h-[300px] overflow-y-auto p-1">
-              {allContacts && allContacts
-                .filter((c: any) =>
-                  c.name?.toLowerCase().includes(contactSearch.toLowerCase()) ||
-                  c.email?.toLowerCase().includes(contactSearch.toLowerCase()) ||
-                  c.phone?.includes(contactSearch)
-                )
-                .slice(0, 20)
-                .map((contact: any) => {
-                  const isSelected = selectedContactIds.includes(contact.id);
-                  return (
-                    <div
-                      key={contact.id}
-                      className={`flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer ${isSelected ? 'bg-primary/5' : ''}`}
-                      onClick={() => toggleSpecificContact(contact.id)}
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">{contact.name}</span>
-                        <span className="text-xs text-muted-foreground">{contact.email || contact.phone || 'Sem contato'}</span>
+        <TabsContent value="segmentations" className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <Filter className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold text-sm">Filtros de Segmentação</h3>
+          </div>
+          {renderFilters(audienceFilters)}
+        </TabsContent>
+
+        <TabsContent value="groups" className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold text-sm">Filtros de Grupo</h3>
+          </div>
+          {availableGroups && availableGroups.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {availableGroups.map((group) => {
+                const isSelected = selectedGroups.includes(group.id.toString());
+                return (
+                  <Card
+                    key={group.id}
+                    className={`p-4 cursor-pointer hover:border-primary transition-all ${isSelected ? 'border-primary bg-primary/5 shadow-md' : ''}`}
+                    onClick={() => toggleGroup(group.id.toString())}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${isSelected ? 'bg-primary border-primary' : 'border-input'}`}>
+                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
                       </div>
-                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-input'}`}>
-                        {isSelected && <Check className="w-3 h-3 text-white" />}
-                      </div>
+                      <div className="font-medium text-sm">{group.name}</div>
                     </div>
-                  );
-                })
-              }
-              {(!allContacts || allContacts.length === 0) && (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  Nenhum contato disponível
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-8 text-center border-2 border-dashed rounded-lg text-muted-foreground">
+              Nenhum grupo disponível para seleção.
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="specific" className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <Search className="w-4 h-4 text-primary" />
+            <h3 className="font-semibold text-sm">Seleção de Contatos Unitários</h3>
+          </div>
+          <div className="space-y-3">
+            <Popover open={isContactPopoverOpen} onOpenChange={setIsContactPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start text-left font-normal" disabled={!allContacts || allContacts.length === 0}>
+                  <Search className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {selectedContactIds.length > 0
+                    ? `${selectedContactIds.length} contato(s) selecionado(s)`
+                    : "Buscar e adicionar contatos específicos..."}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] p-0" align="start">
+                <div className="p-2 border-b">
+                  <Input
+                    placeholder="Buscar por nome, email ou telefone..."
+                    value={contactSearch}
+                    onChange={(e) => setContactSearch(e.target.value)}
+                    autoFocus
+                  />
                 </div>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {availableGroups && availableGroups.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-base">Filtros de Grupo</h3>
-            <Badge variant="secondary" className="ml-auto">
-              {selectedGroups.length} ativos
-            </Badge>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {availableGroups.map((group) => {
-              const isSelected = selectedGroups.includes(group.id.toString());
-              return (
-                <Card
-                  key={group.id}
-                  className={`p-4 cursor-pointer hover:border-primary transition-all ${isSelected ? 'border-primary bg-primary/5 shadow-md' : ''}`}
-                  onClick={() => toggleGroup(group.id.toString())}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${isSelected ? 'bg-primary border-primary' : 'border-input'}`}>
-                      {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                <div className="max-h-[300px] overflow-y-auto p-1">
+                  {allContacts && allContacts
+                    .filter((c: any) =>
+                      c.name?.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                      c.email?.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                      c.phone?.includes(contactSearch)
+                    )
+                    .slice(0, 20)
+                    .map((contact: any) => {
+                      const isSelected = selectedContactIds.includes(contact.id);
+                      return (
+                        <div
+                          key={contact.id}
+                          className={`flex items-center justify-between p-2 rounded-md hover:bg-muted cursor-pointer ${isSelected ? 'bg-primary/5' : ''}`}
+                          onClick={() => toggleSpecificContact(contact.id)}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm">{contact.name}</span>
+                            <span className="text-xs text-muted-foreground">{contact.email || contact.phone || 'Sem contato'}</span>
+                          </div>
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-input'}`}>
+                            {isSelected && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                        </div>
+                      );
+                    })
+                  }
+                  {(!allContacts || allContacts.length === 0) && (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      Nenhum contato disponível
                     </div>
-                    <div className="font-medium text-sm">{group.name}</div>
-                  </div>
-                </Card>
-              );
-            })}
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold text-base">Filtros de Segmentação</h3>
-          <Badge variant="secondary" className="ml-auto">
-            {selectedSegments.length} ativos
-          </Badge>
-        </div>
-        {renderFilters(audienceFilters)}
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {(selectedSegments.length > 0 || selectedGroups.length > 0 || selectedContactIds.length > 0) && (
         <div className="space-y-4">
