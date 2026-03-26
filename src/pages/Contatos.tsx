@@ -335,37 +335,13 @@ export default function Contatos() {
     }
   }, [convertApiContactToFrontend, toast]);
 
-  const syncContactsInBackground = useCallback(async () => {
+  const syncAllPlatforms = useCallback(async () => {
     setIsSyncingBackground(true);
     try {
-      const [shopify, nuvemshop] = await Promise.all([
-        api.getShopifyConnections().catch(() => []),
-        api.getNuvemshopConnections().catch(() => []),
-      ]);
-
-      const activeShopify = shopify.filter((c: any) => c.isActive);
-      const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
-
-      const syncPromises = [];
-
-      for (const shop of activeShopify) {
-        syncPromises.push(api.syncShopifyCustomers(shop.shop).catch(console.error));
-      }
-
-      for (const store of activeNuvemshop) {
-        if (store.storeId) {
-          syncPromises.push(api.syncNuvemshopCustomers(store.storeId).catch(console.error));
-        } else {
-          console.warn('Nuvemshop store found without storeId:', store);
-        }
-      }
-
-      if (syncPromises.length > 0) {
-        await Promise.all(syncPromises);
-        await fetchContacts(); // Recarregar contatos após a sincronização
-      }
+      await api.syncAllPlatforms();
+      await fetchContacts(); // Recarregar contatos após a sincronização
     } catch (error) {
-      console.error('Erro no sync de contatos em background:', error);
+      console.error('Erro na sincronização automática:', error);
     } finally {
       setIsSyncingBackground(false);
     }
@@ -374,25 +350,26 @@ export default function Contatos() {
   // Carregar contatos ao montar o componente
   useEffect(() => {
     fetchContacts();
-    // Iniciar sincronização em background automaticamente
-    syncContactsInBackground();
+    // Iniciar sincronização global em background automaticamente
+    syncAllPlatforms();
 
     // Check integration status
     const checkIntegrations = async () => {
       try {
-        const [nuvemshopStatus, shopifyStatus, vtexStatus] = await Promise.all([
-          api.getIntegrationStatus('nuvemshop').catch(() => ({ connected: false })),
-          api.getIntegrationStatus('shopify').catch(() => ({ connected: false })),
-          api.getIntegrationStatus('vtex').catch(() => ({ connected: false }))
+        const [shopify, nuvemshop, vtex, li] = await Promise.all([
+          api.getIntegrationStatus('shopify'),
+          api.getIntegrationStatus('nuvemshop'),
+          api.getIntegrationStatus('vtex'),
+          api.getIntegrationStatus('loja_integrada'),
         ]);
 
-        setHasActiveIntegration(nuvemshopStatus?.connected || shopifyStatus?.connected || vtexStatus?.connected || false);
+        setHasActiveIntegration(shopify.connected || nuvemshop.connected || vtex.connected || li.connected);
       } catch (error) {
         console.error('Error checking integrations:', error);
       }
     };
     checkIntegrations();
-  }, [fetchContacts, syncContactsInBackground]);
+  }, [fetchContacts, syncAllPlatforms]);
 
   const [groups, setGroups] = useState<Array<{ id: number; name: string; description?: string; color?: string }>>([]);
 

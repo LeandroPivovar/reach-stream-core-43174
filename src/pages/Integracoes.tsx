@@ -130,9 +130,9 @@ export default function Integracoes() {
       name: 'VTEX',
       description: 'Conecte sua loja VTEX para automação completa',
       imageUrl: '/icons/vtex.png',
-      status: 'Em desenvolvimento',
-      color: 'bg-pink-500',
-      features: ['Catálogo unificado', 'OMS integrado', 'Checkout personalizado']
+      status: 'Disponível',
+      color: 'bg-[#F71963]', // VTEX Official Pink
+      features: ['Catálogo unificado', 'OMS integrado', 'Sincronização de Clientes']
     }
   ];
 

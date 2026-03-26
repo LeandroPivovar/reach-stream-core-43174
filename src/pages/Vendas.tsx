@@ -119,52 +119,21 @@ export default function Vendas() {
   };
 
   useEffect(() => {
-    const syncOrdersInBackground = async () => {
+    const syncAllPlatforms = async () => {
       setIsSyncingBackground(true);
       try {
-        const [shopify, nuvemshop, vtex] = await Promise.all([
-          api.getShopifyConnections().catch(() => []),
-          api.getNuvemshopConnections().catch(() => []),
-          api.getVtexConnections().catch(() => []),
-        ]);
-
-        const activeShopify = shopify.filter((c: any) => c.isActive);
-        const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
-        const activeVtex = vtex.filter((c: any) => c.isActive);
-
-        const syncPromises = [];
-
-        for (const shop of activeShopify) {
-          syncPromises.push(api.syncShopifyOrders(shop.shop).catch(console.error));
-          syncPromises.push(api.syncShopifyCheckouts(shop.shop).catch(console.error));
-        }
-
-        for (const store of activeNuvemshop) {
-          syncPromises.push(api.syncNuvemshopOrders(store.storeId).catch(console.error));
-          syncPromises.push(api.syncNuvemshopCheckouts(store.storeId).catch(console.error));
-        }
-
-        // VTEX sync is usually automatic via webhooks or background, 
-        // but we can trigger a check if an endpoint exists. 
-        // Checking api.ts, there isn't a specific syncVtexOrders yet, 
-        // so we'll focus on Shopify and Nuvemshop for now as requested.
-
-        if (syncPromises.length > 0) {
-          const results = await Promise.all(syncPromises);
-          console.log('[Sync Results] Full API Response:', results);
-
-          // Atualiza os dados novamente após a sincronização
-          await fetchData();
-        }
+        await api.syncAllPlatforms();
+        // Atualiza os dados novamente após a sincronização
+        await fetchData();
       } catch (error) {
-        console.error('Erro no sync de pedidos em background:', error);
+        console.error('Erro na sincronização automática:', error);
       } finally {
         setIsSyncingBackground(false);
       }
     };
 
     fetchData().then(() => {
-      syncOrdersInBackground();
+      syncAllPlatforms();
     });
   }, [period]);
 
