@@ -21,7 +21,8 @@ import {
 } from 'lucide-react';
 
 const adminMenuItems = [
-    { title: 'Visão Geral', href: '/admin/overview', icon: Monitor },
+    { title: 'Painel Geral', href: '/admin', icon: LayoutDashboard },
+    { title: 'Visão do Sistema', href: '/admin/overview', icon: Monitor },
     { title: 'Dashboard Financeiro', href: '/admin/finance', icon: TrendingUp },
     { title: 'Categorias', href: '/admin/categories', icon: Tags },
     { title: 'Usuários', href: '/admin/users', icon: Users },
