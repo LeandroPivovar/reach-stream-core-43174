@@ -406,7 +406,7 @@ export default function Dashboard() {
                                     </div>
                                     <div className="text-right">
                                         <p className="font-semibold">{perf.envios.toLocaleString()} envios</p>
-                                        <p className="text-sm text-muted-foreground">{perf.taxaEntrega.toFixed(1)}% entrega</p>
+                                        <p className="text-sm text-muted-foreground">{(perf.taxaEntrega || 0).toFixed(1)}% entrega</p>
                                     </div>
                                 </div>
                             ))}
