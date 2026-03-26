@@ -153,36 +153,16 @@ export default function Produtos() {
   useEffect(() => {
     loadProducts();
     loadCategories();
-    syncProductsInBackground();
+    syncAllPlatforms();
   }, []);
 
-  const syncProductsInBackground = async () => {
+  const syncAllPlatforms = async () => {
     setIsSyncingBackground(true);
     try {
-      const [shopify, nuvemshop] = await Promise.all([
-        api.getShopifyConnections().catch(() => []),
-        api.getNuvemshopConnections().catch(() => []),
-      ]);
-
-      const activeShopify = shopify.filter((c: any) => c.isActive);
-      const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
-
-      const syncPromises = [];
-
-      for (const shop of activeShopify) {
-        syncPromises.push(api.syncShopifyProductsToCrm(shop.shop).catch(console.error));
-      }
-
-      for (const store of activeNuvemshop) {
-        syncPromises.push(api.syncNuvemshopProductsToCrm(store.storeId).catch(console.error));
-      }
-
-      if (syncPromises.length > 0) {
-        await Promise.all(syncPromises);
-        await loadProducts();
-      }
+      await api.syncAllPlatforms();
+      await loadProducts();
     } catch (error) {
-      console.error('Erro no sync de produtos em background:', error);
+      console.error('Erro na sincronização automática:', error);
     } finally {
       setIsSyncingBackground(false);
     }

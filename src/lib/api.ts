@@ -1500,25 +1500,28 @@ class ApiService {
     });
   }
 
-  async getVtexConnections(): Promise<any[]> {
-    return this.request<any[]>('/vtex/connections', {
-      method: 'GET',
-    });
-  }
-
-  async testVtexConnection(accountName: string): Promise<{ success: boolean; message: string }> {
-    return this.request<{ success: boolean; message: string }>('/vtex/test-connection', {
-      method: 'POST',
-      body: JSON.stringify({ accountName }),
-    });
-  }
-
-  async disconnectVtex(accountName: string): Promise<{ success: boolean; message: string }> {
-    return this.request<{ success: boolean; message: string }>('/vtex/disconnect', {
-      method: 'POST',
-      body: JSON.stringify({ accountName }),
-    });
-  }
+  // VTEX Integration
+  public vtexApi = {
+    connect: (data: { accountName: string; appKey: string; appToken: string }) =>
+      this.request<any>('/vtex/connect', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    getConnections: () =>
+      this.request<any[]>('/vtex/connections', {
+        method: 'GET',
+      }),
+    disconnect: (accountName: string) =>
+      this.request<{ success: boolean; message: string }>('/vtex/disconnect', {
+        method: 'POST',
+        body: JSON.stringify({ accountName }),
+      }),
+    sync: (accountName?: string) =>
+      this.request<any>('/vtex/sync', {
+        method: 'POST',
+        body: JSON.stringify({ accountName }),
+      }),
+  };
 
   // Campaigns
   async getCampaigns(filters: {
@@ -1768,23 +1771,72 @@ class ApiService {
     });
   }
 
-  async getIntegrationStatus(type: 'nuvemshop' | 'shopify' | 'vtex'): Promise<{ connected: boolean }> {
+  async getIntegrationStatus(type: 'nuvemshop' | 'shopify' | 'vtex' | 'loja_integrada'): Promise<{ connected: boolean }> {
     try {
-      let connections = [];
+      let connections: any[] = [];
       if (type === 'nuvemshop') {
-        connections = await this.getNuvemshopConnections();
+        connections = await this.nuvemshopApi.getConnections();
       } else if (type === 'shopify') {
-        connections = await this.getShopifyConnections();
+        connections = await this.shopifyApi.getConnections();
       } else if (type === 'vtex') {
-        // VTEX implementation might be missing, returning false
-        return { connected: false };
+        connections = await this.vtexApi.getConnections();
+      } else if (type === 'loja_integrada') {
+        const conn = await this.lojaIntegradaApi.getConnection();
+        return { connected: !!conn && conn.isActive };
       }
-      return { connected: connections.some((c: any) => c.isActive) };
+      return { connected: connections && connections.length > 0 && connections.some((c: any) => c.isActive) };
     } catch (error) {
       console.error(`Error getting ${type} status:`, error);
       return { connected: false };
     }
   }
+
+  // Unified Sync for all platforms
+  async syncAllPlatforms(): Promise<any> {
+    const results: any = {};
+    
+    // Check which integrations are active and sync them
+    try {
+      const [shopify, nuvemshop, vtex, lojaIntegrada] = await Promise.all([
+        this.getIntegrationStatus('shopify'),
+        this.getIntegrationStatus('nuvemshop'),
+        this.getIntegrationStatus('vtex'),
+        this.getIntegrationStatus('loja_integrada'),
+      ]);
+
+      const syncPromises = [];
+      if (shopify.connected) syncPromises.push(this.shopifyApi.syncAll().then(r => results.shopify = r).catch(e => results.shopifyError = e.message));
+      if (nuvemshop.connected) syncPromises.push(this.nuvemshopApi.syncAll().then(r => results.nuvemshop = r).catch(e => results.nuvemshopError = e.message));
+      if (vtex.connected) syncPromises.push(this.vtexApi.sync().then(r => results.vtex = r).catch(e => results.vtexError = e.message));
+      if (lojaIntegrada.connected) syncPromises.push(this.lojaIntegradaApi.sync().then(r => results.lojaIntegrada = r).catch(e => results.lojaIntegradaError = e.message));
+
+      if (syncPromises.length > 0) {
+        await Promise.all(syncPromises);
+      }
+    } catch (e) {
+      console.error('Error in unified sync:', e);
+    }
+    
+    return results;
+  }
+
+  // Shopify Sync
+  public shopifyApi = {
+    getConnections: () => this.request<any[]>('/shopify/connections'),
+    syncAll: (shop?: string) => this.request<any>('/shopify/sync-all', {
+      method: 'POST',
+      body: JSON.stringify({ shop }),
+    }),
+  };
+
+  // Nuvemshop Sync
+  public nuvemshopApi = {
+    getConnections: () => this.request<any[]>('/nuvemshop/connections'),
+    syncAll: (storeId?: string) => this.request<any>('/nuvemshop/sync-all', {
+      method: 'POST',
+      body: JSON.stringify({ storeId }),
+    }),
+  };
 
   async syncShopifyProductsToCrm(shop: string): Promise<any> {
     return this.request<any>('/shopify/sync/products-to-crm', {
