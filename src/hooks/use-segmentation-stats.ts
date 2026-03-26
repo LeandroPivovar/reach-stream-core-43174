@@ -90,6 +90,13 @@ export function evaluateSegmentation(
             return !!contact.state;
         }
 
+        case 'purchased_product': {
+            const productIds = params?.productIds || [];
+            if (productIds.length === 0) return true; // If no products selected, don't filter out? Or return all? Backend returns all if empty array.
+            if (!purchaseData || !purchaseData.purchases) return false;
+            return purchaseData.purchases.some(p => productIds.includes(p.productId) && (p.status === 'completed' || p.status === 'pago'));
+        }
+
         default:
             if (segId.startsWith('state_')) {
                 const state = segId.split('_')[1].toUpperCase();
@@ -122,6 +129,7 @@ export function useSegmentationStats(
             clicked_campaign: 0,
             gender: 0,
             by_state: 0,
+            purchased_product: 0,
         };
 
         contacts.forEach(c => {
@@ -140,6 +148,7 @@ export function useSegmentationStats(
 
             if (evaluateSegmentation(c, purchaseData, 'gender', getParams('gender'))) stats.gender++;
             if (evaluateSegmentation(c, purchaseData, 'by_state', getParams('by_state'))) stats.by_state++;
+            if (evaluateSegmentation(c, purchaseData, 'purchased_product', getParams('purchased_product'))) stats.purchased_product++;
         });
 
 

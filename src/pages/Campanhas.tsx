@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useInternalAnalytics } from '@/hooks/use-internal-analytics';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -109,6 +110,7 @@ interface ContactFrontend {
 }
 
 export default function Campanhas() {
+  const { trackAction } = useInternalAnalytics();
   const { toast } = useToast();
   const [isNewCampaignOpen, setIsNewCampaignOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -475,6 +477,12 @@ export default function Campanhas() {
       toast({
         title: 'Campanha criada com sucesso!',
         description: 'Sua campanha já está sendo processada.',
+      });
+
+      trackAction('Criar Campanha', { 
+        name: newCampaign.name, 
+        complexity: newCampaign.campaignComplexity,
+        channel: newCampaign.channel 
       });
 
       setIsNewCampaignOpen(false);
@@ -2542,7 +2550,7 @@ export default function Campanhas() {
             <div className="bg-muted p-3 rounded-lg">
               <p className="text-xs text-muted-foreground">
                 <strong>Dados incluídos:</strong> Nome da campanha, canais, status,
-                destinatários, métricas de envio, aberturas e cliques.
+                destinatários, métricas de envio, recebidos e cliques.
               </p>
             </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, Category } from '@/lib/api';
+import { useInternalAnalytics } from '@/hooks/use-internal-analytics';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function Categorias() {
+    const { trackAction } = useInternalAnalytics();
     const { user } = useAuth();
     const { toast } = useToast();
     const queryClient = useQueryClient();
@@ -51,6 +53,7 @@ export default function Categorias() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['categories'] });
             toast({ title: 'Sucesso', description: 'Categoria criada com sucesso.' });
+            trackAction('Criar Categoria', { name: name });
             closeDialog();
         },
         onError: () => {
@@ -61,9 +64,10 @@ export default function Categorias() {
     const updateMutation = useMutation({
         mutationFn: (data: { id: number; payload: Partial<Category> }) =>
             api.updateCategory(data.id, data.payload),
-        onSuccess: () => {
+        onSuccess: (_result, variables) => {
             queryClient.invalidateQueries({ queryKey: ['categories'] });
             toast({ title: 'Sucesso', description: 'Categoria atualizada com sucesso.' });
+            trackAction('Editar Categoria', { categoryId: variables.id });
             closeDialog();
         },
         onError: () => {

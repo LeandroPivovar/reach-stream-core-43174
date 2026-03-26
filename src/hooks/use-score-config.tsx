@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 
 export interface ScoreWeights {
-  emailOpens: number;
   linkClicks: number;
   purchases: number;
   ltvDivisor: number;
@@ -14,7 +13,6 @@ export interface ScoreConfig {
 }
 
 const DEFAULT_WEIGHTS: ScoreWeights = {
-  emailOpens: 2,
   linkClicks: 3,
   purchases: 10,
   ltvDivisor: 10,
@@ -35,7 +33,6 @@ export function useScoreConfig() {
         const backendConfig = await api.getScoreConfig();
         setConfig({
           weights: {
-            emailOpens: Number(backendConfig.emailOpens),
             linkClicks: Number(backendConfig.linkClicks),
             purchases: Number(backendConfig.purchases),
             ltvDivisor: Number(backendConfig.ltvDivisor),
@@ -61,7 +58,6 @@ export function useScoreConfig() {
     try {
       // Atualizar no backend
       const updatedConfig = await api.updateScoreConfig({
-        emailOpens: weights.emailOpens,
         linkClicks: weights.linkClicks,
         purchases: weights.purchases,
         ltvDivisor: weights.ltvDivisor,
@@ -70,7 +66,6 @@ export function useScoreConfig() {
       // Atualizar estado local
       setConfig({
         weights: {
-          emailOpens: Number(updatedConfig.emailOpens),
           linkClicks: Number(updatedConfig.linkClicks),
           purchases: Number(updatedConfig.purchases),
           ltvDivisor: Number(updatedConfig.ltvDivisor),
@@ -91,7 +86,6 @@ export function useScoreConfig() {
       // Atualizar estado local
       setConfig({
         weights: {
-          emailOpens: Number(resetConfig.emailOpens),
           linkClicks: Number(resetConfig.linkClicks),
           purchases: Number(resetConfig.purchases),
           ltvDivisor: Number(resetConfig.ltvDivisor),

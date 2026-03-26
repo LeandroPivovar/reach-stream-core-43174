@@ -300,7 +300,6 @@ export interface CreateEmailConnectionData {
 export interface ScoreConfig {
   id: number;
   userId: number;
-  emailOpens: number;
   linkClicks: number;
   purchases: number;
   ltvDivisor: number;
@@ -309,7 +308,6 @@ export interface ScoreConfig {
 }
 
 export interface UpdateScoreConfigData {
-  emailOpens?: number;
   linkClicks?: number;
   purchases?: number;
   ltvDivisor?: number;
@@ -483,6 +481,37 @@ export interface AdminGlobalStats {
   cac: number;
   ticketByPlan: Record<string, number>;
   totalAverageTicket: number;
+}
+
+export interface InternalAnalyticsEvent {
+  type: 'page_view' | 'action';
+  name: string;
+  metadata?: any;
+}
+
+export interface AdminSystemOverviewStats {
+  counts: {
+    contacts: number;
+    campaigns: number;
+    categories: number;
+    trackingLinks: number;
+    integrations: number;
+    emailsSent: number;
+    smsSent: number;
+  };
+  integrationsBreakdown: {
+    shopify: number;
+    nuvemshop: number;
+    vtex: number;
+    lojaIntegrada: number;
+  };
+  topPages: Array<{ name: string; count: number }>;
+  topActions: Array<{ name: string; count: number }>;
+}
+
+export interface AdminEventTrend {
+  date: string;
+  count: number;
 }
 
 export interface AdminUserStats {
@@ -1825,6 +1854,27 @@ class ApiService {
     return this.request<any>(`/admin/settings/${key}`, {
       method: 'PATCH',
       body: JSON.stringify({ value, description }),
+    });
+  }
+
+  // Analytics
+  async trackEvent(data: InternalAnalyticsEvent): Promise<void> {
+    return this.request('/analytics/track', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Admin System Overview
+  async getAdminSystemOverview(): Promise<AdminSystemOverviewStats> {
+    return this.request<AdminSystemOverviewStats>('/admin/overview/stats', {
+      method: 'GET',
+    });
+  }
+
+  async getAdminEventStats(days = 30): Promise<AdminEventTrend[]> {
+    return this.request<AdminEventTrend[]>(`/admin/overview/events?days=${days}`, {
+      method: 'GET',
     });
   }
 }

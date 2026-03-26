@@ -40,8 +40,10 @@ import AdminFinance from "./pages/admin/AdminFinance";
 import AdminSegmentations from "./pages/admin/AdminSegmentations";
 import AdminCapacity from "./pages/admin/AdminCapacity";
 import AdminEmailRequests from "./pages/admin/AdminEmailRequests";
+import AdminSystemOverview from "./pages/admin/AdminSystemOverview";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
+import { AnalyticsTracker } from "./components/analytics/AnalyticsTracker";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +59,7 @@ const App = () => (
             v7_relativeSplatPath: true,
           }}
         >
+          <AnalyticsTracker />
           <Routes>
             {/* Rotas públicas (apenas para não autenticados) */}
             <Route path="/auth/login" element={<PublicRoute><Login /></PublicRoute>} />
@@ -88,6 +91,7 @@ const App = () => (
 
             {/* Rotas Administrativas */}
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/overview" element={<ProtectedRoute><AdminSystemOverview /></ProtectedRoute>} />
             <Route path="/admin/categories" element={<ProtectedRoute><AdminCategories /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/webhooks" element={<ProtectedRoute><WebhookLogs /></ProtectedRoute>} />

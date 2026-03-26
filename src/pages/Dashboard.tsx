@@ -142,11 +142,11 @@ export default function Dashboard() {
         },
         {
             title: 'Taxa de Entrega',
-            value: isLoadingStats ? '...' : `${(dashboardStats?.openRate || 0).toFixed(1)}%`,
+            value: isLoadingStats ? '...' : `${(dashboardStats?.deliveryRate || 0).toFixed(1)}%`,
             icon: Eye,
             trend: {
-                value: dashboardStats?.trends?.openRate || 0,
-                isPositive: (dashboardStats?.trends?.openRate || 0) >= 0
+                value: dashboardStats?.trends?.deliveryRate || 0,
+                isPositive: (dashboardStats?.trends?.deliveryRate || 0) >= 0
             },
             description: 'Média geral',
             colorClass: 'bg-purple-500/20 text-purple-900 dark:text-purple-100 border-purple-500/30'
@@ -298,7 +298,7 @@ export default function Dashboard() {
                                             <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
                                             <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                                         </linearGradient>
-                                        <linearGradient id="colorAberturas" x1="0" y1="0" x2="0" y2="1">
+                                        <linearGradient id="colorRecebidos" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3} />
                                             <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
                                         </linearGradient>
@@ -338,11 +338,11 @@ export default function Dashboard() {
                                     />
                                     <Area
                                         type="monotone"
-                                        dataKey="aberturas"
+                                        dataKey="recebidos"
                                         stroke="hsl(var(--chart-2))"
-                                        fill="url(#colorAberturas)"
+                                        fill="url(#colorRecebidos)"
                                         strokeWidth={2}
-                                        name="Aberturas"
+                                        name="Recebidos"
                                     />
                                     <Area
                                         type="monotone"
@@ -406,7 +406,7 @@ export default function Dashboard() {
                                     </div>
                                     <div className="text-right">
                                         <p className="font-semibold">{perf.envios.toLocaleString()} envios</p>
-                                        <p className="text-sm text-muted-foreground">{perf.taxaAbertura.toFixed(1)}% abertura</p>
+                                        <p className="text-sm text-muted-foreground">{perf.taxaEntrega.toFixed(1)}% entrega</p>
                                     </div>
                                 </div>
                             ))}
@@ -484,7 +484,7 @@ export default function Dashboard() {
                                             {campaign.sent.toLocaleString()}
                                         </td>
                                         <td className="py-4 px-2 text-right font-medium">
-                                            {campaign.opens.toLocaleString()}
+                                            {campaign.recebidos.toLocaleString()}
                                         </td>
                                         <td className="py-4 px-2 text-right font-medium">
                                             {campaign.clicks.toLocaleString()}
