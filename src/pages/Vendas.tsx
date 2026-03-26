@@ -398,7 +398,7 @@ export default function Vendas() {
                         <td className="py-3 px-4 text-right">{(stage.value || 0).toLocaleString('pt-BR')}</td>
                         <td className="py-3 px-4 text-right">
                           <span className="font-semibold text-primary">
-                            {stage.percentage.toFixed(1)}%
+                            {(stage.percentage || 0).toFixed(1)}%
                           </span>
                         </td>
                       </tr>
@@ -415,7 +415,7 @@ export default function Vendas() {
                     <h5 className="font-medium mb-2">Insights do Período</h5>
                     <ul className="space-y-1 text-sm text-muted-foreground">
                       <li>• Total de {comparisonFunnelData[0].value} leads gerados no período selecionado</li>
-                      <li>• Taxa de conversão final de {comparisonFunnelData[4].percentage.toFixed(1)}% (leads para compras)</li>
+                      <li>• Taxa de conversão final de {(comparisonFunnelData[4].percentage || 0).toFixed(1)}% (leads para compras)</li>
                       <li>• Maior queda entre "{comparisonFunnelData[1].stage}" e "{comparisonFunnelData[2].stage}"</li>
                       <li>• Ajuste o período para comparar diferentes intervalos de tempo</li>
                     </ul>
@@ -525,7 +525,7 @@ export default function Vendas() {
                           R$ {totalFaturamento.toLocaleString('pt-BR')}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {totalVendas} vendas ({percentual.toFixed(1)}%)
+                          {totalVendas} vendas ({(percentual || 0).toFixed(1)}%)
                         </p>
                       </div>
                     </div>
@@ -609,7 +609,7 @@ export default function Vendas() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold">{pagamento.percentual.toFixed(1)}%</p>
+                          <p className="text-2xl font-bold">{(pagamento.percentual || 0).toFixed(1)}%</p>
                         </div>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
