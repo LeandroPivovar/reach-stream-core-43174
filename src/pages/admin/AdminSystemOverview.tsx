@@ -11,7 +11,8 @@ import {
   Activity, 
   MousePointer2,
   Globe,
-  Monitor
+  Monitor,
+  HelpCircle
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -27,6 +28,12 @@ import {
   PieChart,
   Pie
 } from 'recharts';
+import {
+  Tooltip as UiTooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const AdminSystemOverview = () => {
   const { data: stats, isLoading: isLoadingStats } = useQuery({
@@ -63,7 +70,8 @@ const AdminSystemOverview = () => {
       title="Visão do Sistema" 
       subtitle="Monitoramento operacional e telemetria de uso global"
     >
-      <div className="p-6 space-y-6">
+      <TooltipProvider>
+        <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Visão do Sistema</h1>
@@ -81,7 +89,17 @@ const AdminSystemOverview = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Contatos Criados</p>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className="text-sm font-medium text-muted-foreground">Contatos Criados</p>
+                    <UiTooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Total de contatos (leads e clientes) cadastrados no banco de dados global.
+                      </TooltipContent>
+                    </UiTooltip>
+                  </div>
                   <h3 className="text-2xl font-bold">{stats?.counts.contacts.toLocaleString()}</h3>
                 </div>
                 <div className="p-3 bg-blue-500/20 rounded-xl text-blue-600">
@@ -95,7 +113,17 @@ const AdminSystemOverview = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Campanhas Ativas</p>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className="text-sm font-medium text-muted-foreground">Campanhas Ativas</p>
+                    <UiTooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Quantidade de campanhas de marketing que estão em execução no momento.
+                      </TooltipContent>
+                    </UiTooltip>
+                  </div>
                   <h3 className="text-2xl font-bold">{stats?.counts.campaigns.toLocaleString()}</h3>
                 </div>
                 <div className="p-3 bg-emerald-500/20 rounded-xl text-emerald-600">
@@ -109,7 +137,17 @@ const AdminSystemOverview = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Categorias Únicas</p>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className="text-sm font-medium text-muted-foreground">Categorias Únicas</p>
+                    <UiTooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Total de categorias de produtos e contatos criadas pelos usuários.
+                      </TooltipContent>
+                    </UiTooltip>
+                  </div>
                   <h3 className="text-2xl font-bold">{stats?.counts.categories.toLocaleString()}</h3>
                 </div>
                 <div className="p-3 bg-purple-500/20 rounded-xl text-purple-600">
@@ -123,7 +161,17 @@ const AdminSystemOverview = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Interações de Link</p>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className="text-sm font-medium text-muted-foreground">Interações de Link</p>
+                    <UiTooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Total de cliques registrados em links de rastreamento de campanhas.
+                      </TooltipContent>
+                    </UiTooltip>
+                  </div>
                   <h3 className="text-2xl font-bold">{stats?.counts.trackingLinks.toLocaleString()}</h3>
                 </div>
                 <div className="p-3 bg-amber-500/20 rounded-xl text-amber-600">
@@ -138,9 +186,19 @@ const AdminSystemOverview = () => {
           {/* Gráfico de Tendência (Atividade do Sistema) */}
           <Card className="lg:col-span-2 border-none shadow-sm overflow-hidden">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
-                Atividade do Sistema (30 Dias)
+              <CardTitle className="text-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  Atividade do Sistema (30 Dias)
+                </div>
+                <UiTooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Volume diário de eventos de telemetria baseados em acessos e ações capturados nos últimos 30 dias.
+                  </TooltipContent>
+                </UiTooltip>
               </CardTitle>
               <CardDescription>Eventos totais processados diariamente.</CardDescription>
             </CardHeader>
@@ -175,9 +233,19 @@ const AdminSystemOverview = () => {
           {/* Top Telas Acessadas */}
           <Card className="border-none shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Monitor className="h-5 w-5 text-primary" />
-                Top 10 Telas (Acessos)
+              <CardTitle className="text-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Monitor className="h-5 w-5 text-primary" />
+                  Top 10 Telas (Acessos)
+                </div>
+                <UiTooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    As páginas do sistema que receberam o maior volume de acessos.
+                  </TooltipContent>
+                </UiTooltip>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -207,9 +275,19 @@ const AdminSystemOverview = () => {
           {/* Funcionalidades Mais Usadas */}
           <Card className="border-none shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MousePointer2 className="h-5 w-5 text-primary" />
-                Ações e Funcionalidades
+              <CardTitle className="text-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MousePointer2 className="h-5 w-5 text-primary" />
+                  Ações e Funcionalidades
+                </div>
+                <UiTooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    As ferramentas e botões mais acionados pelos usuários dentro da plataforma.
+                  </TooltipContent>
+                </UiTooltip>
               </CardTitle>
               <CardDescription>Funções mais executadas pelos usuários.</CardDescription>
             </CardHeader>
@@ -239,9 +317,19 @@ const AdminSystemOverview = () => {
           {/* Integrações */}
           <Card className="border-none shadow-sm">
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Globe className="h-5 w-5 text-primary" />
-                Ecossistema de Integrações
+              <CardTitle className="text-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  Ecossistema de Integrações
+                </div>
+                <UiTooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Distribuição das conexões ativas com plataformas de e-commerce externas.
+                  </TooltipContent>
+                </UiTooltip>
               </CardTitle>
               <CardDescription>Distribuição de plataformas conectadas.</CardDescription>
             </CardHeader>
@@ -281,6 +369,7 @@ const AdminSystemOverview = () => {
           </Card>
         </div>
       </div>
+      </TooltipProvider>
     </AdminLayout>
   );
 };
