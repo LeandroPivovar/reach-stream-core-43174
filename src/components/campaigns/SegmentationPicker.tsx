@@ -427,7 +427,7 @@ export function SegmentationPicker({
                   <div className="font-medium text-sm">{segment.label}</div>
                   {isSelected && (
                     <Badge variant="secondary" className="text-xs shrink-0">
-                      {segment.affectedCount.toLocaleString('pt-BR')} pessoas
+                      {(selectedSegments.length === 1 ? previewContacts.length : segment.affectedCount).toLocaleString('pt-BR')} pessoas
                     </Badge>
                   )}
                 </div>
