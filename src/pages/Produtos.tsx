@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useInternalAnalytics } from '@/hooks/use-internal-analytics';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -60,6 +61,7 @@ interface Product extends ApiProduct {
 }
 
 export default function Produtos() {
+  const { trackAction } = useInternalAnalytics();
   const { toast } = useToast();
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
@@ -266,6 +268,8 @@ export default function Produtos() {
       });
       setShowSuccessModal(true);
 
+      trackAction('Criar Produto', { name: newProduct.name, price: newProduct.price });
+
       setIsNewProductOpen(false);
       setNewProduct({
         name: '',
@@ -367,6 +371,8 @@ export default function Produtos() {
         description: 'As alterações foram salvas.',
       });
       setShowSuccessModal(true);
+
+      trackAction('Editar Produto', { productId: selectedProduct.id });
 
       setIsEditProductOpen(false);
       setSelectedProduct(null);

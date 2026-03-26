@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useInternalAnalytics } from '@/hooks/use-internal-analytics';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { api, Contact as ApiContact, Campaign } from '@/lib/api';
@@ -115,6 +116,7 @@ interface ContactFrontend {
 
 interface Purchase {
   id: number;
+  productId?: number;
   date: string;
   value: number;
   product: string;
@@ -141,11 +143,11 @@ interface ContactDetail {
   ltv: number;
   history: HistoryEvent[];
   score?: number;
-  emailOpens?: number;
   linkClicks?: number;
 }
 
 export default function Contatos() {
+  const { trackAction } = useInternalAnalytics();
   const { config: scoreConfig, updateWeights, resetToDefaults, isLoading: isLoadingScoreConfig } = useScoreConfig();
   const { toast } = useToast();
   const [isNewContactOpen, setIsNewContactOpen] = useState(false);
@@ -197,6 +199,7 @@ export default function Contatos() {
     daysWithoutPurchase: 0, // dias sem comprar
     gender: 'all', // masculino, feminino, todos
     state: 'all', // estado
+    productIds: [] as number[], // IDs dos produtos para filtro
     segmentations: [] as (string | import('@/lib/api').SegmentationParam)[], // segmentações
   });
 
@@ -460,6 +463,20 @@ export default function Contatos() {
     loadCampaigns();
   }, []);
 
+  const [allProducts, setAllProducts] = useState<import('@/lib/api').Product[]>([]);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const productsData = await api.getProducts();
+        setAllProducts(productsData);
+      } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
+      }
+    };
+    loadProducts();
+  }, []);
+
   // Estado para armazenar compras e LTV dos contatos
   const [contactPurchases, setContactPurchases] = useState<Record<number, { purchases: Purchase[]; ltv: number }>>({});
 
@@ -482,6 +499,7 @@ export default function Contatos() {
 
           purchasesByContact[contact.id].purchases.push({
             id: sale.id,
+            productId: sale.productId,
             date: sale.createdAt,
             value: purchaseValue,
             product: sale.product?.name || 'Produto',
@@ -716,6 +734,13 @@ export default function Contatos() {
       return false;
     }
 
+    // Filtro por produtos específicos
+    if (filters.productIds.length > 0) {
+      if (!purchaseData || !purchaseData.purchases) return false;
+      const hasPurchasedOne = purchaseData.purchases.some(p => p.productId && filters.productIds.includes(p.productId));
+      if (!hasPurchasedOne) return false;
+    }
+
     // Filtro por segmentações
     if (filters.segmentations.length > 0) {
       const hasMatchingSegmentation = filters.segmentations.some(seg => {
@@ -744,6 +769,7 @@ export default function Contatos() {
     filters.daysWithoutPurchase > 0 ||
     filters.gender !== 'all' ||
     filters.state !== 'all' ||
+    filters.productIds.length > 0 ||
     filters.segmentations.length > 0;
 
 
@@ -765,6 +791,7 @@ export default function Contatos() {
       daysWithoutPurchase: 0,
       gender: 'all',
       state: 'all',
+      productIds: [],
       segmentations: [],
     });
   };
@@ -924,6 +951,7 @@ export default function Contatos() {
           description: 'O contato foi atualizado com sucesso',
         });
         setEditingContactId(null);
+        trackAction('Editar Contato', { contactId: editingContactId });
       } else {
         // Criar novo contato
         const apiContact = await api.createContact({
@@ -946,6 +974,7 @@ export default function Contatos() {
           title: 'Contato criado!',
           description: 'O contato foi criado com sucesso',
         });
+        trackAction('Criar Contato', { name: newContact.name });
       }
 
       setIsNewContactOpen(false);
@@ -1054,6 +1083,7 @@ export default function Contatos() {
           description: 'O grupo foi atualizado com sucesso',
         });
         setEditingGroupId(null);
+        trackAction('Editar Grupo', { groupId: editingGroupId });
       } else {
         // Criar novo grupo
         const createdGroup = await api.createGroup({
@@ -1066,6 +1096,7 @@ export default function Contatos() {
           title: 'Grupo criado!',
           description: 'O grupo foi criado com sucesso',
         });
+        trackAction('Criar Grupo', { name: newGroup.name });
       }
 
       setIsNewGroupOpen(false);
@@ -1147,6 +1178,7 @@ export default function Contatos() {
           description: 'A etiqueta foi atualizada com sucesso',
         });
         setEditingTagId(null);
+        trackAction('Editar Etiqueta', { tagId: editingTagId });
       } else {
         // Criar nova etiqueta
         const createdTag = await api.createTag({
@@ -1158,6 +1190,7 @@ export default function Contatos() {
           title: 'Etiqueta criada!',
           description: 'A etiqueta foi criada com sucesso',
         });
+        trackAction('Criar Etiqueta', { name: newTag.name });
       }
 
       setIsNewTagOpen(false);
@@ -1501,6 +1534,67 @@ export default function Contatos() {
                                   <SelectItem value="10+">Mais de 10 compras</SelectItem>
                                 </SelectContent>
                               </Select>
+                            </div>
+
+                            {/* Produto Específico */}
+                            <div className="space-y-2">
+                              <Label htmlFor="filter-product" className="text-xs font-medium">
+                                <Tag className="w-3 h-3 inline mr-1" />
+                                Por Produto Comprado
+                              </Label>
+                              <Select
+                                value=""
+                                onValueChange={(value) => {
+                                  if (value && value !== "none") {
+                                    const productId = parseInt(value);
+                                    if (!filters.productIds.includes(productId)) {
+                                      setFilters({
+                                        ...filters,
+                                        productIds: [...filters.productIds, productId]
+                                      });
+                                    }
+                                  }
+                                }}
+                              >
+                                <SelectTrigger id="filter-product" className="h-9">
+                                  <SelectValue placeholder="Selecionar produtos..." />
+                                </SelectTrigger>
+                                <SelectContent className="bg-popover">
+                                  {allProducts.length > 0 ? (
+                                    allProducts.map((product) => (
+                                      <SelectItem key={product.id} value={product.id.toString()}>
+                                        {product.name}
+                                      </SelectItem>
+                                    ))
+                                  ) : (
+                                    <div className="p-2 text-xs text-muted-foreground text-center">Nenhum produto disponível</div>
+                                  )}
+                                </SelectContent>
+                              </Select>
+
+                              {filters.productIds.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {filters.productIds.map(id => {
+                                    const prod = allProducts.find(p => p.id === id);
+                                    return (
+                                      <Badge
+                                        key={id}
+                                        variant="secondary"
+                                        className="text-[10px] pl-2 pr-1 h-6 gap-1 bg-primary/10 text-primary border-primary/20"
+                                      >
+                                        {prod?.name || id}
+                                        <X
+                                          className="w-3 h-3 cursor-pointer hover:bg-primary/20 rounded-full"
+                                          onClick={() => setFilters({
+                                            ...filters,
+                                            productIds: filters.productIds.filter(pid => pid !== id)
+                                          })}
+                                        />
+                                      </Badge>
+                                    );
+                                  })}
+                                </div>
+                              )}
                             </div>
 
                             {/* Aniversariantes */}
@@ -2293,7 +2387,7 @@ export default function Contatos() {
                   <p className="text-sm text-muted-foreground">
                     Ajuste os pesos utilizados no cálculo automático do score dos leads.
                     A fórmula aplicada é: <code className="bg-muted px-2 py-1 rounded text-xs">
-                      Score = (E-mails × peso) + (Cliques × peso) + (Compras × peso) + (LTV ÷ divisor)
+                      Score = (Cliques × peso) + (Compras × peso) + (LTV ÷ divisor)
                     </code>
                   </p>
                 </div>
@@ -2307,23 +2401,6 @@ export default function Contatos() {
                     </h4>
 
                     <div className="space-y-3">
-                      <div className="grid gap-2">
-                        <Label htmlFor="email-weight" className="text-sm">
-                          📧 E-mails Abertos (peso por abertura)
-                        </Label>
-                        <Input
-                          id="email-weight"
-                          type="number"
-                          min="0"
-                          step="0.5"
-                          value={tempWeights.emailOpens}
-                          onChange={(e) => setTempWeights({ ...tempWeights, emailOpens: parseFloat(e.target.value) || 0 })}
-                          className="w-full"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Atual: {scoreConfig.weights.emailOpens} pontos por e-mail aberto
-                        </p>
-                      </div>
 
                       <div className="grid gap-2">
                         <Label htmlFor="click-weight" className="text-sm">
@@ -2394,10 +2471,6 @@ export default function Contatos() {
                           Lead Exemplo:
                         </div>
                         <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span>📧 5 e-mails abertos × {tempWeights.emailOpens}</span>
-                            <span className="font-medium">{(5 * (tempWeights.emailOpens || 0)) || 0} pts</span>
-                          </div>
                           <div className="flex justify-between">
                             <span>🔗 3 cliques × {tempWeights.linkClicks || 0}</span>
                             <span className="font-medium">{(3 * (tempWeights.linkClicks || 0)) || 0} pts</span>

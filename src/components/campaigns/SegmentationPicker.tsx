@@ -53,6 +53,24 @@ export function SegmentationPicker({
   const [isLoadingPreview, setIsLoadingPreview] = React.useState(false);
   const [contactSearch, setContactSearch] = React.useState('');
   const [isContactPopoverOpen, setIsContactPopoverOpen] = React.useState(false);
+  const [products, setProducts] = React.useState<any[]>([]);
+  const [productSearch, setProductSearch] = React.useState('');
+  const [isLoadingProducts, setIsLoadingProducts] = React.useState(false);
+
+  React.useEffect(() => {
+    const loadProducts = async () => {
+      setIsLoadingProducts(true);
+      try {
+        const data = await api.getProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error('Erro ao carregar produtos:', error);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+    loadProducts();
+  }, []);
 
   const audienceFilters: SegmentationOption[] = [
     { id: 'total', label: 'Todos os Contatos', description: 'Enviar para toda a sua base de contatos', affectedCount: stats['total'] || 0 },
@@ -72,7 +90,9 @@ export function SegmentationPicker({
     { id: 'by_state', label: 'Estado', description: 'Segmentar por localização geográfica', affectedCount: stats['by_state'] || 0 },
 
     { id: 'clicked_campaign', label: 'Engajados (cliques)', description: 'Contatos que clicaram em links de campanhas', affectedCount: stats['clicked_campaign'] || 0 },
-
+    { id: 'abandoned_cart', label: 'Carrinho Abandonado', description: 'Contatos com carrinhos não finalizados', affectedCount: stats['abandoned_cart'] || 0 },
+    { id: 'cart_recovered_customer', label: 'Cliente Recuperado', description: 'Clientes que voltaram após abandonar o carrinho', affectedCount: stats['cart_recovered_customer'] || 0 },
+    { id: 'purchased_product', label: 'Compraram Produto Específico', description: 'Clientes que compraram itens selecionados', affectedCount: stats['purchased_product'] || 0 },
   ];
 
   const toggleSegment = (segmentId: string) => {
@@ -288,6 +308,93 @@ export function SegmentationPicker({
               <option key={st} value={st}>{st}</option>
             ))}
           </select>
+        </div>
+      );
+    }
+    if (segmentId === 'purchased_product') {
+      const selectedProductIds = params?.productIds || [];
+      const filteredProducts = products.filter(p =>
+        p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+        (p.sku && p.sku.toLowerCase().includes(productSearch.toLowerCase()))
+      ).slice(0, 5); // Limit to top 5 for better UI
+
+      return (
+        <div className="mt-4 space-y-3" onClick={(e) => e.stopPropagation()}>
+          <div className="flex flex-col gap-2">
+            <Label className="text-[10px] uppercase font-bold text-muted-foreground">Selecionar Produtos:</Label>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou SKU..."
+                className="h-8 pl-8 text-xs"
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {productSearch && (
+            <div className="border rounded-md bg-background overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map(product => {
+                  const isProdSelected = selectedProductIds.includes(product.id);
+                  return (
+                    <div
+                      key={product.id}
+                      className="flex items-center justify-between p-2 hover:bg-accent cursor-pointer border-b last:border-0"
+                      onClick={() => {
+                        const newIds = isProdSelected
+                          ? selectedProductIds.filter((id: number) => id !== product.id)
+                          : [...selectedProductIds, product.id];
+                        updateParams(segmentId, { productIds: newIds });
+                      }}
+                    >
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium">{product.name}</span>
+                        {product.sku && <span className="text-[10px] text-muted-foreground">SKU: {product.sku}</span>}
+                      </div>
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${isProdSelected ? 'bg-primary border-primary' : 'border-input'}`}>
+                        {isProdSelected && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-4 text-center text-xs text-muted-foreground">
+                  Nenhum produto encontrado
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedProductIds.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-2 border-t">
+              {selectedProductIds.map((id: number) => {
+                const product = products.find(p => p.id === id);
+                if (!product) return null;
+                return (
+                  <Badge
+                    key={id}
+                    variant="secondary"
+                    className="flex items-center gap-1 pl-2 pr-1 h-6 text-[10px] bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                  >
+                    {product.name}
+                    <button
+                      className="hover:bg-primary/30 rounded-full p-0.5 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateParams(segmentId, {
+                          productIds: selectedProductIds.filter((pid: number) => pid !== id)
+                        });
+                      }}
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
         </div>
       );
     }

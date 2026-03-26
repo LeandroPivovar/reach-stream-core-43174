@@ -16,17 +16,18 @@ import {
     Filter,
     TrendingUp,
     Activity,
-    MailSearch
+    MailSearch,
+    Monitor
 } from 'lucide-react';
 
 const adminMenuItems = [
-    { title: 'Dashboard Admin', href: '/admin', icon: LayoutDashboard },
+    { title: 'Visão Geral', href: '/admin/overview', icon: Monitor },
+    { title: 'Dashboard Financeiro', href: '/admin/finance', icon: TrendingUp },
     { title: 'Categorias', href: '/admin/categories', icon: Tags },
     { title: 'Usuários', href: '/admin/users', icon: Users },
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
     { title: 'Segmentações', href: '/admin/segmentations', icon: Filter },
     { title: 'Planos', href: '/admin/plans', icon: ShieldCheck },
-    { title: 'Financeiro', href: '/admin/finance', icon: TrendingUp },
     { title: 'Capacidade & Consumo', href: '/admin/capacity', icon: Activity },
     { title: 'Notificações', href: '/admin/notifications', icon: Bell },
     { title: 'Solicitações Email', href: '/admin/email-requests', icon: MailSearch },
