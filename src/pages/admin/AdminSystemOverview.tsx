@@ -60,13 +60,13 @@ const AdminSystemOverview = () => {
 
   return (
     <AdminLayout 
-      title="Visão Geral" 
+      title="Visão do Sistema" 
       subtitle="Monitoramento operacional e telemetria de uso global"
     >
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Visão Geral do Sistema</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Visão do Sistema</h1>
             <p className="text-muted-foreground">Monitoramento operacional e telemetria de uso global.</p>
           </div>
           <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full">

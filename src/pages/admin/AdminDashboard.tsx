@@ -177,16 +177,20 @@ export default function AdminDashboard() {
 
                 <Card className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <Settings className="w-5 h-5 text-amber-500" /> Atividade do Sistema
+                        <DollarSign className="w-5 h-5 text-emerald-500" /> Resumo Financeiro Local
                     </h3>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Usuários Cadastrados</span>
-                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{users?.length || 0}</span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Mensalidade Média</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((globalStats?.mrr || 0) / (globalStats?.activeCompanies || 1))}
+                            </span>
                         </div>
                         <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Logs de Webhooks</span>
-                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{logs?.length || 0}</span>
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Empresas em Dia</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                                {Math.round((globalStats?.activeCompanies || 0) * (1 - (globalStats?.defaultRate || 0) / 100))}
+                            </span>
                         </div>
                     </div>
                 </Card>
