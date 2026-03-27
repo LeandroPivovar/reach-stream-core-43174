@@ -1866,7 +1866,7 @@ export default function Campanhas() {
                 if (!hasDispatchNodes) return null;
 
                 // Fallback para exibir pelo menos algum número se o filtro local falhar mas houver stats
-                const hasSelection = newCampaign.groups.length > 0 || newCampaign.segmentations.length > 0;
+                const hasSelection = newCampaign.groups.length > 0 || newCampaign.segmentations.length > 0 || newCampaign.specificContacts.length > 0;
                 const totalContacts = filteredContacts.length;
 
                 return (
