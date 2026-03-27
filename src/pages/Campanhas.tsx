@@ -1948,6 +1948,9 @@ export default function Campanhas() {
                 <Button
                   onClick={handleCreateCampaign}
                   disabled={(() => {
+                    const hasAudience = filteredContacts.length > 0;
+                    if (!hasAudience) return true;
+
                     const nodes = newCampaign.workflow?.nodes || [];
                     const edges = newCampaign.workflow?.edges || [];
                     const hasStartNode = nodes.some((n: any) => ['sendnow', 'schedule'].includes(n.type));
@@ -1955,10 +1958,11 @@ export default function Campanhas() {
 
                     if (!hasStartNode || dispatchNodes.length === 0) return true;
 
-                    // Pelo menos um nó de disparo deve estar conectado e definido
+                    // Pelo menos um nó de disparo deve estar conectado e definido (ter conteúdo)
                     const hasConnectedAndDefined = dispatchNodes.some((node: any) => {
                       const isConnected = edges.some((e: any) => e.target === node.id);
-                      const hasContent = !!node.data?.content;
+                      // Para nodes recém adicionados, o label pode vir como fallback do content
+                      const hasContent = !!node.data?.content || !!node.data?.label && !['email', 'sms', 'whatsapp'].includes(node.data.label);
                       const hasSubject = node.type === 'email' ? !!node.data?.subject : true;
                       return isConnected && hasContent && hasSubject;
                     });
