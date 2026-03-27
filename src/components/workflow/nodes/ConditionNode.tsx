@@ -214,7 +214,7 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
                   <SelectItem value="cart_abandoned">Carrinho abandonado?</SelectItem>
                   <SelectItem value="cart_recovered">Carrinho recuperado?</SelectItem>
                   <SelectItem value="clicked_link">Clicou no link?</SelectItem>
-                  <SelectItem value="responded">Respondeu?</SelectItem>
+                  {/* <SelectItem value="responded">Respondeu?</SelectItem> */}
                   <SelectItem value="order_value">Valor do pedido</SelectItem>
                   <SelectItem value="product_purchased">Produto comprado</SelectItem>
                   <SelectItem value="last_purchase_product">Produto última compra</SelectItem>
