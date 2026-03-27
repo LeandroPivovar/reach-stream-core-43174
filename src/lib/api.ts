@@ -300,6 +300,7 @@ export interface CreateEmailConnectionData {
 export interface ScoreConfig {
   id: number;
   userId: number;
+  emailOpens: number;
   linkClicks: number;
   purchases: number;
   ltvDivisor: number;
@@ -308,6 +309,7 @@ export interface ScoreConfig {
 }
 
 export interface UpdateScoreConfigData {
+  emailOpens?: number;
   linkClicks?: number;
   purchases?: number;
   ltvDivisor?: number;

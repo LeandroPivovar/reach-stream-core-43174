@@ -102,6 +102,7 @@ interface ContactFrontend {
   city: string;
   birthDate: string;
   gender: string;
+  groupId?: number;
   segmentations: string[];
   lastInteraction: string;
   sales: any[];
@@ -235,6 +236,7 @@ export default function Campanhas() {
       city: apiContact.city || '',
       birthDate: apiContact.birthDate || '',
       gender: apiContact.gender || 'all',
+      groupId: apiContact.groupId,
       segmentations: apiContact.contactSegmentations?.map(cs => cs.segmentationId) || [],
       lastInteraction: apiContact.updatedAt || apiContact.createdAt,
       sales: apiContact.sales || [],
@@ -492,6 +494,7 @@ export default function Campanhas() {
         name: '',
         groups: [],
         segmentations: [] as (string | import('@/lib/api').SegmentationParam)[],
+        specificContacts: [] as number[],
         channel: '',
         campaignType: '',
         campaignConfig: {
@@ -586,6 +589,7 @@ export default function Campanhas() {
       name: campaign.name,
       groups: campaign.config?.groups || [],
       segmentations: campaign.config?.segmentations || [],
+      specificContacts: campaign.config?.specificContacts || [],
       channel: campaign.channel as any,
       campaignType: campaign.config?.campaignType || '',
       campaignConfig: campaign.config?.campaignConfig || {
@@ -1142,6 +1146,7 @@ export default function Campanhas() {
             name: '',
             groups: [],
             segmentations: [] as (string | import('@/lib/api').SegmentationParam)[],
+            specificContacts: [] as number[],
             channel: '',
             campaignType: '',
             campaignConfig: {
@@ -1301,7 +1306,11 @@ export default function Campanhas() {
                 </Button>
                 <Button
                   onClick={handleNextStep}
-                  disabled={newCampaign.segmentations.length === 0}
+                  disabled={
+                    newCampaign.segmentations.length === 0 && 
+                    newCampaign.groups.length === 0 && 
+                    (!newCampaign.specificContacts || newCampaign.specificContacts.length === 0)
+                  }
                 >
                   Próximo
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -1858,12 +1867,7 @@ export default function Campanhas() {
 
                 // Fallback para exibir pelo menos algum número se o filtro local falhar mas houver stats
                 const hasSelection = newCampaign.groups.length > 0 || newCampaign.segmentations.length > 0;
-                const totalContacts = filteredContacts.length > 0 ? filteredContacts.length : (
-                  hasSelection ? newCampaign.segmentations.reduce((acc, seg) => {
-                    const id = typeof seg === 'string' ? seg : seg.id;
-                    return acc + (segmentationStats[id] || 0);
-                  }, 0) : 0
-                );
+                const totalContacts = filteredContacts.length;
 
                 return (
                   <div className="space-y-4 mt-6">
@@ -2354,14 +2358,7 @@ export default function Campanhas() {
                     <span className="text-sm font-medium text-muted-foreground">Contatos impactados</span>
                   </div>
                   <p className="text-2xl font-bold text-foreground">
-                    {(() => {
-                      const total = newCampaign.segmentations.reduce((sum, seg) => {
-                        const id = typeof seg === 'string' ? seg : seg.id;
-                        return sum + (dynamicStats[id] || 0);
-                      }, 0);
-
-                      return total.toLocaleString('pt-BR');
-                    })()}
+                    {filteredContacts.length.toLocaleString('pt-BR')}
                   </p>
                 </Card>
 
