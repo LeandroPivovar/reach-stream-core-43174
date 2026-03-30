@@ -56,6 +56,8 @@ export function SegmentationPicker({
   const [products, setProducts] = React.useState<any[]>([]);
   const [productSearch, setProductSearch] = React.useState('');
   const [isLoadingProducts, setIsLoadingProducts] = React.useState(false);
+  const [activeCoupons, setActiveCoupons] = React.useState<any[]>([]);
+  const [isLoadingCoupons, setIsLoadingCoupons] = React.useState(false);
 
   React.useEffect(() => {
     const loadProducts = async () => {
@@ -70,6 +72,19 @@ export function SegmentationPicker({
       }
     };
     loadProducts();
+
+    const loadCoupons = async () => {
+      setIsLoadingCoupons(true);
+      try {
+        const data = await api.getActiveCoupons();
+        setActiveCoupons(data);
+      } catch (error) {
+        console.error('Erro ao carregar cupons ativos:', error);
+      } finally {
+        setIsLoadingCoupons(false);
+      }
+    };
+    loadCoupons();
   }, []);
 
   const audienceFilters: SegmentationOption[] = [
@@ -311,6 +326,30 @@ export function SegmentationPicker({
         </div>
       );
     }
+
+    if (segmentId === 'active_coupon') {
+      return (
+        <div className="mt-3 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+          <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Selecionar Cupom:</Label>
+          <select
+            className="h-8 w-full border rounded text-xs px-2 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            value={params?.couponName || ''}
+            onChange={(e) => {
+              updateParams(segmentId, { couponName: e.target.value });
+            }}
+          >
+            <option value="">Todos os Cupons Ativos</option>
+            {activeCoupons.map((c, i) => (
+              <option key={i} value={c.name}>{c.name} ({c.campaignName})</option>
+            ))}
+          </select>
+          {activeCoupons.length === 0 && !isLoadingCoupons && (
+            <p className="text-[10px] text-orange-500">Nenhum cupom ativo encontrado no momento.</p>
+          )}
+        </div>
+      );
+    }
+
     if (segmentId === 'purchased_product') {
       const selectedProductIds = params?.productIds || [];
       const filteredProducts = products.filter(p =>
