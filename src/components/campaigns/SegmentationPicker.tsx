@@ -214,10 +214,10 @@ export function SegmentationPicker({
           <Input
             type="text"
             className="h-8 w-20 text-xs"
-            value={params?.minPurchases !== undefined ? params.minPurchases : 0}
+            value={params?.minPurchases !== undefined ? params.minPurchases : ''}
             onChange={(e) => {
-              const val = parseInt(e.target.value);
-              updateParams(segmentId, { minPurchases: isNaN(val) ? 0 : val });
+              const val = e.target.value === '' ? '' : parseInt(e.target.value);
+              updateParams(segmentId, { minPurchases: val === '' || isNaN(val as number) ? '' : val });
             }}
           />
         </div>
@@ -231,10 +231,11 @@ export function SegmentationPicker({
           <Input
             type="text"
             className="h-8 w-24 text-xs"
-            value={params?.minTicket !== undefined ? params.minTicket : 0}
+            value={params?.minTicket !== undefined ? params.minTicket : ''}
             onChange={(e) => {
-              const val = parseFloat(e.target.value.replace(',', '.'));
-              updateParams(segmentId, { minTicket: isNaN(val) ? 0 : val });
+              const raw = e.target.value.replace(',', '.');
+              const val = raw === '' ? '' : parseFloat(raw);
+              updateParams(segmentId, { minTicket: val === '' || isNaN(val as number) ? '' : val });
             }}
           />
         </div>
@@ -242,17 +243,16 @@ export function SegmentationPicker({
     }
 
     if (segmentId === 'inactive_customers' || segmentId === 'no_purchase_x_days') {
-      const defaultDays = segmentId === 'inactive_customers' ? 90 : 30;
       return (
         <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Dias:</Label>
           <Input
             type="text"
             className="h-8 w-20 text-xs"
-            value={params?.days !== undefined ? params.days : 0}
+            value={params?.days !== undefined ? params.days : ''}
             onChange={(e) => {
-              const val = parseInt(e.target.value);
-              updateParams(segmentId, { days: isNaN(val) ? 0 : val });
+              const val = e.target.value === '' ? '' : parseInt(e.target.value);
+              updateParams(segmentId, { days: val === '' || isNaN(val as number) ? '' : val });
             }}
           />
         </div>
@@ -269,12 +269,13 @@ export function SegmentationPicker({
           <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap">Mês:</Label>
           <select
             className="h-8 w-32 border rounded text-xs px-2 bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-            value={params?.month !== undefined ? params.month : new Date().getMonth() + 1}
+            value={params?.month !== undefined ? params.month : ''}
             onChange={(e) => {
-              const val = parseInt(e.target.value);
-              updateParams(segmentId, { month: isNaN(val) ? new Date().getMonth() + 1 : val });
+              const val = e.target.value === '' ? '' : parseInt(e.target.value);
+              updateParams(segmentId, { month: val === '' || isNaN(val as number) ? '' : val });
             }}
           >
+            <option value="">Selecione</option>
             {months.map((m, i) => (
               <option key={i + 1} value={i + 1}>{m}</option>
             ))}
