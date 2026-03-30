@@ -120,14 +120,16 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
     setNodes((nds) => [...nds, newNode]);
 
-    if (lastNode) {
+    // Only auto-connect if the last node is NOT a condition node.
+    // Condition nodes have two outputs (SIM/NÃO) — the user should
+    // manually drag the connection to the desired output handle.
+    if (lastNode && lastNode.type !== 'condition') {
       const newEdge: Edge = {
         id: `edge-${lastNode.id}-${id}`,
         source: lastNode.id,
         target: id,
         animated: true,
         style: { stroke: '#7255F7', strokeWidth: 2 },
-        sourceHandle: lastNode.type === 'condition' ? 'true' : undefined,
       };
       setEdges((eds) => [...eds, newEdge]);
     }
