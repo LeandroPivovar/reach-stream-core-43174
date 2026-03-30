@@ -14,9 +14,10 @@ interface Purchase {
 interface LtvHistoryProps {
   purchases: Purchase[];
   totalLtv: number;
+  hideCards?: boolean;
 }
 
-export function LtvHistory({ purchases, totalLtv }: LtvHistoryProps) {
+export function LtvHistory({ purchases, totalLtv, hideCards = false }: LtvHistoryProps) {
   // Processar dados para o gráfico - LTV acumulado ao longo do tempo
   const ltvOverTime = purchases
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -64,6 +65,7 @@ export function LtvHistory({ purchases, totalLtv }: LtvHistoryProps) {
 
   return (
     <div className="space-y-6">
+      {!hideCards && (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* LTV Total */}
         <Card className="shadow-sm border-border/50">
@@ -149,6 +151,7 @@ export function LtvHistory({ purchases, totalLtv }: LtvHistoryProps) {
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Gráfico de evolução do LTV */}
       <Card>
@@ -210,7 +213,8 @@ export function LtvHistory({ purchases, totalLtv }: LtvHistoryProps) {
         </CardContent>
       </Card>
 
-      {/* Lista de compras */}
+      {!hideCards && (
+      /* Lista de compras */
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Histórico de Compras</CardTitle>
@@ -249,6 +253,7 @@ export function LtvHistory({ purchases, totalLtv }: LtvHistoryProps) {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

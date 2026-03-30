@@ -24,7 +24,6 @@ const adminMenuItems = [
     { title: 'Painel Geral', href: '/admin', icon: LayoutDashboard },
     { title: 'Visão do Sistema', href: '/admin/overview', icon: Monitor },
     { title: 'Dashboard Financeiro', href: '/admin/finance', icon: TrendingUp },
-    { title: 'Categorias', href: '/admin/categories', icon: Tags },
     { title: 'Usuários', href: '/admin/users', icon: Users },
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
     { title: 'Segmentações', href: '/admin/segmentations', icon: Filter },

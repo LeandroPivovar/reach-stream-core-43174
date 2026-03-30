@@ -1549,6 +1549,10 @@ class ApiService {
     });
   }
 
+  async getActiveCoupons(): Promise<any[]> {
+    return this.get<any[]>('/campaigns/active-coupons');
+  }
+
   async getCampaign(id: number): Promise<Campaign> {
     return this.request<Campaign>(`/campaigns/${id}`, {
       method: 'GET',
