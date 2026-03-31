@@ -88,7 +88,7 @@ export function AdminSidebar() {
             {/* Admin Menu Footer */}
             <div className="p-4 border-t border-slate-800 space-y-2">
                 <button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/visao-geral')}
                     className="w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />

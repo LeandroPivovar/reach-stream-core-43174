@@ -22,7 +22,7 @@ export function PublicRoute({ children }: PublicRouteProps) {
 
   // Se já estiver autenticado, redirecionar para o dashboard
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/visao-geral" replace />;
   }
 
   return <>{children}</>;

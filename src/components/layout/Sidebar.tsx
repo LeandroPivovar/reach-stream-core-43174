@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 const menuItems = [
-  { title: 'Visão Geral', href: '/', icon: BarChart3 },
+  { title: 'Visão Geral', href: '/visao-geral', icon: BarChart3 },
   { title: 'Campanhas', href: '/campanhas', icon: MessageSquare },
   { title: 'Rastreamento', href: '/rastreamento', icon: Target },
   { title: 'Vendas', href: '/vendas', icon: DollarSign },

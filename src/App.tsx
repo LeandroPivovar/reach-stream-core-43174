@@ -43,6 +43,7 @@ import AdminEmailRequests from "./pages/admin/AdminEmailRequests";
 import AdminSystemOverview from "./pages/admin/AdminSystemOverview";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
+import LandingPage from "./pages/LandingPage";
 import { AnalyticsTracker } from "./components/analytics/AnalyticsTracker";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,8 @@ const App = () => (
         >
           <AnalyticsTracker />
           <Routes>
+            <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+            
             {/* Rotas públicas (apenas para não autenticados) */}
             <Route path="/auth/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/impersonate" element={<PublicRoute><Impersonate /></PublicRoute>} />
@@ -70,7 +73,7 @@ const App = () => (
             <Route path="/auth/resend-verification" element={<PublicRoute><ResendVerification /></PublicRoute>} />
 
             {/* Rotas protegidas (apenas para autenticados) */}
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/visao-geral" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/campanhas" element={<ProtectedRoute><Campanhas /></ProtectedRoute>} />
             <Route path="/vendas" element={<ProtectedRoute><Vendas /></ProtectedRoute>} />
             <Route path="/contatos" element={<ProtectedRoute><Contatos /></ProtectedRoute>} />
