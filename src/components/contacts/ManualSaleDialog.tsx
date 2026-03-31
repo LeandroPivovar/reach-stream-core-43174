@@ -127,6 +127,15 @@ export function ManualSaleDialog({
       return;
     }
 
+    const paymentLabels: Record<string, string> = {
+      credit_card: 'Cartão de Crédito',
+      debit_card: 'Cartão de Débito',
+      pix: 'PIX',
+      boleto: 'Boleto',
+      cash: 'Dinheiro',
+      other: 'Outro'
+    };
+
     setIsSaving(true);
     try {
       await api.createSale({
@@ -137,7 +146,8 @@ export function ManualSaleDialog({
         unitPrice: selectedProductId && selectedProductId !== 'custom' ? productPrice : totalValue,
         customerName: finalContactName,
         status: 'completed',
-        channel: 'manual',
+        channel: paymentLabels[paymentMethod] || paymentMethod,
+        paymentMethod: paymentMethod,
       });
 
       toast.success('Venda cadastrada com sucesso!');

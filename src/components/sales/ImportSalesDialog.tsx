@@ -70,7 +70,7 @@ export function ImportSalesDialog({ open, onOpenChange, onImportComplete }: Impo
                 'Valor Total': 100.00,
                 'Metodo Pagamento': 'credit_card',
                 Status: 'completed',
-                Canal: 'manual',
+                Canal: 'direct',
                 Data: format(new Date(), 'yyyy-MM-dd HH:mm:ss')
             },
             {
