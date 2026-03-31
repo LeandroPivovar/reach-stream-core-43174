@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="assets/logo-nova.png">
+    <title>Núcleo CRM</title>
+    <meta name="description"
+        content="A plataforma que ajuda e-commerces e empresas a vender mais usando CRM, automações e campanhas inteligentes.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="home-vibe">
+    <div class="navbar-mobile-wrapper">
+        <nav class="navbar-mobile">
+            <div class="logo">
+                <img src="assets/logo-nova.png" alt="Núcleo CRM Logo" class="logo-img">
+            </div>
+            <button class="burger-menu" id="burgerToggle" aria-label="Abrir menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </nav>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarMenu">
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="assets/logo-nova.png" alt="Núcleo CRM Logo" class="logo-img">
+                </div>
+                <button class="close-sidebar" id="closeSidebar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#home" class="sidebar-link">
+                    <span>Início</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+                <a href="#solucao" class="sidebar-link">
+                    <span>A solução</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+                <a href="#automacoes" class="sidebar-link">
+                    <span>Automações</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+                <a href="#funcionalidades" class="sidebar-link">
+                    <span>Recursos</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+                <a href="#como-funciona" class="sidebar-link">
+                    <span>Como funciona</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+                <a href="#contato" class="sidebar-link">
+                    <span>Solicitar contato</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="#contato" class="btn btn-sidebar-contact">CONTACT</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR DESKTOP -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <img src="assets/logo-nova.png" alt="Núcleo CRM Logo" class="logo-img">
+            </div>
+            <div class="nav-cta">
+                <a href="#contato" class="btn btn-primary">Solicitar agendamento</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+
+        <section class="hero transition-colors" id="home">
+            <div class="hero-sticky-wrapper">
+                <div class="hero-cinematic-wrapper">
+                    <video src="assets/cinematic.mp4" autoplay loop muted playsinline class="cinematic-bg"></video>
+                </div>
+
+
+
+                <!-- Hero Canvas -->
+                <div class="hero-canvas-container">
+                    <svg id="hero-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+                        <g id="grid-lines"></g>
+                        <g id="grid-dots"></g>
+                        <g id="energy-rays"></g>
+                    </svg>
+                </div>
+
+                <!-- NEW: Mobile Animated Background -->
+                <div class="mobile-only hero-mobile-bg">
+                    <div class="orb orb-1"></div>
+                    <div class="orb orb-2"></div>
+                </div>
+
+                <!-- SEÇÃO HERO - CONTEÚDO -->
+                <div class="hero-container">
+                    <div id="hero-text-content" class="hero-reveal-wrap">
+                        <img src="assets/logo-nova.png" alt="Núcleo CRM" class="hero-logo-img">
+                        <!-- Mobile Headline Sequence -->
+                        <div class="mobile-only mobile-headline-sequence">
+                            <span class="m-headline">Sua base de clientes</span>
+                            <span class="m-title">VALE OURO</span>
+                            <span class="m-subtitle">Venda mais para quem já conhece sua marca.</span>
+                        </div>
+                        <!-- Desktop Static Content (Hidden on Mobile via CSS) -->
+                        <div class="desktop-only">
+                            <h2 class="sub-title highlight">Venda mais para quem já comprou</h2>
+                            <p class="subheadline">A plataforma que ajuda e-commerces e empresas a vender mais usando CRM,
+                                automações e campanhas inteligentes.</p>
+                            <p class="hero-support">Pare de depender apenas de novos clientes. <strong>Comece a ativar
+                                    melhor os clientes que você já tem.</strong></p>
+                        </div>
+                        <div class="hero-btns">
+                            <a href="#contato" class="btn btn-primary">Solicitar agendamento</a>
+                            <a href="#como-funciona" class="btn btn-secondary">Ver como funciona</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scroll hint at bottom -->
+                <div class="scroll-hint">
+                    <span>Role para baixo</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO LOGO CAROUSEL (Infinite Scroll) -->
+        <section class="logo-carousel reveal">
+            <div class="container">
+                <p class="trust-label align-center">Empresas que confiam na Núcleo CRM</p>
+                <div class="logo-track-wrapper">
+                    <div class="logo-track">
+                        <img src="https://logodownload.org/wp-content/uploads/2014/10/arezzo-logo-1.png" alt="Arezzo">
+                        <img src="https://logodownload.org/wp-content/uploads/2019/08/melissa-logo.png" alt="Melissa">
+                        <img src="https://logodownload.org/wp-content/uploads/2018/06/vivara-logo.png" alt="Vivara">
+                        <img src="https://logodownload.org/wp-content/uploads/2017/05/schutz-logo.png" alt="Schutz">
+                        <img src="https://logodownload.org/wp-content/uploads/2019/07/vtex-logo-1.png" alt="VTEX">
+                        <img src="https://logodownload.org/wp-content/uploads/2019/09/shopify-logo.png" alt="Shopify">
+                        <img src="https://logodownload.org/wp-content/uploads/21/04/nuvemshop-logo.png" alt="Nuvemshop">
+                        <img src="https://logodownload.org/wp-content/uploads/2021/01/pandora-logo.png" alt="Pandora">
+                        <img src="https://logodownload.org/wp-content/uploads/2019/05/hering-logo.png" alt="Hering">
+                        <img src="https://logodownload.org/wp-content/uploads/2020/03/reserva-logo.png" alt="Reserva">
+                        
+                        <!-- Duplicate for infinite effect -->
+                        <img src="https://logodownload.org/wp-content/uploads/2014/10/arezzo-logo-1.png" alt="Arezzo">
+                        <img src="https://logodownload.org/wp-content/uploads/2019/08/melissa-logo.png" alt="Melissa">
+                        <img src="https://logodownload.org/wp-content/uploads/2018/06/vivara-logo.png" alt="Vivara">
+                        <img src="https://logodownload.org/wp-content/uploads/2017/05/schutz-logo.png" alt="Schutz">
+                        <img src="https://logodownload.org/wp-content/uploads/2019/07/vtex-logo-1.png" alt="VTEX">
+                        <img src="https://logodownload.org/wp-content/uploads/2019/09/shopify-logo.png" alt="Shopify">
+                        <img src="https://logodownload.org/wp-content/uploads/21/04/nuvemshop-logo.png" alt="Nuvemshop">
+                        <img src="https://logodownload.org/wp-content/uploads/2021/01/pandora-logo.png" alt="Pandora">
+                        <img src="https://logodownload.org/wp-content/uploads/2019/05/hering-logo.png" alt="Hering">
+                        <img src="https://logodownload.org/wp-content/uploads/2020/03/reserva-logo.png" alt="Reserva">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- UNIFIED PURPLE MESH AREA (Social Proof + Problem) -->
+        <div class="unified-mesh-area">
+            <!-- SEÇÃO PROVA SOCIAL -->
+            <section class="social-proof">
+                <div class="container">
+                    <h2 class="reveal social-proof-title">Empresas já estão crescendo com a Núcleo CRM</h2>
+                    <div class="social-text">
+                        <p>Todos os dias empresas estão descobrindo que a maior oportunidade de crescimento não está em
+                            novos clientes… mas sim na base de clientes que elas já conquistaram. Com a Núcleo CRM, essa
+                            base passa a trabalhar a favor do seu crescimento.</p>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-card reveal">
+                            <span class="metric-value">+30</span>
+                            <p class="metric-label">empresas usando a plataforma</p>
+                        </div>
+                        <div class="metric-card reveal">
+                            <span class="metric-value">+50k</span>
+                            <p class="metric-label">comunicações enviadas automaticamente</p>
+                        </div>
+                        <div class="metric-card reveal">
+                            <span class="metric-value">+R$140k</span>
+                            <p class="metric-label">em vendas geradas com automações</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO PROBLEMA -->
+            <section class="problem section-padding">
+                <div class="problem-mesh-overlay"></div>
+                <div class="container">
+                    <div class="section-header">
+                        <h2 class="reveal">A maioria das empresas perde vendas todos os dias.</h2>
+                    </div>
+                    <div class="problem-grid">
+                        <div class="problem-content reveal">
+                            <p>Clientes compram uma vez… e depois simplesmente desaparecem. Não porque não gostaram da sua
+                                marca, mas porque <strong>ninguém lembra eles de comprar novamente.</strong></p>
+                            <ul class="problem-list">
+                                <li><i class="fas fa-times-circle"></i> Sem campanhas.</li>
+                                <li><i class="fas fa-times-circle"></i> Sem relacionamento.</li>
+                                <li><i class="fas fa-times-circle"></i> Sem automação.</li>
+                            </ul>
+                        </div>
+                        <div class="problem-comparison reveal">
+                            <p class="comparison-title">Enquanto isso, empresas que usam dados e automação conseguem:</p>
+                            <div class="check-item"><i class="fas fa-check-circle"></i> Aumentar recompra</div>
+                            <div class="check-item"><i class="fas fa-check-circle"></i> Fidelizar clientes</div>
+                            <div class="check-item"><i class="fas fa-check-circle"></i> Vender mais com a mesma base</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- SEÇÃO SOLUÇÃO -->
+        <section class="solution section-padding" id="solucao">
+            <div class="container">
+                <div class="solution-wrapper">
+                    <div class="solution-content reveal full-width">
+                        <h2 class="align-center reveal">A Núcleo CRM transforma relacionamento em vendas.</h2>
+                        <div class="align-center section-subheadline">
+                            <p>A Núcleo CRM foi criado para ajudar empresas a organizar clientes, automatizar campanhas
+                                e estimular novas compras.</p>
+                            <p>Tudo em uma única plataforma simples de usar.</p>
+                            <p style="margin-top: 1.5rem; font-weight: 700; color: var(--text-bold);">Com ele você
+                                consegue:</p>
+                        </div>
+
+                        <div class="solution-cards-grid">
+                            <div class="solution-card">
+                                <i class="fas fa-users-cog"></i>
+                                <h3>organizar todos os seus clientes</h3>
+                                <p>Histórico completo e segmentação inteligente em um só lugar.</p>
+                            </div>
+                            <div class="solution-card">
+                                <i class="fas fa-bullseye"></i>
+                                <h3>criar campanhas inteligentes</h3>
+                                <p>Crie ações segmentadas que geram resultados reais.</p>
+                            </div>
+                            <div class="solution-card">
+                                <i class="fas fa-robot"></i>
+                                <h3>automatizar comunicações</h3>
+                                <p>Fale com seu cliente automaticamente no momento certo.</p>
+                            </div>
+                            <div class="solution-card">
+                                <i class="fas fa-user-minus"></i>
+                                <h3>recuperar clientes inativos</h3>
+                                <p>Traga de volta quem parou de comprar da sua marca.</p>
+                            </div>
+                            <div class="solution-card">
+                                <i class="fas fa-chart-line"></i>
+                                <h3>acompanhar resultados em tempo real</h3>
+                                <p>Monitore cada conversão no seu dashboard.</p>
+                            </div>
+                        </div>
+
+                        <div class="solution-footer align-center">
+                            <p><strong>Mais do que um CRM. Uma máquina de crescimento para o seu negócio.</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO AUTOMAÇÕES -->
+        <section class="automations section-padding" id="automacoes">
+            <div class="container">
+                <div class="automations-grid">
+                    <div class="automations-text reveal">
+                        <h2 class="automations-title">Automatize vendas que antes dependiam de esforço manual.</h2>
+                        <p class="automations-lead">Imagine se sua empresa pudesse falar com cada cliente no momento
+                            certo.</p>
+                        <p class="automations-strong">Sem precisar lembrar manualmente.</p>
+                        <p class="automations-label">Com a Núcleo CRM você pode criar automações como:</p>
+
+                        <div class="automation-cards">
+                            <div class="automation-mini-card">
+                                <i class="fas fa-birthday-cake"></i>
+                                <span>cupom de aniversário</span>
+                            </div>
+                            <div class="automation-mini-card">
+                                <i class="fas fa-shopping-bag"></i>
+                                <span>campanhas pós-compra</span>
+                            </div>
+                            <div class="automation-mini-card">
+                                <i class="fas fa-gift"></i>
+                                <span>giftback</span>
+                            </div>
+                            <div class="automation-mini-card">
+                                <i class="fas fa-user-clock"></i>
+                                <span>recuperação de clientes inativos</span>
+                            </div>
+                            <div class="automation-mini-card">
+                                <i class="fas fa-sync"></i>
+                                <span>campanhas de recompra</span>
+                            </div>
+                            <div class="automation-mini-card">
+                                <i class="fas fa-star"></i>
+                                <span>ofertas personalizadas</span>
+                            </div>
+                        </div>
+
+                        <div class="automations-footer-text">
+                            <p>Enquanto você foca em crescer o negócio,</p>
+                            <p><strong>o sistema continua ativando clientes automaticamente.</strong></p>
+                        </div>
+                    </div>
+                    <div class="automations-visual reveal">
+                        <div class="img-container">
+                            <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80&fit=crop"
+                                alt="Automação de Vendas">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO RECURSOS -->
+        <section class="features-carousel overflow-hidden" id="funcionalidades">
+            <div class="container container-features">
+                <div class="features-wrapper">
+                    <!-- Esquerda: Carrossel Vertical de Texto -->
+                    <div class="features-left">
+                        <h2 class="features-headline reveal">Tudo que sua empresa precisa para crescer.</h2>
+
+                        <div class="features-list">
+                            <div class="feature-item" data-index="1">
+                                <h3>Gestão de clientes</h3>
+                                <p>Organize todos os seus clientes em um único lugar, com histórico e segmentação
+                                    inteligente.</p>
+                            </div>
+                            <div class="feature-item" data-index="2">
+                                <h3>Campanhas multicanal</h3>
+                                <p>Envie campanhas por WhatsApp, SMS e e-mail com poucos cliques.</p>
+                            </div>
+                            <div class="feature-item" data-index="3">
+                                <h3>Automações</h3>
+                                <p>Crie fluxos automáticos que trabalham para gerar novas vendas.</p>
+                            </div>
+                            <div class="feature-item" data-index="4">
+                                <h3>Dashboard de resultados</h3>
+                                <p>Acompanhe vendas, campanhas e crescimento da sua empresa em tempo real.</p>
+                            </div>
+                            <div class="feature-item" data-index="5">
+                                <h3>Segmentação de clientes</h3>
+                                <p>Identifique clientes VIP, recorrentes, inativos e oportunidades de venda.</p>
+                            </div>
+                            <div class="feature-item" data-index="6">
+                                <h3>Gestão comercial</h3>
+                                <p>Organize tarefas, relacionamento e ações comerciais.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Direita: Feature Visual Slides -->
+                    <div class="features-right">
+                        <div class="feature-visual">
+                            <div class="scroll-trapezoid" id="scrollTrapezoid"></div>
+
+                            <div class="feature-slide active" data-slide="1">
+                                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&q=80"
+                                    alt="Gestão de clientes">
+                            </div>
+                            <div class="feature-slide" data-slide="2">
+                                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80"
+                                    alt="Campanhas multicanal">
+                            </div>
+                            <div class="feature-slide" data-slide="3">
+                                <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=1200&q=80"
+                                    alt="Automações">
+                            </div>
+                            <div class="feature-slide" data-slide="4">
+                                <img src="https://images.unsplash.com/photo-1542744095-fcf48d80b0fd?w=1200&q=80"
+                                    alt="Dashboard de resultados">
+                            </div>
+                            <div class="feature-slide" data-slide="5">
+                                <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&q=80"
+                                    alt="Segmentação de clientes">
+                            </div>
+                            <div class="feature-slide" data-slide="6">
+                                <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&q=80"
+                                    alt="Gestão comercial">
+                            </div>
+
+                            <!-- Nav Buttons on Image (Bottom Right) -->
+                            <div class="features-mobile-controls">
+                                <button type="button" class="feat-btn feat-prev" aria-label="Anterior"><i
+                                        class="fa-solid fa-chevron-left"></i></button>
+                                <button type="button" class="feat-btn feat-next" aria-label="Próximo"><i
+                                        class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Pagination -->
+                        <div class="features-pagination-wrapper mobile-only">
+                            <div class="feat-pagination">
+                                <span class="feat-page-num active" data-page="0">01</span>
+                                <span class="feat-page-num" data-page="1">02</span>
+                                <span class="feat-page-num" data-page="2">03</span>
+                                <span class="feat-page-num" data-page="3">04</span>
+                                <span class="feat-page-num" data-page="4">05</span>
+                                <span class="feat-page-num" data-page="5">06</span>
+                            </div>
+                            <div class="feat-progress-bar">
+                                <div class="feat-progress-fill" id="featProgressFill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+
+
+        <!-- SEÇÃO BENEFÍCIOS -->
+        <section class="benefits section-padding">
+            <div class="container">
+                <div class="benefits-wrapper reveal">
+                    <div class="benefits-header">
+                        <h2 style="color: var(--text-bold);">Menos esforço. Mais vendas.</h2>
+                        <p style="color: var(--text-main);">Empresas que usam a Núcleo CRM conseguem:</p>
+                    </div>
+                    <div class="benefits-list-grid">
+                        <div class="benefit-item">
+                            <i class="fas fa-arrow-up"></i>
+                            <span style="color: var(--text-bold);">Aumentar recompra</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-heart"></i>
+                            <span style="color: var(--text-bold);">Fidelizar clientes</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-star"></i>
+                            <span style="color: var(--text-bold);">Melhorar relacionamento</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span style="color: var(--text-bold);">Vender mais para quem já comprou</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-coins"></i>
+                            <span style="color: var(--text-bold);">Reduzir dependência de tráfego pago</span>
+                        </div>
+                    </div>
+                    <p class="benefits-footer" style="color: var(--text-main);">O que antes era feito manualmente passa a acontecer de forma automática.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO COMO FUNCIONA -->
+        <section class="how-it-works section-padding" id="como-funciona">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="reveal">Começar é simples.</h2>
+                </div>
+                <div class="steps-grid">
+                    <!-- Progress Line -->
+                    <div class="steps-progress-container">
+                        <div class="steps-progress-fill" id="stepsProgressFill"></div>
+                    </div>
+                    <div class="step-card reveal">
+                        <div class="step-num">01</div>
+                        <h3>Importe sua base</h3>
+                        <p>Importe sua base de clientes ou conecte seu e-commerce.</p>
+                    </div>
+                    <div class="step-card reveal">
+                        <div class="step-num">02</div>
+                        <h3>Crie campanhas</h3>
+                        <p>Crie campanhas e segmentações inteligentes.</p>
+                    </div>
+                    <div class="step-card reveal">
+                        <div class="step-num">03</div>
+                        <h3>Ative automações</h3>
+                        <p>Ative automações de relacionamento.</p>
+                    </div>
+                    <div class="step-card reveal">
+                        <div class="step-num">04</div>
+                        <h3>Acompanhe</h3>
+                        <p>Acompanhe o crescimento da sua empresa.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO DIFERENCIAL -->
+        <section class="differentiator section-padding">
+            <div class="container">
+                <div class="diff-wrapper reveal">
+                    <div class="diff-content">
+                        <h2>Criado para empresas que querem crescer.</h2>
+                        <p>A Núcleo CRM não foi feito apenas para organizar contatos. Foi criado para ajudar empresas a
+                            gerar mais vendas com os clientes que já possuem.</p>
+                        <p class="diff-highlight">Unindo: <strong>CRM + Automações + Campanhas Inteligentes + Dados +
+                                Relacionamento</strong> em uma única plataforma.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO CTA FINAL -->
+        <section class="final-cta section-padding" id="contato">
+            <div class="container">
+                <div class="cta-box reveal">
+                    <h2>Sua base de clientes pode vender muito mais.</h2>
+                    <p>Descubra como a Núcleo CRM pode ajudar sua empresa a aumentar recompra, fidelizar clientes e
+                        crescer com mais previsibilidade.</p>
+
+                    <form id="lead-form" class="lead-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <input type="text" id="name" placeholder="Seu nome" required title="Informe seu nome">
+                            </div>
+                            <div class="form-group">
+                                <input type="email" id="email" placeholder="E-mail profissional" required
+                                    title="Informe seu e-mail">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="company" placeholder="Nome da empresa" required
+                                title="Qual o nome da sua empresa?">
+                        </div>
+                        <div class="form-btns">
+                            <button type="submit" class="btn btn-primary btn-lg">Solicitar agendamento</button>
+                            <button type="button" class="btn btn-secondary btn-lg">Falar com especialista</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col col-brand">
+                    <img src="assets/logo-nova.png" alt="Núcleo CRM Logo" class="footer-logo-img">
+                    <p class="brand-desc">A plataforma que transforma relacionamento em vendas para e-commerces e empresas.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+                        <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Soluções</h4>
+                    <ul>
+                        <li><a href="#solucao">A Solução</a></li>
+                        <li><a href="#automacoes">Automações</a></li>
+                        <li><a href="#funcionalidades">Recursos</a></li>
+                        <li><a href="#como-funciona">Metodologia</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Empresa</h4>
+                    <ul>
+                        <li><a href="#">Sobre nós</a></li>
+                        <li><a href="#">Fale conosco</a></li>
+                        <li><a href="#">Trabalhe conosco</a></li>
+                        <li><a href="#">Políticas de Privacidade</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Contato</h4>
+                    <p>São Paulo, SP - Brasil</p>
+                    <p>atendimento@nucleocrm.com.br</p>
+                    <p>CNPJ: 00.000.000/0001-00</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 NÚCLEO CRM. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+    <script src="assets/objects/video-controller.js"></script>
+
+    <script src="main.js"></script>
+</body>
+
+</html>
