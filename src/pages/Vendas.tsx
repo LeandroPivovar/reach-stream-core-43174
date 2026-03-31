@@ -170,6 +170,18 @@ export default function Vendas() {
         return 'bg-blue-500';
       case 'sms':
         return 'bg-orange-500';
+      case 'pix':
+        return 'bg-cyan-500';
+      case 'boleto':
+        return 'bg-amber-500';
+      case 'dinheiro':
+        return 'bg-emerald-500';
+      case 'cartão de crédito':
+      case 'cartao de credito':
+        return 'bg-indigo-500';
+      case 'cartão de débito':
+      case 'cartao de debito':
+        return 'bg-rose-500';
       default:
         return 'bg-gray-500';
     }

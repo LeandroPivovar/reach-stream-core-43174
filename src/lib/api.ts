@@ -80,6 +80,8 @@ export interface Sale {
     id: number;
     name: string;
   };
+  paymentMethod?: string;
+  channel?: string;
 }
 
 export interface CreateSaleData {
@@ -92,6 +94,7 @@ export interface CreateSaleData {
   unitPrice?: number;
   totalValue?: number;
   channel?: string;
+  paymentMethod?: string;
 }
 
 export interface DashboardStats {

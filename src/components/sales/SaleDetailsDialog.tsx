@@ -113,6 +113,19 @@ export function SaleDetailsDialog({ sale, open, onOpenChange }: SaleDetailsDialo
                                     <p className="text-xs text-muted-foreground">unit. R$ {Number(sale.unitPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                 </div>
                             </div>
+
+                            <div className="flex justify-between items-center pt-2 border-t border-border/50">
+                                <div className="flex items-center gap-2 text-xs">
+                                    <span className="text-muted-foreground">Método:</span>
+                                    <span className="font-medium uppercase">{sale.paymentMethod?.replace('_', ' ') || 'Não informado'}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs">
+                                    <span className="text-muted-foreground">Canal/Fonte:</span>
+                                    <Badge variant="outline" className="text-[9px] h-4 uppercase">
+                                        {sale.channel || 'Direto'}
+                                    </Badge>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
