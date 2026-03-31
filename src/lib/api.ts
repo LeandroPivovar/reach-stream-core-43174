@@ -1505,7 +1505,19 @@ class ApiService {
     });
   }
 
-  // VTEX Integration
+  async getVtexConnections(): Promise<any[]> {
+    return this.request<any[]>('/vtex/connections', {
+      method: 'GET',
+    });
+  }
+
+  async disconnectVtex(accountName: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>('/vtex/disconnect', {
+      method: 'POST',
+      body: JSON.stringify({ accountName }),
+    });
+  }
+
   public vtexApi = {
     connect: (data: { accountName: string; appKey: string; appToken: string }) =>
       this.request<any>('/vtex/connect', {
