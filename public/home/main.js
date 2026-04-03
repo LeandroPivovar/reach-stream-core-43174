@@ -3,6 +3,73 @@
 document.addEventListener('DOMContentLoaded', () => {
     const isMobileDevice = window.innerWidth <= 1024;
 
+    if (isMobileDevice) {
+        const canvas = document.getElementById('mobile-particles-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            const particles = [];
+            const numParticles = 40;
+            for(let i=0; i<numParticles; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    radius: Math.random() * 2 + 1,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8,
+                    alpha: Math.random() * 0.5 + 0.3
+                });
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach((p, index) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if(p.x < 0) p.x = width;
+                    if(p.x > width) p.x = 0;
+                    if(p.y < 0) p.y = height;
+                    if(p.y > height) p.y = 0;
+                    
+                    ctx.fillStyle = "#A78BFA";
+                    ctx.globalAlpha = p.alpha;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    for(let j = index + 1; j < particles.length; j++) {
+                        const p2 = particles[j];
+                        const dx = p.x - p2.x;
+                        const dy = p.y - p2.y;
+                        const dist = dx*dx + dy*dy;
+                        if(dist < 12000) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = "#A78BFA";
+                            ctx.globalAlpha = (12000 - dist) / 12000 * 0.4;
+                            ctx.lineWidth = 0.5;
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.stroke();
+                        }
+                    }
+                });
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+
+            window.addEventListener('resize', () => {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+            });
+        }
+    }
+
     let lenis = null;
     if (!isMobileDevice) {
         lenis = new Lenis({
@@ -171,17 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         // Stage 2: SYNCED RAYS, SWEEP, AND GRID
-        if (isMobile) {
-            // Circular reveal for mobile to prevent "cutting" feel
-            heroTl.fromTo(".hero-cinematic-wrapper",
-                { clipPath: "circle(100% at 50% 50%)" },
-                { clipPath: "circle(0% at 50% 50%)", duration: 2, ease: "power2.inOut" }, 0.5);
-        } else {
-            // Horizontal sweep for desktop
-            heroTl.fromTo(".hero-cinematic-wrapper",
-                { clipPath: "inset(0% 0% 0% 0%)" },
-                { clipPath: "inset(0% 50% 0% 50%)", duration: 1.8, ease: "power2.inOut" }, 0.5);
-        }
+        heroTl.fromTo(".hero-cinematic-wrapper",
+            { clipPath: "inset(0% 0% 0% 0%)" },
+            { clipPath: "inset(0% 50% 0% 50%)", duration: 1.8, ease: "power2.inOut" }, 0.5);
         heroTl.to(".hero-cinematic-wrapper", { opacity: 0, duration: 0.1 }, 2.3);
 
         // Animação unificada: raios de energia
@@ -396,17 +455,14 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCarousel(0);
 
             // MOBILE HERO ENTRANCE SEQUENCE
-            const mobileEntryTl = gsap.timeline({ delay: 0.5 });
+            const mobileEntryTl = gsap.timeline({ delay: 0.2 });
             mobileEntryTl
-                .to(".m-headline", { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" })
-                .to(".m-title", { opacity: 1, y: 0, duration: 1, ease: "back.out(1.7)" }, "-=0.4")
-                .to(".m-subtitle", { opacity: 1, duration: 0.8, ease: "power2.out" }, "-=0.6")
-                .from(".orb", { scale: 0, opacity: 0, duration: 2, stagger: 0.5, ease: "power2.out" }, 0);
+                .from("#mobile-particles-canvas", { opacity: 0, duration: 2, ease: "power2.out" }, 0)
+                .from(".cinematic-logo-mobile", { opacity: 0, scale: 0.8, y: 30, duration: 1, ease: "power3.out" }, 0.3)
+                .from(".cinematic-subtitle-mobile", { opacity: 0, y: 20, duration: 1, ease: "power3.out" }, 0.6);
         }
 
-        if (isDesktop) {
-            gsap.set("#hero-text-content", { opacity: 0 });
-        }
+        gsap.set("#hero-text-content", { opacity: 0 });
     });
 
     // ANIMAÇÕES GLOBAIS
