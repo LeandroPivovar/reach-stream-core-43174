@@ -57,6 +57,7 @@ interface ConditionNodeData {
   paymentMethod?: string;
   dateFrom?: Date;
   dateTo?: Date;
+  selectedBranch?: 'true' | 'false';
   onUpdate: (data: any) => void;
   onDelete: () => void;
 }
@@ -71,6 +72,7 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
   const [paymentMethod, setPaymentMethod] = useState((data as any)?.paymentMethod || '');
   const [dateFrom, setDateFrom] = useState<Date | undefined>((data as any)?.dateFrom);
   const [dateTo, setDateTo] = useState<Date | undefined>((data as any)?.dateTo);
+  const [selectedBranch, setSelectedBranch] = useState<'true' | 'false'>((data as any)?.selectedBranch || 'true');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
@@ -99,6 +101,7 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
       paymentMethod,
       dateFrom,
       dateTo,
+      selectedBranch,
     });
     setIsEditing(false);
   };
@@ -200,6 +203,19 @@ export const ConditionNode: React.FC<NodeProps> = ({ data, id }) => {
             <DialogTitle>Configurar Condição</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="grid gap-2">
+              <Label>Linkar próximo bloco ao:</Label>
+              <Select value={selectedBranch} onValueChange={(v) => setSelectedBranch(v as 'true' | 'false')}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">SIM (Condição atendida)</SelectItem>
+                  <SelectItem value="false">NÃO (Condição não atendida)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid gap-2">
               <Label>Tipo de Condição</Label>
               <Select value={conditionType} onValueChange={(value) => setConditionType(value as ConditionType)}>
