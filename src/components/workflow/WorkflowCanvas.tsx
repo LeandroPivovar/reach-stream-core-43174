@@ -114,20 +114,26 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
       data: {
         label: type,
       },
+      selected: true,
     };
 
-    const lastNode = nodes.length > 0 ? nodes[nodes.length - 1] : null;
+    // Use current selection as anchor, or fallback to last node
+    const selectedNode = nodes.find(n => n.selected);
+    const lastNode = selectedNode || (nodes.length > 0 ? nodes[nodes.length - 1] : null);
 
-    setNodes((nds) => [...nds, newNode]);
+    // Deselect all nodes and add the new one
+    setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
 
-    // Only auto-connect if the last node is NOT a condition node.
-    // Condition nodes have two outputs (SIM/NÃO) — the user should
-    // manually drag the connection to the desired output handle.
-    if (lastNode && lastNode.type !== 'condition') {
+    if (lastNode) {
+      const sourceHandle = (lastNode.type === 'condition')
+        ? String((lastNode.data as any).selectedBranch || 'true')
+        : undefined;
+
       const newEdge: Edge = {
         id: `edge-${lastNode.id}-${id}`,
         source: lastNode.id,
         target: id,
+        sourceHandle,
         animated: true,
         style: { stroke: '#7255F7', strokeWidth: 2 },
       };
