@@ -29,7 +29,7 @@ interface ResponsiveTableProps<T> {
   className?: string;
 }
 
-export function ResponsiveTable<T extends { id?: string | number }>({
+export const ResponsiveTable = <T extends { id?: string | number }>({
   columns,
   data,
   isLoading,
@@ -37,7 +37,7 @@ export function ResponsiveTable<T extends { id?: string | number }>({
   emptyMessage = "Nenhum dado encontrado",
   onRowClick,
   className,
-}: ResponsiveTableProps<T>) {
+}: ResponsiveTableProps<T>) => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
