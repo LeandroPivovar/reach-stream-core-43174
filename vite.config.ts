@@ -22,19 +22,13 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    minify: 'terser', // Usar terser que é mais robusto que o esbuild para ReferenceErrors
-    terserOptions: {
-      compress: {
-        keep_fnames: true, // Mantém nomes de funções para evitar ReferenceError
-        keep_classnames: true
-      }
-    },
+    minify: false, // Desativar minificação para depurar o ReferenceError de vez
     rollupOptions: {
       output: {
-        // Mudando a versão para v4 para forçar novo hash e remover manualChunks
-        entryFileNames: `assets/[name].v4.[hash].js`,
-        chunkFileNames: `assets/[name].v4.[hash].js`,
-        assetFileNames: `assets/[name].v4.[hash].[ext]`
+        // Mudando a versão para v5 para forçar novo hash
+        entryFileNames: `assets/[name].v5.[hash].js`,
+        chunkFileNames: `assets/[name].v5.[hash].js`,
+        assetFileNames: `assets/[name].v5.[hash].[ext]`
       }
     }
   }
