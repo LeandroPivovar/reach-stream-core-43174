@@ -25,42 +25,42 @@ export function StatsCard({
   colorClass = "bg-primary/10 text-primary"
 }: StatsCardProps) {
   return (
-    <div className={cn("card-stats", colorClass, className)}>
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-muted-foreground mb-1">
+    <div className={cn("card-stats p-4 md:p-6", colorClass, className)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs md:text-sm font-medium text-muted-foreground mb-1 truncate">
             {title}
           </p>
-          <p className="text-2xl font-bold text-foreground">
+          <p className="text-xl md:text-2xl font-bold text-foreground truncate">
             {value}
           </p>
           
           {trend && (
-            <div className="flex items-center mt-2">
+            <div className="flex flex-wrap items-center mt-2 gap-x-2">
               <span className={cn(
-                "text-xs font-medium",
+                "text-xs font-semibold",
                 trend.isPositive 
                   ? "text-success" 
                   : "text-destructive"
               )}>
                 {trend.isPositive ? '+' : ''}{trend.value}%
               </span>
-              <span className="text-xs text-muted-foreground ml-2">
-                vs período anterior
+              <span className="text-[10px] md:text-xs text-muted-foreground whitespace-nowrap">
+                vs anterior
               </span>
             </div>
           )}
           
           {description && (
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[10px] md:text-xs text-muted-foreground mt-1 truncate">
               {description}
             </p>
           )}
         </div>
         
-        <div className="ml-4">
-          <div className="w-12 h-12 bg-white/20 dark:bg-black/20 rounded-lg flex items-center justify-center">
-            <Icon className="w-6 h-6" />
+        <div className="shrink-0">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 dark:bg-black/20 rounded-lg flex items-center justify-center">
+            <Icon className="w-5 h-5 md:w-6 md:h-6" />
           </div>
         </div>
       </div>

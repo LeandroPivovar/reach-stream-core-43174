@@ -104,7 +104,7 @@ export function CustomerJourney({ stages, segmentationStats }: CustomerJourneyPr
       </div>
 
       <div className="relative">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 relative">
           {journeyStages.map((stage, index) => {
             const Icon = stage.icon;
             return (
