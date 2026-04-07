@@ -29,7 +29,7 @@ interface ResponsiveTableProps<T> {
   className?: string;
 }
 
-export default function ResponsiveTable<T extends { id?: string | number }>({
+function ResponsiveTable<T extends { id?: string | number }>({
   columns,
   data,
   isLoading,
@@ -132,3 +132,4 @@ export default function ResponsiveTable<T extends { id?: string | number }>({
     </div>
   );
 }
+export default ResponsiveTable;
