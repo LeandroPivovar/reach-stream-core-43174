@@ -92,7 +92,7 @@ import { ManualSaleDialog } from '@/components/contacts/ManualSaleDialog';
 import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
 import * as XLSX from 'xlsx';
 
-import ResponsiveTable from '@/components/ui/responsive-table';
+import ResponsiveTable from '@/components/common/responsive-table';
 import { cn } from '@/lib/utils';
 
 // Interface para compatibilidade com a estrutura existente do frontend
