@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import ResponsiveTable from '@/components/ui/responsive-table';
+import ResponsiveTable from '@/components/common/responsive-table';
 import { cn } from '@/lib/utils';
 
 export default function Conexoes() {

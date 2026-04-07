@@ -30,7 +30,7 @@ import {
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
-import ResponsiveTable from '@/components/ui/responsive-table';
+import ResponsiveTable from '@/components/common/responsive-table';
 import { cn } from '@/lib/utils';
 
 export default function Integracoes() {
