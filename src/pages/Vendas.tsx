@@ -4,6 +4,7 @@ import { StatsCard } from '@/components/ui/stats-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DollarSign,
   ShoppingCart,
@@ -20,12 +21,44 @@ import {
   CreditCard,
   Clock,
   Loader2,
-  FileUp
+  FileUp,
+  TrendingDown,
+  ArrowUpRight,
+  ArrowRight,
+  Filter,
+  CheckCircle2,
+  AlertCircle,
+  Zap,
+  Target,
+  ArrowDownRight,
+  MoreHorizontal,
+  RefreshCw
 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from 'recharts';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { ManualSaleDialog } from '@/components/contacts/ManualSaleDialog';
 import { ImportSalesDialog } from '@/components/sales/ImportSalesDialog';
 import { SaleDetailsDialog } from '@/components/sales/SaleDetailsDialog';
-import { Input } from '@/components/ui/input';
+import { api, Sale, DashboardStats, SalesByCampaign, SalesByChannel, TopProduct, PaymentMethodStats, FunnelStage } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { ResponsiveTable } from '@/components/ui/responsive-table';
 import {
   Select,
   SelectContent,
@@ -45,15 +78,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
-
-import { api, DashboardStats, SalesByCampaign, SalesByChannel, TopProduct, PaymentMethodStats, FunnelStage, Sale } from '@/lib/api';
-import { toast } from '@/components/ui/use-toast';
 
 export default function Vendas() {
+  const { toast } = useToast();
   const [period, setPeriod] = useState('15');
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -627,86 +655,130 @@ export default function Vendas() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Data</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Cliente</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Produto</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider text-center">Itens</th>
-                    <th className="text-left py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Cupom / Campanha</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Valor Total</th>
-                    <th className="text-right py-3 px-2 font-medium text-muted-foreground text-sm uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentSales.map((venda) => (
-                    <tr
-                      key={venda.id}
-                      className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => {
-                        setSelectedSale(venda);
-                        setIsDetailsOpen(true);
-                      }}
-                    >
-                      <td className="py-4 px-2 text-sm">
-                        {format(new Date(venda.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                      </td>
-                      <td className="py-4 px-2">
-                        <div className="text-sm font-semibold">{venda.customerName || 'Sem nome'}</div>
-                        <div className="text-xs text-muted-foreground">{venda.customerEmail}</div>
-                      </td>
-                      <td className="py-4 px-2">
-                        <div className="text-sm font-medium max-w-[200px] truncate">
-                          {venda.product?.name || 'Produto Removido'}
-                        </div>
-                      </td>
-                      <td className="py-4 px-2 text-center text-sm">
-                        {venda.quantity || 1}
-                      </td>
-                      <td className="py-4 px-2">
-                        {venda.couponCode ? (
-                          <div className="space-y-1">
-                            <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[10px]">
-                              {venda.couponCode}
-                            </Badge>
-                            {venda.campaign && (
-                              <div className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                <TrendingUp className="w-3 h-3 text-blue-500" />
-                                {venda.campaign.name}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-2 text-right">
-                        <div className="text-sm font-bold text-success">
-                          R$ {Number(venda.totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground">
-                          unit. R$ {Number(venda.unitPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </div>
-                      </td>
-                      <td className="py-4 px-2 text-right">
-                        <Badge variant={venda.status === 'completed' ? 'default' : 'secondary'} className="text-[10px] uppercase font-bold">
-                          {venda.status === 'completed' ? 'Pago' : 'Pendente'}
+            <ResponsiveTable<Sale>
+              columns={[
+                {
+                  header: "Data",
+                  accessorKey: "createdAt",
+                  cell: (venda) => format(new Date(venda.createdAt), "dd/MM HH:mm", { locale: ptBR }),
+                  className: "w-[120px]"
+                },
+                {
+                  header: "Cliente",
+                  cell: (venda) => (
+                    <div>
+                      <div className="text-sm font-semibold truncate max-w-[150px]">{venda.customerName || 'Sem nome'}</div>
+                      <div className="text-[10px] text-muted-foreground truncate max-w-[150px]">{venda.customerEmail}</div>
+                    </div>
+                  )
+                },
+                {
+                  header: "Produto",
+                  cell: (venda) => (
+                    <div className="text-sm font-medium max-w-[180px] truncate">
+                      {venda.product?.name || 'Produto Removido'}
+                    </div>
+                  )
+                },
+                {
+                  header: "Itens",
+                  accessorKey: "quantity",
+                  className: "text-center w-[60px]",
+                  cell: (venda) => venda.quantity || 1
+                },
+                {
+                  header: "Campanha",
+                  cell: (venda) => (
+                    venda.couponCode ? (
+                      <div className="flex flex-col gap-1">
+                        <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[9px] w-fit">
+                          {venda.couponCode}
                         </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                  {currentSales.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center">
-                        <p className="text-muted-foreground">Nenhuma venda encontrada.</p>
-                      </td>
-                    </tr>
+                        {venda.campaign && (
+                          <div className="text-[9px] text-muted-foreground flex items-center gap-1">
+                            <TrendingUp className="w-2.5 h-2.5 text-blue-500" />
+                            {venda.campaign.name}
+                          </div>
+                        )}
+                      </div>
+                    ) : "-"
+                  )
+                },
+                {
+                  header: "Valor",
+                  className: "text-right",
+                  cell: (venda) => (
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-success">
+                        R$ {Number(venda.totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </div>
+                      <div className="text-[9px] text-muted-foreground">
+                        {venda.quantity > 1 && `un. R$ ${Number(venda.unitPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  header: "Status",
+                  className: "text-right w-[100px]",
+                  cell: (venda) => (
+                    <Badge variant={venda.status === 'completed' ? 'default' : 'secondary'} className="text-[9px] uppercase font-bold">
+                      {venda.status === 'completed' ? 'Pago' : 'Pendente'}
+                    </Badge>
+                  )
+                }
+              ]}
+              data={currentSales}
+              onRowClick={(venda) => {
+                setSelectedSale(venda);
+                setIsDetailsOpen(true);
+              }}
+              renderMobileCard={(venda) => (
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase font-semibold">
+                        {format(new Date(venda.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </p>
+                      <h4 className="font-bold text-sm mt-0.5">{venda.customerName || 'Sem nome'}</h4>
+                      <p className="text-[11px] text-muted-foreground">{venda.customerEmail}</p>
+                    </div>
+                    <Badge variant={venda.status === 'completed' ? 'default' : 'secondary'} className="text-[9px] uppercase">
+                      {venda.status === 'completed' ? 'Pago' : 'Pendente'}
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-2 bg-muted/30 rounded-md">
+                    <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
+                       <Package className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold truncate">{venda.product?.name || 'Produto Removido'}</p>
+                      <p className="text-[10px] text-muted-foreground">{venda.quantity || 1} {venda.quantity > 1 ? 'itens' : 'item'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-success">
+                        R$ {Number(venda.totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {venda.couponCode && (
+                    <div className="flex items-center gap-2">
+                       <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[9px]">
+                          {venda.couponCode}
+                        </Badge>
+                        {venda.campaign && (
+                          <div className="text-[9px] text-muted-foreground flex items-center gap-1">
+                            <TrendingUp className="w-2.5 h-2.5 text-blue-500" />
+                            {venda.campaign.name}
+                          </div>
+                        )}
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
+                </div>
+              )}
+            />
 
             {/* Paginação */}
             {totalPages > 1 && (

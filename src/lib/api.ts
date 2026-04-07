@@ -1,4 +1,4 @@
-const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+﻿const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 const defaultApiUrl = isProd ? window.location.origin : 'http://localhost:3000';
 export const API_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
 
@@ -609,7 +609,7 @@ class ApiService {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    // Adicionar /api se não estiver presente no endpoint e se o API_URL não já incluir /api
+    // Adicionar /api se nÃ£o estiver presente no endpoint e se o API_URL nÃ£o jÃ¡ incluir /api
     const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
     const apiEndpoint = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
     const response = await fetch(`${baseUrl}${apiEndpoint}`, {
@@ -625,17 +625,17 @@ class ApiService {
       let error;
       try {
         const text = await response.text();
-        error = text ? JSON.parse(text) : { message: 'Erro ao processar requisição' };
+        error = text ? JSON.parse(text) : { message: 'Erro ao processar requisiÃ§Ã£o' };
       } catch {
-        error = { message: 'Erro ao processar requisição' };
+        error = { message: 'Erro ao processar requisiÃ§Ã£o' };
       }
       // NestJS retorna mensagens de erro em error.message ou em um array
       const errorMessage = error.message ||
-        (Array.isArray(error.message) ? error.message.join(', ') : 'Erro ao processar requisição');
+        (Array.isArray(error.message) ? error.message.join(', ') : 'Erro ao processar requisiÃ§Ã£o');
       throw new Error(errorMessage);
     }
 
-    // Verificar se a resposta tem conteúdo (status 204 No Content não tem body)
+    // Verificar se a resposta tem conteÃºdo (status 204 No Content nÃ£o tem body)
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       // Resposta vazia (como DELETE 204) - retornar void
@@ -644,13 +644,13 @@ class ApiService {
 
     try {
       const text = await response.text();
-      // Se não houver texto, retornar undefined
+      // Se nÃ£o houver texto, retornar undefined
       if (!text) {
         return undefined as any;
       }
       const data = JSON.parse(text);
 
-      // Log para APIs de vendas conforme solicitado pelo usuário
+      // Log para APIs de vendas conforme solicitado pelo usuÃ¡rio
       if (apiEndpoint.includes('/sales')) {
         console.log(`[Sales API] ${options.method || 'GET'} ${apiEndpoint} - Response:`, data);
       }
@@ -658,7 +658,7 @@ class ApiService {
       return data;
     } catch (error) {
       console.error('Erro ao parsear resposta JSON:', error);
-      // Se não conseguir parsear, retornar undefined (pode ser resposta vazia válida)
+      // Se nÃ£o conseguir parsear, retornar undefined (pode ser resposta vazia vÃ¡lida)
       return undefined as any;
     }
   }
@@ -788,7 +788,7 @@ class ApiService {
   }
 
   /**
-   * Importa produto de integração (cria ou atualiza se já existir)
+   * Importa produto de integraÃ§Ã£o (cria ou atualiza se jÃ¡ existir)
    * Verifica por SKU ou externalIds antes de criar
    */
   async importProduct(
@@ -1505,6 +1505,13 @@ class ApiService {
     });
   }
 
+  async testVtexConnection(accountName: string): Promise<{ success: boolean; message?: string }> {
+    return this.request<{ success: boolean; message?: string }>('/vtex/test', {
+      method: 'POST',
+      body: JSON.stringify({ accountName }),
+    });
+  }
+
   async getVtexConnections(): Promise<any[]> {
     return this.request<any[]>('/vtex/connections', {
       method: 'GET',
@@ -1697,7 +1704,7 @@ class ApiService {
     return this.get<any>(`/webhooks/logs/${id}`);
   }
 
-  // Notificações
+  // NotificaÃ§Ãµes
   async getNotifications(): Promise<Notification[]> {
     return this.get<Notification[]>('/notifications');
   }
@@ -1729,7 +1736,7 @@ class ApiService {
     });
   }
 
-  // Admin Notificações
+  // Admin NotificaÃ§Ãµes
 
 
   async createCoupon(data: {
@@ -1763,7 +1770,7 @@ class ApiService {
     });
   }
 
-  // Sincronização em Background (Nuvemshop)
+  // SincronizaÃ§Ã£o em Background (Nuvemshop)
   async syncNuvemshopCustomers(storeId: string): Promise<any> {
     return this.request<any>('/nuvemshop/sync/customers', {
       method: 'POST',
@@ -1948,6 +1955,20 @@ class ApiService {
   async getAdminEventStats(days = 30): Promise<AdminEventTrend[]> {
     return this.request<AdminEventTrend[]>(`/admin/overview/events?days=${days}`, {
       method: 'GET',
+    });
+  }
+
+  // Admin Lead Requests
+  async getAdminLeadRequests(): Promise<LeadRequest[]> {
+    return this.request<LeadRequest[]>('/lead-requests/admin/all', {
+      method: 'GET',
+    });
+  }
+
+  async updateAdminLeadStatus(id: number, status: string): Promise<LeadRequest> {
+    return this.request<LeadRequest>(`/lead-requests/admin/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
     });
   }
 }
@@ -2150,3 +2171,15 @@ export interface LojaIntegradaConnection {
 
 
 
+
+export interface LeadRequest {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  source?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -58,6 +58,7 @@ import {
   RotateCcw,
   Save,
   Send,
+  Phone,
   X,
   CheckSquare,
   Filter,
@@ -90,6 +91,9 @@ import { LtvHistory } from '@/components/contacts/LtvHistory';
 import { ManualSaleDialog } from '@/components/contacts/ManualSaleDialog';
 import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
 import * as XLSX from 'xlsx';
+
+import { ResponsiveTable } from '@/components/ui/responsive-table';
+import { cn } from '@/lib/utils';
 
 // Interface para compatibilidade com a estrutura existente do frontend
 interface ContactFrontend {
@@ -1246,6 +1250,293 @@ export default function Contatos() {
     setIsExportOpen(false);
   };
 
+  const contactTableColumns = useMemo(() => [
+    {
+      header: (
+        <Checkbox
+          checked={selectedContacts.size === filteredContacts.length && filteredContacts.length > 0}
+          onCheckedChange={toggleSelectAll}
+          aria-label="Selecionar todos"
+        />
+      ),
+      className: "w-10",
+      cell: (contact: ContactFrontend) => (
+        <Checkbox
+          checked={selectedContacts.has(contact.id)}
+          onCheckedChange={() => toggleContactSelection(contact.id)}
+          aria-label={`Selecionar ${contact.name}`}
+        />
+      )
+    },
+    {
+      header: "Nome",
+      cell: (contact: ContactFrontend) => {
+        const contactLtv = contactPurchases[contact.id]?.ltv || 0;
+        const ltvColors = getLtvColor(contactLtv);
+        return (
+          <div className="flex items-center gap-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex-shrink-0">
+                    {contactLtv > 0 ? (
+                      <div className={`w-8 h-8 rounded-full ${ltvColors.bg} flex items-center justify-center text-white text-xs font-bold shadow-sm`}>
+                        <TrendingUp className="w-4 h-4" />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                        <User2 className="w-4 h-4" />
+                      </div>
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="p-3">
+                  {contactLtv > 0 ? (
+                    <div className="space-y-1">
+                      <p className="font-semibold text-[10px] uppercase">Total Comprado</p>
+                      <p className="text-sm font-bold text-primary">R$ {contactLtv.toFixed(2)}</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs">Nenhuma compra registrada</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm truncate">{contact.name}</span>
+                {contactLtv > 0 && (
+                  <Badge variant="outline" className={`${ltvColors.border} ${ltvColors.text} text-[9px] h-4 px-1.5`}>
+                    R$ {contactLtv.toFixed(0)}
+                  </Badge>
+                )}
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                {new Date(contact.lastInteraction).toLocaleDateString('pt-BR')}
+              </div>
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Score",
+      cell: (contact: ContactFrontend) => {
+        const score = calculateScore(contact.id);
+        const safeScore = isNaN(score) ? 0 : score;
+        const scoreColors = getScoreColor(safeScore);
+        const ScoreIcon = scoreColors.icon;
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2 cursor-pointer">
+                  <div className={`w-8 h-8 rounded-lg ${scoreColors.bg} flex items-center justify-center text-white shadow-sm transition-transform hover:scale-105`}>
+                    <ScoreIcon className="w-4 h-4" />
+                  </div>
+                  <div className="hidden sm:block">
+                    <div className="text-sm font-bold leading-none">{safeScore}</div>
+                    <div className={`text-[9px] ${scoreColors.text} font-medium leading-none mt-1`}>
+                      {scoreColors.label.split(' ')[1] || scoreColors.label}
+                    </div>
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="p-3">
+                <div className="space-y-1 text-xs">
+                  <p className="font-bold">{scoreColors.label} ({safeScore})</p>
+                  <p className="text-muted-foreground">Baseado em compras e LTV</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+    },
+    {
+      header: "Contato",
+      cell: (contact: ContactFrontend) => (
+        <div className="text-xs">
+          <div className="font-medium">{contact.phone}</div>
+          <div className="text-muted-foreground">{contact.email}</div>
+        </div>
+      )
+    },
+    {
+      header: "Grupo",
+      cell: (contact: ContactFrontend) => (
+        <Badge variant="secondary" className="text-[10px] h-5">{contact.group}</Badge>
+      )
+    },
+    {
+      header: "Status",
+      cell: (contact: ContactFrontend) => (
+        <div className="flex items-center space-x-1.5">
+          <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(contact.status)}`}></div>
+          <span className="text-[11px] font-medium">{contact.status}</span>
+        </div>
+      )
+    },
+    {
+      header: "Localização",
+      cell: (contact: ContactFrontend) => (
+        <div className="flex items-center space-x-1 text-[11px] text-muted-foreground">
+          {contact.city && contact.state ? (
+            <>
+              <MapPin className="w-3 h-3" />
+              <span className="truncate max-w-[100px]">{contact.city}, {contact.state}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground/50">-</span>
+          )}
+        </div>
+      )
+    },
+    {
+      header: "Ações",
+      className: "text-right",
+      cell: (contact: ContactFrontend) => (
+        <div className="flex justify-end gap-1">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8"
+            onClick={() => setSelectedContactId(contact.id)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ações do Contato</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-2">
+                <Button variant="ghost" className="justify-start focus:ring-0" onClick={() => setSelectedContactId(contact.id)}>
+                  <Eye className="w-4 h-4 mr-2" /> Visualizar Perfil
+                </Button>
+                <Button variant="ghost" className="justify-start focus:ring-0" onClick={() => handleEditContact(contact)}>
+                  <Edit className="w-4 h-4 mr-2" /> Editar Contato
+                </Button>
+                <Button variant="ghost" className="justify-start focus:ring-0" onClick={() => {
+                  setSelectedContactForSale({ id: contact.id, name: contact.name });
+                  setIsManualSaleOpen(true);
+                }}>
+                  <ShoppingCart className="w-4 h-4 mr-2" /> Cadastrar Venda
+                </Button>
+                <Button variant="ghost" className="justify-start text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-0" onClick={() => handleDeleteContact(contact.id, contact.name)}>
+                  <Trash2 className="w-4 h-4 mr-2" /> Excluir Contato
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )
+    }
+  ], [selectedContacts, filteredContacts, contactPurchases, scoreConfig.weights]);
+
+  const renderContactCard = useCallback((contact: ContactFrontend) => {
+    const contactLtv = contactPurchases[contact.id]?.ltv || 0;
+    const ltvColors = getLtvColor(contactLtv);
+    const score = calculateScore(contact.id);
+    const scoreColors = getScoreColor(score);
+    const ScoreIcon = scoreColors.icon;
+
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-start">
+          <div className="flex gap-3">
+            <div className="relative">
+              <Checkbox
+                checked={selectedContacts.has(contact.id)}
+                onCheckedChange={() => toggleContactSelection(contact.id)}
+                className="absolute -left-2 -top-2 z-10 scale-90 border-primary"
+              />
+              <div className={`w-10 h-10 rounded-full ${ltvColors.bg} flex items-center justify-center text-white shadow-md`}>
+                <User2 className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="min-w-0">
+              <h4 className="font-bold text-sm truncate">{contact.name}</h4>
+              <div className="flex gap-1.5 mt-1 items-center">
+                <Badge variant="outline" className="text-[9px] h-4 uppercase font-bold">{contact.group}</Badge>
+                <div className="flex items-center space-x-1">
+                  <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(contact.status)}`}></div>
+                  <span className="text-[10px] font-medium text-muted-foreground">{contact.status}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+             <div className={`flex items-center gap-1 justify-end font-bold text-sm ${scoreColors.text}`}>
+                <ScoreIcon className="w-3 h-3" />
+                {score}
+             </div>
+             <p className="text-[9px] text-muted-foreground uppercase leading-none mt-0.5">Lead Score</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 py-3 border-y border-border/50">
+           <div className="space-y-1">
+              <p className="text-[9px] text-muted-foreground uppercase font-bold">Contato</p>
+              <div className="flex items-center gap-1.5 text-xs">
+                 <Mail className="w-3 h-3 text-muted-foreground" />
+                 <span className="truncate">{contact.email}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs">
+                 <Phone className="w-3 h-3 text-muted-foreground" />
+                 <span>{contact.phone}</span>
+              </div>
+           </div>
+           <div className="space-y-1 pl-3 border-l border-border/50">
+              <p className="text-[9px] text-muted-foreground uppercase font-bold">Valor Acumulado</p>
+              <p className="text-lg font-black text-primary">R$ {contactLtv.toFixed(2)}</p>
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                 <MapPin className="w-3 h-3" />
+                 {contact.city || '-'}, {contact.state || '-'}
+              </div>
+           </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-2">
+           <div className="flex flex-wrap gap-1">
+              {contact.tags.slice(0, 2).map(tag => (
+                <Badge key={tag} variant="secondary" className="text-[9px] h-4 bg-muted/80">{tag}</Badge>
+              ))}
+              {contact.tags.length > 2 && (
+                <Badge variant="secondary" className="text-[9px] h-4 bg-muted/80">+{contact.tags.length - 2}</Badge>
+              )}
+           </div>
+           <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 text-[10px] px-3 shadow-sm hover:bg-muted"
+                onClick={() => setSelectedContactId(contact.id)}
+              >
+                Detalhes
+              </Button>
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="h-8 text-[10px] px-3 shadow-md"
+                onClick={() => {
+                  setSelectedContactForSale({ id: contact.id, name: contact.name });
+                  setIsManualSaleOpen(true);
+                }}
+              >
+                Venda
+              </Button>
+           </div>
+        </div>
+      </div>
+    );
+  }, [contactPurchases, scoreConfig.weights, selectedContacts]);
+
   const actions = (
     <>
       <Button variant="outline" onClick={() => setIsImportOpen(true)}>
@@ -1926,244 +2217,14 @@ export default function Contatos() {
 
           <TabsContent value="contacts">
             <Card className="p-6 shadow-card animate-fade-in">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-2 font-medium text-muted-foreground w-10">
-                        <Checkbox
-                          checked={selectedContacts.size === filteredContacts.length && filteredContacts.length > 0}
-                          onCheckedChange={toggleSelectAll}
-                          aria-label="Selecionar todos"
-                        />
-                      </th>
-                      <th className="text-left py-3 px-2 font-medium text-muted-foreground">Nome</th>
-                      <th className="text-left py-3 px-2 font-medium text-muted-foreground">Score</th>
-                      <th className="text-left py-3 px-2 font-medium text-muted-foreground">Contato</th>
-                      <th className="text-left py-3 px-2 font-medium text-muted-foreground">Grupo</th>
-                      <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
-                      <th className="text-left py-3 px-2 font-medium text-muted-foreground">Etiquetas</th>
-                      <th className="text-left py-3 px-2 font-medium text-muted-foreground">Localização</th>
-                      <th className="text-right py-3 px-2 font-medium text-muted-foreground">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredContacts.map((contact) => {
-                      const contactLtv = contactPurchases[contact.id]?.ltv || 0;
-                      const ltvColors = getLtvColor(contactLtv);
-                      const score = calculateScore(contact.id);
-                      const safeScore = isNaN(score) ? 0 : score;
-                      const scoreColors = getScoreColor(safeScore);
-                      const ScoreIcon = scoreColors.icon;
-
-                      return (
-                        <tr key={contact.id} className="border-b border-border last:border-0 hover:bg-muted/50">
-                          <td className="py-4 px-2">
-                            <Checkbox
-                              checked={selectedContacts.has(contact.id)}
-                              onCheckedChange={() => toggleContactSelection(contact.id)}
-                              aria-label={`Selecionar ${contact.name}`}
-                            />
-                          </td>
-                          <td className="py-4 px-2">
-                            <div className="flex items-center gap-3">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex-shrink-0">
-                                      {contactLtv > 0 ? (
-                                        <div className={`w-8 h-8 rounded-full ${ltvColors.bg} flex items-center justify-center text-white text-xs font-bold shadow-sm`}>
-                                          <TrendingUp className="w-4 h-4" />
-                                        </div>
-                                      ) : (
-                                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                                          <Users className="w-4 h-4" />
-                                        </div>
-                                      )}
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right" className="p-3">
-                                    {contactLtv > 0 ? (
-                                      <div className="space-y-1">
-                                        <p className="font-semibold">Total Comprado</p>
-                                        <p className="text-lg font-bold text-primary">
-                                          R$ {contactLtv.toFixed(2)}
-                                        </p>
-                                        <p className={`text-xs ${ltvColors.text}`}>
-                                          {getLtvLabel(contactLtv)}
-                                        </p>
-                                      </div>
-                                    ) : (
-                                      <p className="text-sm">Nenhuma compra registrada</p>
-                                    )}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">{contact.name}</span>
-                                  {contactLtv > 0 && (
-                                    <Badge variant="outline" className={`${ltvColors.border} ${ltvColors.text} text-xs px-2`}>
-                                      R$ {contactLtv.toFixed(2)}
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  Último contato: {new Date(contact.lastInteraction).toLocaleDateString('pt-BR')}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-2">
-                            {contactPurchases[contact.id] ? (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-center gap-2 cursor-pointer">
-                                      <div className={`w-12 h-12 rounded-lg ${scoreColors.bg} flex items-center justify-center text-white shadow-score transition-transform hover:scale-105`}>
-                                        <ScoreIcon className="w-5 h-5" />
-                                      </div>
-                                      <div>
-                                        <div className="text-2xl font-bold">{safeScore}</div>
-                                        <div className={`text-xs ${scoreColors.text} font-medium`}>
-                                          {scoreColors.label.split(' ')[1]}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right" className="p-3">
-                                    <div className="space-y-2">
-                                      <p className="font-semibold">{scoreColors.label}</p>
-                                      <div className="text-xs space-y-1">
-                                        <div>🛍️ Compras: {contactPurchases[contact.id].purchases.length || 0} × {scoreConfig.weights.purchases || 0} pts</div>
-                                        <div>💰 LTV: R$ {(contactPurchases[contact.id].ltv || 0).toFixed(2)} ÷ {scoreConfig.weights.ltvDivisor || 10}</div>
-                                      </div>
-                                      <div className="pt-2 border-t border-border">
-                                        <div className="font-bold">Score Total: {safeScore}/100</div>
-                                      </div>
-                                    </div>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            ) : (
-                              <div className="text-muted-foreground text-sm">N/A</div>
-                            )}
-                          </td>
-                          <td className="py-4 px-2">
-                            <div>
-                              <div className="text-sm">{contact.phone}</div>
-                              <div className="text-sm text-muted-foreground">{contact.email}</div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-2">
-                            <Badge variant="outline">{contact.group}</Badge>
-                          </td>
-                          <td className="py-4 px-2">
-                            <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${getStatusColor(contact.status)}`}></div>
-                              <span className="text-sm">{contact.status}</span>
-                            </div>
-                          </td>
-                          <td className="py-4 px-2">
-                            <div className="flex flex-wrap gap-1">
-                              {contact.tags.map((tag) => (
-                                <Badge key={tag} variant="secondary" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="py-4 px-2">
-                            <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                              {contact.city && contact.state ? (
-                                <>
-                                  <MapPin className="w-3 h-3" />
-                                  <span>{contact.city}, {contact.state}</span>
-                                </>
-                              ) : (
-                                <span className="text-muted-foreground/50">Não informado</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-4 px-2 text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setSelectedContactId(contact.id)}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  setSelectedContactForSale({ id: contact.id, name: contact.name });
-                                  setIsManualSaleOpen(true);
-                                }}
-                              >
-                                <ShoppingCart className="w-4 h-4" />
-                              </Button>
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <MoreHorizontal className="w-4 h-4" />
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>Ações do Contato</DialogTitle>
-                                  </DialogHeader>
-                                  <div className="grid gap-2">
-                                    <Button
-                                      variant="ghost"
-                                      className="justify-start"
-                                      onClick={() => {
-                                        setSelectedContactId(contact.id);
-                                      }}
-                                    >
-                                      <Eye className="w-4 h-4 mr-2" />
-                                      Visualizar Perfil
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      className="justify-start"
-                                      onClick={() => handleEditContact(contact)}
-                                      disabled={isLoading}
-                                    >
-                                      <Edit className="w-4 h-4 mr-2" />
-                                      Editar Contato
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      className="justify-start"
-                                      onClick={() => {
-                                        setSelectedContactForSale({ id: contact.id, name: contact.name });
-                                        setIsManualSaleOpen(true);
-                                      }}
-                                    >
-                                      <ShoppingCart className="w-4 h-4 mr-2" />
-                                      Cadastrar Venda
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      className="justify-start text-destructive"
-                                      onClick={() => handleDeleteContact(contact.id, contact.name)}
-                                      disabled={isLoading}
-                                    >
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Excluir Contato
-                                    </Button>
-                                  </div>
-                                </DialogContent>
-                              </Dialog>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="overflow-hidden">
+                <ResponsiveTable
+                  columns={contactTableColumns}
+                  data={filteredContacts}
+                  isLoading={isLoading}
+                  emptyMessage="Nenhum contato encontrado com esses filtros."
+                  renderMobileCard={renderContactCard}
+                />
               </div>
             </Card>
           </TabsContent>

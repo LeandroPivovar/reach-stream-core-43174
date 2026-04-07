@@ -26,8 +26,12 @@ import {
   ArrowLeft,
   Store,
   Zap,
-  Loader2
+  Loader2,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
+import { ResponsiveTable } from '@/components/ui/responsive-table';
+import { cn } from '@/lib/utils';
 
 export default function Integracoes() {
   const { toast } = useToast();
@@ -649,11 +653,12 @@ export default function Integracoes() {
         </Card>
 
         {/* Webhook Integrations */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
+        <Card className="p-0 overflow-hidden border-none shadow-none md:border md:shadow-sm md:p-6">
+          <div className="flex items-center justify-between mb-6 px-4 md:px-0 pt-4 md:pt-0">
             <h3 className="text-lg font-semibold">Webhooks Personalizados</h3>
             <Button
               variant="outline"
+              size="sm"
               onClick={handleOpenNewIntegration}
             >
               <Webhook className="w-4 h-4 mr-2" />
@@ -661,96 +666,133 @@ export default function Integracoes() {
             </Button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Nome</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">URL</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Eventos</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Último Trigger</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loadingConnections ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto" />
-                      <p className="text-sm text-muted-foreground mt-2">Carregando webhooks...</p>
-                    </td>
-                  </tr>
-                ) : webhooks.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                      Nenhum webhook configurado ainda
-                    </td>
-                  </tr>
-                ) : (
-                  webhooks.map((webhook, index) => (
-                    <tr key={webhook.id || index} className="border-b border-border last:border-0">
-                      <td className="py-4 px-2">
-                        <div className="font-medium">
-                          {webhook.platform || 'Webhook'}
-                          {webhook.event ? ` - ${webhook.event}` : ''}
-                        </div>
-                      </td>
-                      <td className="py-4 px-2">
-                        <div className="flex items-center space-x-2">
-                          <code className="text-sm bg-muted px-2 py-1 rounded max-w-xs truncate">
-                            {webhook.address || webhook.url || 'N/A'}
-                          </code>
-                          {(webhook.address || webhook.url) && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => window.open(webhook.address || webhook.url, '_blank')}
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-2">
-                        <div className="flex flex-wrap gap-1">
-                          {webhook.event ? (
-                            <Badge variant="outline" className="text-xs">
-                              {eventLabels[webhook.event] || webhook.event}
-                            </Badge>
-                          ) : webhook.topic ? (
-                            <Badge variant="outline" className="text-xs">
-                              {webhook.topic}
-                            </Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-2">
-                        <Badge variant="default">
-                          <div className="w-2 h-2 rounded-full mr-2 bg-green-500"></div>
-                          Ativo
-                        </Badge>
-                      </td>
-                      <td className="py-4 px-2">
-                        <span className="text-sm text-muted-foreground">
-                          {webhook.created_at ? new Date(webhook.created_at).toLocaleDateString('pt-BR') : '-'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-2 text-right">
-                        <div className="flex justify-end space-x-2">
-                          <Button variant="ghost" size="sm">
-                            <Settings className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable<any>
+            columns={[
+              {
+                header: "Nome",
+                cell: (webhook) => (
+                  <div className="font-medium">
+                    {webhook.platform || 'Webhook'}
+                    {webhook.event ? ` - ${webhook.event}` : ''}
+                  </div>
+                )
+              },
+              {
+                header: "URL",
+                cell: (webhook) => (
+                  <div className="flex items-center space-x-2">
+                    <code className="text-xs bg-muted px-2 py-1 rounded max-w-xs truncate">
+                      {webhook.address || webhook.url || 'N/A'}
+                    </code>
+                    {(webhook.address || webhook.url) && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => window.open(webhook.address || webhook.url, '_blank')}
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                )
+              },
+              {
+                header: "Eventos",
+                cell: (webhook) => (
+                  <div className="flex flex-wrap gap-1">
+                    {webhook.event ? (
+                      <Badge variant="outline" className="text-[10px]">
+                        {eventLabels[webhook.event] || webhook.event}
+                      </Badge>
+                    ) : webhook.topic ? (
+                      <Badge variant="outline" className="text-[10px]">
+                        {webhook.topic}
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
+                  </div>
+                )
+              },
+              {
+                header: "Status",
+                cell: () => (
+                  <Badge variant="default" className="text-[10px] uppercase font-bold">
+                    <div className="w-1.5 h-1.5 rounded-full mr-1.5 bg-green-500"></div>
+                    Ativo
+                  </Badge>
+                )
+              },
+              {
+                header: "Último Trigger",
+                cell: (webhook) => (
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    {webhook.created_at ? new Date(webhook.created_at).toLocaleDateString('pt-BR') : '-'}
+                  </span>
+                )
+              },
+              {
+                header: "Ações",
+                className: "text-right",
+                cell: () => (
+                  <div className="flex justify-end">
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )
+              }
+            ]}
+            data={webhooks}
+            isLoading={loadingConnections}
+            emptyMessage="Nenhum webhook configurado ainda"
+            renderMobileCard={(webhook) => (
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-sm">
+                      {webhook.platform || 'Webhook'}
+                    </h4>
+                    <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
+                      {webhook.event ? eventLabels[webhook.event] || webhook.event : webhook.topic || 'Evento geral'}
+                    </p>
+                  </div>
+                  <Badge variant="default" className="text-[9px] h-4 px-1.5 uppercase font-bold">
+                     Ativo
+                  </Badge>
+                </div>
+
+                <div className="bg-muted px-2 py-2 rounded-lg border border-border/50">
+                   <div className="flex items-center justify-between">
+                     <code className="text-[10px] truncate max-w-[200px] text-muted-foreground">
+                        {webhook.address || webhook.url || 'N/A'}
+                     </code>
+                     {(webhook.address || webhook.url) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => window.open(webhook.address || webhook.url, '_blank')}
+                        >
+                          <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                        </Button>
+                      )}
+                   </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                  <span className="text-[10px] text-muted-foreground">
+                    Data: {webhook.created_at ? new Date(webhook.created_at).toLocaleDateString('pt-BR') : '-'}
+                  </span>
+                  <Button variant="outline" size="sm" className="h-7 text-[10px]">
+                    <Settings className="w-3.5 h-3.5 mr-1.5" />
+                    Configurar
+                  </Button>
+                </div>
+              </div>
+            )}
+          />
         </Card>
       </div>
 
