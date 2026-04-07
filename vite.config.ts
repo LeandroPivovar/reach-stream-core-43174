@@ -31,14 +31,10 @@ export default defineConfig(({ mode }) => ({
     },
     rollupOptions: {
       output: {
-        // Mudando a versão para v3 para forçar novo hash
-        entryFileNames: `assets/[name].v3.[hash].js`,
-        chunkFileNames: `assets/[name].v3.[hash].js`,
-        assetFileNames: `assets/[name].v3.[hash].[ext]`,
-        manualChunks: {
-          'vendor': ['react', 'react-dom', 'lucide-react'],
-          'ui': ['@/components/ui/button', '@/components/ui/card']
-        }
+        // Mudando a versão para v4 para forçar novo hash e remover manualChunks
+        entryFileNames: `assets/[name].v4.[hash].js`,
+        chunkFileNames: `assets/[name].v4.[hash].js`,
+        assetFileNames: `assets/[name].v4.[hash].[ext]`
       }
     }
   }
