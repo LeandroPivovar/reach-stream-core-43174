@@ -58,7 +58,8 @@ import { ImportSalesDialog } from '@/components/sales/ImportSalesDialog';
 import { SaleDetailsDialog } from '@/components/sales/SaleDetailsDialog';
 import { api, Sale, DashboardStats, SalesByCampaign, SalesByChannel, TopProduct, PaymentMethodStats, FunnelStage } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import ResponsiveTable from '@/components/common/responsive-table';
+import InternalResponsiveTable from '@/components/common/responsive-table';
+const ResponsiveTable = (typeof window !== 'undefined' && (window as any).ResponsiveTable) || InternalResponsiveTable;
 import {
   Select,
   SelectContent,
