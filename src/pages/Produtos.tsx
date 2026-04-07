@@ -35,7 +35,8 @@ import {
 } from '@/components/ui/popover';
 import { Package, MoreHorizontal, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Upload, X, History, User, Filter, RefreshCw, Check, ImagePlus, Loader2, Plus, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import ResponsiveTable from '@/components/common/responsive-table';
+import InternalResponsiveTable from '@/components/common/responsive-table';
+const ResponsiveTable = (typeof window !== 'undefined' && (window as any).ResponsiveTable) || InternalResponsiveTable;
 import { cn } from '@/lib/utils';
 
 interface Product extends ApiProduct {

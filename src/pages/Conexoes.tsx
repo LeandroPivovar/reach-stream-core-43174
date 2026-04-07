@@ -40,7 +40,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import ResponsiveTable from '@/components/common/responsive-table';
+import InternalResponsiveTable from '@/components/common/responsive-table';
+const ResponsiveTable = (typeof window !== 'undefined' && (window as any).ResponsiveTable) || InternalResponsiveTable;
 import { cn } from '@/lib/utils';
 
 export default function Conexoes() {

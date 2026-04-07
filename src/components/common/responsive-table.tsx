@@ -139,4 +139,9 @@ function ResponsiveTable(props: any) {
   );
 }
 
+
+if (typeof window !== 'undefined') {
+  (window as any).ResponsiveTable = ResponsiveTable;
+}
+
 export default ResponsiveTable;
