@@ -21,4 +21,14 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Forçar novos nomes de arquivos para evitar cache do navegador ou servidor
+        entryFileNames: `assets/[name].v2.[hash].js`,
+        chunkFileNames: `assets/[name].v2.[hash].js`,
+        assetFileNames: `assets/[name].v2.[hash].[ext]`
+      }
+    }
+  }
 }));
