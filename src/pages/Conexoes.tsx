@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -40,6 +40,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ResponsiveTable } from '@/components/ui/responsive-table';
+import { cn } from '@/lib/utils';
 
 export default function Conexoes() {
   const { toast } = useToast();
@@ -105,7 +107,7 @@ export default function Conexoes() {
     toast({ title: 'Copiado', description: 'Valor copiado para a área de transferência.' });
   };
 
-  const actions = (
+  const actions = useMemo(() => (
     <div className="flex gap-2">
       <Button variant="outline" onClick={handleOpenEmailModal}>
         <Mail className="mr-2 h-4 w-4" />
@@ -115,7 +117,196 @@ export default function Conexoes() {
         Nova Conexão
       </HeaderActions.Add>
     </div>
-  );
+  ), [handleOpenEmailModal, handleOpenNewConnection]);
+
+  // Unified data for Connections Table
+  const connectionsData = useMemo(() => {
+    const list: any[] = [];
+    
+    // WhatsApp
+    list.push({
+      id: 'whatsapp-zenvia',
+      type: 'whatsapp',
+      platform: 'WhatsApp Business',
+      provider: 'Zenvia API',
+      identifier: 'API Principal',
+      status: isWhatsappConnected ? 'verified' : 'pending',
+      statusLabel: isWhatsappConnected ? 'Conectado' : 'Desconectado',
+      icon: MessageSquare,
+      color: isWhatsappConnected ? 'text-green-500' : 'text-red-500',
+      bgColor: isWhatsappConnected ? 'bg-green-500/10' : 'bg-red-500/10'
+    });
+    
+    // Emails
+    if (emailConnections) {
+      emailConnections.forEach(conn => {
+        list.push({
+          id: `email-${conn.id}`,
+          type: 'email',
+          platform: 'E-mail',
+          provider: conn.type === 'smtp' ? 'SMTP Customizado' : 'Domínio Próprio',
+          identifier: conn.type === 'smtp' ? conn.email : conn.domain,
+          status: conn.status,
+          statusLabel: conn.status === 'verified' ? 'Verificado' : conn.status === 'pending' ? 'Pendente' : 'Rejeitado',
+          icon: Mail,
+          color: 'text-primary',
+          bgColor: 'bg-primary/10',
+          original: conn
+        });
+      });
+    }
+    
+    return list;
+  }, [isWhatsappConnected, emailConnections]);
+
+  const connectionColumns = useMemo(() => [
+    {
+      header: "Canal",
+      cell: (conn: any) => {
+        const Icon = conn.icon;
+        return (
+          <div className="flex items-center gap-3">
+            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", conn.bgColor)}>
+              <Icon className={cn("w-5 h-5", conn.color)} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">{conn.platform}</p>
+              <p className="text-xs text-muted-foreground">{conn.provider}</p>
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      header: "Identificador",
+      cell: (conn: any) => (
+        <code className="text-xs bg-muted px-2 py-1 rounded truncate max-w-[200px] inline-block">
+          {conn.identifier}
+        </code>
+      )
+    },
+    {
+      header: "Status",
+      cell: (conn: any) => (
+        <Badge variant={conn.status === 'verified' ? 'default' : conn.status === 'pending' ? 'secondary' : 'destructive'}>
+          <div className="flex items-center gap-1.5">
+            <div className={cn("w-1.5 h-1.5 rounded-full", 
+              conn.status === 'verified' ? 'bg-background' : 
+              conn.status === 'pending' ? 'bg-muted-foreground' : 'bg-background'
+            )} />
+            {conn.statusLabel}
+          </div>
+        </Badge>
+      )
+    },
+    {
+      header: "Ações",
+      className: "text-right",
+      cell: (conn: any) => (
+        <div className="flex justify-end gap-2">
+          {conn.type === 'whatsapp' ? (
+            <Button variant="outline" size="sm" onClick={handleOpenNewConnection}>
+              <Settings className="w-4 h-4 mr-2" />
+              Sincronizar
+            </Button>
+          ) : (
+            <>
+              {conn.original.type === 'domain' && (
+                <Button variant="outline" size="sm" onClick={() => setSelectedConnection(conn.original)}>
+                  Ver DNS
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => deleteEmailMutation.mutate(conn.original.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      )
+    }
+  ], [handleOpenNewConnection, deleteEmailMutation]);
+
+  const renderConnectionCard = useCallback((conn: any) => {
+    const Icon = conn.icon;
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center", conn.bgColor)}>
+              <Icon className={cn("w-6 h-6", conn.color)} />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm">{conn.platform}</h3>
+              <p className="text-xs text-muted-foreground">{conn.provider}</p>
+            </div>
+          </div>
+          <Badge variant={conn.status === 'verified' ? 'default' : conn.status === 'pending' ? 'secondary' : 'destructive'}>
+            {conn.statusLabel}
+          </Badge>
+        </div>
+
+        <div className="bg-muted/50 p-3 rounded-lg">
+          <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">Identificador</p>
+          <p className="text-sm font-medium truncate">{conn.identifier}</p>
+        </div>
+
+        {conn.type === 'email' && conn.original.type === 'domain' && conn.status !== 'verified' && (
+          <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-3">
+            <p className="text-[10px] text-amber-600 font-bold mb-1 flex items-center gap-1">
+              <Info className="w-3 h-3" /> AGUARDANDO CONFIGURAÇÃO DNS
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full text-xs h-8"
+              onClick={() => setSelectedConnection(conn.original)}
+            >
+              Configurar Registros
+            </Button>
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          {conn.type === 'whatsapp' ? (
+            <Button variant="outline" size="sm" className="w-full h-9 shadow-sm" onClick={handleOpenNewConnection}>
+              <Settings className="w-4 h-4 mr-2" />
+              Sincronizar
+            </Button>
+          ) : (
+            <div className="flex gap-2 w-full">
+               <Button 
+                 variant="outline" 
+                 size="sm" 
+                 className="flex-1 h-9 shadow-sm"
+                 onClick={() => {
+                   if (conn.original.type === 'domain') {
+                     setSelectedConnection(conn.original);
+                   } else {
+                     toast({ title: 'Configuração', description: 'SMTP não requer DNS.' });
+                   }
+                 }}
+               >
+                 Detalhes
+               </Button>
+               <Button
+                variant="ghost"
+                size="sm"
+                className="w-10 h-9 text-destructive hover:bg-destructive/10"
+                onClick={() => deleteEmailMutation.mutate(conn.original.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }, [handleOpenNewConnection, deleteEmailMutation, toast]);
 
   return (
     <Layout
@@ -163,167 +354,41 @@ export default function Conexoes() {
           </Card>
         </div>
 
-        {/* Connections Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {/* WhatsApp Connection */}
-          {isWhatsappConnected ? (
-            <Card className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isWhatsappConnected ? 'bg-green-500/10' : 'bg-red-500/10'
-                    }`}>
-                    <MessageSquare className={`w-6 h-6 ${isWhatsappConnected ? 'text-green-500' : 'text-red-500'
-                      }`} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">WhatsApp Business</h3>
-                    <p className="text-sm text-muted-foreground">Zenvia API</p>
-                  </div>
-                </div>
+        {/* Connections List */}
+        <Card className="shadow-card overflow-hidden">
+          <ResponsiveTable
+            columns={connectionColumns}
+            data={connectionsData}
+            isLoading={isLoadingEmails}
+            emptyMessage="Nenhuma conexão configurada."
+            renderMobileCard={renderConnectionCard}
+          />
+        </Card>
 
-                <Badge variant={isWhatsappConnected ? 'default' : 'secondary'}>
-                  <div className={`w-2 h-2 rounded-full mr-2 ${isWhatsappConnected ? 'bg-green-500' : 'bg-red-500'
-                    }`}></div>
-                  {isWhatsappConnected ? 'Conectado' : 'Desconectado'}
-                </Badge>
-              </div>
-
-              <div className="space-y-4 mb-6">
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">Status da API</p>
-                  <p className="text-sm font-medium text-green-600">Serviço operacional</p>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  O WhatsApp está configurado via Zenvia API para envio automático de campanhas e notificações.
-                </p>
-              </div>
-
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm" className="flex-1" onClick={handleOpenNewConnection}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Sincronizar
-                </Button>
-              </div>
-            </Card>
-          ) : (
-            <Card className="p-6 border-dashed bg-muted/20 flex flex-col items-center justify-center text-center">
-              <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-sm text-muted-foreground mb-4">Nenhum WhatsApp conectado.</p>
-              <Button variant="outline" size="sm" onClick={handleOpenNewConnection}>
-                Conectar WhatsApp
-              </Button>
-            </Card>
-          )}
-
-          {/* Email Connections */}
-          {isLoadingEmails ? (
-            <Card className="p-6 animate-pulse">
-              <div className="h-12 w-12 bg-muted rounded-lg mb-4"></div>
-              <div className="h-4 w-32 bg-muted rounded mb-2"></div>
-              <div className="h-3 w-48 bg-muted rounded"></div>
-            </Card>
-          ) : (
-            emailConnections?.map((conn) => (
-              <Card key={conn.id} className="p-6 relative group">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Mail className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold truncate max-w-[150px]">
-                        {conn.type === 'smtp' ? conn.email : conn.domain}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {conn.type === 'smtp' ? 'SMTP Customizado' : 'Domínio Próprio'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Badge variant={conn.status === 'verified' ? 'default' : conn.status === 'pending' ? 'secondary' : 'destructive'}>
-                    <div className="flex items-center gap-1">
-                      {conn.status === 'verified' && <CheckCircle2 className="w-3 h-3" />}
-                      {conn.status === 'pending' && <Clock className="w-3 h-3" />}
-                      {conn.status === 'rejected' && <XCircle className="w-3 h-3" />}
-                      {conn.status === 'verified' ? 'Verificado' : conn.status === 'pending' ? 'Pendente' : 'Rejeitado'}
-                    </div>
-                  </Badge>
-                </div>
-
-                {conn.type === 'domain' && conn.status !== 'verified' && (
-                  <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-3 mb-4">
-                    <p className="text-[10px] text-amber-600 font-medium mb-1 flex items-center gap-1">
-                      <Info className="w-3 h-3" /> AGUARDANDO CONFIGURAÇÃO DNS
-                    </p>
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-muted-foreground">TXT Record</span>
-                        <Button variant="ghost" className="h-4 px-1 text-[9px]" onClick={() => copyToClipboard(conn.dnsTxt || '')}>
-                          <Copy className="w-2 h-2 mr-1" /> Copiar
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {conn.status === 'rejected' && conn.adminNote && (
-                  <div className="bg-red-500/5 border border-red-500/10 rounded-lg p-3 mb-4">
-                    <p className="text-[10px] text-red-600 font-medium mb-1">MOTIVO DA REJEIÇÃO:</p>
-                    <p className="text-[11px] text-muted-foreground italic">{conn.adminNote}</p>
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  {conn.type === 'domain' && (
-                    <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => {
-                      setSelectedConnection(conn);
-                    }}>
-                      Ver DNS
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => deleteEmailMutation.mutate(conn.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))
-          )}
-
-          {/* Add Email Placeholder */}
-          <Card
+        {/* Quick Setup / Add Options */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card 
             className="p-6 border-dashed bg-muted/5 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/10 transition-colors"
             onClick={handleOpenEmailModal}
           >
             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
-              <Plus className="w-6 h-6 text-muted-foreground" />
+              <Mail className="w-6 h-6 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium">Adicionar Domínio</p>
-            <p className="text-xs text-muted-foreground">Utilize seu domínio próprio</p>
+            <p className="text-sm font-medium">Adicionar E-mail</p>
+            <p className="text-xs text-muted-foreground">Configure SMTP ou Domínio Próprio</p>
+          </Card>
+
+          <Card 
+            className="p-6 border-dashed bg-primary/5 border-primary/20 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-primary/10 transition-colors"
+            onClick={handleOpenNewConnection}
+          >
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+              <MessageSquare className="w-6 h-6 text-primary" />
+            </div>
+            <p className="text-sm font-medium">Conectar WhatsApp</p>
+            <p className="text-xs text-muted-foreground">Utilize QR Code ou Zenvia API</p>
           </Card>
         </div>
-
-        {/* Quick Setup */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Configurações do Canal</h3>
-          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-            <Button
-              variant="outline"
-              className="h-24 flex-col space-y-2 border-primary/50 bg-primary/5 hover:bg-primary/10"
-              onClick={handleOpenNewConnection}
-            >
-              <MessageSquare className="w-8 h-8 text-primary" />
-              <div className="text-center">
-                <span className="font-semibold block">Configurar WhatsApp</span>
-                <span className="text-xs text-muted-foreground">Conecte via QR Code ou API Token</span>
-              </div>
-            </Button>
-          </div>
-        </Card>
       </div>
 
       {/* Modal Configurar E-mail */}

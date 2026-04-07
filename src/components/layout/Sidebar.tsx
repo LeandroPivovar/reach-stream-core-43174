@@ -58,25 +58,30 @@ export function Sidebar() {
       style={{ backgroundColor: 'hsl(247 90% 65%)' }}
     >
       {/* Logo & Mobile Close */}
-      {!isCollapsed && (
-        <div className="p-6 border-b border-white/20 flex items-center justify-between">
-          <div className="flex items-center justify-center overflow-hidden transition-all duration-300">
+      <div className={cn(
+        "p-4 md:p-6 border-b border-white/20 flex items-center justify-between min-h-[73px]",
+        isCollapsed ? "justify-center" : "justify-between"
+      )}>
+        {!isCollapsed && (
+          <div className="flex items-center overflow-hidden transition-all duration-300">
             <img
               src={logoNucleocrm}
               alt="Núcleo CRM"
               className="h-5 w-auto"
             />
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="lg:hidden text-white hover:bg-white/10"
-            onClick={toggleOpen}
-          >
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
-      )}
+        )}
+        
+        {/* Mobile Close Button - Always show on mobile if open, regardless of collapse state */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="lg:hidden text-white hover:bg-white/10 shrink-0"
+          onClick={toggleOpen}
+        >
+          <X className="w-5 h-5" />
+        </Button>
+      </div>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">

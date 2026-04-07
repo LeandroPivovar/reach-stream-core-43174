@@ -33,27 +33,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  Package,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  ShoppingCart,
-  Upload,
-  X,
-  History,
-  User,
-  Filter,
-  RefreshCw,
-  Check,
-  ImagePlus,
-  Loader2,
-  Plus,
-} from 'lucide-react';
+import { Package, MoreHorizontal, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Upload, X, History, User, Filter, RefreshCw, Check, ImagePlus, Loader2, Plus, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ResponsiveTable } from '@/components/ui/responsive-table';
+import { cn } from '@/lib/utils';
 
 interface Product extends ApiProduct {
   status?: 'active' | 'inactive' | 'out_of_stock';
@@ -1240,130 +1223,164 @@ export default function Produtos() {
         </div>
 
         {/* Products Table */}
-        <Card className="p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Produto</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">SKU</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Categoria</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Preço</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Estoque</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                      Carregando produtos...
-                    </td>
-                  </tr>
-                ) : products.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                      Nenhum produto cadastrado. Clique em "Novo Produto" para começar.
-                    </td>
-                  </tr>
-                ) : (
-                  products.map((product) => {
-                    return (
-                      <tr key={product.id} className="border-b border-border last:border-0">
-                        <td className="py-4 px-2">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-muted rounded flex items-center justify-center overflow-hidden flex-shrink-0">
-                              {product.coverPhoto ? (
-                                <img src={product.coverPhoto} alt={product.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <Package className="w-5 h-5 text-muted-foreground" />
-                              )}
-                            </div>
-                            <div>
-                              <div className="font-medium">{product.name}</div>
-                              <div className="text-sm text-muted-foreground truncate max-w-[200px]">
-                                {product.description || '-'}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-2">
-                          <span className="text-sm font-mono">{product.sku || '-'}</span>
-                        </td>
-                        <td className="py-4 px-2">
-                          {product.categoryEntity ? (
-                            <Badge variant="outline">{product.categoryEntity.name}</Badge>
-                          ) : product.category ? (
-                            <Badge variant="outline">{product.category}</Badge>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
-                        </td>
-                        <td className="py-4 px-2 text-right font-medium">
-                          {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                          }).format(Number(product.price))}
-                        </td>
-                        <td className="py-4 px-2 text-right">
-                          <span className={`font-medium ${product.stock < 20 ? 'text-red-600' : ''}`}>
-                            {product.stock}
-                          </span>
-                        </td>
-                        <td className="py-4 px-2">
-                          <Badge variant={getStatusVariant(product.status || 'active')}>
-                            <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor(product.status || 'active')}`}></div>
-                            {getStatusLabel(product.status || 'active')}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-2 text-right">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Ações do Produto</DialogTitle>
-                              </DialogHeader>
-                              <div className="grid gap-2">
-                                <Button
-                                  variant="ghost"
-                                  className="justify-start"
-                                  onClick={() => handleViewPurchaseHistory(product)}
-                                >
-                                  <History className="w-4 h-4 mr-2" />
-                                  Ver Histórico de Compras
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  className="justify-start"
-                                  onClick={() => handleOpenEdit(product)}
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Editar Produto
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  className="justify-start text-destructive"
-                                  onClick={() => handleDeleteClick(product.id)}
-                                >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Excluir Produto
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+        <Card className="p-0 overflow-hidden border-none shadow-none md:border md:shadow-sm md:p-6">
+          <ResponsiveTable<Product>
+            columns={[
+              {
+                header: "Produto",
+                cell: (product) => (
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-muted rounded flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {product.coverPhoto ? (
+                        <img src={product.coverPhoto} alt={product.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <Package className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-medium truncate max-w-[150px] md:max-w-[200px]">{product.name}</div>
+                      <div className="text-xs text-muted-foreground truncate max-w-[150px] md:max-w-[200px]">
+                        {product.description || '-'}
+                      </div>
+                    </div>
+                  </div>
+                )
+              },
+              {
+                header: "SKU",
+                cell: (product) => <span className="text-xs font-mono">{product.sku || '-'}</span>,
+                className: "hidden lg:table-cell"
+              },
+              {
+                header: "Categoria",
+                cell: (product) => (
+                  product.categoryEntity ? (
+                    <Badge variant="outline" className="text-[10px]">{product.categoryEntity.name}</Badge>
+                  ) : product.category ? (
+                    <Badge variant="outline" className="text-[10px]">{product.category}</Badge>
+                  ) : "-"
+                ),
+                className: "hidden md:table-cell"
+              },
+              {
+                header: "Preço",
+                className: "text-right",
+                cell: (product) => (
+                  <span className="font-semibold">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(product.price))}
+                  </span>
+                )
+              },
+              {
+                header: "Estoque",
+                className: "text-right w-[80px]",
+                cell: (product) => (
+                  <span className={cn("font-medium", Number(product.stock) < 10 ? 'text-red-600' : '')}>
+                    {product.stock}
+                  </span>
+                )
+              },
+              {
+                header: "Status",
+                className: "w-[120px]",
+                cell: (product) => (
+                  <Badge variant={getStatusVariant(product.status || 'active')} className="text-[10px] uppercase font-bold py-0.5">
+                    <div className={cn("w-1.5 h-1.5 rounded-full mr-1.5", getStatusColor(product.status || 'active'))}></div>
+                    {getStatusLabel(product.status || 'active')}
+                  </Badge>
+                )
+              },
+              {
+                header: "Ações",
+                className: "text-right w-[60px]",
+                cell: (product) => (
+                  <div className="flex justify-end">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[300px]">
+                        <DialogHeader>
+                          <DialogTitle>Ações do Produto</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-1 py-4">
+                          <Button variant="ghost" className="justify-start h-10" onClick={() => handleViewPurchaseHistory(product)}>
+                            <History className="w-4 h-4 mr-2" />
+                            Histórico
+                          </Button>
+                          <Button variant="ghost" className="justify-start h-10" onClick={() => handleOpenEdit(product)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Editar
+                          </Button>
+                          <Button variant="ghost" className="justify-start h-10 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteClick(product.id)}>
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Excluir
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )
+              }
+            ]}
+            data={products}
+            isLoading={isLoading}
+            emptyMessage="Nenhum produto cadastrado. Clique em 'Novo Produto' para começar."
+            renderMobileCard={(product) => (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="w-12 h-12 bg-muted rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center border">
+                      {product.coverPhoto ? (
+                        <img src={product.coverPhoto} alt={product.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <Package className="w-6 h-6 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-sm truncate">{product.name}</h4>
+                      <p className="text-[11px] text-muted-foreground truncate uppercase font-mono mt-0.5">
+                        SKU: {product.sku || '-'}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {product.categoryEntity && (
+                          <Badge variant="secondary" className="text-[9px] h-4 px-1.5">{product.categoryEntity.name}</Badge>
+                        )}
+                        <Badge variant={getStatusVariant(product.status || 'active')} className="text-[9px] h-4 px-1.5 uppercase font-bold">
+                           {getStatusLabel(product.status || 'active')}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-bold text-base text-foreground">
+                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(product.price))}
+                    </p>
+                    <p className={cn("text-[10px] font-medium mt-0.5", Number(product.stock) < 10 ? 'text-red-500' : 'text-muted-foreground')}>
+                        Estoque: {product.stock}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
+                  <Button variant="outline" size="sm" className="h-8 text-[11px]" onClick={(e) => { e.stopPropagation(); handleViewPurchaseHistory(product); }}>
+                    <History className="w-3.5 h-3.5 mr-1.5" />
+                    Histórico
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 text-[11px]" onClick={(e) => { e.stopPropagation(); handleOpenEdit(product); }}>
+                    <Edit className="w-3.5 h-3.5 mr-1.5" />
+                    Editar
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-8 text-[11px] text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); handleDeleteClick(product.id); }}>
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                    Excluir
+                  </Button>
+                </div>
+              </div>
+            )}
+          />
         </Card>
       </div>
 

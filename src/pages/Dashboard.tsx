@@ -26,7 +26,8 @@ import {
     Zap,
     Filter,
     Package,
-    Target
+    Target,
+    ChevronRight
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import {
@@ -40,6 +41,8 @@ import { CustomerJourney } from '@/components/dashboard/CustomerJourney';
 import { CustomerHeatmap } from '@/components/dashboard/CustomerHeatmap';
 import { api } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
+import { ResponsiveTable } from '@/components/ui/responsive-table';
+import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -443,57 +446,98 @@ export default function Dashboard() {
                 </div>
 
                 {/* Recent Campaigns */}
-                <Card className="p-6">
-                    <div className="flex items-center justify-between mb-6">
+                <Card className="p-0 overflow-hidden border-none shadow-none md:border md:shadow-sm md:p-6">
+                    <div className="flex items-center justify-between mb-6 px-4 md:px-0 pt-4 md:pt-0">
                         <h3 className="text-lg font-semibold">Campanhas Recentes</h3>
-                        <Button variant="outline" onClick={() => navigate('/campanhas')}>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/campanhas')}>
                             Ver todas
                         </Button>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-border">
-                                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Nome</th>
-                                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Tipo</th>
-                                    <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
-                                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Enviados</th>
-                                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Recebidos</th>
-                                    <th className="text-right py-3 px-2 font-medium text-muted-foreground">Cliques</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {(campaignStats.recentCampaigns || []).map((campaign: any, index: number) => (
-                                    <tr key={index} className="border-b border-border last:border-0">
-                                        <td className="py-4 px-2">
-                                            <div className="font-medium">{campaign.name}</div>
-                                        </td>
-                                        <td className="py-4 px-2">
-                                            <Badge variant="secondary">{campaign.type}</Badge>
-                                        </td>
-                                        <td className="py-4 px-2">
+                    <ResponsiveTable<any>
+                        columns={[
+                            {
+                                header: "Nome",
+                                cell: (campaign) => (
+                                    <div className="font-medium text-sm">{campaign.name}</div>
+                                )
+                            },
+                            {
+                                header: "Tipo",
+                                cell: (campaign) => (
+                                    <Badge variant="secondary" className="text-[10px]">{campaign.type}</Badge>
+                                )
+                            },
+                            {
+                                header: "Status",
+                                cell: (campaign) => (
+                                    <Badge variant={
+                                        campaign.status === 'Ativa' ? 'default' :
+                                            campaign.status === 'Pausada' ? 'secondary' : 'outline'
+                                    } className="text-[10px] uppercase font-bold py-0.5">
+                                        {campaign.status}
+                                    </Badge>
+                                )
+                            },
+                            {
+                                header: "Enviados",
+                                className: "text-right",
+                                cell: (campaign) => <span className="font-medium text-sm">{campaign.sent.toLocaleString()}</span>
+                            },
+                            {
+                                header: "Recebidos",
+                                className: "text-right hidden sm:table-cell",
+                                cell: (campaign) => <span className="text-sm">{campaign.recebidos.toLocaleString()}</span>
+                            },
+                            {
+                                header: "Cliques",
+                                className: "text-right",
+                                cell: (campaign) => <span className="font-semibold text-sm text-primary">{campaign.clicks.toLocaleString()}</span>
+                            }
+                        ]}
+                        data={campaignStats.recentCampaigns || []}
+                        isLoading={isLoadingStats}
+                        emptyMessage="Nenhuma campanha recente encontrada."
+                        renderMobileCard={(campaign) => (
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div className="min-w-0">
+                                        <h4 className="font-bold text-sm truncate">{campaign.name}</h4>
+                                        <div className="flex gap-1.5 mt-1">
+                                            <Badge variant="secondary" className="text-[9px] h-4">{campaign.type}</Badge>
                                             <Badge variant={
                                                 campaign.status === 'Ativa' ? 'default' :
                                                     campaign.status === 'Pausada' ? 'secondary' : 'outline'
-                                            }>
+                                            } className="text-[9px] h-4 uppercase font-bold">
                                                 {campaign.status}
                                             </Badge>
-                                        </td>
-                                        <td className="py-4 px-2 text-right font-medium">
-                                            {campaign.sent.toLocaleString()}
-                                        </td>
-                                        <td className="py-4 px-2 text-right font-medium">
-                                            {campaign.recebidos.toLocaleString()}
-                                        </td>
-                                        <td className="py-4 px-2 text-right font-medium">
-                                            {campaign.clicks.toLocaleString()}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-muted-foreground">Cliques</p>
+                                        <p className="font-bold text-base text-primary">{campaign.clicks.toLocaleString()}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 p-2 bg-muted/50 rounded-lg border border-border/50">
+                                    <div className="text-center">
+                                        <p className="text-[10px] text-muted-foreground uppercase">Enviados</p>
+                                        <p className="font-semibold text-sm">{campaign.sent.toLocaleString()}</p>
+                                    </div>
+                                    <div className="text-center border-l border-border/50">
+                                        <p className="text-[10px] text-muted-foreground uppercase">Recebidos</p>
+                                        <p className="font-semibold text-sm">{campaign.recebidos.toLocaleString()}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end pt-2 border-t border-border/50">
+                                    <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => navigate('/campanhas')}>
+                                        Detalhes <ChevronRight className="w-3 h-3 ml-1" />
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    />
                 </Card>
             </div>
         </Layout>

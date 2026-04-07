@@ -953,185 +953,244 @@ export default function Campanhas() {
         </div>
 
         {/* Campaigns Table */}
-        <Card className="p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Campanha</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Canais</th>
-                  <th className="text-left py-3 px-2 font-medium text-muted-foreground">Status</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Destinatários</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Enviados</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Recebidos</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Cliques</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Faturamento</th>
-                  <th className="text-right py-3 px-2 font-medium text-muted-foreground">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {campaigns.map((campaign) => (
-                  <tr key={campaign.id} className="border-b border-border last:border-0">
-                    <td className="py-4 px-2">
-                      <div>
-                        <div className="font-medium">{campaign.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          Criada em {new Date(campaign.createdAt).toLocaleDateString('pt-BR')}
-                        </div>
-                        {campaign.scheduledAt && (
-                          <div className="text-xs text-muted-foreground">
-                            Agendada para {new Date(campaign.scheduledAt).toLocaleString('pt-BR')}
+        <Card className="p-0 overflow-hidden border-none shadow-none md:border md:shadow-sm md:p-6">
+          <ResponsiveTable<Campaign>
+            columns={[
+              {
+                header: "Campanha",
+                cell: (campaign) => (
+                  <div>
+                    <div className="font-medium">{campaign.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Criada em {new Date(campaign.createdAt).toLocaleDateString('pt-BR')}
+                    </div>
+                    {campaign.scheduledAt && (
+                      <div className="text-[10px] text-primary font-medium mt-0.5">
+                        Agendada: {new Date(campaign.scheduledAt).toLocaleString('pt-BR')}
+                      </div>
+                    )}
+                  </div>
+                )
+              },
+              {
+                header: "Canais",
+                cell: (campaign) => (
+                  <div className="flex flex-wrap gap-1">
+                    {(() => {
+                      let channels: string[] = [];
+                      if (campaign.complexity === 'advanced' && campaign.config?.workflow?.nodes) {
+                        const nodes = campaign.config.workflow.nodes;
+                        if (nodes.some((n: any) => n.type === 'email')) channels.push('email');
+                        if (nodes.some((n: any) => n.type === 'sms')) channels.push('sms');
+                        if (nodes.some((n: any) => n.type === 'whatsapp')) channels.push('whatsapp');
+                      } else if (campaign.channel) {
+                        channels.push(campaign.channel);
+                      }
+                      return channels.map((channel, index) => {
+                        const Icon = getChannelIcon(channel);
+                        return (
+                          <div key={`${channel}-${index}`} className="flex items-center space-x-1 bg-muted/50 rounded-full px-2 py-0.5 border border-border/50">
+                            <Icon className="w-2.5 h-2.5" />
+                            <span className="text-[10px] uppercase font-bold">{channel}</span>
                           </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                )
+              },
+              {
+                header: "Status",
+                cell: (campaign) => (
+                  <Badge
+                    variant={getStatusVariant(campaign.status)}
+                    className="cursor-pointer hover:opacity-80 transition-opacity text-[10px] uppercase font-bold px-2 py-0"
+                    onClick={() => {
+                      setCampaignForStatusUpdate(campaign);
+                      setIsStatusUpdateOpen(true);
+                    }}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${getStatusColor(campaign.status)}`}></div>
+                    {campaign.status}
+                  </Badge>
+                )
+              },
+              {
+                header: "Enviados",
+                className: "text-right",
+                cell: (campaign) => <span className="font-medium">{(campaign.sentCount || 0).toLocaleString()}</span>
+              },
+              {
+                header: "Recebidos",
+                className: "text-right",
+                cell: (campaign) => (
+                  <div className="text-right">
+                    <div className="font-medium">{(campaign.deliveredCount || 0).toLocaleString()}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {campaign.sentCount > 0 ? ((campaign.deliveredCount / campaign.sentCount) * 100).toFixed(1) : 0}%
+                    </div>
+                  </div>
+                )
+              },
+              {
+                header: "Cliques",
+                className: "text-right",
+                cell: (campaign) => (
+                  <div className="text-right">
+                    <div className="font-medium">{(campaign.clicksCount || 0).toLocaleString()}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {campaign.deliveredCount > 0 ? ((campaign.clicksCount / campaign.deliveredCount) * 100).toFixed(1) : 0}%
+                    </div>
+                  </div>
+                )
+              },
+              {
+                header: "Faturamento",
+                className: "text-right",
+                cell: (campaign) => (
+                  <div className="text-right">
+                    <div className="font-bold text-green-600">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(campaign.revenue))}
+                    </div>
+                  </div>
+                )
+              },
+              {
+                header: "Ações",
+                className: "text-right",
+                cell: (campaign) => (
+                  <div className="flex justify-end">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Ações da Campanha</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-2">
+                        <Button variant="ghost" className="justify-start focus:ring-0" onClick={() => handleViewReport(campaign)}>
+                          <Eye className="w-4 h-4 mr-2" /> Visualizar Relatório
+                        </Button>
+                        <Button variant="ghost" className="justify-start focus:ring-0" onClick={() => handleEditCampaign(campaign)}>
+                          <Edit className="w-4 h-4 mr-2" /> Editar Campanha
+                        </Button>
+                        {campaign.status === 'ativa' ? (
+                          <Button variant="ghost" className="justify-start focus:ring-0" onClick={() => handleToggleStatus(campaign.id, campaign.status)}>
+                            <Pause className="w-4 h-4 mr-2" /> Pausar Campanha
+                          </Button>
+                        ) : campaign.status === 'pausada' ? (
+                          <Button variant="ghost" className="justify-start focus:ring-0" onClick={() => handleToggleStatus(campaign.id, campaign.status)}>
+                            <Play className="w-4 h-4 mr-2" /> Reativar Campanha
+                          </Button>
+                        ) : null}
+                        {campaign.status !== 'finalizada' && (
+                          <Button variant="ghost" className="justify-start text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-0" onClick={() => handleDeleteCampaign(campaign.id)}>
+                            <Trash2 className="w-4 h-4 mr-2" /> Excluir Campanha
+                          </Button>
                         )}
                       </div>
-                    </td>
-                    <td className="py-4 px-2">
-                      <div className="flex flex-wrap gap-1">
-                        {(() => {
-                          let channels: string[] = [];
+                    </DialogContent>
+                  </Dialog>
+                  </div>
+                )
+              }
+            ]}
+            data={campaigns}
+            isLoading={isLoading}
+            emptyMessage="Nenhuma campanha encontrada com esses filtros."
+            renderMobileCard={(campaign) => (
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-sm truncate">{campaign.name}</h4>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Criada em {new Date(campaign.createdAt).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <Badge variant={getStatusVariant(campaign.status)} className="text-[9px] h-4 px-1.5 uppercase font-bold">
+                    {campaign.status}
+                  </Badge>
+                </div>
 
-                          if (campaign.complexity === 'advanced' && campaign.config?.workflow?.nodes) {
-                            const nodes = campaign.config.workflow.nodes;
-                            const hasEmail = nodes.some((n: any) => n.type === 'email');
-                            const hasSms = nodes.some((n: any) => n.type === 'sms');
-                            const hasWhatsapp = nodes.some((n: any) => n.type === 'whatsapp');
+                <div className="flex flex-wrap gap-1.5">
+                  {(() => {
+                      let channels: string[] = [];
+                      if (campaign.complexity === 'advanced' && campaign.config?.workflow?.nodes) {
+                        const nodes = campaign.config.workflow.nodes;
+                        if (nodes.some((n: any) => n.type === 'email')) channels.push('email');
+                        if (nodes.some((n: any) => n.type === 'sms')) channels.push('sms');
+                        if (nodes.some((n: any) => n.type === 'whatsapp')) channels.push('whatsapp');
+                      } else if (campaign.channel) {
+                        channels.push(campaign.channel);
+                      }
+                      return channels.map((channel, index) => {
+                        const Icon = getChannelIcon(channel);
+                        return (
+                          <Badge key={index} variant="secondary" className="text-[9px] h-4 flex items-center gap-1">
+                            <Icon className="w-2.5 h-2.5" />
+                            {channel}
+                          </Badge>
+                        );
+                      });
+                  })()}
+                </div>
 
-                            if (hasEmail) channels.push('email');
-                            if (hasSms) channels.push('sms');
-                            if (hasWhatsapp) channels.push('whatsapp');
-                          } else if (campaign.channel) {
-                            channels.push(campaign.channel);
-                          }
+                <div className="grid grid-cols-2 gap-2 p-2 bg-muted/50 rounded-lg border border-border/50">
+                  <div className="space-y-1">
+                    <p className="text-[9px] text-muted-foreground uppercase font-bold">Envios</p>
+                    <p className="text-sm font-semibold">{(campaign.sentCount || 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                       Entrega: {campaign.sentCount > 0 ? ((campaign.deliveredCount / campaign.sentCount) * 100).toFixed(1) : 0}%
+                    </p>
+                  </div>
+                  <div className="space-y-1 border-l border-border/50 pl-2">
+                    <p className="text-[9px] text-muted-foreground uppercase font-bold">Cliques</p>
+                    <p className="text-sm font-semibold">{(campaign.clicksCount || 0).toLocaleString()}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                       Taxa: {campaign.deliveredCount > 0 ? ((campaign.clicksCount / campaign.deliveredCount) * 100).toFixed(1) : 0}%
+                    </p>
+                  </div>
+                </div>
 
-                          if (channels.length === 0) {
-                            return <span className="text-xs text-muted-foreground">-</span>;
-                          }
-
-                          return channels.map((channel, index) => {
-                            const Icon = getChannelIcon(channel);
-                            return (
-                              <div key={`${channel}-${index}`} className="flex items-center space-x-1 bg-muted/50 rounded-full px-2 py-1">
-                                <Icon className="w-3 h-3" />
-                                <span className="text-xs uppercase">{channel}</span>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </td>
-                    <td className="py-4 px-2">
-                      <Badge
-                        variant={getStatusVariant(campaign.status)}
-                        className="cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => {
-                          setCampaignForStatusUpdate(campaign);
-                          setIsStatusUpdateOpen(true);
-                        }}
-                      >
-                        <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor(campaign.status)}`}></div>
-                        {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
-                      </Badge>
-                    </td>
-                    <td className="py-4 px-2 text-right font-medium">
-                      {(campaign.recipientsCount || 0).toLocaleString()}
-                    </td>
-                    <td className="py-4 px-2 text-right font-medium">
-                      {(campaign.sentCount || 0).toLocaleString()}
-                    </td>
-                    <td className="py-4 px-2 text-right">
-                      <div className="font-medium">{(campaign.deliveredCount || 0).toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {campaign.sentCount > 0 ? ((campaign.deliveredCount / campaign.sentCount) * 100).toFixed(1) : 0}%
-                      </div>
-                    </td>
-                    <td className="py-4 px-2 text-right">
-                      <div className="font-medium">{(campaign.clicksCount || 0).toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {campaign.deliveredCount > 0 ? ((campaign.clicksCount / campaign.deliveredCount) * 100).toFixed(1) : 0}%
-                      </div>
-                    </td>
-                    <td className="py-4 px-2 text-right">
-                      <div className="font-medium text-green-600">
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL'
-                        }).format(Number(campaign.revenue))}
-                      </div>
-                      {campaign.sentCount > 0 && (
-                        <div className="text-xs text-muted-foreground">
-                          {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL'
-                          }).format(Number(campaign.revenue) / campaign.sentCount)} / envio
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-4 px-2 text-right">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="w-4 h-4" />
+                <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                   <div>
+                      <p className="text-[9px] text-muted-foreground uppercase font-bold">Faturamento</p>
+                      <p className="font-bold text-green-600 text-sm">
+                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(campaign.revenue))}
+                      </p>
+                   </div>
+                   <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => handleViewReport(campaign)}>
+                      Relatório
+                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Ações da Campanha</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-2">
+                          <Button variant="ghost" className="justify-start focus:ring-0" onClick={() => handleEditCampaign(campaign)}>
+                            <Edit className="w-4 h-4 mr-2" /> Editar Campanha
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Ações da Campanha</DialogTitle>
-                          </DialogHeader>
-                          <div className="grid gap-2">
-                            <Button
-                              variant="ghost"
-                              className="justify-start"
-                              onClick={() => handleViewReport(campaign)}
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Visualizar Relatório
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              className="justify-start"
-                              onClick={() => handleEditCampaign(campaign)}
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Editar Campanha
-                            </Button>
-                            {campaign.status === 'ativa' ? (
-                              <Button
-                                variant="ghost"
-                                className="justify-start"
-                                onClick={() => handleToggleStatus(campaign.id, campaign.status)}
-                              >
-                                <Pause className="w-4 h-4 mr-2" />
-                                Pausar Campanha
-                              </Button>
-                            ) : campaign.status === 'pausada' ? (
-                              <Button
-                                variant="ghost"
-                                className="justify-start"
-                                onClick={() => handleToggleStatus(campaign.id, campaign.status)}
-                              >
-                                <Play className="w-4 h-4 mr-2" />
-                                Reativar Campanha
-                              </Button>
-                            ) : null}
-                            {campaign.status !== 'finalizada' && (
-                              <Button
-                                variant="ghost"
-                                className="justify-start text-destructive"
-                                onClick={() => handleDeleteCampaign(campaign.id)}
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Excluir Campanha
-                              </Button>
-                            )}
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          <Button variant="ghost" className="justify-start text-destructive hover:text-destructive hover:bg-destructive/10 focus:ring-0" onClick={() => handleDeleteCampaign(campaign.id)}>
+                            <Trash2 className="w-4 h-4 mr-2" /> Excluir Campanha
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                   </div>
+                </div>
+              </div>
+            )}
+          />
         </Card>
       </div>
 

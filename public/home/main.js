@@ -279,12 +279,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const scrollTrap = document.getElementById('scrollTrapezoid');
             if (scrollTrap) {
                 gsap.fromTo(scrollTrap, { top: '5vh' }, {
-                    top: '40vh',
+                    top: '30vh',
                     ease: 'none',
                     scrollTrigger: {
                         trigger: '.features-carousel',
                         start: 'top top',
-                        end: 'bottom bottom',
+                        end: 'bottom 90%',
                         scrub: true,
                     }
                 });
@@ -472,6 +472,58 @@ document.addEventListener('DOMContentLoaded', () => {
             scrollTrigger: { trigger: el, start: "top 85%" }
         });
     });
+
+    // Lógica do Formulário de Leads
+    const leadForm = document.getElementById('lead-form');
+    if (leadForm) {
+        leadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = leadForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Enviando...';
+
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('telefone').value,
+                company: document.getElementById('company').value,
+                source: document.getElementById('source').value
+            };
+
+            const API_URL = window.location.hostname === 'localhost' 
+                ? 'http://localhost:3000/api' 
+                : '/api';
+
+            try {
+                const response = await fetch(`${API_URL}/lead-requests`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    leadForm.innerHTML = `
+                        <div class="form-success-message" style="text-align: center; padding: 2rem; background: rgba(139, 92, 246, 0.1); border-radius: 12px; border: 1px solid var(--primary);">
+                            <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                            <h3 style="color: white; margin-bottom: 0.5rem;">Solicitação enviada com sucesso!</h3>
+                            <p style="color: var(--text-main);">Em breve um de nossos especialistas entrará em contato com você.</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Falha ao enviar');
+                }
+            } catch (error) {
+                console.error('Erro ao enviar lead:', error);
+                alert('Ocorreu um erro ao enviar sua solicitação. Por favor, tente novamente mais tarde.');
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText;
+            }
+        });
+    }
 
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
