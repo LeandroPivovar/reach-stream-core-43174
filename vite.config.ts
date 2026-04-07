@@ -22,12 +22,23 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    minify: 'terser', // Usar terser que é mais robusto que o esbuild para ReferenceErrors
+    terserOptions: {
+      compress: {
+        keep_fnames: true, // Mantém nomes de funções para evitar ReferenceError
+        keep_classnames: true
+      }
+    },
     rollupOptions: {
       output: {
-        // Forçar novos nomes de arquivos para evitar cache do navegador ou servidor
-        entryFileNames: `assets/[name].v2.[hash].js`,
-        chunkFileNames: `assets/[name].v2.[hash].js`,
-        assetFileNames: `assets/[name].v2.[hash].[ext]`
+        // Mudando a versão para v3 para forçar novo hash
+        entryFileNames: `assets/[name].v3.[hash].js`,
+        chunkFileNames: `assets/[name].v3.[hash].js`,
+        assetFileNames: `assets/[name].v3.[hash].[ext]`,
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'lucide-react'],
+          'ui': ['@/components/ui/button', '@/components/ui/card']
+        }
       }
     }
   }
