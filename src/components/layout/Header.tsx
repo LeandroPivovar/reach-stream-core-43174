@@ -6,9 +6,11 @@ import {
   Search,
   Plus,
   Download,
-  Filter
+  Filter,
+  Menu
 } from 'lucide-react';
 import { NotificationCenter } from './NotificationCenter';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 interface HeaderProps {
   title: string;
@@ -20,14 +22,36 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle, actions, showSearch = false, onSearchChange, searchValue }: HeaderProps) {
+  const { toggleOpen, toggleCollapsed } = useSidebar();
+
   return (
     <div className="bg-background border-b border-border px-6 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold text-foreground">{title}</h1>
-          {subtitle && (
-            <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
-          )}
+        <div className="flex items-center flex-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-4 lg:hidden"
+            onClick={toggleOpen}
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-4 hidden lg:flex"
+            onClick={toggleCollapsed}
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">{title}</h1>
+            {subtitle && (
+              <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center space-x-4">

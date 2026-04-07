@@ -1,6 +1,8 @@
 import React from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { useSidebar } from '@/contexts/SidebarContext';
+import { cn } from '@/lib/utils';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,11 +15,26 @@ interface LayoutProps {
 }
 
 export function Layout({ children, title, subtitle, actions, showSearch, onSearchChange, searchValue }: LayoutProps) {
+  const { isOpen, isCollapsed, closeMobile } = useSidebar();
+
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden relative">
       <Sidebar />
       
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
+      {/* Sidebar Overlay (Mobile) */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[55] lg:hidden animate-in fade-in duration-300" 
+          onClick={closeMobile}
+        />
+      )}
+      
+      <div 
+        className={cn(
+          "flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out overflow-hidden",
+          isCollapsed ? "lg:ml-20" : "lg:ml-64"
+        )}
+      >
         <Header 
           title={title} 
           subtitle={subtitle} 
@@ -27,8 +44,8 @@ export function Layout({ children, title, subtitle, actions, showSearch, onSearc
           searchValue={searchValue}
         />
         
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="animate-fade-in">
+        <main className="flex-1 p-4 md:p-6 overflow-auto custom-scrollbar">
+          <div className="animate-fade-in max-w-[1600px] mx-auto">
             {children}
           </div>
         </main>
