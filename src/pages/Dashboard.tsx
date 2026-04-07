@@ -41,7 +41,7 @@ import { CustomerJourney } from '@/components/dashboard/CustomerJourney';
 import { CustomerHeatmap } from '@/components/dashboard/CustomerHeatmap';
 import { api } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
-import { ResponsiveTable } from '@/components/ui/responsive-table';
+import ResponsiveTable from '@/components/ui/responsive-table';
 import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
