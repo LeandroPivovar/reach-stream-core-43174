@@ -58,18 +58,15 @@ export function Sidebar() {
       style={{ backgroundColor: 'hsl(247 90% 65%)' }}
     >
       {/* Logo & Mobile Close */}
-      <div className={cn(
-        "p-6 border-b border-white/20 flex items-center",
-        isCollapsed ? "justify-center" : "justify-between"
-      )}>
-        <div className="flex items-center justify-center overflow-hidden">
-          <img
-            src={logoNucleocrm}
-            alt="Núcleo CRM"
-            className={cn("h-5 w-auto transition-all", isCollapsed ? "scale-150" : "scale-100")}
-          />
-        </div>
-        {!isCollapsed && (
+      {!isCollapsed && (
+        <div className="p-6 border-b border-white/20 flex items-center justify-between">
+          <div className="flex items-center justify-center overflow-hidden transition-all duration-300">
+            <img
+              src={logoNucleocrm}
+              alt="Núcleo CRM"
+              className="h-5 w-auto"
+            />
+          </div>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -78,8 +75,8 @@ export function Sidebar() {
           >
             <X className="w-5 h-5" />
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">

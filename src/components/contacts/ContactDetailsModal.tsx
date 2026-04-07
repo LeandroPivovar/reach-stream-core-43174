@@ -327,17 +327,9 @@ export function ContactDetailsModal({
                                 </CardContent>
                             </Card>
                         </div>
-                    </div>
 
-                    {/* ===== Histórico de LTV Section ===== */}
-                    <div className="mb-6">
-                        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                            Histórico de LTV
-                        </h3>
-
-                        {/* 4 stat cards in a row */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        {/* Histórico de LTV - Cards ao lado em 2 colunas */}
+                        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* LTV Total */}
                             <Card className="shadow-sm border-border/50 bg-white dark:bg-card">
                                 <CardContent className="p-5">
@@ -425,8 +417,10 @@ export function ContactDetailsModal({
                                 </CardContent>
                             </Card>
                         </div>
+                    </div>
 
-                        {/* LTV Evolution Chart */}
+                    {/* Evolução do LTV - Gráfico agora ocupa a largura total abaixo da grade */}
+                    <div className="mb-6">
                         <LtvHistory purchases={purchaseData.purchases} totalLtv={purchaseData.ltv} hideCards={true} />
                     </div>
 
