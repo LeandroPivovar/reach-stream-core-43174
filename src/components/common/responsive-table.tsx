@@ -29,15 +29,21 @@ interface ResponsiveTableProps<T> {
   className?: string;
 }
 
-const ResponsiveTable = <T extends { id?: string | number }>({
-  columns,
-  data,
-  isLoading,
-  renderMobileCard,
-  emptyMessage = "Nenhum dado encontrado",
-  onRowClick,
-  className,
-}: ResponsiveTableProps<T>) => {
+/**
+ * ResponsiveTable Component
+ * Simplified export pattern to avoid production ReferenceErrors during minification.
+ */
+function ResponsiveTable(props: any) {
+  const {
+    columns,
+    data,
+    isLoading,
+    renderMobileCard,
+    emptyMessage = "Nenhum dado encontrado",
+    onRowClick,
+    className,
+  } = props;
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -47,7 +53,7 @@ const ResponsiveTable = <T extends { id?: string | number }>({
     );
   }
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg bg-muted/20">
         <p className="text-sm text-muted-foreground">{emptyMessage}</p>
@@ -62,7 +68,7 @@ const ResponsiveTable = <T extends { id?: string | number }>({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30">
-              {columns.map((col, idx) => (
+              {columns.map((col: any, idx: number) => (
                 <TableHead 
                     key={idx} 
                     className={cn(
@@ -76,7 +82,7 @@ const ResponsiveTable = <T extends { id?: string | number }>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item, rowIdx) => (
+            {data.map((item: any, rowIdx: number) => (
               <TableRow 
                 key={item.id || rowIdx}
                 className={cn(
@@ -85,7 +91,7 @@ const ResponsiveTable = <T extends { id?: string | number }>({
                 )}
                 onClick={() => onRowClick?.(item)}
               >
-                {columns.map((col, colIdx) => (
+                {columns.map((col: any, colIdx: number) => (
                   <TableCell key={colIdx} className={cn("py-4", col.className)}>
                     {col.cell 
                       ? col.cell(item) 
@@ -100,7 +106,7 @@ const ResponsiveTable = <T extends { id?: string | number }>({
 
       {/* View Mobile: Cards */}
       <div className="md:hidden space-y-4">
-        {data.map((item, idx) => (
+        {data.map((item: any, idx: number) => (
           <Card 
             key={item.id || idx} 
             className={cn(
@@ -114,7 +120,7 @@ const ResponsiveTable = <T extends { id?: string | number }>({
             ) : (
                 <div className="space-y-3">
                     {/* Default Mobile View: Key/Value pairs */}
-                    {columns.filter(c => !c.mobileHidden).map((col, cIdx) => (
+                    {columns.filter((c: any) => !c.mobileHidden).map((col: any, cIdx: number) => (
                         <div key={cIdx} className="flex justify-between items-start gap-4 pb-2 border-b border-border last:border-0 last:pb-0">
                             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{col.header}</span>
                             <div className="text-sm font-semibold text-right">
@@ -131,6 +137,6 @@ const ResponsiveTable = <T extends { id?: string | number }>({
       </div>
     </div>
   );
-};
+}
 
 export default ResponsiveTable;
