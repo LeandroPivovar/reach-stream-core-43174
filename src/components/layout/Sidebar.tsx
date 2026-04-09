@@ -51,7 +51,7 @@ export function Sidebar() {
   return (
     <div 
       className={cn(
-        "flex flex-col h-screen fixed left-0 top-0 z-[60] transition-all duration-300 ease-in-out border-r border-white/10",
+        "flex flex-col h-screen fixed left-0 top-0 z-40 transition-all duration-300 ease-in-out border-r border-white/10",
         isCollapsed ? "w-20" : "w-64",
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )} 

@@ -24,7 +24,7 @@ export function Layout({ children, title, subtitle, actions, showSearch, onSearc
       {/* Sidebar Overlay (Mobile) */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-[55] lg:hidden animate-in fade-in duration-300" 
+          className="fixed inset-0 bg-black/50 z-[35] lg:hidden animate-in fade-in duration-300" 
           onClick={closeMobile}
         />
       )}
