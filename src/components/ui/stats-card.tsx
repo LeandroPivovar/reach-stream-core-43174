@@ -43,7 +43,7 @@ export function StatsCard({
                   ? "text-success" 
                   : "text-destructive"
               )}>
-                {trend.isPositive ? '+' : ''}{trend.value}%
+                {trend.isPositive ? '+' : ''}{typeof trend.value === 'number' ? (Number.isInteger(trend.value) ? trend.value : trend.value.toFixed(2)) : trend.value}%
               </span>
               <span className="text-[9px] 2xl:text-[10px] text-muted-foreground whitespace-nowrap">
                 vs anterior
