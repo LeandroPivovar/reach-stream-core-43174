@@ -1971,6 +1971,13 @@ class ApiService {
       body: JSON.stringify({ status }),
     });
   }
+
+  async generateTestAccount(level) {
+    return this.request('/admin/generate-test-account', {
+      method: 'POST',
+      body: JSON.stringify({ level }),
+    });
+  }
 }
 
 export const api = new ApiService();

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserCog, MoreVertical, Edit, ShieldAlert, CheckCircle, XCircle, CalendarClock, User, BarChart3, CreditCard, Key, ExternalLink, MessageSquare, Mail, Smartphone, TrendingUp, Link as LinkIcon } from 'lucide-react';
+import { UserCog, MoreVertical, Edit, ShieldAlert, CheckCircle, XCircle, CalendarClock, User, BarChart3, CreditCard, Key, ExternalLink, MessageSquare, Mail, Smartphone, TrendingUp, Link as LinkIcon, FlaskConical, Users, Megaphone, ShoppingCart, BadgeDollarSign, Copy, CheckCheck } from 'lucide-react';
 import { api, AdminUser, Plan, AdminUserStats } from '@/lib/api';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,6 +69,15 @@ export default function AdminUsers() {
     const [showPasswordInput, setShowPasswordInput] = useState(false);
     const [newPassword, setNewPassword] = useState('');
 
+    // --- Test Account State ---
+    const [isTestAccountModalOpen, setIsTestAccountModalOpen] = useState(false);
+    const [testAccountLevel, setTestAccountLevel] = useState<'low' | 'medium' | 'high'>('low');
+    const [testAccountResult, setTestAccountResult] = useState<null | {
+        userId: number; email: string; password: string; firstName: string; lastName: string; level: string;
+        summary: { contacts: number; campaigns: number; products: number; sales: number; estimatedRevenue: number; };
+    }>(null);
+    const [copiedField, setCopiedField] = useState<string | null>(null);
+
     // --- New Mutations ---
     const resetPasswordMutation = useMutation({
         mutationFn: ({ userId, password }: { userId: number, password: string }) => api.resetAdminUserPassword(userId, password),
@@ -79,6 +88,22 @@ export default function AdminUsers() {
         },
         onError: () => toast({ title: 'Erro', description: 'Falha ao resetar senha.', variant: 'destructive' })
     });
+
+    const generateTestAccountMutation = useMutation({
+        mutationFn: (level: 'low' | 'medium' | 'high') => api.generateTestAccount(level),
+        onSuccess: (data) => {
+            setTestAccountResult(data);
+            queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+            toast({ title: '✅ Conta Gerada!', description: `Conta ${data.email} criada com sucesso.` });
+        },
+        onError: (err: any) => toast({ title: 'Erro', description: err.message || 'Falha ao gerar conta.', variant: 'destructive' })
+    });
+
+    const handleCopy = (text: string, field: string) => {
+        navigator.clipboard.writeText(text).catch(() => {});
+        setCopiedField(field);
+        setTimeout(() => setCopiedField(null), 2000);
+    };
 
     const addCreditsMutation = useMutation({
         mutationFn: ({ userId, type, amount }: { userId: number, type: 'email' | 'sms', amount: number }) =>
@@ -224,7 +249,7 @@ export default function AdminUsers() {
             title="Administração de Usuários"
             subtitle="Gerencie os usuários cadastrados na plataforma e seus respectivos planos."
         >
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-between items-center mb-4">
                 <div className="w-64">
                     <Select value={planFilter} onValueChange={setPlanFilter}>
                         <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
@@ -240,6 +265,13 @@ export default function AdminUsers() {
                         </SelectContent>
                     </Select>
                 </div>
+                <Button
+                    onClick={() => { setTestAccountResult(null); setIsTestAccountModalOpen(true); }}
+                    className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-md"
+                >
+                    <FlaskConical className="h-4 w-4" />
+                    Gerar Conta Teste
+                </Button>
             </div>
 
             <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -745,6 +777,197 @@ export default function AdminUsers() {
                             {expiryMutation.isPending ? 'Salvando...' : 'Salvar Vencimento'}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* ── Generate Test Account Modal ───────────────────────────────── */}
+            <Dialog open={isTestAccountModalOpen} onOpenChange={(open) => { setIsTestAccountModalOpen(open); if (!open) setTestAccountResult(null); }}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600">
+                                <FlaskConical className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-xl">Gerar Conta de Demonstração</DialogTitle>
+                                <DialogDescription>Cria uma conta com dados fake realistas para testes e demos.</DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    {!testAccountResult ? (
+                        <div className="space-y-6 py-4">
+                            {/* Level selector */}
+                            <div>
+                                <Label className="text-sm font-semibold mb-3 block">Selecione o Volume de Dados</Label>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {/* LOW */}
+                                    <button
+                                        onClick={() => setTestAccountLevel('low')}
+                                        className={`relative rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${
+                                            testAccountLevel === 'low'
+                                                ? 'border-violet-500 bg-violet-50 dark:bg-violet-950/30'
+                                                : 'border-border hover:border-violet-300 bg-card'
+                                        }`}
+                                    >
+                                        {testAccountLevel === 'low' && (
+                                            <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-violet-500" />
+                                        )}
+                                        <div className="text-2xl mb-2">🟢</div>
+                                        <p className="font-bold text-sm">Baixo</p>
+                                        <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                                            <div>50 contatos</div>
+                                            <div>3 campanhas</div>
+                                            <div>30 vendas</div>
+                                            <div className="font-semibold text-green-600 mt-1">~R$ 5k–20k</div>
+                                        </div>
+                                    </button>
+
+                                    {/* MEDIUM */}
+                                    <button
+                                        onClick={() => setTestAccountLevel('medium')}
+                                        className={`relative rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${
+                                            testAccountLevel === 'medium'
+                                                ? 'border-violet-500 bg-violet-50 dark:bg-violet-950/30'
+                                                : 'border-border hover:border-violet-300 bg-card'
+                                        }`}
+                                    >
+                                        {testAccountLevel === 'medium' && (
+                                            <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-violet-500" />
+                                        )}
+                                        <div className="text-2xl mb-2">🟡</div>
+                                        <p className="font-bold text-sm">Médio</p>
+                                        <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                                            <div>300 contatos</div>
+                                            <div>10 campanhas</div>
+                                            <div>200 vendas</div>
+                                            <div className="font-semibold text-yellow-600 mt-1">~R$ 50k–150k</div>
+                                        </div>
+                                    </button>
+
+                                    {/* HIGH */}
+                                    <button
+                                        onClick={() => setTestAccountLevel('high')}
+                                        className={`relative rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${
+                                            testAccountLevel === 'high'
+                                                ? 'border-violet-500 bg-violet-50 dark:bg-violet-950/30'
+                                                : 'border-border hover:border-violet-300 bg-card'
+                                        }`}
+                                    >
+                                        {testAccountLevel === 'high' && (
+                                            <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-violet-500" />
+                                        )}
+                                        <div className="text-2xl mb-2">🔴</div>
+                                        <p className="font-bold text-sm">Alto</p>
+                                        <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                                            <div>1.000 contatos</div>
+                                            <div>30 campanhas</div>
+                                            <div>1.000 vendas</div>
+                                            <div className="font-semibold text-red-600 mt-1">~R$ 300k–1M</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-300">
+                                ⚠️ <strong>Atenção:</strong> Níveis Alto podem levar alguns segundos para gerar todos os dados. Aguarde a confirmação.
+                            </div>
+
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsTestAccountModalOpen(false)}>Cancelar</Button>
+                                <Button
+                                    onClick={() => generateTestAccountMutation.mutate(testAccountLevel)}
+                                    disabled={generateTestAccountMutation.isPending}
+                                    className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white min-w-[160px]"
+                                >
+                                    {generateTestAccountMutation.isPending ? (
+                                        <span className="flex items-center gap-2">
+                                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                            </svg>
+                                            Gerando dados...
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center gap-2"><FlaskConical className="h-4 w-4" /> Gerar Conta</span>
+                                    )}
+                                </Button>
+                            </DialogFooter>
+                        </div>
+                    ) : (
+                        /* Result panel */
+                        <div className="space-y-5 py-4">
+                            <div className="rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/20 border border-green-200 dark:border-green-800 p-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <CheckCircle className="h-5 w-5 text-green-600" />
+                                    <span className="font-bold text-green-700 dark:text-green-400">Conta criada com sucesso!</span>
+                                    <Badge variant="outline" className="ml-auto bg-green-100 text-green-700 border-green-300 capitalize">
+                                        Nível {testAccountResult.level === 'low' ? 'Baixo' : testAccountResult.level === 'medium' ? 'Médio' : 'Alto'}
+                                    </Badge>
+                                </div>
+
+                                {/* Credentials */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between bg-white dark:bg-slate-900 rounded-lg px-3 py-2 border">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Email</p>
+                                            <p className="font-mono text-sm">{testAccountResult.email}</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handleCopy(testAccountResult.email, 'email')}>
+                                            {copiedField === 'email' ? <CheckCheck className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                                        </Button>
+                                    </div>
+                                    <div className="flex items-center justify-between bg-white dark:bg-slate-900 rounded-lg px-3 py-2 border">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Senha</p>
+                                            <p className="font-mono text-sm tracking-widest">{testAccountResult.password}</p>
+                                        </div>
+                                        <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handleCopy(testAccountResult.password, 'password')}>
+                                            {copiedField === 'password' ? <CheckCheck className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Data summary */}
+                            <div>
+                                <p className="text-sm font-semibold mb-3">📊 Dados Gerados</p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <div className="rounded-lg border bg-card p-3 text-center">
+                                        <Users className="h-5 w-5 mx-auto mb-1 text-blue-500" />
+                                        <p className="text-2xl font-bold">{testAccountResult.summary.contacts.toLocaleString('pt-BR')}</p>
+                                        <p className="text-xs text-muted-foreground">Contatos</p>
+                                    </div>
+                                    <div className="rounded-lg border bg-card p-3 text-center">
+                                        <Megaphone className="h-5 w-5 mx-auto mb-1 text-purple-500" />
+                                        <p className="text-2xl font-bold">{testAccountResult.summary.campaigns}</p>
+                                        <p className="text-xs text-muted-foreground">Campanhas</p>
+                                    </div>
+                                    <div className="rounded-lg border bg-card p-3 text-center">
+                                        <ShoppingCart className="h-5 w-5 mx-auto mb-1 text-orange-500" />
+                                        <p className="text-2xl font-bold">{testAccountResult.summary.sales.toLocaleString('pt-BR')}</p>
+                                        <p className="text-xs text-muted-foreground">Vendas</p>
+                                    </div>
+                                    <div className="rounded-lg border bg-card p-3 text-center">
+                                        <BadgeDollarSign className="h-5 w-5 mx-auto mb-1 text-green-500" />
+                                        <p className="text-lg font-bold text-green-600">
+                                            {testAccountResult.summary.estimatedRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">Faturamento</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <DialogFooter className="gap-2">
+                                <Button variant="outline" onClick={() => { setTestAccountResult(null); }}>
+                                    Gerar Outra Conta
+                                </Button>
+                                <Button onClick={() => setIsTestAccountModalOpen(false)} className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+                                    Fechar
+                                </Button>
+                            </DialogFooter>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
 

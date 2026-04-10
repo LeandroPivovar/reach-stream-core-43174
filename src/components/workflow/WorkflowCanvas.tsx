@@ -105,6 +105,24 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
     [setEdges]
   );
 
+  const isValidConnection = useCallback(
+    (connection: Connection | Edge) => {
+      const sourceNode = nodes.find((n) => n.id === connection.source);
+      const targetNode = nodes.find((n) => n.id === connection.target);
+      
+      if (!sourceNode || !targetNode) return false;
+
+      // Bloquear conexão entre nós de início ("Enviar Agora" e "Agendar")
+      const isStartNode = (type: string) => type === 'sendnow' || type === 'schedule';
+      if (isStartNode(sourceNode.type as string) && isStartNode(targetNode.type as string)) {
+        return false;
+      }
+      
+      return true;
+    },
+    [nodes]
+  );
+
   const addNode = (type: WorkflowStep['type']) => {
     const id = `node-${nodeIdCounter}`;
     const newNode: Node = {
@@ -288,6 +306,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          isValidConnection={isValidConnection}
           onEdgeClick={(_, edge) => {
             if (isDeleteMode) {
               setEdges((eds) => eds.filter((e) => e.id !== edge.id));
