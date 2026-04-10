@@ -139,6 +139,10 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
     const selectedNode = nodes.find(n => n.selected);
     const lastNode = selectedNode || (nodes.length > 0 ? nodes[nodes.length - 1] : null);
 
+    // Safety check: prohibit adding sendnow if last is schedule, and vice versa
+    if (type === 'sendnow' && lastNode?.type === 'schedule') return;
+    if (type === 'schedule' && lastNode?.type === 'sendnow') return;
+
     // Deselect all nodes and add the new one
     setNodes((nds) => [...nds.map(n => ({ ...n, selected: false })), newNode]);
 
@@ -185,6 +189,10 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
     }));
   }, [nodes, updateNodeData, deleteNode]);
 
+  const activeNode = nodes.find(n => n.selected) || (nodes.length > 0 ? nodes[nodes.length - 1] : null);
+  const isSendNowDisabled = activeNode?.type === 'schedule';
+  const isScheduleDisabled = activeNode?.type === 'sendnow';
+
   return (
     <div className="flex flex-col gap-4 h-[600px]">
       {/* Toolbar */}
@@ -196,6 +204,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               variant="outline"
               size="sm"
               onClick={() => addNode('sendnow')}
+              disabled={isSendNowDisabled}
               className="gap-2"
             >
               <Send className="w-4 h-4 text-green-500" />
@@ -205,6 +214,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               variant="outline"
               size="sm"
               onClick={() => addNode('schedule')}
+              disabled={isScheduleDisabled}
               className="gap-2"
             >
               <Calendar className="w-4 h-4 text-blue-500" />
