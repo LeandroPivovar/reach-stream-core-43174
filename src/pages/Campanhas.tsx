@@ -211,6 +211,7 @@ export default function Campanhas() {
   const [contacts, setContacts] = useState<ContactFrontend[]>([]);
   const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
   const [subscriptionStats, setSubscriptionStats] = useState<any>(null);
+  const [twilioConfigured, setTwilioConfigured] = useState(false);
   const { config: scoreConfig } = useScoreConfig();
 
   // Estado para armazenar compras e LTV dos contatos (necessário para o modal)
@@ -294,15 +295,17 @@ export default function Campanhas() {
 
   const loadExternalData = async () => {
     try {
-      const [contactsData, groupsData, statsData, subStats] = await Promise.all([
+      const [contactsData, groupsData, statsData, subStats, twilioData] = await Promise.all([
         api.getContacts(),
         api.getGroups(),
         api.getContactSegmentationStats(),
-        api.getSubscriptionStats()
+        api.getSubscriptionStats(),
+        api.getTwilioConfig().catch(() => ({ configured: false })),
       ]);
       setContacts(contactsData.map(convertApiContactToFrontend));
       setAvailableGroups(groupsData);
       setSubscriptionStats(subStats);
+      setTwilioConfigured(!!twilioData?.configured);
     } catch (error) {
       console.error('Erro ao carregar dados externos:', error);
     }
@@ -435,6 +438,18 @@ export default function Campanhas() {
     try {
       setIsSaving(true);
 
+      const simpleWhatsapp = newCampaign.campaignComplexity === 'simple' && newCampaign.channel === 'whatsapp';
+      const advancedWhatsapp = newCampaign.campaignComplexity === 'advanced' &&
+        (newCampaign.workflow?.nodes || []).some((n: any) => n.type === 'whatsapp');
+      if ((simpleWhatsapp || advancedWhatsapp) && !twilioConfigured) {
+        toast({
+          title: 'Twilio não configurada',
+          description: 'Configure a Twilio em Conexões para usar campanhas de WhatsApp.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       let finalStatus = newCampaign.scheduleType === 'schedule' ? 'agendada' : 'ativa';
       let finalScheduledAt = newCampaign.scheduleType === 'schedule'
         ? `${newCampaign.scheduleDate}T${newCampaign.scheduleTime}:00`
@@ -565,6 +580,21 @@ export default function Campanhas() {
 
   const handleToggleStatus = async (id: number, currentStatus: string) => {
     try {
+      const targetCampaign = campaigns.find((campaign) => campaign.id === id);
+      const reactivating = currentStatus === 'pausada';
+      const usesWhatsapp = !!(
+        targetCampaign?.channel === 'whatsapp' ||
+        targetCampaign?.config?.workflow?.nodes?.some((node: any) => node?.type === 'whatsapp')
+      );
+      if (reactivating && usesWhatsapp && !twilioConfigured) {
+        toast({
+          title: 'Twilio não configurada',
+          description: 'Configure a Twilio em Conexões para reativar campanhas com WhatsApp.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const newStatus = currentStatus === 'ativa' ? 'pausada' : 'ativa';
       await api.updateCampaign(id, { status: newStatus });
       toast({
@@ -1464,7 +1494,17 @@ export default function Campanhas() {
                   <Card
                     className={`p-6 cursor-pointer hover:border-primary transition-colors ${newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : ''
                       }`}
-                    onClick={() => setNewCampaign({ ...newCampaign, channel: 'whatsapp' })}
+                    onClick={() => {
+                      if (!twilioConfigured) {
+                        toast({
+                          title: 'Twilio não configurada',
+                          description: 'Configure a Twilio na tela Conexões antes de selecionar WhatsApp.',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+                      setNewCampaign({ ...newCampaign, channel: 'whatsapp' });
+                    }}
                   >
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 bg-green-600/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -1475,6 +1515,11 @@ export default function Campanhas() {
                         <p className="text-sm text-muted-foreground">
                           Mensagens via WhatsApp Business com suporte a mídia e botões interativos.
                         </p>
+                        {!twilioConfigured && (
+                          <p className="text-xs text-destructive mt-2">
+                            Indisponível: configure a Twilio em Conexões.
+                          </p>
+                        )}
                       </div>
                     </div>
                   </Card>
@@ -1913,6 +1958,7 @@ export default function Campanhas() {
               <WorkflowCanvas
                 workflow={newCampaign.workflow}
                 onChange={(workflow) => setNewCampaign({ ...newCampaign, workflow })}
+                twilioConfigured={twilioConfigured}
               />
 
               {/* Resumo da Campanha - Só mostra se houver pelo menos um nó de disparo */}
@@ -2715,6 +2761,13 @@ export default function Campanhas() {
                 {campaignForStatusUpdate.status === 'pausada' && (
                   <Button
                     className="w-full bg-green-500 hover:bg-green-600 text-white"
+                    disabled={
+                      !twilioConfigured &&
+                      (
+                        campaignForStatusUpdate.channel === 'whatsapp' ||
+                        campaignForStatusUpdate.config?.workflow?.nodes?.some((node: any) => node?.type === 'whatsapp')
+                      )
+                    }
                     onClick={() => {
                       handleToggleStatus(campaignForStatusUpdate.id, 'pausada');
                       setIsStatusUpdateOpen(false);
@@ -2724,6 +2777,16 @@ export default function Campanhas() {
                     Reativar Campanha
                   </Button>
                 )}
+                {campaignForStatusUpdate.status === 'pausada' &&
+                  !twilioConfigured &&
+                  (
+                    campaignForStatusUpdate.channel === 'whatsapp' ||
+                    campaignForStatusUpdate.config?.workflow?.nodes?.some((node: any) => node?.type === 'whatsapp')
+                  ) && (
+                    <p className="text-xs text-destructive text-center">
+                      Configure a Twilio em Conexões para reativar esta campanha.
+                    </p>
+                  )}
                 <Button
                   variant="outline"
                   className="w-full"
