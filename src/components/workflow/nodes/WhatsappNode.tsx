@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,17 @@ interface WhatsappNodeData {
   content?: string;
   media?: { url: string; type: 'image' | 'video'; name: string }[];
   destinationUrl?: string;
-  onUpdate: (data: { content: string; media?: { url: string; type: 'image' | 'video'; name: string }[]; destinationUrl?: string }) => void;
+  provider?: 'zenvia' | 'twilio';
+  contentSid?: string;
+  templateVariables?: Record<string, string>;
+  onUpdate: (data: {
+    content: string;
+    media?: { url: string; type: 'image' | 'video'; name: string }[];
+    destinationUrl?: string;
+    provider?: 'zenvia' | 'twilio';
+    contentSid?: string;
+    templateVariables?: Record<string, string>;
+  }) => void;
   onDelete: () => void;
 }
 
@@ -25,6 +36,11 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
   const [content, setContent] = useState((data as any)?.content || '');
   const [media, setMedia] = useState<{ url: string; type: 'image' | 'video'; name: string }[]>((data as any)?.media || []);
   const [destinationUrl, setDestinationUrl] = useState((data as any)?.destinationUrl || '');
+  const [provider, setProvider] = useState<'zenvia' | 'twilio'>((data as any)?.provider || 'zenvia');
+  const [contentSid, setContentSid] = useState((data as any)?.contentSid || '');
+  const [templateVariablesText, setTemplateVariablesText] = useState(
+    JSON.stringify((data as any)?.templateVariables || { '1': '{{nome}}' }, null, 2),
+  );
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -43,7 +59,21 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
   };
 
   const handleSave = () => {
-    (data as any).onUpdate({ content, media, destinationUrl });
+    let templateVariables: Record<string, string> = {};
+    try {
+      templateVariables = templateVariablesText.trim() ? JSON.parse(templateVariablesText) : {};
+    } catch {
+      templateVariables = {};
+    }
+
+    (data as any).onUpdate({
+      content,
+      media,
+      destinationUrl,
+      provider,
+      contentSid: contentSid.trim() || undefined,
+      templateVariables,
+    });
     setIsEditing(false);
   };
 
@@ -93,6 +123,50 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
             <DialogTitle>Configurar WhatsApp</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="grid gap-2">
+              <Label>Provedor WhatsApp</Label>
+              <Select value={provider} onValueChange={(value: 'zenvia' | 'twilio') => setProvider(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="zenvia">Zenvia</SelectItem>
+                  <SelectItem value="twilio">Twilio</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {provider === 'twilio' && (
+              <div className="space-y-3 rounded border p-3 bg-primary/5">
+                <div className="grid gap-2">
+                  <Label htmlFor="twilio-content-sid">Content SID (Template WhatsApp)</Label>
+                  <Input
+                    id="twilio-content-sid"
+                    placeholder="HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={contentSid}
+                    onChange={(e) => setContentSid(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Se preenchido, a campanha envia template aprovado da Twilio. Se vazio, envia texto livre.
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="twilio-template-vars">Variáveis do Template (JSON)</Label>
+                  <textarea
+                    id="twilio-template-vars"
+                    value={templateVariablesText}
+                    onChange={(e) => setTemplateVariablesText(e.target.value)}
+                    rows={5}
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Exemplo: {"{ \"1\": \"João\", \"2\": \"15/05/2026\" }"}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="grid gap-2">
               <Label htmlFor="whatsapp-content">Mensagem WhatsApp</Label>
               <textarea

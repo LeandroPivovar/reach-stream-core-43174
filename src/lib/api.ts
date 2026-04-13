@@ -59,6 +59,19 @@ export interface ChangePasswordData {
   newPassword: string;
 }
 
+export interface TwilioConfigResponse {
+  accountSid: string | null;
+  authTokenMask: string | null;
+  whatsappFrom: string | null;
+  configured: boolean;
+}
+
+export interface SaveTwilioConfigData {
+  accountSid: string;
+  authToken: string;
+  whatsappFrom: string;
+}
+
 export interface Sale {
   id: number;
   productId: number;
@@ -731,6 +744,26 @@ class ApiService {
 
   async toggle2fa(enabled: boolean): Promise<User> {
     return this.updateUser({ twoFactorEnabled: enabled });
+  }
+
+  async getTwilioConfig(): Promise<TwilioConfigResponse> {
+    return this.request<TwilioConfigResponse>('/users/me/twilio', {
+      method: 'GET',
+    });
+  }
+
+  async saveTwilioConfig(data: SaveTwilioConfigData): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>('/users/me/twilio', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createTwilioSubaccount(data: { friendlyName: string; whatsappFrom: string }): Promise<{ success: boolean; accountSid?: string; message: string }> {
+    return this.request<{ success: boolean; accountSid?: string; message: string }>('/users/me/twilio/create-subaccount', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   async verify2fa(email: string, code: string): Promise<AuthResponse> {

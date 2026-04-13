@@ -51,6 +51,7 @@ export interface WorkflowStep {
 interface WorkflowCanvasProps {
   workflow: any;
   onChange: (workflow: any) => void;
+  twilioConfigured?: boolean;
 }
 
 const nodeTypes: NodeTypes = {
@@ -68,6 +69,7 @@ const nodeTypes: NodeTypes = {
 export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   workflow,
   onChange,
+  twilioConfigured = true,
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(workflow?.nodes || []);
   const [edges, setEdges, onEdgesChange] = useEdgesState(workflow?.edges || []);
@@ -246,6 +248,8 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               size="sm"
               onClick={() => addNode('whatsapp')}
               className="gap-2"
+              disabled={!twilioConfigured}
+              title={!twilioConfigured ? 'Configure a Twilio na tela de Conexões para usar WhatsApp.' : undefined}
             >
               <Phone className="w-4 h-4 text-green-500" />
               WhatsApp

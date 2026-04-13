@@ -50,7 +50,20 @@ export default function Conexoes() {
   const [isNewConnectionOpen, setIsNewConnectionOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [emailConnType, setEmailConnType] = useState<'smtp' | 'domain'>('smtp');
-  const [isWhatsappConnected, setIsWhatsappConnected] = useState(false);
+  const [isTwilioModalOpen, setIsTwilioModalOpen] = useState(false);
+  const [isSavingTwilio, setIsSavingTwilio] = useState(false);
+  const [twilioConfig, setTwilioConfig] = useState({
+    accountSid: '',
+    authTokenMask: '',
+    configured: false,
+    whatsappFrom: '',
+  });
+  const [twilioForm, setTwilioForm] = useState({
+    friendlyName: '',
+    accountSid: '',
+    authToken: '',
+    whatsappFrom: '',
+  });
   const [selectedConnection, setSelectedConnection] = useState<EmailConnection | null>(null);
 
   const [emailForm, setEmailForm] = useState({
@@ -61,6 +74,24 @@ export default function Conexoes() {
   const { data: emailConnections, isLoading: isLoadingEmails } = useQuery({
     queryKey: ['email-connections'],
     queryFn: () => api.getEmailConnections(),
+  });
+
+  useQuery({
+    queryKey: ['twilio-config'],
+    queryFn: () => api.getTwilioConfig(),
+    onSuccess: (data) => {
+      setTwilioConfig({
+        accountSid: data.accountSid || '',
+        authTokenMask: data.authTokenMask || '',
+        configured: !!data.configured,
+        whatsappFrom: data.whatsappFrom || '',
+      });
+      setTwilioForm((prev) => ({
+        ...prev,
+        accountSid: data.accountSid || '',
+        whatsappFrom: data.whatsappFrom || '',
+      }));
+    },
   });
 
   // Mutations
@@ -95,9 +126,7 @@ export default function Conexoes() {
     });
   };
 
-  const handleOpenNewConnection = () => {
-    setIsNewConnectionOpen(true);
-  };
+  const handleOpenNewConnection = () => setIsNewConnectionOpen(true);
 
   const handleOpenEmailModal = () => {
     setIsEmailModalOpen(true);
@@ -108,11 +137,85 @@ export default function Conexoes() {
     toast({ title: 'Copiado', description: 'Valor copiado para a área de transferência.' });
   };
 
+  const handleOpenTwilioModal = () => {
+    setTwilioForm((prev) => ({
+      ...prev,
+      accountSid: twilioConfig.accountSid || '',
+      whatsappFrom: twilioConfig.whatsappFrom || '',
+      authToken: '',
+    }));
+    setIsTwilioModalOpen(true);
+  };
+
+  const handleSaveTwilio = async () => {
+    if (!twilioForm.accountSid || !twilioForm.whatsappFrom) {
+      toast({ title: 'Dados obrigatórios', description: 'Preencha Account SID e WhatsApp From.', variant: 'destructive' });
+      return;
+    }
+    if (!twilioForm.authToken && !twilioConfig.authTokenMask) {
+      toast({ title: 'Auth Token obrigatório', description: 'Informe o Auth Token da subconta Twilio.', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      setIsSavingTwilio(true);
+      await api.saveTwilioConfig({
+        accountSid: twilioForm.accountSid,
+        authToken: twilioForm.authToken || twilioConfig.authTokenMask,
+        whatsappFrom: twilioForm.whatsappFrom,
+      });
+      const updated = await api.getTwilioConfig();
+      setTwilioConfig({
+        accountSid: updated.accountSid || '',
+        authTokenMask: updated.authTokenMask || '',
+        configured: !!updated.configured,
+        whatsappFrom: updated.whatsappFrom || '',
+      });
+      setIsTwilioModalOpen(false);
+      toast({ title: 'Twilio salva', description: 'Integração WhatsApp configurada com sucesso.' });
+    } catch (error: any) {
+      toast({ title: 'Erro ao salvar Twilio', description: error.message || 'Não foi possível salvar.', variant: 'destructive' });
+    } finally {
+      setIsSavingTwilio(false);
+    }
+  };
+
+  const handleCreateTwilioSubaccount = async () => {
+    if (!twilioForm.friendlyName || !twilioForm.whatsappFrom) {
+      toast({ title: 'Dados obrigatórios', description: 'Preencha nome amigável e WhatsApp From.', variant: 'destructive' });
+      return;
+    }
+    try {
+      setIsSavingTwilio(true);
+      await api.createTwilioSubaccount({
+        friendlyName: twilioForm.friendlyName,
+        whatsappFrom: twilioForm.whatsappFrom,
+      });
+      const updated = await api.getTwilioConfig();
+      setTwilioConfig({
+        accountSid: updated.accountSid || '',
+        authTokenMask: updated.authTokenMask || '',
+        configured: !!updated.configured,
+        whatsappFrom: updated.whatsappFrom || '',
+      });
+      setTwilioForm((prev) => ({ ...prev, accountSid: updated.accountSid || '', authToken: '' }));
+      toast({ title: 'Subconta criada', description: 'Subconta Twilio criada e salva no seu usuário.' });
+    } catch (error: any) {
+      toast({ title: 'Erro ao criar subconta', description: error.message || 'Não foi possível criar.', variant: 'destructive' });
+    } finally {
+      setIsSavingTwilio(false);
+    }
+  };
+
   const actions = useMemo(() => (
     <div className="flex gap-2">
       <Button variant="outline" onClick={handleOpenEmailModal}>
         <Mail className="mr-2 h-4 w-4" />
         Configurar E-mail
+      </Button>
+      <Button variant="outline" onClick={handleOpenTwilioModal}>
+        <MessageSquare className="mr-2 h-4 w-4" />
+        Configurar Twilio
       </Button>
       <HeaderActions.Add onClick={handleOpenNewConnection}>
         Nova Conexão
@@ -126,16 +229,16 @@ export default function Conexoes() {
     
     // WhatsApp
     list.push({
-      id: 'whatsapp-zenvia',
+      id: 'whatsapp-twilio',
       type: 'whatsapp',
       platform: 'WhatsApp Business',
-      provider: 'Zenvia API',
-      identifier: 'API Principal',
-      status: isWhatsappConnected ? 'verified' : 'pending',
-      statusLabel: isWhatsappConnected ? 'Conectado' : 'Desconectado',
+      provider: 'Twilio',
+      identifier: twilioConfig.accountSid || 'Não configurado',
+      status: twilioConfig.configured ? 'verified' : 'pending',
+      statusLabel: twilioConfig.configured ? 'Conectado' : 'Desconectado',
       icon: MessageSquare,
-      color: isWhatsappConnected ? 'text-green-500' : 'text-red-500',
-      bgColor: isWhatsappConnected ? 'bg-green-500/10' : 'bg-red-500/10'
+      color: twilioConfig.configured ? 'text-green-500' : 'text-red-500',
+      bgColor: twilioConfig.configured ? 'bg-green-500/10' : 'bg-red-500/10'
     });
     
     // Emails
@@ -158,7 +261,7 @@ export default function Conexoes() {
     }
     
     return list;
-  }, [isWhatsappConnected, emailConnections]);
+  }, [twilioConfig, emailConnections]);
 
   const connectionColumns = useMemo(() => [
     {
@@ -206,9 +309,9 @@ export default function Conexoes() {
       cell: (conn: any) => (
         <div className="flex justify-end gap-2">
           {conn.type === 'whatsapp' ? (
-            <Button variant="outline" size="sm" onClick={handleOpenNewConnection}>
+            <Button variant="outline" size="sm" onClick={handleOpenTwilioModal}>
               <Settings className="w-4 h-4 mr-2" />
-              Sincronizar
+              Configurar
             </Button>
           ) : (
             <>
@@ -274,9 +377,9 @@ export default function Conexoes() {
 
         <div className="flex gap-2">
           {conn.type === 'whatsapp' ? (
-            <Button variant="outline" size="sm" className="w-full h-9 shadow-sm" onClick={handleOpenNewConnection}>
+            <Button variant="outline" size="sm" className="w-full h-9 shadow-sm" onClick={handleOpenTwilioModal}>
               <Settings className="w-4 h-4 mr-2" />
-              Sincronizar
+              Configurar
             </Button>
           ) : (
             <div className="flex gap-2 w-full">
@@ -322,7 +425,7 @@ export default function Conexoes() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Conexões Ativas</p>
-                <p className="text-2xl font-bold text-foreground">{isWhatsappConnected ? 1 : 0}</p>
+                <p className="text-2xl font-bold text-foreground">{twilioConfig.configured ? 1 : 0}</p>
               </div>
               <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
                 <Wifi className="w-5 h-5 text-green-500" />
@@ -334,7 +437,7 @@ export default function Conexoes() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Desconectadas</p>
-                <p className="text-2xl font-bold text-foreground">{isWhatsappConnected ? 0 : 1}</p>
+                <p className="text-2xl font-bold text-foreground">{twilioConfig.configured ? 0 : 1}</p>
               </div>
               <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center">
                 <WifiOff className="w-5 h-5 text-red-500" />
@@ -346,7 +449,7 @@ export default function Conexoes() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total de Canais</p>
-                <p className="text-2xl font-bold text-foreground">{isWhatsappConnected ? 1 : 0}</p>
+                <p className="text-2xl font-bold text-foreground">{twilioConfig.configured ? 1 : 0}</p>
               </div>
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 <MessageSquare className="w-5 h-5 text-primary" />
@@ -381,13 +484,13 @@ export default function Conexoes() {
 
           <Card 
             className="p-6 border-dashed bg-primary/5 border-primary/20 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-primary/10 transition-colors"
-            onClick={handleOpenNewConnection}
+            onClick={handleOpenTwilioModal}
           >
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
               <MessageSquare className="w-6 h-6 text-primary" />
             </div>
             <p className="text-sm font-medium">Conectar WhatsApp</p>
-            <p className="text-xs text-muted-foreground">Utilize QR Code ou Zenvia API</p>
+            <p className="text-xs text-muted-foreground">Configure via Twilio (subconta + número)</p>
           </Card>
         </div>
       </div>
@@ -482,6 +585,70 @@ export default function Conexoes() {
             </div>
 
             <Button className="w-full" onClick={() => setSelectedConnection(null)}>Entendi</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Twilio */}
+      <Dialog open={isTwilioModalOpen} onOpenChange={setIsTwilioModalOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Configurar Twilio (WhatsApp)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="bg-primary/5 border border-primary/10 p-3 rounded-lg text-xs">
+              Passo a passo: 1) (Opcional) criar subconta, 2) informar número WhatsApp `from`, 3) salvar credenciais.
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="twilio-friendly-name">Nome para Subconta (opcional)</Label>
+              <Input
+                id="twilio-friendly-name"
+                placeholder="Empresa XYZ"
+                value={twilioForm.friendlyName}
+                onChange={(e) => setTwilioForm((prev) => ({ ...prev, friendlyName: e.target.value }))}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="twilio-account-sid">Account SID</Label>
+              <Input
+                id="twilio-account-sid"
+                placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                value={twilioForm.accountSid}
+                onChange={(e) => setTwilioForm((prev) => ({ ...prev, accountSid: e.target.value }))}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="twilio-auth-token">Auth Token</Label>
+              <Input
+                id="twilio-auth-token"
+                type="password"
+                placeholder={twilioConfig.authTokenMask || 'Informe o token da subconta'}
+                value={twilioForm.authToken}
+                onChange={(e) => setTwilioForm((prev) => ({ ...prev, authToken: e.target.value }))}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="twilio-whatsapp-from">WhatsApp From</Label>
+              <Input
+                id="twilio-whatsapp-from"
+                placeholder="+14155238886"
+                value={twilioForm.whatsappFrom}
+                onChange={(e) => setTwilioForm((prev) => ({ ...prev, whatsappFrom: e.target.value }))}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Badge variant={twilioConfig.configured ? 'default' : 'secondary'}>
+                {twilioConfig.configured ? 'Twilio conectada' : 'Twilio não configurada'}
+              </Badge>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handleCreateTwilioSubaccount} disabled={isSavingTwilio}>
+                  Criar Subconta
+                </Button>
+                <Button onClick={handleSaveTwilio} disabled={isSavingTwilio}>
+                  {isSavingTwilio ? 'Salvando...' : 'Salvar'}
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
