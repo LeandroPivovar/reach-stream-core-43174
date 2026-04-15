@@ -17,7 +17,8 @@ import {
     TrendingUp,
     Activity,
     MailSearch,
-    Monitor
+    Monitor,
+    MessageSquare,
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -31,6 +32,7 @@ const adminMenuItems = [
     { title: 'Capacidade & Consumo', href: '/admin/capacity', icon: Activity },
     { title: 'Notificações', href: '/admin/notifications', icon: Bell },
     { title: 'Solicitações Email', href: '/admin/email-requests', icon: MailSearch },
+    { title: 'Solicitações WhatsApp', href: '/admin/twilio-requests', icon: MessageSquare },
     { title: 'Solicitações Contato', href: '/admin/lead-requests', icon: Users },
     { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];

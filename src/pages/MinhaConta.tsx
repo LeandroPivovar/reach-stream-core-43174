@@ -60,13 +60,6 @@ export default function MinhaConta() {
     newPassword: '',
     confirmPassword: ''
   });
-  const [twilioData, setTwilioData] = useState({
-    accountSid: '',
-    authToken: '',
-    whatsappFrom: '',
-    configured: false,
-    authTokenMask: '',
-  });
 
   useEffect(() => {
     loadUserData();
@@ -88,7 +81,7 @@ export default function MinhaConta() {
       });
       setTwoFactorEnabled(userData.twoFactorEnabled || false);
       loadNotificationPreferences();
-      loadTwilioConfig();
+      loadNotificationPreferences();
     } catch (error) {
       toast({
         title: 'Erro ao carregar dados',
@@ -100,20 +93,6 @@ export default function MinhaConta() {
     }
   };
 
-  const loadTwilioConfig = async () => {
-    try {
-      const config = await api.getTwilioConfig();
-      setTwilioData({
-        accountSid: config.accountSid || '',
-        authToken: '',
-        whatsappFrom: config.whatsappFrom || '',
-        configured: config.configured,
-        authTokenMask: config.authTokenMask || '',
-      });
-    } catch (error) {
-      console.error('Erro ao carregar configuração Twilio:', error);
-    }
-  };
 
   const loadNotificationPreferences = async () => {
     try {
@@ -337,47 +316,6 @@ export default function MinhaConta() {
     }
   };
 
-  const handleSaveTwilio = async () => {
-    if (!twilioData.accountSid || !twilioData.whatsappFrom) {
-      toast({
-        title: 'Dados incompletos',
-        description: 'Preencha Account SID e WhatsApp From.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!twilioData.authToken && !twilioData.authTokenMask) {
-      toast({
-        title: 'Auth Token obrigatório',
-        description: 'Informe o Auth Token para salvar a integração.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setIsSaving(true);
-      await api.saveTwilioConfig({
-        accountSid: twilioData.accountSid,
-        authToken: twilioData.authToken || twilioData.authTokenMask,
-        whatsappFrom: twilioData.whatsappFrom,
-      });
-      await loadTwilioConfig();
-      toast({
-        title: 'Twilio configurado',
-        description: 'Credenciais salvas com sucesso.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erro ao salvar Twilio',
-        description: error instanceof Error ? error.message : 'Não foi possível salvar a configuração',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   return (
     <Layout
@@ -633,54 +571,6 @@ export default function MinhaConta() {
                 </div>
               </Card>
 
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Twilio WhatsApp</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Configure as credenciais da subconta Twilio para envio de campanhas no WhatsApp.
-                </p>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="twilio-account-sid">Account SID</Label>
-                    <Input
-                      id="twilio-account-sid"
-                      placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                      value={twilioData.accountSid}
-                      onChange={(e) => setTwilioData((prev) => ({ ...prev, accountSid: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="twilio-auth-token">Auth Token</Label>
-                    <Input
-                      id="twilio-auth-token"
-                      type="password"
-                      placeholder={twilioData.authTokenMask || 'Informe o token da subconta'}
-                      value={twilioData.authToken}
-                      onChange={(e) => setTwilioData((prev) => ({ ...prev, authToken: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="twilio-whatsapp-from">WhatsApp From</Label>
-                    <Input
-                      id="twilio-whatsapp-from"
-                      placeholder="+14155238886"
-                      value={twilioData.whatsappFrom}
-                      onChange={(e) => setTwilioData((prev) => ({ ...prev, whatsappFrom: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <Badge variant={twilioData.configured ? 'default' : 'secondary'}>
-                      {twilioData.configured ? 'Configurado' : 'Não configurado'}
-                    </Badge>
-                    <Button onClick={handleSaveTwilio} disabled={isSaving}>
-                      {isSaving ? 'Salvando...' : 'Salvar Twilio'}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
             </div>
           </TabsContent>
 
