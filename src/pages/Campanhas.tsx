@@ -441,14 +441,6 @@ export default function Campanhas() {
       const simpleWhatsapp = newCampaign.campaignComplexity === 'simple' && newCampaign.channel === 'whatsapp';
       const advancedWhatsapp = newCampaign.campaignComplexity === 'advanced' &&
         (newCampaign.workflow?.nodes || []).some((n: any) => n.type === 'whatsapp');
-      if ((simpleWhatsapp || advancedWhatsapp) && !twilioConfigured) {
-        toast({
-          title: 'Twilio não configurada',
-          description: 'Configure a Twilio em Conexões para usar campanhas de WhatsApp.',
-          variant: 'destructive',
-        });
-        return;
-      }
 
       let finalStatus = newCampaign.scheduleType === 'schedule' ? 'agendada' : 'ativa';
       let finalScheduledAt = newCampaign.scheduleType === 'schedule'
@@ -586,14 +578,6 @@ export default function Campanhas() {
         targetCampaign?.channel === 'whatsapp' ||
         targetCampaign?.config?.workflow?.nodes?.some((node: any) => node?.type === 'whatsapp')
       );
-      if (reactivating && usesWhatsapp && !twilioConfigured) {
-        toast({
-          title: 'Twilio não configurada',
-          description: 'Configure a Twilio em Conexões para reativar campanhas com WhatsApp.',
-          variant: 'destructive',
-        });
-        return;
-      }
 
       const newStatus = currentStatus === 'ativa' ? 'pausada' : 'ativa';
       await api.updateCampaign(id, { status: newStatus });
