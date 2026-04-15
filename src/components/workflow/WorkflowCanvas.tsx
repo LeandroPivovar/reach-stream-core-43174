@@ -248,8 +248,6 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               size="sm"
               onClick={() => addNode('whatsapp')}
               className="gap-2"
-              disabled={!twilioConfigured}
-              title={!twilioConfigured ? 'Configure a Twilio na tela de Conexões para usar WhatsApp.' : undefined}
             >
               <Phone className="w-4 h-4 text-green-500" />
               WhatsApp
