@@ -1479,14 +1479,6 @@ export default function Campanhas() {
                     className={`p-6 cursor-pointer hover:border-primary transition-colors ${newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : ''
                       }`}
                     onClick={() => {
-                      if (!twilioConfigured) {
-                        toast({
-                          title: 'Twilio não configurada',
-                          description: 'Configure a Twilio na tela Conexões antes de selecionar WhatsApp.',
-                          variant: 'destructive',
-                        });
-                        return;
-                      }
                       setNewCampaign({ ...newCampaign, channel: 'whatsapp' });
                     }}
                   >
@@ -1499,11 +1491,6 @@ export default function Campanhas() {
                         <p className="text-sm text-muted-foreground">
                           Mensagens via WhatsApp Business com suporte a mídia e botões interativos.
                         </p>
-                        {!twilioConfigured && (
-                          <p className="text-xs text-destructive mt-2">
-                            Indisponível: configure a Twilio em Conexões.
-                          </p>
-                        )}
                       </div>
                     </div>
                   </Card>
