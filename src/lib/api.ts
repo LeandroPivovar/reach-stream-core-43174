@@ -1,4 +1,4 @@
-﻿const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 const defaultApiUrl = isProd ? window.location.origin : 'http://localhost:3000';
 export const API_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
 
@@ -59,18 +59,6 @@ export interface ChangePasswordData {
   newPassword: string;
 }
 
-export interface TwilioConfigResponse {
-  accountSid: string | null;
-  authTokenMask: string | null;
-  whatsappFrom: string | null;
-  configured: boolean;
-}
-
-export interface SaveTwilioConfigData {
-  accountSid: string;
-  authToken: string;
-  whatsappFrom: string;
-}
 
 export interface Sale {
   id: number;
@@ -306,6 +294,26 @@ export interface EmailConnection {
   dnsMx?: string;
   adminNote?: string;
   createdAt: string;
+}
+
+export interface TwilioConnection {
+  id: number;
+  friendlyName?: string;
+  whatsappFrom: string;
+  status: 'pending' | 'verified' | 'rejected';
+  adminNote?: string;
+  createdAt: string;
+  userId: number;
+  user?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+export interface CreateTwilioConnectionData {
+  friendlyName?: string;
+  whatsappFrom: string;
 }
 
 export interface CreateEmailConnectionData {
@@ -608,6 +616,38 @@ class ApiService {
       }),
   };
 
+  // Twilio Connections
+  public twilioConnectionsApi = {
+    request: (data: CreateTwilioConnectionData) =>
+      this.request<TwilioConnection>('/twilio-connections', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    getMyRequests: () =>
+      this.request<TwilioConnection[]>('/twilio-connections/me', {
+        method: 'GET',
+      }),
+    remove: (id: number) =>
+      this.request<void>(`/twilio-connections/${id}`, {
+        method: 'DELETE',
+      }),
+    // Admin
+    getAdminPending: () =>
+      this.request<TwilioConnection[]>('/twilio-connections/admin/pending', {
+        method: 'GET',
+      }),
+    approve: (id: number, credentials: { accountSid: string; authToken: string }) =>
+      this.request<TwilioConnection>(`/twilio-connections/admin/${id}/approve`, {
+        method: 'POST',
+        body: JSON.stringify(credentials),
+      }),
+    reject: (id: number, reason: string) =>
+      this.request<TwilioConnection>(`/twilio-connections/admin/${id}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      }),
+  };
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -746,25 +786,6 @@ class ApiService {
     return this.updateUser({ twoFactorEnabled: enabled });
   }
 
-  async getTwilioConfig(): Promise<TwilioConfigResponse> {
-    return this.request<TwilioConfigResponse>('/users/me/twilio', {
-      method: 'GET',
-    });
-  }
-
-  async saveTwilioConfig(data: SaveTwilioConfigData): Promise<{ success: boolean; message: string }> {
-    return this.request<{ success: boolean; message: string }>('/users/me/twilio', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async createTwilioSubaccount(data: { friendlyName: string; whatsappFrom: string }): Promise<{ success: boolean; accountSid?: string; message: string }> {
-    return this.request<{ success: boolean; accountSid?: string; message: string }>('/users/me/twilio/create-subaccount', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
 
   async verify2fa(email: string, code: string): Promise<AuthResponse> {
     return this.request<AuthResponse>('/auth/verify-2fa', {
