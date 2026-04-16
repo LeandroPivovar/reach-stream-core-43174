@@ -54,17 +54,18 @@ export default function AdminTwilioRequests() {
     const [credentials, setCredentials] = useState({
         accountSid: '',
         authToken: '',
+        whatsappFrom: '',
     });
 
     // Mutations
     const approveMutation = useMutation({
-        mutationFn: ({ id, credentials }: { id: number, credentials: { accountSid: string, authToken: string } }) => 
+        mutationFn: ({ id, credentials }: { id: number, credentials: { accountSid: string, authToken: string, whatsappFrom: string } }) => 
             api.twilioConnectionsApi.approve(id, credentials),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-twilio-requests'] });
             toast({ title: 'Sucesso', description: 'Número próprio aprovado com sucesso.' });
             setIsApproveModalOpen(false);
-            setCredentials({ accountSid: '', authToken: '' });
+            setCredentials({ accountSid: '', authToken: '', whatsappFrom: '' });
         },
         onError: (error: any) => {
             toast({ title: 'Erro', description: error.message || 'Falha ao aprovar número.', variant: 'destructive' });
@@ -105,7 +106,7 @@ export default function AdminTwilioRequests() {
     };
 
     const submitApprove = () => {
-        if (selectedRequest && credentials.accountSid && credentials.authToken) {
+        if (selectedRequest && credentials.accountSid && credentials.authToken && credentials.whatsappFrom) {
             approveMutation.mutate({ id: selectedRequest.id, credentials });
         }
     };
@@ -157,7 +158,9 @@ export default function AdminTwilioRequests() {
                                     <TableCell>
                                         <div className="flex items-center gap-2">
                                             <Phone className="h-4 w-4 text-slate-400" />
-                                            {request.whatsappFrom}
+                                            {request.whatsappFrom || (
+                                                <span className="text-amber-500 text-xs italic font-medium">Número a definir</span>
+                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
@@ -220,7 +223,7 @@ export default function AdminTwilioRequests() {
                             <div className="space-y-1">
                                 <Label className="text-xs text-muted-foreground">Número</Label>
                                 <p className="text-sm font-medium flex items-center gap-1">
-                                    {selectedRequest?.whatsappFrom}
+                                    {selectedRequest?.whatsappFrom || <span className="text-amber-500 italic">Número a definir</span>}
                                 </p>
                             </div>
                         </div>
@@ -247,12 +250,26 @@ export default function AdminTwilioRequests() {
             <Dialog open={isApproveModalOpen} onOpenChange={setIsApproveModalOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Configurar Credenciais Twilio</DialogTitle>
+                        <DialogTitle>Configurar e Aprovar Número</DialogTitle>
                         <DialogDescription>
-                            Insira as credenciais da subconta para o número <b>{selectedRequest?.whatsappFrom}</b>.
+                            Configure os detalhes finais da subconta Twilio para o usuário.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="whatsappFrom">Número de WhatsApp (E.164)</Label>
+                            <div className="relative">
+                                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    id="whatsappFrom"
+                                    placeholder="+5511999998888"
+                                    className="pl-9"
+                                    value={credentials.whatsappFrom}
+                                    onChange={(e) => setCredentials({ ...credentials, whatsappFrom: e.target.value })}
+                                />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground italic">Informe o número exatamente como cadastrado na Twilio.</p>
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="accountSid">Account SID</Label>
                             <div className="relative">
@@ -285,7 +302,7 @@ export default function AdminTwilioRequests() {
                         <Button variant="outline" onClick={() => setIsApproveModalOpen(false)}>Cancelar</Button>
                         <Button 
                             onClick={submitApprove} 
-                            disabled={approveMutation.isPending || !credentials.accountSid || !credentials.authToken} 
+                            disabled={approveMutation.isPending || !credentials.accountSid || !credentials.authToken || !credentials.whatsappFrom} 
                             className="bg-green-600 hover:bg-green-700"
                         >
                             {approveMutation.isPending ? 'Salvando...' : 'Confirmar e Ativar'}
