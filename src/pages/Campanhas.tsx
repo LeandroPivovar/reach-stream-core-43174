@@ -1565,19 +1565,20 @@ export default function Campanhas() {
                                   }
                                 }
                                 
-                                // 1. Metadados
-                                if (tpl.variables) {
-                                  Object.keys(tpl.variables).forEach(k => {
-                                    newVars[k] = '';
-                                  });
-                                }
-
-                                // 2. Prioridade: Extrair variáveis do corpo do texto usando Regex {{variável}}
+                                // 1. Extrair variáveis do corpo do texto usando Regex {{variável}}
+                                // Esta é a fonte da verdade para o que a Twilio espera no disparo
                                 const matches = bodyText.match(/{{[^{}]+}}/g);
                                 if (matches) {
                                   matches.forEach(match => {
                                     const varName = match.replace(/[{}]/g, '');
-                                    if (!newVars[varName]) newVars[varName] = '';
+                                    newVars[varName] = '';
+                                  });
+                                }
+
+                                // 2. Fallback: Metadados (caso regex não encontre mas a Twilio sugira algo)
+                                if (Object.keys(newVars).length === 0 && tpl.variables) {
+                                  Object.keys(tpl.variables).forEach(k => {
+                                    newVars[k] = '';
                                   });
                                 }
                               }
@@ -1598,11 +1599,21 @@ export default function Campanhas() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">Sem Template (Texto Livre)</SelectItem>
-                              {twilioTemplates.map(t => (
-                                <SelectItem key={t.sid} value={t.sid}>
-                                  {t.friendlyName} - {t.language}
-                                </SelectItem>
-                              ))}
+                              {twilioTemplates.map(t => {
+                                const type = Object.keys(t.types || {})[0]?.split('/').pop() || 'unknown';
+                                return (
+                                  <SelectItem key={t.sid} value={t.sid}>
+                                    <div className="flex items-center gap-2">
+                                      <span>{t.friendlyName}</span>
+                                      <span className={`text-[10px] px-1 rounded border font-mono ${
+                                        type === 'list-picker' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'
+                                      }`}>
+                                        {type.toUpperCase()}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                           <p className="text-xs text-muted-foreground">
