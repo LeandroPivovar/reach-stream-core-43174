@@ -157,19 +157,34 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                   <Select value={contentSid || 'none'} onValueChange={(val) => {
                     setContentSid(val === 'none' ? '' : val);
                     const tpl = templates.find(t => t.sid === val);
-                    if (tpl && tpl.variables) {
-                      const newVars: Record<string, string> = {};
-                      Object.keys(tpl.variables).forEach(k => {
-                        newVars[k] = dynamicVariables[k] || ''; 
-                      });
-                      setDynamicVariables(newVars);
-                    } else {
-                      setDynamicVariables({});
-                    }
+                    let detectedVars: Record<string, string> = {};
+                    let bodyText = '';
+
                     if (tpl && val !== 'none') {
-                      const bodyText = tpl.types?.['twilio/text']?.body || tpl.types?.['twilio/media']?.body;
+                      bodyText = tpl.types?.['twilio/text']?.body || tpl.types?.['twilio/media']?.body || '';
+                      
+                      // 1. Tentar pegar as variáveis dos metadados da Twilio
+                      if (tpl.variables) {
+                        Object.keys(tpl.variables).forEach(k => {
+                          detectedVars[k] = '';
+                        });
+                      }
+
+                      // 2. Fallback: Extrair variáveis do corpo do texto usando Regex {{variável}}
+                      const matches = bodyText.match(/{{[^{}]+}}/g);
+                      if (matches) {
+                        matches.forEach(match => {
+                          const varName = match.replace(/[{}]/g, '');
+                          if (!detectedVars[varName]) {
+                            detectedVars[varName] = '';
+                          }
+                        });
+                      }
+
                       if (bodyText) setContent(bodyText);
                     }
+                    
+                    setDynamicVariables(detectedVars);
                   }}>
                     <SelectTrigger id="twilio-content-sid">
                       <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />

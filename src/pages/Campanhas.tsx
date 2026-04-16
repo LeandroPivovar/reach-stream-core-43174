@@ -1553,18 +1553,28 @@ export default function Campanhas() {
                               const contentSid = val === 'none' ? undefined : val;
                               const tpl = twilioTemplates.find(t => t.sid === val);
                               let newVars: Record<string, string> = {};
-                              
-                              if (tpl && tpl.variables) {
-                                Object.keys(tpl.variables).forEach(k => {
-                                  newVars[k] = '';
-                                });
-                              }
-                              
                               let bodyText = newCampaign.email.content;
+
                               if (tpl && val !== 'none') {
                                 bodyText = tpl.types?.['twilio/text']?.body || tpl.types?.['twilio/media']?.body || bodyText;
-                              }
+                                
+                                // 1. Metadados
+                                if (tpl.variables) {
+                                  Object.keys(tpl.variables).forEach(k => {
+                                    newVars[k] = '';
+                                  });
+                                }
 
+                                // 2. Regex Fallback
+                                const matches = bodyText.match(/{{[^{}]+}}/g);
+                                if (matches) {
+                                  matches.forEach(match => {
+                                    const varName = match.replace(/[{}]/g, '');
+                                    if (!newVars[varName]) newVars[varName] = '';
+                                  });
+                                }
+                              }
+                              
                               setNewCampaign({
                                 ...newCampaign,
                                 email: {
