@@ -217,6 +217,19 @@ export default function Campanhas() {
   // Estado para armazenar compras e LTV dos contatos (necessário para o modal)
   const [contactPurchases, setContactPurchases] = useState<Record<number, { purchases: any[]; ltv: number }>>({});
 
+  const [twilioTemplates, setTwilioTemplates] = useState<any[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+
+  useEffect(() => {
+    if (newCampaign.campaignComplexity === 'simple' && currentStep === 5 && newCampaign.channel === 'whatsapp' && twilioTemplates.length === 0) {
+      setIsLoadingTemplates(true);
+      api.getTwilioTemplates()
+        .then(res => setTwilioTemplates(res || []))
+        .catch(console.error)
+        .finally(() => setIsLoadingTemplates(false));
+    }
+  }, [newCampaign.campaignComplexity, currentStep, newCampaign.channel, twilioTemplates.length]);
+
   const dynamicStats = useSegmentationStats(
     contacts,
     contactPurchases,
@@ -1531,8 +1544,91 @@ export default function Campanhas() {
                       </p>
                     </div>
 
+                      <div className="space-y-4 rounded border p-4 bg-primary/5">
+                        <div className="grid gap-2">
+                          <Label htmlFor="twilio-content-sid">Template Aprovado (Content API)</Label>
+                          <Select 
+                            value={(newCampaign.email as any).contentSid || 'none'} 
+                            onValueChange={(val) => {
+                              const contentSid = val === 'none' ? undefined : val;
+                              const tpl = twilioTemplates.find(t => t.sid === val);
+                              let newVars: Record<string, string> = {};
+                              
+                              if (tpl && tpl.variables) {
+                                Object.keys(tpl.variables).forEach(k => {
+                                  newVars[k] = '';
+                                });
+                              }
+                              
+                              setNewCampaign({
+                                ...newCampaign,
+                                email: {
+                                  ...newCampaign.email,
+                                  ...( { contentSid } as any ),
+                                  ...({ templateVariables: newVars } as any)
+                                }
+                              });
+                            }}
+                          >
+                            <SelectTrigger id="twilio-content-sid">
+                              <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Sem Template (Texto Livre)</SelectItem>
+                              {twilioTemplates.map(t => (
+                                <SelectItem key={t.sid} value={t.sid}>
+                                  {t.friendlyName} - {t.language}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            Selecione um modelo previamente aprovado na Meta para iniciar as conversas.
+                          </p>
+                        </div>
+
+                        {(newCampaign.email as any).contentSid && Object.keys((newCampaign.email as any).templateVariables || {}).length > 0 && (
+                          <div className="space-y-3 pt-3 border-t border-primary/20">
+                            <Label className="font-semibold text-primary">Preencher Variáveis do Template</Label>
+                            <div className="grid gap-3">
+                              {Object.keys((newCampaign.email as any).templateVariables).map(key => (
+                                <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border">
+                                  <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center">
+                                    {"{{" + key + "}}"}
+                                  </Label>
+                                  <Input 
+                                    value={(newCampaign.email as any).templateVariables[key] || ''}
+                                    onChange={e => {
+                                      const vars = { ...((newCampaign.email as any).templateVariables || {}) };
+                                      vars[key] = e.target.value;
+                                      setNewCampaign({
+                                        ...newCampaign,
+                                        email: {
+                                          ...newCampaign.email,
+                                          ...({ templateVariables: vars } as any)
+                                        }
+                                      });
+                                    }}
+                                    placeholder={`Valor para a variável ${key}`}
+                                    className="h-8 text-sm"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {!(newCampaign.email as any).contentSid && (
+                          <div className="grid gap-2 pt-2 border-t border-primary/10">
+                            <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                              ⚠️ <strong>Atenção:</strong> O envio de texto livre via Twilio só funciona caso a janela de 24 horas no WhatsApp já esteja aberta. Para campanhas (contato proativo fora da janela de 24h), é OBRIGATÓRIO usar um Template.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
                     <div className="grid gap-2">
-                      <Label htmlFor="whatsapp-content">Mensagem WhatsApp *</Label>
+                      <Label htmlFor="whatsapp-content">Mensagem WhatsApp {(newCampaign.email as any).contentSid ? '(Fallback)' : '*'}</Label>
                       <Textarea
                         id="whatsapp-content"
                         value={newCampaign.email.content}

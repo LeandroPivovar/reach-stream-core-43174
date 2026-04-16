@@ -37,7 +37,6 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
   const [content, setContent] = useState((data as any)?.content || '');
   const [media, setMedia] = useState<{ url: string; type: 'image' | 'video'; name: string }[]>((data as any)?.media || []);
   const [destinationUrl, setDestinationUrl] = useState((data as any)?.destinationUrl || '');
-  const [provider, setProvider] = useState<'zenvia' | 'twilio'>((data as any)?.provider || 'zenvia');
   const [contentSid, setContentSid] = useState((data as any)?.contentSid || '');
   const [templateVariablesText, setTemplateVariablesText] = useState(
     JSON.stringify((data as any)?.templateVariables || { '1': '{{nome}}' }, null, 2),
@@ -47,7 +46,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
   const [dynamicVariables, setDynamicVariables] = useState<Record<string, string>>((data as any)?.templateVariables || {});
 
   React.useEffect(() => {
-    if (isEditing && provider === 'twilio' && templates.length === 0) {
+    if (isEditing && templates.length === 0) {
       setIsLoadingTemplates(true);
       api.getTwilioTemplates()
         .then(res => {
@@ -69,7 +68,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
         .catch(err => console.error(err))
         .finally(() => setIsLoadingTemplates(false));
     }
-  }, [isEditing, provider]);
+  }, [isEditing, templates]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -91,7 +90,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
     let finalVars = templateVariablesText.trim() ? JSON.parse(templateVariablesText) : {};
     
     // Se selecionou um template da Twilio, usamos as dynamicVariables em vez do JSON bruto
-    if (provider === 'twilio' && contentSid && contentSid !== 'none') {
+    if (contentSid && contentSid !== 'none') {
        finalVars = dynamicVariables;
     }
 
@@ -99,7 +98,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
       content,
       media,
       destinationUrl,
-      provider,
+      provider: 'twilio',
       contentSid: contentSid === 'none' ? undefined : (contentSid.trim() || undefined),
       templateVariables: finalVars,
     });
@@ -152,20 +151,6 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
             <DialogTitle>Configurar WhatsApp</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="grid gap-2">
-              <Label>Provedor WhatsApp</Label>
-              <Select value={provider} onValueChange={(value: 'zenvia' | 'twilio') => setProvider(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="zenvia">Zenvia</SelectItem>
-                  <SelectItem value="twilio">Twilio</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {provider === 'twilio' && (
               <div className="space-y-4 rounded border p-4 bg-primary/5">
                 <div className="grid gap-2">
                   <Label htmlFor="twilio-content-sid">Template Aprovado (Content API)</Label>
@@ -228,7 +213,6 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                 </div>
                 )}
               </div>
-            )}
 
             <div className="grid gap-2">
               <Label htmlFor="whatsapp-content">Mensagem WhatsApp</Label>
