@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Phone, Settings, Trash2, Upload, X, Link2, Plus } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface WhatsappNodeData {
   content?: string;
@@ -41,6 +42,34 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
   const [templateVariablesText, setTemplateVariablesText] = useState(
     JSON.stringify((data as any)?.templateVariables || { '1': '{{nome}}' }, null, 2),
   );
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [dynamicVariables, setDynamicVariables] = useState<Record<string, string>>((data as any)?.templateVariables || {});
+
+  React.useEffect(() => {
+    if (isEditing && provider === 'twilio' && templates.length === 0) {
+      setIsLoadingTemplates(true);
+      api.getTwilioTemplates()
+        .then(res => {
+          setTemplates(res || []);
+          // Se já tem um contentSid salvo, inicializar as vars dinâmicas
+          if (contentSid && res) {
+            const currentTpl = res.find((t: any) => t.sid === contentSid);
+            if (currentTpl && currentTpl.variables) {
+               const savedVars = (data as any)?.templateVariables || {};
+               const newVars: Record<string, string> = { ...savedVars };
+               // Garante que todas as chaves do template existem no state
+               Object.keys(currentTpl.variables).forEach(k => {
+                 if (!newVars[k]) newVars[k] = '';
+               });
+               setDynamicVariables(newVars);
+            }
+          }
+        })
+        .catch(err => console.error(err))
+        .finally(() => setIsLoadingTemplates(false));
+    }
+  }, [isEditing, provider]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -59,11 +88,11 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
   };
 
   const handleSave = () => {
-    let templateVariables: Record<string, string> = {};
-    try {
-      templateVariables = templateVariablesText.trim() ? JSON.parse(templateVariablesText) : {};
-    } catch {
-      templateVariables = {};
+    let finalVars = templateVariablesText.trim() ? JSON.parse(templateVariablesText) : {};
+    
+    // Se selecionou um template da Twilio, usamos as dynamicVariables em vez do JSON bruto
+    if (provider === 'twilio' && contentSid && contentSid !== 'none') {
+       finalVars = dynamicVariables;
     }
 
     (data as any).onUpdate({
@@ -71,8 +100,8 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
       media,
       destinationUrl,
       provider,
-      contentSid: contentSid.trim() || undefined,
-      templateVariables,
+      contentSid: contentSid === 'none' ? undefined : (contentSid.trim() || undefined),
+      templateVariables: finalVars,
     });
     setIsEditing(false);
   };
@@ -137,33 +166,67 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
             </div>
 
             {provider === 'twilio' && (
-              <div className="space-y-3 rounded border p-3 bg-primary/5">
+              <div className="space-y-4 rounded border p-4 bg-primary/5">
                 <div className="grid gap-2">
-                  <Label htmlFor="twilio-content-sid">Content SID (Template WhatsApp)</Label>
-                  <Input
-                    id="twilio-content-sid"
-                    placeholder="HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    value={contentSid}
-                    onChange={(e) => setContentSid(e.target.value)}
-                  />
+                  <Label htmlFor="twilio-content-sid">Template Aprovado (Content API)</Label>
+                  <Select value={contentSid || 'none'} onValueChange={(val) => {
+                    setContentSid(val === 'none' ? '' : val);
+                    const tpl = templates.find(t => t.sid === val);
+                    if (tpl && tpl.variables) {
+                      const newVars: Record<string, string> = {};
+                      Object.keys(tpl.variables).forEach(k => {
+                        newVars[k] = dynamicVariables[k] || ''; 
+                      });
+                      setDynamicVariables(newVars);
+                    } else {
+                      setDynamicVariables({});
+                    }
+                  }}>
+                    <SelectTrigger id="twilio-content-sid">
+                      <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem Template (Texto Livre)</SelectItem>
+                      {templates.map(t => (
+                        <SelectItem key={t.sid} value={t.sid}>
+                          {t.friendlyName} - {t.language}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-muted-foreground">
-                    Se preenchido, a campanha envia template aprovado da Twilio. Se vazio, envia texto livre.
+                    Selecione um modelo previamente aprovado na Meta para iniciar as conversas.
                   </p>
                 </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="twilio-template-vars">Variáveis do Template (JSON)</Label>
-                  <textarea
-                    id="twilio-template-vars"
-                    value={templateVariablesText}
-                    onChange={(e) => setTemplateVariablesText(e.target.value)}
-                    rows={5}
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Exemplo: {"{ \"1\": \"João\", \"2\": \"15/05/2026\" }"}
+                {contentSid && contentSid !== 'none' && Object.keys(dynamicVariables).length > 0 && (
+                  <div className="space-y-3 pt-3 border-t border-primary/20">
+                    <Label className="font-semibold text-primary">Preencher Variáveis do Template</Label>
+                    <div className="grid gap-3">
+                      {Object.keys(dynamicVariables).map(key => (
+                        <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border">
+                          <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center">
+                            {"{{" + key + "}}"}
+                          </Label>
+                          <Input 
+                            value={dynamicVariables[key] || ''}
+                            onChange={e => setDynamicVariables({...dynamicVariables, [key]: e.target.value})}
+                            placeholder={`Valor para a variável ${key}`}
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {(!contentSid || contentSid === 'none') && (
+                  <div className="grid gap-2 pt-2 border-t border-primary/10">
+                  <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                    ⚠️ <strong>Atenção:</strong> O envio de texto livre via Twilio só funciona caso a janela de 24 horas no WhatsApp já esteja aberta. Para o primeiro contato (Campanha), é OBRIGATÓRIO usar um Template.
                   </p>
                 </div>
+                )}
               </div>
             )}
 
