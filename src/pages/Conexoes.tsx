@@ -491,30 +491,24 @@ export default function Conexoes() {
             <div className="bg-green-500/5 border border-green-500/10 p-4 rounded-lg">
               <p className="text-xs text-green-700 flex items-center gap-2">
                 <Info className="w-4 h-4" />
-                O WhatsApp já está disponível via sistema. Use isto apenas se quiser usar seu próprio número Twilio.
+                Deseja utilizar seu próprio número da Twilio para os envios?
               </p>
             </div>
 
+            <p className="text-sm text-muted-foreground p-2">
+              Ao clicar em solicitar, nossa equipe entrará em contato ou habilitará a configuração do seu número próprio no painel. O WhatsApp via sistema continua disponível para uso imediato.
+            </p>
+
             <div className="space-y-2">
-              <Label htmlFor="friendlyName">Identificação (Opcional)</Label>
+              <Label htmlFor="friendlyName">Identificação da Conexão (Opcional)</Label>
               <Input 
                 id="friendlyName" 
-                placeholder="Ex: Comercial Principal" 
+                placeholder="Ex: Comercial WhatsApp" 
                 value={twilioForm.friendlyName}
                 onChange={(e) => setTwilioForm({ ...twilioForm, friendlyName: e.target.value })}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="whatsappFrom">Seu Número de WhatsApp (E.164)</Label>
-              <Input 
-                id="whatsappFrom" 
-                placeholder="+5511999998888" 
-                value={twilioForm.whatsappFrom}
-                onChange={(e) => setTwilioForm({ ...twilioForm, whatsappFrom: e.target.value })}
-              />
               <p className="text-[11px] text-muted-foreground">
-                Insira o número que você configurou no Console da Twilio.
+                Um nome para você identificar este número futuramente.
               </p>
             </div>
           </div>
@@ -523,9 +517,9 @@ export default function Conexoes() {
             <Button variant="outline" onClick={() => setIsTwilioModalOpen(false)}>Cancelar</Button>
             <Button 
               onClick={() => createTwilioMutation.mutate(twilioForm)}
-              disabled={createTwilioMutation.isPending || !twilioForm.whatsappFrom}
+              disabled={createTwilioMutation.isPending}
             >
-              {createTwilioMutation.isPending ? 'Enviando...' : 'Solicitar Configuração'}
+              {createTwilioMutation.isPending ? 'Enviando...' : 'Enviar Solicitação'}
             </Button>
           </div>
         </DialogContent>

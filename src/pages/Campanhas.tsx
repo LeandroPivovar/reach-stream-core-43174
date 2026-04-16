@@ -1623,32 +1623,81 @@ export default function Campanhas() {
 
                         {(newCampaign.email as any).contentSid && Object.keys((newCampaign.email as any).templateVariables || {}).length > 0 && (
                           <div className="space-y-3 pt-3 border-t border-primary/20">
-                            <Label className="font-semibold text-primary">Preencher Variáveis do Template</Label>
+                            <div className="flex items-center justify-between">
+                              <Label className="font-semibold text-primary">Preencher Variáveis do Template</Label>
+                              <div className="flex gap-1">
+                                {[
+                                  { label: 'Cupom', value: '{{cupom_nome}}' },
+                                  { label: 'Valor', value: '{{cupom_valor}}' },
+                                  { label: 'Validade', value: '{{cupom_validade}}' },
+                                  { label: 'Link', value: '{{link_rastreio}}' },
+                                  { label: 'Nome', value: '{{nome}}' }
+                                ].map(v => (
+                                  <Badge 
+                                    key={v.value} 
+                                    variant="outline" 
+                                    className="cursor-help text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
+                                    title={`Use ${v.value} para substituir pelo valor dinâmico`}
+                                  >
+                                    {v.label}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
                             <div className="grid gap-3">
                               {Object.keys((newCampaign.email as any).templateVariables).map(key => (
-                                <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border">
+                                <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border group">
                                   <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center">
                                     {"{{" + key + "}}"}
                                   </Label>
-                                  <Input 
-                                    value={(newCampaign.email as any).templateVariables[key] || ''}
-                                    onChange={e => {
-                                      const vars = { ...((newCampaign.email as any).templateVariables || {}) };
-                                      vars[key] = e.target.value;
-                                      setNewCampaign({
-                                        ...newCampaign,
-                                        email: {
-                                          ...newCampaign.email,
-                                          ...({ templateVariables: vars } as any)
-                                        }
-                                      });
-                                    }}
-                                    placeholder={`Valor para a variável ${key}`}
-                                    className="h-8 text-sm"
-                                  />
+                                  <div className="relative">
+                                    <Input 
+                                      value={(newCampaign.email as any).templateVariables[key] || ''}
+                                      onChange={e => {
+                                        const vars = { ...((newCampaign.email as any).templateVariables || {}) };
+                                        vars[key] = e.target.value;
+                                        setNewCampaign({
+                                          ...newCampaign,
+                                          email: {
+                                            ...newCampaign.email,
+                                            ...({ templateVariables: vars } as any)
+                                          }
+                                        });
+                                      }}
+                                      placeholder={`Ex: {{nome}} ou texto fixo`}
+                                      className="h-8 text-sm pr-20"
+                                    />
+                                    <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      {['{{nome}}', '{{cupom_nome}}', '{{link_rastreio}}'].map(v => (
+                                        <Button
+                                          key={v}
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-6 w-6 text-[10px]"
+                                          onClick={() => {
+                                            const vars = { ...((newCampaign.email as any).templateVariables || {}) };
+                                            vars[key] = (vars[key] || '') + v;
+                                            setNewCampaign({
+                                              ...newCampaign,
+                                              email: {
+                                                ...newCampaign.email,
+                                                ...({ templateVariables: vars } as any)
+                                              }
+                                            });
+                                          }}
+                                          title={`Inserir ${v}`}
+                                        >
+                                          <Plus className="h-3 w-3" />
+                                        </Button>
+                                      ))}
+                                    </div>
+                                  </div>
                                 </div>
                               ))}
                             </div>
+                            <p className="text-[10px] text-muted-foreground italic">
+                              Dica: Você pode usar variáveis do sistema como <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{link_rastreio}}"}</strong> ou <strong>{"{{nome}}"}</strong>.
+                            </p>
                           </div>
                         )}
                         
