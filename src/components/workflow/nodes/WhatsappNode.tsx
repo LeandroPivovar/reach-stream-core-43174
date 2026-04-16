@@ -161,7 +161,14 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                     let bodyText = '';
 
                     if (tpl && val !== 'none') {
-                      bodyText = tpl.types?.['twilio/text']?.body || tpl.types?.['twilio/media']?.body || '';
+                      // Tentar encontrar o body em qualquer um dos tipos (text, media, list-picker, etc)
+                      const typeKeys = Object.keys(tpl.types || {});
+                      for (const type of typeKeys) {
+                        if (tpl.types[type].body) {
+                          bodyText = tpl.types[type].body;
+                          break;
+                        }
+                      }
                       
                       // 1. Tentar pegar as variáveis dos metadados da Twilio
                       if (tpl.variables) {
@@ -170,11 +177,13 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                         });
                       }
 
-                      // 2. Fallback: Extrair variáveis do corpo do texto usando Regex {{variável}}
+                      // 2. Prioridade Total: Extrair variáveis do corpo do texto usando Regex {{variável}}
+                      // Isso resolve discrepâncias entre metadados (ex: 'time') e corpo (ex: 'date')
                       const matches = bodyText.match(/{{[^{}]+}}/g);
                       if (matches) {
                         matches.forEach(match => {
                           const varName = match.replace(/[{}]/g, '');
+                          // Se já existia algo do metadado, mantemos, se não, adicionamos a nova chave detectada
                           if (!detectedVars[varName]) {
                             detectedVars[varName] = '';
                           }

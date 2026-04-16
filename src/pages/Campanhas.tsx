@@ -1556,7 +1556,14 @@ export default function Campanhas() {
                               let bodyText = newCampaign.email.content;
 
                               if (tpl && val !== 'none') {
-                                bodyText = tpl.types?.['twilio/text']?.body || tpl.types?.['twilio/media']?.body || bodyText;
+                                // Tentar encontrar o body em qualquer um dos tipos (text, media, list-picker, etc)
+                                const typeKeys = Object.keys(tpl.types || {});
+                                for (const type of typeKeys) {
+                                  if (tpl.types[type].body) {
+                                    bodyText = tpl.types[type].body;
+                                    break;
+                                  }
+                                }
                                 
                                 // 1. Metadados
                                 if (tpl.variables) {
@@ -1565,7 +1572,7 @@ export default function Campanhas() {
                                   });
                                 }
 
-                                // 2. Regex Fallback
+                                // 2. Prioridade: Extrair variáveis do corpo do texto usando Regex {{variável}}
                                 const matches = bodyText.match(/{{[^{}]+}}/g);
                                 if (matches) {
                                   matches.forEach(match => {
