@@ -1455,6 +1455,12 @@ class ApiService {
     });
   }
 
+  async getTwilioTemplates(): Promise<any[]> {
+    return this.request<any[]>('/campaigns/twilio/templates', {
+      method: 'GET',
+    });
+  }
+
   // Nuvemshop Integration
   async initNuvemshopAuth(): Promise<{ authUrl: string; state: string }> {
     return this.request<{ authUrl: string; state: string }>('/nuvemshop/auth/init', {
