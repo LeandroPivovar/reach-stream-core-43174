@@ -1560,12 +1560,18 @@ export default function Campanhas() {
                                 });
                               }
                               
+                              let bodyText = newCampaign.email.content;
+                              if (tpl && val !== 'none') {
+                                bodyText = tpl.types?.['twilio/text']?.body || tpl.types?.['twilio/media']?.body || bodyText;
+                              }
+
                               setNewCampaign({
                                 ...newCampaign,
                                 email: {
                                   ...newCampaign.email,
                                   ...( { contentSid } as any ),
-                                  ...({ templateVariables: newVars } as any)
+                                  ...({ templateVariables: newVars } as any),
+                                  content: bodyText
                                 }
                               });
                             }}

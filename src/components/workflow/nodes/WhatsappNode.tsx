@@ -166,6 +166,10 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                     } else {
                       setDynamicVariables({});
                     }
+                    if (tpl && val !== 'none') {
+                      const bodyText = tpl.types?.['twilio/text']?.body || tpl.types?.['twilio/media']?.body;
+                      if (bodyText) setContent(bodyText);
+                    }
                   }}>
                     <SelectTrigger id="twilio-content-sid">
                       <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
