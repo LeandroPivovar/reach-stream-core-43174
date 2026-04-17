@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Settings, Shield, Globe, CreditCard, Save, RefreshCw, Mail, Cpu } from 'lucide-react';
+import { Settings, Shield, Globe, CreditCard, Save, RefreshCw, Mail, Cpu, MessageSquare } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -113,6 +113,9 @@ export default function AdminSettings() {
                     </TabsTrigger>
                     <TabsTrigger value="zenvia" className="flex items-center gap-2">
                         <Globe className="w-4 h-4" /> Zenvia
+                    </TabsTrigger>
+                    <TabsTrigger value="whatsapp" className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" /> WhatsApp
                     </TabsTrigger>
                     <TabsTrigger value="security" className="flex items-center gap-2">
                         <Shield className="w-4 h-4" /> Segurança
@@ -236,6 +239,55 @@ export default function AdminSettings() {
                                 Estas configurações estão sendo migradas. Por enquanto, os tokens e IDs da Zenvia são gerenciados via variáveis de ambiente.
                             </p>
                         </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="whatsapp" className="space-y-4">
+                    <Card className="border-border/60 shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-xl">Pacotes de Créditos WhatsApp</CardTitle>
+                            <CardDescription>
+                                Configure os 3 pacotes disponíveis para os usuários comprarem créditos adicionais de WhatsApp.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {[1, 2, 3].map((num) => (
+                                    <div key={num} className="space-y-4 p-4 border rounded-lg bg-muted/10">
+                                        <h3 className="font-bold flex items-center gap-2 text-primary">
+                                            Pacote {num}
+                                        </h3>
+                                        <div className="space-y-2">
+                                            <Label htmlFor={`WHATSAPP_PKG${num}_AMOUNT`}>Quantidade de Disparos</Label>
+                                            <Input
+                                                id={`WHATSAPP_PKG${num}_AMOUNT`}
+                                                type="number"
+                                                value={localSettings[`WHATSAPP_PKG${num}_AMOUNT`] || ''}
+                                                onChange={(e) => handleInputChange(`WHATSAPP_PKG${num}_AMOUNT`, e.target.value)}
+                                                placeholder="Ex: 1000"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor={`WHATSAPP_PKG${num}_PRICE`}>Preço (R$)</Label>
+                                            <Input
+                                                id={`WHATSAPP_PKG${num}_PRICE`}
+                                                type="number"
+                                                step="0.01"
+                                                value={localSettings[`WHATSAPP_PKG${num}_PRICE`] || ''}
+                                                onChange={(e) => handleInputChange(`WHATSAPP_PKG${num}_PRICE`, e.target.value)}
+                                                placeholder="Ex: 50.00"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                        <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
+                            <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
+                                {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Salvar Configurações
+                            </Button>
+                        </CardFooter>
                     </Card>
                 </TabsContent>
 

@@ -483,7 +483,7 @@ export default function Vendas() {
                           {campanha.vendas}
                         </td>
                         <td className="py-4 px-2 text-right font-semibold text-success">
-                          R$ {campanha.faturamento.toLocaleString('pt-BR')}
+                          R$ {campanha.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td className="py-4 px-2 text-right text-muted-foreground">
                           R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -497,7 +497,7 @@ export default function Vendas() {
                     <td className="py-4 px-2" colSpan={2}>Total</td>
                     <td className="py-4 px-2 text-right">{dashboardStats?.vendas || 0}</td>
                     <td className="py-4 px-2 text-right text-success">
-                      R$ {(dashboardStats?.faturamento || 0).toLocaleString('pt-BR')}
+                      R$ {(dashboardStats?.faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="py-4 px-2 text-right text-muted-foreground">
                       R$ {(dashboardStats?.ticketMedio || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -532,7 +532,7 @@ export default function Vendas() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-success">
-                          R$ {totalFaturamento.toLocaleString('pt-BR')}
+                          R$ {totalFaturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {totalVendas} vendas ({(percentual || 0).toFixed(1)}%)
@@ -578,7 +578,7 @@ export default function Vendas() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-success">
-                          R$ {produto.faturamento.toLocaleString('pt-BR')}
+                          R$ {produto.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /un

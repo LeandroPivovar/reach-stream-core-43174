@@ -199,7 +199,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                       <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
                     </SelectTrigger>
                     <SelectContent>
-                            <SelectItem value="none">Sem Template (Texto Livre)</SelectItem>
+                            {isLoadingTemplates && <SelectItem value="loading" disabled>Carregando templates...</SelectItem>}
                             {templates.map(t => {
                               const type = Object.keys(t.types || {})[0]?.split('/').pop() || 'unknown';
                               return (
@@ -284,8 +284,8 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                 
                 {(!contentSid || contentSid === 'none') && (
                   <div className="grid gap-2 pt-2 border-t border-primary/10">
-                  <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
-                    ⚠️ <strong>Atenção:</strong> O envio de texto livre via Twilio só funciona caso a janela de 24 horas no WhatsApp já esteja aberta. Para o primeiro contato (Campanha), é OBRIGATÓRIO usar um Template.
+                  <p className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                    🚫 <strong>Template obrigatório:</strong> Para campanhas proativas via WhatsApp, é OBRIGATÓRIO selecionar um template aprovado na Meta. Mensagens sem template serão bloqueadas.
                   </p>
                 </div>
                 )}
@@ -386,7 +386,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
               <Button variant="outline" onClick={() => setIsEditing(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave}>Salvar</Button>
+              <Button onClick={handleSave} disabled={!contentSid || contentSid === 'none'}>Salvar</Button>
             </div>
           </div>
         </DialogContent>

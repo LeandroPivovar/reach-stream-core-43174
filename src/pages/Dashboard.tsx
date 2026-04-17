@@ -405,12 +405,22 @@ export default function Dashboard() {
                             {(campaignStats?.channelPerformance || []).map((perf: any, index: number) => (
                                 <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
                                     <div className="flex items-center space-x-3">
-                                        <div className={`w-3 h-3 rounded-full ${perf.channel === 'whatsapp' ? 'bg-green-500' : perf.channel === 'email' ? 'bg-blue-500' : 'bg-orange-500'}`}></div>
-                                        <span className="font-medium capitalize">{perf.channel}</span>
+                                        <div className={`w-3 h-3 rounded-full ${
+                                            perf.channel === 'whatsapp' ? 'bg-green-500' : 
+                                            perf.channel === 'email' ? 'bg-blue-500' : 
+                                            perf.channel === 'sms' ? 'bg-orange-500' : 
+                                            'bg-slate-400'
+                                        }`}></div>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium capitalize">{perf.channel}</span>
+                                            <span className="text-xs text-muted-foreground">{perf.envios.toLocaleString()} envios</span>
+                                        </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-semibold">{perf.envios.toLocaleString()} envios</p>
-                                        <p className="text-sm text-muted-foreground">{(perf.taxaEntrega || 0).toFixed(1)}% entrega</p>
+                                        <p className="font-semibold text-primary">
+                                            {formatCurrency(perf.receita || 0)}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">{(perf.taxaEntrega || 0).toFixed(1)}% entrega</p>
                                     </div>
                                 </div>
                             ))}
