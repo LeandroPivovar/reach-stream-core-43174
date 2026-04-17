@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Smartphone, Mail, QrCode, CreditCard, ShieldCheck, Loader2, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Smartphone, Mail, QrCode, CreditCard, ShieldCheck, Loader2, ChevronRight, CheckCircle2, MessageSquare } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,12 +19,13 @@ interface BuyCreditsModalProps {
 export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalProps) {
     const { user } = useAuth();
     const [step, setStep] = useState(1); // 1: Config, 2: Checkout (if Card), 3: Success/QR
-    const [creditType, setCreditType] = useState<'email' | 'sms'>('email');
+    const [creditType, setCreditType] = useState<'email' | 'sms' | 'whatsapp'>('email');
     const [amount, setAmount] = useState<number>(1000);
     const [billingType, setBillingType] = useState<'PIX' | 'CREDIT_CARD'>('PIX');
     const [loading, setLoading] = useState(false);
     const [qrCode, setQrCode] = useState<any>(null);
     const [paymentSuccess, setPaymentSuccess] = useState(false);
+    const [whatsappPackages, setWhatsappPackages] = useState<any[]>([]);
 
     const [cardData, setCardData] = useState({
         number: '',
@@ -40,8 +41,23 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
         address: user?.address || ''
     });
 
-    const pricePerUnit = creditType === 'email' ? 0.30 : 0.40;
-    const totalValue = (amount * pricePerUnit).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    useEffect(() => {
+        if (isOpen) {
+            api.getSystemSettings().then(settings => {
+                const pkgs = [
+                    { amount: parseInt(settings.find(s => s.key === 'WHATSAPP_PKG1_AMOUNT')?.value || '0'), price: parseFloat(settings.find(s => s.key === 'WHATSAPP_PKG1_PRICE')?.value || '0') },
+                    { amount: parseInt(settings.find(s => s.key === 'WHATSAPP_PKG2_AMOUNT')?.value || '0'), price: parseFloat(settings.find(s => s.key === 'WHATSAPP_PKG2_PRICE')?.value || '0') },
+                    { amount: parseInt(settings.find(s => s.key === 'WHATSAPP_PKG3_AMOUNT')?.value || '0'), price: parseFloat(settings.find(s => s.key === 'WHATSAPP_PKG3_PRICE')?.value || '0') },
+                ].filter(p => p.amount > 0);
+                setWhatsappPackages(pkgs);
+            });
+        }
+    }, [isOpen]);
+
+    const currentPkg = creditType === 'whatsapp' ? whatsappPackages.find(p => p.amount === amount) : null;
+    const pricePerUnit = creditType === 'whatsapp' ? (currentPkg ? currentPkg.price / currentPkg.amount : 0.50) : (creditType === 'email' ? 0.30 : 0.40);
+    const totalValueRaw = creditType === 'whatsapp' && currentPkg ? currentPkg.price : (amount * pricePerUnit);
+    const totalValue = totalValueRaw.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     // Sync billing info if user data arrives
     useEffect(() => {
@@ -68,8 +84,9 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
 
     useEffect(() => {
         if (creditType === 'email') setAmount(1000);
-        else setAmount(500);
-    }, [creditType]);
+        else if (creditType === 'sms') setAmount(500);
+        else if (creditType === 'whatsapp' && whatsappPackages.length > 0) setAmount(whatsappPackages[0].amount);
+    }, [creditType, whatsappPackages]);
 
     const handleBuy = async () => {
         if (amount < 100) {
@@ -160,56 +177,98 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                     <div className="space-y-6 py-4">
                         <div className="space-y-3">
                             <Label>Tipo de Crédito</Label>
-                            <RadioGroup value={creditType} onValueChange={(val: 'email' | 'sms') => setCreditType(val)} className="flex space-x-4">
-                                <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                            <RadioGroup value={creditType} onValueChange={(val: any) => setCreditType(val)} className="flex flex-wrap gap-3">
+                                <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 min-w-[120px] cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
                                     <RadioGroupItem value="email" id="c_email" />
                                     <Label htmlFor="c_email" className="flex items-center space-x-2 cursor-pointer w-full">
                                         <Mail className="w-4 h-4 text-primary" />
                                         <span>E-mail</span>
                                     </Label>
                                 </div>
-                                <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 min-w-[120px] cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
                                     <RadioGroupItem value="sms" id="c_sms" />
                                     <Label htmlFor="c_sms" className="flex items-center space-x-2 cursor-pointer w-full">
                                         <Smartphone className="w-4 h-4 text-primary" />
                                         <span>SMS</span>
                                     </Label>
                                 </div>
+                                <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 min-w-[120px] cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <RadioGroupItem value="whatsapp" id="c_whatsapp" />
+                                    <Label htmlFor="c_whatsapp" className="flex items-center space-x-2 cursor-pointer w-full">
+                                        <MessageSquare className="w-4 h-4 text-primary" />
+                                        <span>WhatsApp</span>
+                                    </Label>
+                                </div>
                             </RadioGroup>
                         </div>
 
                         <div className="space-y-3">
-                            <Label>Quantidade</Label>
-                            <div className="flex space-x-2">
-                                {[100, 500, 1000, 5000].map(val => (
-                                    <Button
-                                        key={val}
-                                        variant={amount === val ? 'default' : 'outline'}
-                                        size="sm"
-                                        className="flex-1"
-                                        onClick={() => setAmount(val)}
-                                    >
-                                        {val}
-                                    </Button>
-                                ))}
-                            </div>
-                            <div className="pt-2">
-                                <Label className="text-xs text-muted-foreground">Outro valor (Mín. 100)</Label>
-                                <Input
-                                    type="number"
-                                    min="100"
-                                    step="100"
-                                    value={amount}
-                                    onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
-                                    className="mt-1"
-                                />
-                            </div>
+                            <Label>{creditType === 'whatsapp' ? 'Selecione o Pacote' : 'Quantidade'}</Label>
+                            {creditType === 'whatsapp' ? (
+                                <div className="grid grid-cols-1 gap-3">
+                                    {whatsappPackages.map((pkg, idx) => (
+                                        <div 
+                                            key={idx}
+                                            onClick={() => setAmount(pkg.amount)}
+                                            className={`flex justify-between items-center p-4 border rounded-xl cursor-pointer transition-all ${amount === pkg.amount ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:border-primary/50'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${amount === pkg.amount ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+                                                    <MessageSquare className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm">{pkg.amount} Envios</p>
+                                                    <p className="text-xs text-muted-foreground">Créditos Vitalícios</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-lg text-primary">R$ {pkg.price.toFixed(2).replace('.', ',')}</p>
+                                                <p className="text-[10px] text-muted-foreground">R$ {(pkg.price / pkg.amount).toFixed(2).replace('.', ',')} / envio</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {whatsappPackages.length === 0 && (
+                                        <p className="text-sm text-muted-foreground italic bg-muted/20 p-4 rounded-lg text-center">
+                                            Nenhum pacote de WhatsApp disponível no momento.
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex space-x-2">
+                                        {[100, 500, 1000, 5000].map(val => (
+                                            <Button
+                                                key={val}
+                                                variant={amount === val ? 'default' : 'outline'}
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={() => setAmount(val)}
+                                            >
+                                                {val}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <div className="pt-2">
+                                        <Label className="text-xs text-muted-foreground">Outro valor (Mín. 100)</Label>
+                                        <Input
+                                            type="number"
+                                            min="100"
+                                            step="100"
+                                            value={amount}
+                                            onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
+                                            className="mt-1"
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         <Card className="p-4 bg-muted/50">
                             <div className="flex justify-between items-center text-sm mb-1">
                                 <span className="text-muted-foreground">Preço por {creditType.toUpperCase()}</span>
-                                <span className="font-medium">R$ {pricePerUnit.toFixed(2).replace('.', ',')}</span>
+                                <span className="font-medium">
+                                    {creditType === 'whatsapp' && currentPkg ? '-' : `R$ ${pricePerUnit.toFixed(2).replace('.', ',')}`}
+                                </span>
                             </div>
                             <div className="flex justify-between items-center border-t border-border pt-2 mt-2">
                                 <span className="font-semibold text-base">Total</span>

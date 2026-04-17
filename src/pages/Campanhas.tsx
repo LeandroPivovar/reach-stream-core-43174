@@ -1489,12 +1489,25 @@ export default function Campanhas() {
                   </Card>
 
                   <Card
-                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : ''
-                      }`}
+                    className={`p-6 transition-colors relative ${
+                      !subscriptionStats || subscriptionStats.whatsappLimit === 0
+                        ? 'opacity-60 cursor-not-allowed border-dashed'
+                        : 'cursor-pointer hover:border-primary ' + (newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : '')
+                    }`}
                     onClick={() => {
-                      setNewCampaign({ ...newCampaign, channel: 'whatsapp' });
+                      if (subscriptionStats && subscriptionStats.whatsappLimit > 0) {
+                        setNewCampaign({ ...newCampaign, channel: 'whatsapp' });
+                      }
                     }}
                   >
+                    {(!subscriptionStats || subscriptionStats.whatsappLimit === 0) && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70 rounded-lg z-10">
+                        <div className="bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-2 text-center">
+                          <p className="text-xs font-bold text-destructive">🔒 Sem créditos WhatsApp</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">Compre um pacote adicional para liberar</p>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 bg-green-600/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         <MessageSquare className="w-6 h-6 text-green-600" />
@@ -1504,6 +1517,13 @@ export default function Campanhas() {
                         <p className="text-sm text-muted-foreground">
                           Mensagens via WhatsApp Business com suporte a mídia e botões interativos.
                         </p>
+                        {subscriptionStats && (
+                          <p className="text-xs mt-2 font-medium text-green-700">
+                            {subscriptionStats.whatsappLimit > 0
+                              ? `✅ ${subscriptionStats.whatsappLimit.toLocaleString('pt-BR')} créditos disponíveis`
+                              : '❌ Nenhum crédito disponível'}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </Card>
@@ -1598,7 +1618,7 @@ export default function Campanhas() {
                               <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="none">Sem Template (Texto Livre)</SelectItem>
+                              {isLoadingTemplates && <SelectItem value="loading" disabled>Carregando templates...</SelectItem>}
                               {twilioTemplates.map(t => {
                                 const type = Object.keys(t.types || {})[0]?.split('/').pop() || 'unknown';
                                 return (
@@ -2046,7 +2066,9 @@ export default function Campanhas() {
                   disabled={
                     newCampaign.channel === 'email'
                       ? !newCampaign.email.subject || !newCampaign.email.content
-                      : !newCampaign.email.content
+                      : newCampaign.channel === 'whatsapp'
+                        ? !(newCampaign.email as any).contentSid
+                        : !newCampaign.email.content
                   }
                 >
                   Próximo
@@ -2609,36 +2631,68 @@ export default function Campanhas() {
                   </p>
                 </Card>
 
-                <Card className="p-4 border-green-500/20 bg-green-500/5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap className="w-5 h-5 text-green-500" />
-                    <span className="text-sm font-medium text-muted-foreground">Envios restantes</span>
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">
-                    {(() => {
-                      if (!subscriptionStats) return '...';
-                      const channel = newCampaign.channel;
-                      let limit = 0;
-                      let used = 0;
+                {(() => {
+                  const channel = newCampaign.channel;
+                  let remaining = 0;
+                  let isWhatsapp = channel === 'whatsapp';
 
-                      if (channel === 'email') {
-                        limit = subscriptionStats.emailsLimit;
-                        used = subscriptionStats.emailsSent;
-                      } else if (channel === 'sms') {
-                        limit = subscriptionStats.smsLimit;
-                        used = subscriptionStats.smsSent;
-                      } else if (channel === 'whatsapp') {
-                        limit = subscriptionStats.whatsappLimit;
-                        used = subscriptionStats.whatsappSent;
-                      }
+                  if (subscriptionStats) {
+                    if (channel === 'email') remaining = Math.max(0, subscriptionStats.emailsLimit - subscriptionStats.emailsSent);
+                    else if (channel === 'sms') remaining = Math.max(0, subscriptionStats.smsLimit - subscriptionStats.smsSent);
+                    else if (channel === 'whatsapp') remaining = Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0));
+                  }
 
-                      if (limit === -1) return 'Ilimitado';
-                      const remaining = Math.max(0, limit - used);
-                      return remaining.toLocaleString('pt-BR');
-                    })()}
-                  </p>
-                </Card>
+                  const willExceed = subscriptionStats && filteredContacts.length > remaining;
+
+                  return (
+                    <Card className={`p-4 ${
+                      isWhatsapp && willExceed
+                        ? 'border-destructive/50 bg-destructive/5'
+                        : 'border-green-500/20 bg-green-500/5'
+                    }`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Zap className={`w-5 h-5 ${isWhatsapp && willExceed ? 'text-destructive' : 'text-green-500'}`} />
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {isWhatsapp ? 'Créditos WhatsApp restantes' : 'Envios restantes'}
+                        </span>
+                      </div>
+                      <p className={`text-2xl font-bold ${
+                        isWhatsapp && willExceed ? 'text-destructive' : 'text-foreground'
+                      }`}>
+                        {subscriptionStats ? remaining.toLocaleString('pt-BR') : '...'}
+                      </p>
+                      {isWhatsapp && subscriptionStats && (
+                        <p className="text-xs mt-1 text-muted-foreground">
+                          Serão consumidos: <strong>{Math.min(filteredContacts.length, remaining).toLocaleString('pt-BR')}</strong>
+                        </p>
+                      )}
+                    </Card>
+                  );
+                })()}
               </div>
+
+              {/* Warning: insufficient WhatsApp credits */}
+              {newCampaign.channel === 'whatsapp' && subscriptionStats && (
+                subscriptionStats.whatsappLimit === 0 ? (
+                  <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/30 rounded-lg p-4 mt-4">
+                    <MessageSquare className="w-5 h-5 text-destructive flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-destructive">Sem créditos WhatsApp</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Você não possui créditos WhatsApp disponíveis. Compre um pacote adicional antes de criar a campanha.</p>
+                    </div>
+                  </div>
+                ) : filteredContacts.length > (subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)) ? (
+                  <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mt-4">
+                    <Zap className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-amber-700">⚠️ Créditos insuficientes</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Você tem {Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')} créditos, mas a campanha precisa de {filteredContacts.length.toLocaleString('pt-BR')}. Apenas os primeiros {Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')} serão enviados.
+                      </p>
+                    </div>
+                  </div>
+                ) : null
+              )}
 
               <div className="grid gap-4 mt-6">
                 <Label>Quando enviar a campanha?</Label>
@@ -2709,7 +2763,8 @@ export default function Campanhas() {
                   onClick={handleCreateCampaign}
                   disabled={
                     (newCampaign.scheduleType === 'schedule' &&
-                      (!newCampaign.scheduleDate || !newCampaign.scheduleTime))
+                      (!newCampaign.scheduleDate || !newCampaign.scheduleTime)) ||
+                    (newCampaign.channel === 'whatsapp' && subscriptionStats && subscriptionStats.whatsappLimit === 0)
                   }
                 >
                   {newCampaign.scheduleType === 'now' ? (
