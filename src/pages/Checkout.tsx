@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CheckCircle2, ShieldCheck, ChevronRight, CreditCard, Box, User as UserIcon, Loader2 } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, ChevronRight, CreditCard, Box, User as UserIcon, Loader2, QrCode, Copy } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, Plan } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
@@ -37,6 +37,7 @@ export default function Checkout() {
     });
 
     const [asaasResult, setAsaasResult] = useState<{ invoiceUrl: string } | null>(null);
+    const [qrCode, setQrCode] = useState<{ payload: string, encodedImage: string, expirationDate: string } | null>(null);
     const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
     const [statusPollingInterval, setStatusPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
@@ -129,6 +130,7 @@ export default function Checkout() {
             });
 
             setAsaasResult(result.asaas || null);
+            setQrCode(result.qrCode || null);
             setStep(4); // Aguardando pagamento
             startPolling();
         } catch (error: any) {
@@ -356,35 +358,70 @@ export default function Checkout() {
                     )}
                 </div>
 
-                {/* Step 4 - Waiting for Payment */}
                 {step === 4 && (
                     <div className="flex justify-center">
-                        <Card className="p-12 text-center flex flex-col items-center justify-center space-y-6 max-w-lg w-full">
-                            <div className="w-24 h-24 bg-blue-500/10 rounded-full flex items-center justify-center animate-pulse">
-                                <Loader2 className="w-14 h-14 text-blue-500 animate-spin" />
+                        <Card className="p-8 md:p-12 text-center flex flex-col items-center justify-center space-y-6 max-w-lg w-full">
+                            <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center">
+                                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                             </div>
+                            
                             <div>
-                                <h2 className="text-3xl font-bold mb-3">Aguardando Pagamento</h2>
-                                <p className="text-muted-foreground text-lg mb-4">
-                                    Identificamos seu pedido. Você receberá uma notificação assim que o pagamento for concluído.
+                                <h2 className="text-2xl font-bold mb-2">Aguardando Pagamento</h2>
+                                <p className="text-muted-foreground text-sm mb-1">
+                                    Identificamos seu pedido. A confirmação é automática.
                                 </p>
-                                <p className="text-blue-600 font-medium">
+                                <p className="text-blue-600 font-medium text-xs">
                                     Esta página será atualizada automaticamente...
                                 </p>
                             </div>
+
+                            {qrCode && (
+                                <div className="w-full flex flex-col items-center space-y-4 py-4 border-y border-border/50">
+                                    <h3 className="font-semibold flex items-center gap-2">
+                                        <QrCode className="w-4 h-4 text-primary" /> Pagamento via PIX
+                                    </h3>
+                                    
+                                    <div className="bg-white p-3 rounded-xl border-2 border-primary/10 shadow-sm">
+                                        <img 
+                                            src={`data:image/jpeg;base64,${qrCode.encodedImage}`} 
+                                            alt="QR Code PIX"
+                                            className="w-48 h-48"
+                                        />
+                                    </div>
+                                    
+                                    <div className="w-full space-y-2">
+                                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Código PIX Copia e Cola</Label>
+                                        <div className="flex gap-2">
+                                            <Input readOnly value={qrCode.payload} className="text-xs font-mono h-9" />
+                                            <Button 
+                                                variant="secondary" 
+                                                size="sm"
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(qrCode.payload);
+                                                    toast({ title: "Sucesso", description: "Código PIX copiado!" });
+                                                }}
+                                            >
+                                                <Copy className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {asaasResult && (
                                 <div className="w-full space-y-4">
                                     <Button className="w-full py-6 text-lg bg-blue-600 hover:bg-blue-700" onClick={() => window.open(asaasResult.invoiceUrl, '_blank')}>
                                         Abrir Fatura / Pagar Agora
                                     </Button>
-                                    <p className="text-sm text-muted-foreground">
-                                        Mantenha esta janela aberta ou acompanhe por e-mail.
-                                    </p>
+                                    {!qrCode && (
+                                        <p className="text-sm text-muted-foreground">
+                                            Mantenha esta janela aberta ou acompanhe por e-mail.
+                                        </p>
+                                    )}
                                 </div>
                             )}
 
-                            <Button variant="ghost" className="w-full" onClick={() => navigate('/')}>
+                            <Button variant="ghost" className="w-full text-xs text-muted-foreground" onClick={() => navigate('/')}>
                                 Voltar para o Dashboard
                             </Button>
                         </Card>
