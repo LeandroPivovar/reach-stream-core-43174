@@ -409,6 +409,7 @@ export default function Dashboard() {
                                             perf.channel === 'whatsapp' ? 'bg-green-500' : 
                                             perf.channel === 'email' ? 'bg-blue-500' : 
                                             perf.channel === 'sms' ? 'bg-orange-500' : 
+                                            perf.channel === 'venda manual' ? 'bg-purple-500' :
                                             'bg-slate-400'
                                         }`}></div>
                                         <div className="flex flex-col">

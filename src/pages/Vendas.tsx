@@ -199,6 +199,9 @@ export default function Vendas() {
         return 'bg-blue-500';
       case 'sms':
         return 'bg-orange-500';
+      case 'venda manual':
+      case 'manual':
+        return 'bg-purple-500';
       case 'pix':
         return 'bg-cyan-500';
       case 'boleto':
