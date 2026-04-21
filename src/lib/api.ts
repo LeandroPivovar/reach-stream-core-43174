@@ -648,6 +648,24 @@ class ApiService {
       }),
   };
 
+  // Admin Template Requests
+  public adminTemplateRequestsApi = {
+    getRequests: () =>
+      this.request<any[]>('/admin/template-requests', {
+        method: 'GET',
+      }),
+    approve: (id: number, adminNote?: string) =>
+      this.request<any>(`/admin/template-requests/${id}/approve`, {
+        method: 'POST',
+        body: JSON.stringify({ adminNote }),
+      }),
+    reject: (id: number, adminNote: string) =>
+      this.request<any>(`/admin/template-requests/${id}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ adminNote }),
+      }),
+  };
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -1694,13 +1712,25 @@ class ApiService {
   }
 
   async buyCredits(data: {
-    type: 'email' | 'sms',
+    type: 'email' | 'sms' | 'whatsapp',
     amount: number,
     billingType: 'PIX' | 'CREDIT_CARD',
     creditCard?: any,
     creditCardHolderInfo?: any
   }): Promise<any> {
     return this.request<any>('/subscriptions/buy-credits', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async buyTemplateRequest(data: {
+    content: string,
+    billingType: 'PIX' | 'CREDIT_CARD',
+    creditCard?: any,
+    creditCardHolderInfo?: any
+  }): Promise<any> {
+    return this.request<any>('/subscriptions/buy-template-request', {
       method: 'POST',
       body: JSON.stringify(data),
     });

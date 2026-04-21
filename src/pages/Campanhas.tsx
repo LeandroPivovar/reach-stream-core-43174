@@ -42,6 +42,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useScoreConfig } from '@/hooks/use-score-config';
 import { useSegmentationStats, evaluateSegmentation } from '@/hooks/use-segmentation-stats';
 import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
+import { TemplateRequestModal } from '@/components/campaigns/TemplateRequestModal';
 import {
   Table,
   TableBody,
@@ -122,6 +123,7 @@ export default function Campanhas() {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isStatusUpdateOpen, setIsStatusUpdateOpen] = useState(false);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [campaignForStatusUpdate, setCampaignForStatusUpdate] = useState<Campaign | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const contactsPerPage = 10;
@@ -1636,9 +1638,20 @@ export default function Campanhas() {
                               })}
                             </SelectContent>
                           </Select>
-                          <p className="text-xs text-muted-foreground">
-                            Selecione um modelo previamente aprovado na Meta para iniciar as conversas.
-                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <p className="text-[12px] text-muted-foreground mr-4">
+                              Selecione um modelo previamente aprovado na Meta para iniciar as conversas.
+                            </p>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-xs h-8 text-primary border-primary/30 hover:bg-primary/5 flex items-center justify-center white-space-nowrap"
+                              onClick={() => setIsTemplateModalOpen(true)}
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Solicitar Novo Template
+                            </Button>
+                          </div>
                         </div>
 
                         {(newCampaign.email as any).contentSid && Object.keys((newCampaign.email as any).templateVariables || {}).length > 0 && (
