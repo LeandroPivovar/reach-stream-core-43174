@@ -62,7 +62,7 @@ export default function AdminUsers() {
     const [expiryDate, setExpiryDate] = useState('');
 
     // Form State
-    const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
+    const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', phone: '', role: 'user' });
     const [selectedPlanId, setSelectedPlanId] = useState<string>('');
     const [creditForm, setCreditForm] = useState({ email: 0, sms: 0, whatsapp: 0 });
     const [showCreditInputs, setShowCreditInputs] = useState(false);
@@ -202,7 +202,13 @@ export default function AdminUsers() {
 
     const handleOpenEdit = (user: AdminUser) => {
         setSelectedUser(user);
-        setEditForm({ firstName: user.firstName, lastName: user.lastName, email: user.email, phone: user.phone || '' });
+        setEditForm({ 
+            firstName: user.firstName, 
+            lastName: user.lastName, 
+            email: user.email, 
+            phone: user.phone || '',
+            role: user.role || 'user'
+        });
         setIsEditModalOpen(true);
     };
 
@@ -719,6 +725,21 @@ export default function AdminUsers() {
                                 value={editForm.phone}
                                 onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
                             />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="role">Função (Role)</Label>
+                            <Select 
+                                value={editForm.role} 
+                                onValueChange={(val) => setEditForm(prev => ({ ...prev, role: val }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione a função" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="user">Usuário Comum</SelectItem>
+                                    <SelectItem value="admin">Administrador</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                     <DialogFooter>

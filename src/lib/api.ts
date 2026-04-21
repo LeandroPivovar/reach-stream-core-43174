@@ -2163,6 +2163,7 @@ export interface AdminUser {
   state: string;
   city: string;
   active: boolean;
+  role: string;
   createdAt: string;
   currentPlan?: Plan;
   extraEmailsBalance?: number;
