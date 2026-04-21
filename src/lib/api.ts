@@ -666,6 +666,26 @@ class ApiService {
       }),
   };
 
+  // Admin Campaign Templates
+  public adminCampaignTemplatesApi = {
+    getAll: () =>
+      this.request<any[]>('/admin/campaign-templates', { method: 'GET' }),
+    create: (data: { name: string; description?: string; workflow?: any; status?: string }) =>
+      this.request<any>('/admin/campaign-templates', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (id: number, data: Partial<{ name: string; description: string; workflow: any; status: string }>) =>
+      this.request<any>(`/admin/campaign-templates/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
+    delete: (id: number) =>
+      this.request<void>(`/admin/campaign-templates/${id}`, { method: 'DELETE' }),
+    getPublic: () =>
+      this.request<any[]>('/campaigns/admin-templates', { method: 'GET' }),
+  };
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -1060,7 +1080,7 @@ class ApiService {
     });
   }
 
-  async addAdminUserCredits(userId: number, type: 'email' | 'sms', amount: number): Promise<any> {
+  async addAdminUserCredits(userId: number, type: 'email' | 'sms' | 'whatsapp', amount: number): Promise<any> {
     return this.request<any>(`/admin/stats/users/${userId}/credits`, {
       method: 'POST',
       body: JSON.stringify({ type, amount }),
