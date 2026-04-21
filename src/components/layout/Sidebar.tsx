@@ -85,7 +85,14 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
-        {menuItems.map((item) => {
+        {menuItems
+          .filter(item => {
+            if (item.href === '/admin') {
+              return user?.role === 'admin';
+            }
+            return true;
+          })
+          .map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href;
 

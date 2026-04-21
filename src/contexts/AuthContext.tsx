@@ -10,6 +10,7 @@ interface User {
   document?: string;
   address?: string;
   postalCode?: string;
+  role?: string;
   createdAt: string;
   updatedAt: string;
 }
