@@ -44,6 +44,7 @@ import AdminEmailRequests from "./pages/admin/AdminEmailRequests";
 import AdminSystemOverview from "./pages/admin/AdminSystemOverview";
 import AdminLeadRequests from "./pages/admin/AdminLeadRequests";
 import AdminTwilioRequests from "./pages/admin/AdminTwilioRequests";
+import AdminTemplateRequests from "./pages/admin/AdminTemplateRequests";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
 import LandingPage from "./pages/LandingPage";
@@ -111,6 +112,7 @@ const App = () => (
             <Route path="/admin/email-requests" element={<ProtectedRoute><AdminEmailRequests /></ProtectedRoute>} />
             <Route path="/admin/twilio-requests" element={<ProtectedRoute><AdminTwilioRequests /></ProtectedRoute>} />
             <Route path="/admin/lead-requests" element={<ProtectedRoute><AdminLeadRequests /></ProtectedRoute>} />
+            <Route path="/admin/template-requests" element={<ProtectedRoute><AdminTemplateRequests /></ProtectedRoute>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
