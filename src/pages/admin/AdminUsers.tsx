@@ -286,6 +286,7 @@ export default function AdminUsers() {
                         <TableRow>
                             <TableHead>Nome</TableHead>
                             <TableHead>Email</TableHead>
+                            <TableHead>Template ID</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Plano Atual</TableHead>
                             <TableHead>Último Login</TableHead>
@@ -298,6 +299,11 @@ export default function AdminUsers() {
                             <TableRow key={user.id}>
                                 <TableCell className="font-medium">{user.firstName} {user.lastName}</TableCell>
                                 <TableCell>{user.email}</TableCell>
+                                <TableCell>
+                                    <Badge variant="outline" className="font-mono bg-blue-50 text-blue-700 border-blue-100">
+                                        {user.templateId || '---'}
+                                    </Badge>
+                                </TableCell>
                                 <TableCell>
                                     <Badge variant={user.active ? "default" : "destructive"}>
                                         {user.active ? 'Ativo' : 'Inativo'}
@@ -390,6 +396,12 @@ export default function AdminUsers() {
                             <div>
                                 <DialogTitle className="text-2xl">{selectedUser?.firstName} {selectedUser?.lastName}</DialogTitle>
                                 <DialogDescription>{selectedUser?.email}</DialogDescription>
+                                <div className="mt-1 flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Template ID:</span>
+                                    <Badge variant="outline" className="font-mono text-xs bg-muted/50 border-border">
+                                        {selectedUser?.templateId || '---'}
+                                    </Badge>
+                                </div>
                             </div>
                         </div>
                     </DialogHeader>

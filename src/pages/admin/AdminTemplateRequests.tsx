@@ -131,6 +131,17 @@ export default function AdminTemplateRequests() {
             title="Solicitações de Template de WhatsApp"
             subtitle="Revise e crie os templates solicitados e pagos pelos clientes."
         >
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex gap-3 items-start">
+                <div className="p-1 bgColor-blue-500 rounded-full">
+                    <ExternalLink className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                    <h4 className="text-sm font-semibold text-blue-800">Dica de Exclusividade</h4>
+                    <p className="text-xs text-blue-700 mt-1">
+                        Para criar um template <strong>exclusivo</strong> para um usuário, adicione o sufixo <code>_idXXXX</code> ao nome do template na Twilio/Meta, onde <code>XXXX</code> é o <strong>Template ID</strong> do usuário mostrado abaixo.
+                    </p>
+                </div>
+            </div>
             <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <Table>
                     <TableHeader>
@@ -138,6 +149,7 @@ export default function AdminTemplateRequests() {
                             <TableHead>Usuário</TableHead>
                             <TableHead>Visualização</TableHead>
                             <TableHead>Data Solicitação</TableHead>
+                            <TableHead>Template ID</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Ações</TableHead>
                         </TableRow>
@@ -145,7 +157,7 @@ export default function AdminTemplateRequests() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                                     Carregando...
                                 </TableCell>
                             </TableRow>
@@ -169,6 +181,11 @@ export default function AdminTemplateRequests() {
                                         </div>
                                     </TableCell>
                                     <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className="font-mono text-[10px] bg-blue-50 text-blue-700 border-blue-100">
+                                            {request.user?.templateId || '---'}
+                                        </Badge>
+                                    </TableCell>
                                     <TableCell>
                                         {getStatusBadge(request.status)}
                                     </TableCell>
@@ -246,12 +263,18 @@ export default function AdminTemplateRequests() {
 
                     <DialogFooter className="gap-2 sm:gap-0">
                         <Button variant="outline" onClick={() => setIsDetailsModalOpen(false)}>Fechar</Button>
-                        {selectedRequest?.status === 'requested' && (
-                            <div className="flex gap-2">
-                                <Button variant="destructive" onClick={(e) => { setIsDetailsModalOpen(false); handleOpenReject(selectedRequest, e); }}>Rejeitar</Button>
-                                <Button className="bg-primary" onClick={(e) => { setIsDetailsModalOpen(false); handleOpenApprove(selectedRequest, e); }}>Marcar como Criado</Button>
-                            </div>
-                        )}
+                         {selectedRequest?.status === 'requested' && (
+                             <div className="flex gap-2">
+                                 <div className="hidden">{/* Spacer */}</div>
+                                 <Button variant="destructive" onClick={(e) => { setIsDetailsModalOpen(false); handleOpenReject(selectedRequest, e); }}>Rejeitar</Button>
+                                 <div className="flex flex-col gap-1">
+                                     <Button className="bg-primary" onClick={(e) => { setIsDetailsModalOpen(false); handleOpenApprove(selectedRequest, e); }}>Marcar como Criado</Button>
+                                     {selectedRequest?.user?.templateId && (
+                                         <span className="text-[10px] text-center text-muted-foreground">Lembre do sufixo <code>_id{selectedRequest.user.templateId}</code></span>
+                                     )}
+                                 </div>
+                             </div>
+                         )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

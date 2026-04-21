@@ -30,6 +30,7 @@ export interface User {
   document?: string;
   address?: string;
   postalCode?: string;
+  templateId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -2168,6 +2169,7 @@ export interface AdminUser {
   currentPlan?: Plan;
   extraEmailsBalance?: number;
   extraSmsBalance?: number;
+  templateId?: string;
   lastLoginAt?: string;
 }
 
