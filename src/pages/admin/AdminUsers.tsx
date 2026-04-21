@@ -64,7 +64,7 @@ export default function AdminUsers() {
     // Form State
     const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', phone: '' });
     const [selectedPlanId, setSelectedPlanId] = useState<string>('');
-    const [creditForm, setCreditForm] = useState({ email: 0, sms: 0 });
+    const [creditForm, setCreditForm] = useState({ email: 0, sms: 0, whatsapp: 0 });
     const [showCreditInputs, setShowCreditInputs] = useState(false);
     const [showPasswordInput, setShowPasswordInput] = useState(false);
     const [newPassword, setNewPassword] = useState('');
@@ -106,7 +106,7 @@ export default function AdminUsers() {
     };
 
     const addCreditsMutation = useMutation({
-        mutationFn: ({ userId, type, amount }: { userId: number, type: 'email' | 'sms', amount: number }) =>
+        mutationFn: ({ userId, type, amount }: { userId: number, type: 'email' | 'sms' | 'whatsapp', amount: number }) =>
             api.addAdminUserCredits(userId, type, amount),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['admin-user-stats', selectedUser?.id] });
@@ -604,7 +604,7 @@ export default function AdminUsers() {
                                 {showCreditInputs && (
                                     <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border space-y-4">
                                         <h4 className="font-semibold text-sm">Adicionar Créditos Extra</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                             <div className="space-y-2">
                                                 <Label className="flex items-center gap-2"><Mail className="h-4 w-4 text-blue-500" /> Créditos de Email</Label>
                                                 <div className="flex gap-2">
@@ -638,6 +638,25 @@ export default function AdminUsers() {
                                                         size="sm"
                                                         disabled={!creditForm.sms || addCreditsMutation.isPending}
                                                         onClick={() => addCreditsMutation.mutate({ userId: selectedUser!.id, type: 'sms', amount: creditForm.sms })}
+                                                    >
+                                                        Adicionar
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-purple-500" /> Créditos de WhatsApp</Label>
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        value={creditForm.whatsapp}
+                                                        onChange={(e) => setCreditForm(prev => ({ ...prev, whatsapp: parseInt(e.target.value) || 0 }))}
+                                                        placeholder="Ex: 500"
+                                                    />
+                                                    <Button
+                                                        size="sm"
+                                                        disabled={!creditForm.whatsapp || addCreditsMutation.isPending}
+                                                        onClick={() => addCreditsMutation.mutate({ userId: selectedUser!.id, type: 'whatsapp', amount: creditForm.whatsapp })}
                                                     >
                                                         Adicionar
                                                     </Button>

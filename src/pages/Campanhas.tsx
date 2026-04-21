@@ -88,7 +88,8 @@ import {
   Upload,
   X,
   Image,
-  Filter
+  Filter,
+  Library
 } from 'lucide-react';
 
 interface ContactFrontend {
@@ -221,6 +222,8 @@ export default function Campanhas() {
 
   const [twilioTemplates, setTwilioTemplates] = useState<any[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [adminTemplates, setAdminTemplates] = useState<any[]>([]);
+  const [isLoadingAdminTemplates, setIsLoadingAdminTemplates] = useState(false);
 
   useEffect(() => {
     if (newCampaign.campaignComplexity === 'simple' && currentStep === 5 && newCampaign.channel === 'whatsapp' && twilioTemplates.length === 0) {
@@ -389,6 +392,10 @@ export default function Campanhas() {
     if (newCampaign.campaignComplexity === 'simple') {
       // Simple: 1. Complexity + 2. Segmentation + 3. Basic Data + 4. Channel + 5. Email/SMS/WhatsApp + 6. Coupon/Giftback + 7. Tracking/Send
       return 7;
+    }
+    if (newCampaign.campaignComplexity === 'predefined') {
+      // Predefined: 1. Complexity + 2. Template Selection + 3. Segmentation + 4. Workflow
+      return 4;
     }
     // Advanced: 1. Complexity + 2. Segmentation + 3. Name + 4. Workflow (tudo configurado lá)
     return 4;
@@ -1007,7 +1014,7 @@ export default function Campanhas() {
                   <div className="flex flex-wrap gap-1">
                     {(() => {
                       let channels: string[] = [];
-                      if (campaign.complexity === 'advanced' && campaign.config?.workflow?.nodes) {
+                      if ((campaign.complexity === 'advanced' || campaign.complexity === 'predefined') && campaign.config?.workflow?.nodes) {
                         const nodes = campaign.config.workflow.nodes;
                         if (nodes.some((n: any) => n.type === 'email')) channels.push('email');
                         if (nodes.some((n: any) => n.type === 'sms')) channels.push('sms');
@@ -1147,7 +1154,7 @@ export default function Campanhas() {
                 <div className="flex flex-wrap gap-1.5">
                   {(() => {
                       let channels: string[] = [];
-                      if (campaign.complexity === 'advanced' && campaign.config?.workflow?.nodes) {
+                      if ((campaign.complexity === 'advanced' || campaign.complexity === 'predefined') && campaign.config?.workflow?.nodes) {
                         const nodes = campaign.config.workflow.nodes;
                         if (nodes.some((n: any) => n.type === 'email')) channels.push('email');
                         if (nodes.some((n: any) => n.type === 'sms')) channels.push('sms');
@@ -1351,6 +1358,38 @@ export default function Campanhas() {
                       </div>
                     </div>
                   </Card>
+
+                  <Card
+                    className={`p-6 cursor-pointer hover:border-primary transition-colors ${newCampaign.campaignComplexity === 'predefined' ? 'border-primary bg-primary/5' : ''
+                      }`}
+                    onClick={() => {
+                        setNewCampaign({ ...newCampaign, campaignComplexity: 'predefined' });
+                        if (adminTemplates.length === 0) {
+                            setIsLoadingAdminTemplates(true);
+                            api.adminCampaignTemplatesApi.getPublic()
+                                .then(res => setAdminTemplates(res || []))
+                                .catch(console.error)
+                                .finally(() => setIsLoadingAdminTemplates(false));
+                        }
+                    }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Library className="w-6 h-6 text-emerald-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1">Campanha Pré-Definida</h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Use modelos prontos criados pelo administrador
+                        </p>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li>• Fluxos de trabalho comprovados</li>
+                          <li>• Setup rápido e simplificado</li>
+                          <li>• Totalmente editável após a seleção</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </Card>
                 </div>
               </div>
 
@@ -1366,8 +1405,8 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Etapa 2: Segmentação de Clientes */}
-          {currentStep === 2 && (
+          {/* Etapa 2: Segmentação de Clientes (Simple & Advanced) */}
+          {currentStep === 2 && newCampaign.campaignComplexity !== 'predefined' && (
             <div className="space-y-6 py-4">
               <SegmentationPicker
                 selectedSegments={newCampaign.segmentations || []}
@@ -1385,7 +1424,103 @@ export default function Campanhas() {
                 onViewContact={setSelectedContactId}
               />
 
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button
+                  onClick={handleNextStep}
+                  disabled={
+                    newCampaign.segmentations.length === 0 && 
+                    newCampaign.groups.length === 0 && 
+                    (!newCampaign.specificContacts || newCampaign.specificContacts.length === 0)
+                  }
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
 
+          {/* Etapa 2: Seleção de Template (apenas para predefined) */}
+          {currentStep === 2 && newCampaign.campaignComplexity === 'predefined' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-primary/10 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  Selecione um dos modelos abaixo para começar
+                </p>
+              </div>
+
+              {isLoadingAdminTemplates ? (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-sm text-muted-foreground">Carregando modelos...</p>
+                </div>
+              ) : adminTemplates.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    <Library className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="text-muted-foreground">Nenhum modelo publicado no momento.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {adminTemplates.map((template) => (
+                    <Card 
+                      key={template.id}
+                      className="p-4 hover:border-primary cursor-pointer transition-all hover:shadow-md group"
+                      onClick={() => {
+                        setNewCampaign({
+                          ...newCampaign,
+                          name: template.name,
+                          workflow: template.workflow
+                        });
+                        handleNextStep();
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                          <Library className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-sm truncate">{template.name}</h4>
+                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                            {template.description || 'Sem descrição.'}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-start">
+                <Button variant="outline" onClick={handlePrevStep}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Etapa 3: Segmentação de Clientes (apenas para predefined) */}
+          {currentStep === 3 && newCampaign.campaignComplexity === 'predefined' && (
+            <div className="space-y-6 py-4">
+              <SegmentationPicker
+                selectedSegments={newCampaign.segmentations || []}
+                stats={dynamicStats}
+                availableGroups={availableGroups}
+                selectedGroups={newCampaign.groups}
+                onGroupsChange={(groups) => setNewCampaign({ ...newCampaign, groups })}
+                selectedContactIds={newCampaign.specificContacts || []}
+                onSpecificContactsChange={(specificContacts) => setNewCampaign({ ...newCampaign, specificContacts })}
+                allContacts={contacts}
+                onSegmentsChange={(segments) => {
+                  setNewCampaign({ ...newCampaign, segmentations: segments });
+                  setCurrentPage(1); // Reset pagination when segmentation changes
+                }}
+                onViewContact={setSelectedContactId}
+              />
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={handlePrevStep}>
@@ -2126,8 +2261,8 @@ export default function Campanhas() {
             </div>
           )}
 
-          {/* Workflow Step (only for advanced) */}
-          {newCampaign.campaignComplexity === 'advanced' && currentStep === 4 && (
+          {/* Workflow Step (advanced or predefined) */}
+          {((newCampaign.campaignComplexity === 'advanced' && currentStep === 4) || (newCampaign.campaignComplexity === 'predefined' && currentStep === 4)) && (
             <div className="space-y-6 py-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
