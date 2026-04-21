@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   // Buscar a assinatura apenas se estiver autenticado
@@ -37,6 +37,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!isAuthenticated) {
     // Redirecionar para login, salvando a rota atual para redirecionar depois
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+
+  // Verificar se é uma rota administrativa
+  const isAdminPath = location.pathname.startsWith('/admin');
+  
+  if (isAdminPath && user?.role !== 'admin') {
+    // Redirecionar usuários comuns para a visão geral se tentarem acessar o admin
+    return <Navigate to="/visao-geral" replace />;
   }
 
   // Rotas permitidas mesmo sem plano ativo
