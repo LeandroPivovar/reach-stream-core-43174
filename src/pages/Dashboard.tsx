@@ -90,9 +90,10 @@ export default function Dashboard() {
                     productId: selectedProduct !== 'all' ? selectedProduct : undefined,
                 };
 
+                const periodInDays = getChartPeriodInDays();
                 const [statsData, funnelData, segData, campData, heatData] = await Promise.all([
-                    api.getDashboardStats(30, filters),
-                    api.getFunnelData(30, filters),
+                    api.getDashboardStats(periodInDays, filters),
+                    api.getFunnelData(periodInDays, filters),
                     api.getSegmentationStats(filters),
                     api.getCampaignDashboardPerformance(chartPeriod, filters),
                     api.getDashboardHeatmap(filters)
@@ -128,6 +129,29 @@ export default function Dashboard() {
 
 
 
+    const getChartPeriodInDays = () => {
+        switch (chartPeriod) {
+            case 'diario':
+            case 'semanal':
+                return 7;
+            case 'mensal':
+                return 180;
+            default:
+                return 30;
+        }
+    };
+
+    const getPeriodLabel = () => {
+        switch (chartPeriod) {
+            case 'diario':
+                return 'Últimos 7 dias';
+            case 'mensal':
+                return 'Últimos 6 meses';
+            default:
+                return 'Última semana';
+        }
+    };
+
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
@@ -141,7 +165,7 @@ export default function Dashboard() {
                 value: dashboardStats?.trends?.envios || 0,
                 isPositive: (dashboardStats?.trends?.envios || 0) >= 0
             },
-            description: 'Últimos 30 dias',
+            description: getPeriodLabel(),
             colorClass: 'bg-blue-500/20 text-blue-900 dark:text-blue-100 border-blue-500/30'
         },
         {
@@ -152,7 +176,7 @@ export default function Dashboard() {
                 value: dashboardStats?.trends?.deliveryRate || 0,
                 isPositive: (dashboardStats?.trends?.deliveryRate || 0) >= 0
             },
-            description: 'Média geral',
+            description: getPeriodLabel(),
             colorClass: 'bg-purple-500/20 text-purple-900 dark:text-purple-100 border-purple-500/30'
         },
         {
@@ -185,24 +209,13 @@ export default function Dashboard() {
                 value: dashboardStats?.trends?.faturamento || 0,
                 isPositive: (dashboardStats?.trends?.faturamento || 0) >= 0
             },
-            description: 'Últimos 30 dias',
+            description: getPeriodLabel(),
             colorClass: 'bg-emerald-500/20 text-emerald-900 dark:text-emerald-100 border-emerald-500/30'
         }
     ];
 
     const getChartData = () => {
         return campaignStats.chartData || [];
-    };
-
-    const getPeriodLabel = () => {
-        switch (chartPeriod) {
-            case 'diario':
-                return 'Últimos 7 dias';
-            case 'mensal':
-                return 'Últimos 6 meses';
-            default:
-                return 'Última semana';
-        }
     };
 
     const getRelativeTime = (dateStr: string) => {
