@@ -132,10 +132,11 @@ export default function Dashboard() {
     const getChartPeriodInDays = () => {
         switch (chartPeriod) {
             case 'diario':
+                return 1;
             case 'semanal':
                 return 7;
             case 'mensal':
-                return 180;
+                return 30;
             default:
                 return 30;
         }
@@ -144,9 +145,11 @@ export default function Dashboard() {
     const getPeriodLabel = () => {
         switch (chartPeriod) {
             case 'diario':
+                return 'Hoje';
+            case 'semanal':
                 return 'Últimos 7 dias';
             case 'mensal':
-                return 'Últimos 6 meses';
+                return 'Últimos 30 dias';
             default:
                 return 'Última semana';
         }
