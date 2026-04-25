@@ -148,11 +148,11 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
       </Card>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2">
             <DialogTitle>Configurar WhatsApp</DialogTitle>
           </DialogHeader>
-          <ScrollArea className="flex-1 px-6">
+          <div className="flex-1 overflow-y-auto px-6 custom-scrollbar">
             <div className="space-y-6 py-4 pb-8">
                 <div className="space-y-4 rounded border p-4 bg-primary/5">
                   <div className="grid gap-2">
@@ -385,7 +385,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                 </div>
               </div>
             </div>
-          </ScrollArea>
+          </div>
           
           <div className="flex justify-end gap-2 p-6 border-t bg-slate-50/50 dark:bg-slate-900/50">
             <Button variant="outline" onClick={() => setIsEditing(false)}>
