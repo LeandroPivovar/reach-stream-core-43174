@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Phone, Settings, Trash2, Upload, X, Link2, Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -147,247 +148,250 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
       </Card>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-2">
             <DialogTitle>Configurar WhatsApp</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-              <div className="space-y-4 rounded border p-4 bg-primary/5">
-                <div className="grid gap-2">
-                  <Label htmlFor="twilio-content-sid">Template Aprovado (Content API)</Label>
-                  <Select value={contentSid || 'none'} onValueChange={(val) => {
-                    setContentSid(val === 'none' ? '' : val);
-                    const tpl = templates.find(t => t.sid === val);
-                    let detectedVars: Record<string, string> = {};
-                    let bodyText = '';
-                    let primaryType = '';
+          <ScrollArea className="flex-1 px-6">
+            <div className="space-y-6 py-4 pb-8">
+                <div className="space-y-4 rounded border p-4 bg-primary/5">
+                  <div className="grid gap-2">
+                    <Label htmlFor="twilio-content-sid">Template Aprovado (Content API)</Label>
+                    <Select value={contentSid || 'none'} onValueChange={(val) => {
+                      setContentSid(val === 'none' ? '' : val);
+                      const tpl = templates.find(t => t.sid === val);
+                      let detectedVars: Record<string, string> = {};
+                      let bodyText = '';
+                      let primaryType = '';
 
-                    if (tpl && val !== 'none') {
-                      const typeKeys = Object.keys(tpl.types || {});
-                      // Tentar encontrar o body e identificar o tipo principal
-                      for (const type of typeKeys) {
-                        primaryType = type.split('/').pop() || type;
-                        if (tpl.types[type].body) {
-                          bodyText = tpl.types[type].body;
-                          break;
+                      if (tpl && val !== 'none') {
+                        const typeKeys = Object.keys(tpl.types || {});
+                        // Tentar encontrar o body e identificar o tipo principal
+                        for (const type of typeKeys) {
+                          primaryType = type.split('/').pop() || type;
+                          if (tpl.types[type].body) {
+                            bodyText = tpl.types[type].body;
+                            break;
+                          }
                         }
+                        
+                        // 1. Extrair variáveis do corpo do texto usando Regex {{variável}}
+                        // Esta é a fonte da verdade para o que a Twilio espera no disparo
+                        const matches = bodyText.match(/{{[^{}]+}}/g);
+                        if (matches) {
+                          matches.forEach(match => {
+                            const varName = match.replace(/[{}]/g, '');
+                            detectedVars[varName] = '';
+                          });
+                        }
+
+                        // 2. Se não encontrou nada via regex, tenta usar os metadados (como fallback)
+                        if (Object.keys(detectedVars).length === 0 && tpl.variables) {
+                          Object.keys(tpl.variables).forEach(k => {
+                            detectedVars[k] = '';
+                          });
+                        }
+
+                        if (bodyText) setContent(bodyText);
                       }
                       
-                      // 1. Extrair variáveis do corpo do texto usando Regex {{variável}}
-                      // Esta é a fonte da verdade para o que a Twilio espera no disparo
-                      const matches = bodyText.match(/{{[^{}]+}}/g);
-                      if (matches) {
-                        matches.forEach(match => {
-                          const varName = match.replace(/[{}]/g, '');
-                          detectedVars[varName] = '';
-                        });
-                      }
+                      setDynamicVariables(detectedVars);
+                    }}>
+                      <SelectTrigger id="twilio-content-sid">
+                        <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
+                      </SelectTrigger>
+                      <SelectContent>
+                              {isLoadingTemplates && <SelectItem value="loading" disabled>Carregando templates...</SelectItem>}
+                              {templates.map(t => {
+                                const type = Object.keys(t.types || {})[0]?.split('/').pop() || 'unknown';
+                                return (
+                                  <SelectItem key={t.sid} value={t.sid}>
+                                    <div className="flex items-center gap-2">
+                                      <span>{t.friendlyName}</span>
+                                      <span className={`text-[10px] px-1 rounded border font-mono ${
+                                        type === 'list-picker' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'
+                                      }`}>
+                                        {type.toUpperCase()}
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Selecione um modelo previamente aprovado na Meta para iniciar as conversas.
+                    </p>
+                  </div>
 
-                      // 2. Se não encontrou nada via regex, tenta usar os metadados (como fallback)
-                      if (Object.keys(detectedVars).length === 0 && tpl.variables) {
-                        Object.keys(tpl.variables).forEach(k => {
-                          detectedVars[k] = '';
-                        });
-                      }
-
-                      if (bodyText) setContent(bodyText);
-                    }
-                    
-                    setDynamicVariables(detectedVars);
-                  }}>
-                    <SelectTrigger id="twilio-content-sid">
-                      <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
-                    </SelectTrigger>
-                    <SelectContent>
-                            {isLoadingTemplates && <SelectItem value="loading" disabled>Carregando templates...</SelectItem>}
-                            {templates.map(t => {
-                              const type = Object.keys(t.types || {})[0]?.split('/').pop() || 'unknown';
-                              return (
-                                <SelectItem key={t.sid} value={t.sid}>
-                                  <div className="flex items-center gap-2">
-                                    <span>{t.friendlyName}</span>
-                                    <span className={`text-[10px] px-1 rounded border font-mono ${
-                                      type === 'list-picker' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'
-                                    }`}>
-                                      {type.toUpperCase()}
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Selecione um modelo previamente aprovado na Meta para iniciar as conversas.
-                  </p>
-                </div>
-
-                {contentSid && contentSid !== 'none' && Object.keys(dynamicVariables).length > 0 && (
-                  <div className="space-y-3 pt-3 border-t border-primary/20">
-                    <div className="flex items-center justify-between">
-                      <Label className="font-semibold text-primary">Preencher Variáveis do Template</Label>
-                      <div className="flex gap-1">
-                        {[
-                          { label: 'Cupom', value: '{{cupom_nome}}' },
-                          { label: 'Valor', value: '{{cupom_valor}}' },
-                          { label: 'Validade', value: '{{cupom_validade}}' },
-                          { label: 'Link', value: '{{link_rastreio}}' },
-                          { label: 'Nome', value: '{{nome}}' }
-                        ].map(v => (
-                          <Badge 
-                            key={v.value} 
-                            variant="outline" 
-                            className="cursor-help text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
-                            title={`Use ${v.value} para substituir pelo valor dinâmico`}
-                          >
-                            {v.label}
-                          </Badge>
+                  {contentSid && contentSid !== 'none' && Object.keys(dynamicVariables).length > 0 && (
+                    <div className="space-y-3 pt-3 border-t border-primary/20">
+                      <div className="flex items-center justify-between">
+                        <Label className="font-semibold text-primary">Preencher Variáveis do Template</Label>
+                        <div className="flex gap-1">
+                          {[
+                            { label: 'Cupom', value: '{{cupom_nome}}' },
+                            { label: 'Valor', value: '{{cupom_valor}}' },
+                            { label: 'Validade', value: '{{cupom_validade}}' },
+                            { label: 'Link', value: '{{link_rastreio}}' },
+                            { label: 'Nome', value: '{{nome}}' }
+                          ].map(v => (
+                            <Badge 
+                              key={v.value} 
+                              variant="outline" 
+                              className="cursor-help text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
+                              title={`Use ${v.value} para substituir pelo valor dinâmico`}
+                            >
+                              {v.label}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid gap-3">
+                        {Object.keys(dynamicVariables).map(key => (
+                          <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border group">
+                            <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center">
+                              {"{{" + key + "}}"}
+                            </Label>
+                            <div className="relative">
+                              <Input 
+                                value={dynamicVariables[key] || ''}
+                                onChange={e => setDynamicVariables({...dynamicVariables, [key]: e.target.value})}
+                                placeholder={`Ex: {{nome}} ou texto fixo`}
+                                className="h-8 text-sm pr-20"
+                              />
+                              <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {['{{nome}}', '{{cupom_nome}}', '{{link_rastreio}}'].map(v => (
+                                  <Button
+                                    key={v}
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-[10px]"
+                                    onClick={() => setDynamicVariables({...dynamicVariables, [key]: (dynamicVariables[key] || '') + v})}
+                                    title={`Inserir ${v}`}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
                         ))}
                       </div>
+                      <p className="text-[10px] text-muted-foreground italic">
+                        Dica: Você pode usar variáveis do sistema como <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{link_rastreio}}"}</strong> ou <strong>{"{{nome}}"}</strong>.
+                      </p>
                     </div>
-                    <div className="grid gap-3">
-                      {Object.keys(dynamicVariables).map(key => (
-                        <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border group">
-                          <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center">
-                            {"{{" + key + "}}"}
-                          </Label>
-                          <div className="relative">
-                            <Input 
-                              value={dynamicVariables[key] || ''}
-                              onChange={e => setDynamicVariables({...dynamicVariables, [key]: e.target.value})}
-                              placeholder={`Ex: {{nome}} ou texto fixo`}
-                              className="h-8 text-sm pr-20"
-                            />
-                            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {['{{nome}}', '{{cupom_nome}}', '{{link_rastreio}}'].map(v => (
-                                <Button
-                                  key={v}
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-[10px]"
-                                  onClick={() => setDynamicVariables({...dynamicVariables, [key]: (dynamicVariables[key] || '') + v})}
-                                  title={`Inserir ${v}`}
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              ))}
-                            </div>
+                  )}
+                  
+                  {(!contentSid || contentSid === 'none') && (
+                    <div className="grid gap-2 pt-2 border-t border-primary/10">
+                    <p className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                      🚫 <strong>Template obrigatório:</strong> Para campanhas proativas via WhatsApp, é OBRIGATÓRIO selecionar um template aprovado na Meta. Mensagens sem template serão bloqueadas.
+                    </p>
+                  </div>
+                  )}
+                </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="whatsapp-content">Mensagem WhatsApp</Label>
+                <textarea
+                  id="whatsapp-content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Digite a mensagem..."
+                  rows={6}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+                <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
+                  💡 Variáveis disponíveis: <br />
+                  <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong> e <strong>{"{{link_rastreio}}"}</strong>
+                </p>
+              </div>
+
+              <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Link2 className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Link de Redirecionamento</span>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="node-dest-url" className="text-xs">URL de Destino</Label>
+                  <Input
+                    id="node-dest-url"
+                    placeholder="https://seusite.com.br/promo"
+                    value={destinationUrl}
+                    onChange={(e) => setDestinationUrl(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs h-8"
+                  onClick={() => setContent(content + ' {{link_rastreio}}')}
+                >
+                  <Plus className="w-3 h-3 mr-2" />
+                  Inserir Variável de Link
+                </Button>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Anexar Imagem ou Vídeo</Label>
+                <div className="flex flex-col gap-3">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="whatsapp-media-upload"
+                    />
+                    <label htmlFor="whatsapp-media-upload">
+                      <Button type="button" variant="outline" className="w-full" asChild>
+                        <div className="cursor-pointer">
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload de Mídia
+                        </div>
+                      </Button>
+                    </label>
+                  </div>
+                  {media.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {media.map((item, index) => (
+                        <div key={index} className="relative group border rounded-md p-2">
+                          <div className="flex items-center gap-2">
+                            {item.type === 'image' ? (
+                              <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                            ) : (
+                              <video src={item.url} className="w-12 h-12 object-cover rounded" />
+                            )}
+                            <span className="text-xs truncate flex-1">{item.name}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => removeMedia(index)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       ))}
                     </div>
-                    <p className="text-[10px] text-muted-foreground italic">
-                      Dica: Você pode usar variáveis do sistema como <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{link_rastreio}}"}</strong> ou <strong>{"{{nome}}"}</strong>.
-                    </p>
-                  </div>
-                )}
-                
-                {(!contentSid || contentSid === 'none') && (
-                  <div className="grid gap-2 pt-2 border-t border-primary/10">
-                  <p className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
-                    🚫 <strong>Template obrigatório:</strong> Para campanhas proativas via WhatsApp, é OBRIGATÓRIO selecionar um template aprovado na Meta. Mensagens sem template serão bloqueadas.
-                  </p>
+                  )}
                 </div>
-                )}
-              </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="whatsapp-content">Mensagem WhatsApp</Label>
-              <textarea
-                id="whatsapp-content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Digite a mensagem..."
-                rows={6}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-              <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
-                💡 Variáveis disponíveis: <br />
-                <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong> e <strong>{"{{link_rastreio}}"}</strong>
-              </p>
-            </div>
-
-            <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
-              <div className="flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Link de Redirecionamento</span>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="node-dest-url" className="text-xs">URL de Destino</Label>
-                <Input
-                  id="node-dest-url"
-                  placeholder="https://seusite.com.br/promo"
-                  value={destinationUrl}
-                  onChange={(e) => setDestinationUrl(e.target.value)}
-                  className="h-8 text-sm"
-                />
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full text-xs h-8"
-                onClick={() => setContent(content + ' {{link_rastreio}}')}
-              >
-                <Plus className="w-3 h-3 mr-2" />
-                Inserir Variável de Link
-              </Button>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Anexar Imagem ou Vídeo</Label>
-              <div className="flex flex-col gap-3">
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    multiple
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="whatsapp-media-upload"
-                  />
-                  <label htmlFor="whatsapp-media-upload">
-                    <Button type="button" variant="outline" className="w-full" asChild>
-                      <div className="cursor-pointer">
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload de Mídia
-                      </div>
-                    </Button>
-                  </label>
-                </div>
-                {media.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {media.map((item, index) => (
-                      <div key={index} className="relative group border rounded-md p-2">
-                        <div className="flex items-center gap-2">
-                          {item.type === 'image' ? (
-                            <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
-                          ) : (
-                            <video src={item.url} className="w-12 h-12 object-cover rounded" />
-                          )}
-                          <span className="text-xs truncate flex-1">{item.name}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => removeMedia(index)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave} disabled={!contentSid || contentSid === 'none'}>Salvar</Button>
-            </div>
+          </ScrollArea>
+          
+          <div className="flex justify-end gap-2 p-6 border-t bg-slate-50/50 dark:bg-slate-900/50">
+            <Button variant="outline" onClick={() => setIsEditing(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={!contentSid || contentSid === 'none'}>Salvar</Button>
           </div>
         </DialogContent>
       </Dialog>
