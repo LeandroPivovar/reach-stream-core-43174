@@ -20,6 +20,7 @@ import {
     Monitor,
     MessageSquare,
     Zap,
+    LifeBuoy,
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -30,13 +31,14 @@ const adminMenuItems = [
     { title: 'Campanhas', href: '/admin/campaigns', icon: Zap },
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
     { title: 'Segmentações', href: '/admin/segmentations', icon: Filter },
-    { title: 'Planos', href: '/admin/plans', icon: ShieldCheck },
+    { title: 'Planos e Pacotes', href: '/admin/plans', icon: ShieldCheck },
     { title: 'Capacidade & Consumo', href: '/admin/capacity', icon: Activity },
     { title: 'Notificações', href: '/admin/notifications', icon: Bell },
     { title: 'Solicitações Email', href: '/admin/email-requests', icon: MailSearch },
     { title: 'Solicitações WhatsApp', href: '/admin/twilio-requests', icon: MessageSquare },
     { title: 'Solicitações Template', href: '/admin/template-requests', icon: MessageSquare },
     { title: 'Solicitações Contato', href: '/admin/lead-requests', icon: Users },
+    { title: 'Tickets Suporte', href: '/admin/tickets', icon: LifeBuoy },
     { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];
 
@@ -47,7 +49,7 @@ export function AdminSidebar() {
 
     const handleLogout = () => {
         logout();
-        navigate('/auth/login');
+        window.location.href = 'https://nucleocrm.com.br/';
     };
 
     return (
@@ -95,10 +97,10 @@ export function AdminSidebar() {
             <div className="p-4 border-t border-slate-800 space-y-2">
                 <button
                     onClick={() => navigate('/visao-geral')}
-                    className="w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                    className="w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors border border-slate-800/50"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    <span>Voltar ao Sistema</span>
+                    <span>Ir para Plataforma</span>
                 </button>
 
                 <button

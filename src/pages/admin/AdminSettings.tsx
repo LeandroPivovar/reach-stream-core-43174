@@ -322,6 +322,17 @@ export default function AdminSettings() {
                                 />
                                 <p className="text-[12px] text-muted-foreground">Total de mensagens contratado com a provedora de SMS por mês.</p>
                             </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="PROVIDER_WHATSAPP_LIMIT" className="text-sm font-semibold">Limite Global de WhatsApp (Mensal)</Label>
+                                <Input
+                                    id="PROVIDER_WHATSAPP_LIMIT"
+                                    type="number"
+                                    value={localSettings['PROVIDER_WHATSAPP_LIMIT'] || '50000'}
+                                    onChange={(e) => handleInputChange('PROVIDER_WHATSAPP_LIMIT', e.target.value)}
+                                    placeholder="50000"
+                                />
+                                <p className="text-[12px] text-muted-foreground">Total de mensagens contratado com a Twilio (WhatsApp) por mês.</p>
+                            </div>
                         </CardContent>
                         <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
                             <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">

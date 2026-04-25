@@ -46,7 +46,35 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
     }, [isOpen]);
 
 
-    const pricePerUnit = creditType === 'whatsapp' ? 0.06 : (creditType === 'email' ? 0.30 : 0.40);
+    const [prices, setPrices] = useState({
+        UNIT_PRICE_WHATSAPP: 0.15,
+        UNIT_PRICE_SMS: 0.10,
+        UNIT_PRICE_EMAIL: 0.01 // per unit, but shown as 1000 in UI often
+    });
+
+    useEffect(() => {
+        const fetchPrices = async () => {
+            try {
+                const settings = await api.getSystemSettings();
+                const newPrices = { ...prices };
+                settings.forEach(s => {
+                    if (s.key === 'UNIT_PRICE_WHATSAPP') newPrices.UNIT_PRICE_WHATSAPP = parseFloat(s.value);
+                    if (s.key === 'UNIT_PRICE_SMS') newPrices.UNIT_PRICE_SMS = parseFloat(s.value);
+                    if (s.key === 'UNIT_PRICE_EMAIL') newPrices.UNIT_PRICE_EMAIL = parseFloat(s.value);
+                });
+                setPrices(newPrices);
+            } catch (error) {
+                console.error('Erro ao buscar preços:', error);
+            }
+        };
+        fetchPrices();
+    }, []);
+
+    const pricePerUnit = creditType === 'whatsapp' 
+        ? prices.UNIT_PRICE_WHATSAPP 
+        : (creditType === 'email' ? prices.UNIT_PRICE_EMAIL : prices.UNIT_PRICE_SMS);
+    
+    // Total value based on price per unit
     const totalValueRaw = amount * pricePerUnit;
     const totalValue = totalValueRaw.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 

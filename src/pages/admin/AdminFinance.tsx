@@ -4,6 +4,13 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { useToast } from '@/components/ui/use-toast';
 import {
     TrendingUp,
@@ -40,9 +47,11 @@ import {
 export default function AdminFinance() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
+    const [days, setDays] = useState('365');
+
     const { data: stats, isLoading } = useQuery({
-        queryKey: ['admin-finance-stats'],
-        queryFn: () => api.getAdminFinanceStats()
+        queryKey: ['admin-finance-stats', days],
+        queryFn: () => api.getAdminFinanceStats(parseInt(days))
     });
 
     const [costSms, setCostSms] = useState('0.05');
@@ -94,7 +103,7 @@ export default function AdminFinance() {
 
     const kpis = [
         {
-            label: 'Receita Total (12m)',
+            label: 'Receita Total (Período)',
             value: formatCurrency(stats?.ytdRevenue || 0),
             icon: DollarSign,
             color: 'text-emerald-500',
@@ -114,6 +123,24 @@ export default function AdminFinance() {
             title="Análise Financeira (CFO)"
             subtitle="Visão estratégica de lucros, faturamento e projeções de crescimento."
         >
+            <div className="flex justify-end mb-6">
+                <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-2 px-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-semibold text-slate-500">Período:</span>
+                    <Select value={days} onValueChange={setDays}>
+                        <SelectTrigger className="w-[180px] h-8 text-xs border-none shadow-none focus:ring-0 bg-transparent">
+                            <SelectValue placeholder="Selecione o período" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="7">Últimos 7 dias</SelectItem>
+                            <SelectItem value="30">Últimos 30 dias</SelectItem>
+                            <SelectItem value="90">Últimos 90 dias</SelectItem>
+                            <SelectItem value="180">Últimos 6 meses</SelectItem>
+                            <SelectItem value="365">Último ano</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
             {/* Configurações de Custo */}
             <Card className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 mb-8">
                 <div className="flex items-center justify-between mb-6">
