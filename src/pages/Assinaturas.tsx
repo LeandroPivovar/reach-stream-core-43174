@@ -82,8 +82,8 @@ export default function Assinaturas() {
 
   return (
     <Layout
-      title="Assinaturas"
-      subtitle="Gerencie seu plano e recursos"
+      title="Planos e Pacotes"
+      subtitle="Gerencie seu plano e recursos adicionais"
     >
       <div className="space-y-10 max-w-7xl mx-auto pb-10">
         {/* Expired Subscription Warning */}

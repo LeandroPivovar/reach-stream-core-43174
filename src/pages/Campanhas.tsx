@@ -89,8 +89,12 @@ import {
   X,
   Image,
   Filter,
-  Library
+  Library,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ContactFrontend {
   id: number;
@@ -113,6 +117,7 @@ interface ContactFrontend {
 }
 
 export default function Campanhas() {
+  const navigate = useNavigate();
   const { trackAction } = useInternalAnalytics();
   const { toast } = useToast();
   const [isNewCampaignOpen, setIsNewCampaignOpen] = useState(false);
@@ -1625,26 +1630,47 @@ export default function Campanhas() {
                     </div>
                   </Card>
 
-                  <Card
-                    className={`p-6 transition-colors relative ${
-                      !subscriptionStats || subscriptionStats.whatsappLimit === 0
-                        ? 'opacity-60 cursor-not-allowed border-dashed'
-                        : 'cursor-pointer hover:border-primary ' + (newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : '')
-                    }`}
-                    onClick={() => {
-                      if (subscriptionStats && subscriptionStats.whatsappLimit > 0) {
-                        setNewCampaign({ ...newCampaign, channel: 'whatsapp' });
-                      }
-                    }}
-                  >
-                    {(!subscriptionStats || subscriptionStats.whatsappLimit === 0) && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70 rounded-lg z-10">
-                        <div className="bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-2 text-center">
-                          <p className="text-xs font-bold text-destructive">🔒 Sem créditos WhatsApp</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">Compre um pacote adicional para liberar</p>
-                        </div>
-                      </div>
-                    )}
+                  {(() => {
+                    const hasWhatsapp = subscriptionStats && (
+                      subscriptionStats.whatsappLimit === true || 
+                      subscriptionStats.whatsappLimit === -1 || 
+                      (Number(subscriptionStats.whatsappLimit) - (subscriptionStats.whatsappSent || 0)) > 0
+                    );
+
+                    return (
+                      <Card
+                        className={`p-6 transition-colors relative ${
+                          !hasWhatsapp
+                            ? 'opacity-60 cursor-not-allowed border-dashed'
+                            : 'cursor-pointer hover:border-primary ' + (newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : '')
+                        }`}
+                        onClick={() => {
+                          if (hasWhatsapp) {
+                            setNewCampaign({ ...newCampaign, channel: 'whatsapp' });
+                          }
+                        }}
+                      >
+                        {!hasWhatsapp && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70 rounded-lg z-10 p-4">
+                            <div className="bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3 text-center shadow-sm">
+                              <p className="text-xs font-bold text-destructive flex items-center justify-center gap-1.5 mb-1">
+                                <ShieldCheck className="w-3.5 h-3.5" /> Sem Créditos de WhatsApp
+                              </p>
+                              <p className="text-[10px] text-muted-foreground mb-3 font-medium">Você atingiu o limite do seu plano.</p>
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="h-7 text-[10px] font-bold px-4"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate('/assinaturas');
+                                }}
+                              >
+                                <Zap className="w-3 h-3 mr-1" /> Comprar Créditos
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 bg-green-600/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         <MessageSquare className="w-6 h-6 text-green-600" />
@@ -1663,7 +1689,9 @@ export default function Campanhas() {
                         )}
                       </div>
                     </div>
-                  </Card>
+                      </Card>
+                    );
+                  })()}
                 </div>
               </div>
 

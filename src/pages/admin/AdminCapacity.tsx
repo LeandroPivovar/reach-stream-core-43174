@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import {
     Mail,
     MessageSquare,
+    MessageCircle,
     AlertTriangle,
     TrendingUp,
     Calendar,
@@ -33,6 +34,7 @@ const AdminCapacity = () => {
     }
 
     const StatCard = ({ title, icon: Icon, data, label }: { title: string, icon: any, data: any, label: string }) => {
+        if (!data) return null;
         const isCritical = data.isAlert;
 
         return (
@@ -123,7 +125,7 @@ const AdminCapacity = () => {
             title="Capacidade & Consumo"
             subtitle="Monitore a carga da plataforma e a relação entre limites contratados e vendidos."
         >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 <StatCard
                     title="Plataforma de E-mail"
                     icon={Mail}
@@ -135,6 +137,12 @@ const AdminCapacity = () => {
                     icon={MessageSquare}
                     data={stats?.sms}
                     label="Capacidade Global de Mensagens"
+                />
+                <StatCard
+                    title="Plataforma de WhatsApp"
+                    icon={MessageCircle}
+                    data={stats?.whatsapp}
+                    label="Capacidade Global (Twilio)"
                 />
             </div>
 

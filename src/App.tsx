@@ -26,6 +26,7 @@ import Indicacoes from "./pages/Indicacoes";
 import MinhaConta from "./pages/MinhaConta";
 import Produtos from "./pages/Produtos";
 import Categorias from "./pages/Categorias";
+import Suporte from "./pages/Suporte";
 import NotFound from "./pages/NotFound";
 import ShopifyCallback from "./pages/integrations/ShopifyCallback";
 import NuvemshopCallback from "./pages/integrations/NuvemshopCallback";
@@ -46,6 +47,7 @@ import AdminLeadRequests from "./pages/admin/AdminLeadRequests";
 import AdminTwilioRequests from "./pages/admin/AdminTwilioRequests";
 import AdminTemplateRequests from "./pages/admin/AdminTemplateRequests";
 import AdminCampaigns from "./pages/admin/AdminCampaigns";
+import AdminTickets from "./pages/admin/AdminTickets";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
 import LandingPage from "./pages/LandingPage";
@@ -97,6 +99,7 @@ const App = () => (
             <Route path="/indicacoes" element={<ProtectedRoute><Indicacoes /></ProtectedRoute>} />
             <Route path="/conta" element={<ProtectedRoute><MinhaConta /></ProtectedRoute>} />
             <Route path="/cupons" element={<ProtectedRoute><Cupons /></ProtectedRoute>} />
+            <Route path="/suporte" element={<ProtectedRoute><Suporte /></ProtectedRoute>} />
 
             {/* Rotas Administrativas */}
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
@@ -115,6 +118,7 @@ const App = () => (
             <Route path="/admin/lead-requests" element={<ProtectedRoute><AdminLeadRequests /></ProtectedRoute>} />
             <Route path="/admin/template-requests" element={<ProtectedRoute><AdminTemplateRequests /></ProtectedRoute>} />
             <Route path="/admin/campaigns" element={<ProtectedRoute><AdminCampaigns /></ProtectedRoute>} />
+            <Route path="/admin/tickets" element={<ProtectedRoute><AdminTickets /></ProtectedRoute>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

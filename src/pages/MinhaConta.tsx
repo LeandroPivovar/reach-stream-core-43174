@@ -34,11 +34,12 @@ import {
   Mail,
   Calendar,
   AlertTriangle,
-  Trash2
+  Trash2,
+  LogOut
 } from 'lucide-react';
 
 export default function MinhaConta() {
-  const { user: authUser, login } = useAuth();
+  const { user: authUser, login, logout } = useAuth();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
@@ -316,11 +317,26 @@ export default function MinhaConta() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    window.location.href = 'https://nucleocrm.com.br/';
+  };
+
 
   return (
     <Layout
       title="Minha Conta"
       subtitle="Gerencie suas informações pessoais e configurações"
+      actions={
+        <Button 
+          variant="outline" 
+          onClick={handleLogout}
+          className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sair
+        </Button>
+      }
     >
       <div className="space-y-6">
         <Tabs defaultValue="profile" className="space-y-6">

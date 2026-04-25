@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { ShoppingCart, Package, DollarSign, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, Product, Contact } from '@/lib/api';
@@ -35,6 +37,7 @@ export function ManualSaleDialog({
   const [paymentMethod, setPaymentMethod] = useState<string>('credit_card');
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isContactSelectOpen, setIsContactSelectOpen] = useState(false);
 
   // Carregar produtos e contatos do backend
   useEffect(() => {
@@ -188,52 +191,50 @@ export function ManualSaleDialog({
                 <p className="font-medium">{contactName}</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar cliente por nome ou email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
-                  />
-                </div>
-                <Select value={selectedContactId} onValueChange={setSelectedContactId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o cliente" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover max-h-[200px]">
-                    {isLoadingContacts ? (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        <span className="text-sm text-muted-foreground">Carregando contatos...</span>
-                      </div>
-                    ) : (
-                      contacts
-                        .filter(c =>
-                          c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
-                        )
-                        .slice(0, 50) // Limit to avoid performance issues
-                        .map(contact => (
-                          <SelectItem key={contact.id} value={contact.id.toString()}>
-                            <div className="flex flex-col">
-                              <span>{contact.name}</span>
-                              {contact.email && (
-                                <span className="text-xs text-muted-foreground">{contact.email}</span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))
-                    )}
-                    {!isLoadingContacts && contacts.length === 0 && (
-                      <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                        Nenhum contato encontrado
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Popover open={isContactSelectOpen} onOpenChange={setIsContactSelectOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={isContactSelectOpen}
+                    className="w-full justify-between"
+                  >
+                    {selectedContactId
+                      ? contacts.find((c) => c.id.toString() === selectedContactId)?.name
+                      : "Selecione o cliente..."}
+                    <div className="flex items-center gap-2">
+                       {isLoadingContacts && <Loader2 className="h-3 w-3 animate-spin" />}
+                       <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </div>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Procurar cliente..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                      <CommandGroup>
+                        {contacts.map((contact) => (
+                          <CommandItem
+                            key={contact.id}
+                            value={contact.name + (contact.email || '')}
+                            onSelect={() => {
+                              setSelectedContactId(contact.id.toString());
+                              setIsContactSelectOpen(false);
+                            }}
+                            className="flex flex-col items-start"
+                          >
+                            <span className="font-medium">{contact.name}</span>
+                            {contact.email && (
+                              <span className="text-xs text-muted-foreground">{contact.email}</span>
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
 

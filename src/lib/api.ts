@@ -485,6 +485,16 @@ export interface AdminCapacityStats {
     marginOfSafety: number;
     isAlert: boolean;
   };
+  whatsapp: {
+    consumed: number;
+    providerLimit: number;
+    clientsContracted: number;
+    usagePercent: number;
+    daysRemaining: number;
+    projection: number;
+    marginOfSafety: number;
+    isAlert: boolean;
+  };
 }
 
 export interface SystemSetting {
@@ -583,6 +593,28 @@ export interface Category {
   updatedAt: string;
 }
 
+export interface Ticket {
+  id: number;
+  subject: string;
+  category: string;
+  status: 'pendente' | 'respondido' | 'finalizado';
+  userId: number;
+  user?: User;
+  messages?: TicketMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TicketMessage {
+  id: number;
+  message: string;
+  ticketId: number;
+  senderId: number;
+  sender?: User;
+  isAdmin: boolean;
+  createdAt: string;
+}
+
 export interface CreateCategoryData {
   name: string;
   description?: string;
@@ -601,6 +633,32 @@ class ApiService {
   }
 
   // Loja Integrada Integration
+  // Tickets API
+  public ticketsApi = {
+    create: (data: { subject: string; category: string; message: string }) =>
+      this.request<Ticket>('/tickets', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    getAll: () =>
+      this.request<Ticket[]>('/tickets', {
+        method: 'GET',
+      }),
+    getById: (id: number) =>
+      this.request<Ticket>(`/tickets/${id}`, {
+        method: 'GET',
+      }),
+    addMessage: (id: number, message: string) =>
+      this.request<TicketMessage>(`/tickets/${id}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ message }),
+      }),
+    finish: (id: number) =>
+      this.request<Ticket>(`/tickets/${id}/finish`, {
+        method: 'PUT',
+      }),
+  };
+
   public lojaIntegradaApi = {
     connect: (data: { storeName: string; apiKey: string; applicationKey?: string }) =>
       this.request<LojaIntegradaConnection>('/loja-integrada/connect', {
@@ -2032,8 +2090,8 @@ class ApiService {
   }
 
   // --- Admin Finance Stats ---
-  async getAdminFinanceStats(): Promise<AdminFinanceStats> {
-    return this.get<AdminFinanceStats>('/admin/finance/stats');
+  async getAdminFinanceStats(days = 365): Promise<AdminFinanceStats> {
+    return this.get<AdminFinanceStats>(`/admin/finance/stats?days=${days}`);
   }
 
   // --- Admin Settings ---
@@ -2186,6 +2244,7 @@ export interface Plan {
     contacts: number;
     emails: number;
     whatsapp: boolean;
+    whatsappLimit: number;
     sms: number;
     internalUsers?: number;
     advancedCampaigns?: number;
