@@ -1656,7 +1656,7 @@ export default function Campanhas() {
                           }
                         }}
                       >
-                        {!hasWhatsapp && (
+                        {subscriptionStats && !hasWhatsapp && (
                           <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70 rounded-lg z-10 p-4">
                             <div className="bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3 text-center shadow-sm">
                               <p className="text-xs font-bold text-destructive flex items-center justify-center gap-1.5 mb-1">
