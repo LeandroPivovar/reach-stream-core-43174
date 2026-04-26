@@ -1639,12 +1639,16 @@ export default function Campanhas() {
                       (Number(subscriptionStats.whatsappLimit) - (subscriptionStats.whatsappSent || 0)) > 0
                     );
 
+                    const isLoading = !subscriptionStats;
+
                     return (
                       <Card
                         className={`p-6 transition-colors relative ${
-                          !hasWhatsapp
-                            ? 'opacity-60 cursor-not-allowed border-dashed'
-                            : 'cursor-pointer hover:border-primary ' + (newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : '')
+                          isLoading 
+                            ? 'opacity-50 cursor-wait'
+                            : !hasWhatsapp
+                              ? 'opacity-60 cursor-not-allowed border-dashed'
+                              : 'cursor-pointer hover:border-primary ' + (newCampaign.channel === 'whatsapp' ? 'border-primary bg-primary/5' : '')
                         }`}
                         onClick={() => {
                           if (hasWhatsapp) {
