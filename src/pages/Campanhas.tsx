@@ -1633,13 +1633,12 @@ export default function Campanhas() {
                   </Card>
 
                   {(() => {
-                    const hasWhatsapp = subscriptionStats && (
+                    const isLoading = !subscriptionStats;
+                    const hasWhatsapp = !isLoading && (
                       subscriptionStats.whatsappLimit === true || 
                       subscriptionStats.whatsappLimit === -1 || 
                       (Number(subscriptionStats.whatsappLimit) - (subscriptionStats.whatsappSent || 0)) > 0
                     );
-
-                    const isLoading = !subscriptionStats;
 
                     return (
                       <Card
