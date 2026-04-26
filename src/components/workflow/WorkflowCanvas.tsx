@@ -16,6 +16,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { Mail, MessageSquare, Phone, Clock, GitBranch, Send, Calendar, Tag, Gift, Eraser } from 'lucide-react';
 import { EmailNode } from './nodes/EmailNode';
 import { SmsNode } from './nodes/SmsNode';
@@ -52,6 +54,10 @@ interface WorkflowCanvasProps {
   workflow: any;
   onChange: (workflow: any) => void;
   twilioConfigured?: boolean;
+  whatsappLimit?: number | boolean;
+  whatsappSent?: number;
+  onBuyCredits?: () => void;
+  onOpenTemplateModal?: () => void;
 }
 
 const nodeTypes: NodeTypes = {
@@ -70,6 +76,10 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   workflow,
   onChange,
   twilioConfigured = true,
+  whatsappLimit,
+  whatsappSent = 0,
+  onBuyCredits,
+  onOpenTemplateModal,
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(workflow?.nodes || []);
   const [edges, setEdges, onEdgesChange] = useEdgesState(workflow?.edges || []);
@@ -126,6 +136,16 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   );
 
   const addNode = (type: WorkflowStep['type']) => {
+    if (type === 'whatsapp') {
+      const hasCredits = whatsappLimit === true || whatsappLimit === -1 || (Number(whatsappLimit || 0) - (whatsappSent || 0)) > 0;
+      if (!hasCredits) {
+        if (onBuyCredits) {
+          onBuyCredits();
+        }
+        return;
+      }
+    }
+
     const id = `node-${nodeIdCounter}`;
     const newNode: Node = {
       id,
@@ -187,6 +207,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         ...node.data,
         onUpdate: (data: any) => updateNodeData(node.id, data),
         onDelete: () => deleteNode(node.id),
+        onOpenTemplateModal,
       },
     }));
   }, [nodes, updateNodeData, deleteNode]);
@@ -247,10 +268,16 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               variant="outline"
               size="sm"
               onClick={() => addNode('whatsapp')}
-              className="gap-2"
+              className={cn(
+                "gap-2",
+                !(whatsappLimit === true || whatsappLimit === -1 || (Number(whatsappLimit || 0) - (whatsappSent || 0)) > 0) && "opacity-50 border-dashed"
+              )}
             >
               <Phone className="w-4 h-4 text-green-500" />
               WhatsApp
+              {!(whatsappLimit === true || whatsappLimit === -1 || (Number(whatsappLimit || 0) - (whatsappSent || 0)) > 0) && (
+                <Badge variant="destructive" className="ml-1 text-[8px] h-3 px-1">Sem crédito</Badge>
+              )}
             </Button>
           </div>
           <div className="flex items-center gap-3 flex-wrap">

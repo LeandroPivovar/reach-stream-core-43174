@@ -157,68 +157,83 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                 <div className="space-y-4 rounded border p-4 bg-primary/5">
                   <div className="grid gap-2">
                     <Label htmlFor="twilio-content-sid">Template Aprovado (Content API)</Label>
-                    <Select value={contentSid || 'none'} onValueChange={(val) => {
-                      setContentSid(val === 'none' ? '' : val);
-                      const tpl = templates.find(t => t.sid === val);
-                      let detectedVars: Record<string, string> = {};
-                      let bodyText = '';
-                      let primaryType = '';
+                    <div className="flex items-center gap-2">
+                      <Select value={contentSid || 'none'} onValueChange={(val) => {
+                        setContentSid(val === 'none' ? '' : val);
+                        const tpl = templates.find(t => t.sid === val);
+                        let detectedVars: Record<string, string> = {};
+                        let bodyText = '';
+                        let primaryType = '';
 
-                      if (tpl && val !== 'none') {
-                        const typeKeys = Object.keys(tpl.types || {});
-                        // Tentar encontrar o body e identificar o tipo principal
-                        for (const type of typeKeys) {
-                          primaryType = type.split('/').pop() || type;
-                          if (tpl.types[type].body) {
-                            bodyText = tpl.types[type].body;
-                            break;
+                        if (tpl && val !== 'none') {
+                          const typeKeys = Object.keys(tpl.types || {});
+                          // Tentar encontrar o body e identificar o tipo principal
+                          for (const type of typeKeys) {
+                            primaryType = type.split('/').pop() || type;
+                            if (tpl.types[type].body) {
+                              bodyText = tpl.types[type].body;
+                              break;
+                            }
                           }
+                          
+                          // 1. Extrair variáveis do corpo do texto usando Regex {{variável}}
+                          // Esta é a fonte da verdade para o que a Twilio espera no disparo
+                          const matches = bodyText.match(/{{[^{}]+}}/g);
+                          if (matches) {
+                            matches.forEach(match => {
+                              const varName = match.replace(/[{}]/g, '');
+                              detectedVars[varName] = '';
+                            });
+                          }
+
+                          // 2. Se não encontrou nada via regex, tenta usar os metadados (como fallback)
+                          if (Object.keys(detectedVars).length === 0 && tpl.variables) {
+                            Object.keys(tpl.variables).forEach(k => {
+                              detectedVars[k] = '';
+                            });
+                          }
+
+                          if (bodyText) setContent(bodyText);
                         }
                         
-                        // 1. Extrair variáveis do corpo do texto usando Regex {{variável}}
-                        // Esta é a fonte da verdade para o que a Twilio espera no disparo
-                        const matches = bodyText.match(/{{[^{}]+}}/g);
-                        if (matches) {
-                          matches.forEach(match => {
-                            const varName = match.replace(/[{}]/g, '');
-                            detectedVars[varName] = '';
-                          });
-                        }
-
-                        // 2. Se não encontrou nada via regex, tenta usar os metadados (como fallback)
-                        if (Object.keys(detectedVars).length === 0 && tpl.variables) {
-                          Object.keys(tpl.variables).forEach(k => {
-                            detectedVars[k] = '';
-                          });
-                        }
-
-                        if (bodyText) setContent(bodyText);
-                      }
-                      
-                      setDynamicVariables(detectedVars);
-                    }}>
-                      <SelectTrigger id="twilio-content-sid">
-                        <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
-                      </SelectTrigger>
-                      <SelectContent>
-                              {isLoadingTemplates && <SelectItem value="loading" disabled>Carregando templates...</SelectItem>}
-                              {templates.map(t => {
-                                const type = Object.keys(t.types || {})[0]?.split('/').pop() || 'unknown';
-                                return (
-                                  <SelectItem key={t.sid} value={t.sid}>
-                                    <div className="flex items-center gap-2">
-                                      <span>{t.friendlyName}</span>
-                                      <span className={`text-[10px] px-1 rounded border font-mono ${
-                                        type === 'list-picker' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'
-                                      }`}>
-                                        {type.toUpperCase()}
-                                      </span>
-                                    </div>
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                    </Select>
+                        setDynamicVariables(detectedVars);
+                      }}>
+                        <SelectTrigger id="twilio-content-sid" className="flex-1">
+                          <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
+                        </SelectTrigger>
+                        <SelectContent>
+                                {isLoadingTemplates && <SelectItem value="loading" disabled>Carregando templates...</SelectItem>}
+                                {templates.map(t => {
+                                  const type = Object.keys(t.types || {})[0]?.split('/').pop() || 'unknown';
+                                  return (
+                                    <SelectItem key={t.sid} value={t.sid}>
+                                      <div className="flex items-center gap-2">
+                                        <span>{t.friendlyName}</span>
+                                        <span className={`text-[10px] px-1 rounded border font-mono ${
+                                          type === 'list-picker' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'
+                                        }`}>
+                                          {type.toUpperCase()}
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 text-xs border-primary/30 hover:bg-primary/5 flex items-center gap-1.5 whitespace-nowrap"
+                        onClick={() => {
+                          if ((data as any).onOpenTemplateModal) {
+                            (data as any).onOpenTemplateModal();
+                          }
+                        }}
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Solicitar Novo
+                      </Button>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Selecione um modelo previamente aprovado na Meta para iniciar as conversas.
                     </p>

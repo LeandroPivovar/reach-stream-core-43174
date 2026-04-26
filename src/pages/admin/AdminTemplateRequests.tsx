@@ -41,6 +41,7 @@ export default function AdminTemplateRequests() {
     const { data: requests, isLoading } = useQuery({
         queryKey: ['admin-template-requests'],
         queryFn: () => api.adminTemplateRequestsApi.getRequests(),
+        refetchInterval: 30000, // Refresh every 30 seconds to see new paid requests
     });
 
     // State
@@ -214,7 +215,7 @@ export default function AdminTemplateRequests() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                                     Nenhuma solicitação pendente encontrada.
                                 </TableCell>
                             </TableRow>
