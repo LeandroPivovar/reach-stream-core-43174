@@ -43,6 +43,7 @@ import { useScoreConfig } from '@/hooks/use-score-config';
 import { useSegmentationStats, evaluateSegmentation } from '@/hooks/use-segmentation-stats';
 import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
 import { TemplateRequestModal } from '@/components/campaigns/TemplateRequestModal';
+import { BuyCreditsModal } from '@/components/subscriptions/BuyCreditsModal';
 import {
   Table,
   TableBody,
@@ -130,6 +131,7 @@ export default function Campanhas() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isStatusUpdateOpen, setIsStatusUpdateOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [isBuyCreditsModalOpen, setIsBuyCreditsModalOpen] = useState(false);
   const [campaignForStatusUpdate, setCampaignForStatusUpdate] = useState<Campaign | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const contactsPerPage = 10;
@@ -2307,6 +2309,10 @@ export default function Campanhas() {
                 workflow={newCampaign.workflow}
                 onChange={(workflow) => setNewCampaign({ ...newCampaign, workflow })}
                 twilioConfigured={twilioConfigured}
+                whatsappLimit={subscriptionStats?.whatsappLimit}
+                whatsappSent={subscriptionStats?.whatsappSent}
+                onBuyCredits={() => setIsBuyCreditsModalOpen(true)}
+                onOpenTemplateModal={() => setIsTemplateModalOpen(true)}
               />
 
               {/* Resumo da Campanha - Só mostra se houver pelo menos um nó de disparo */}
@@ -3188,6 +3194,22 @@ export default function Campanhas() {
         contacts={contacts as any}
         contactPurchases={contactPurchases as any}
         scoreConfig={scoreConfig}
+      />
+
+      <TemplateRequestModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        onSuccess={() => {
+          loadExternalData();
+        }}
+      />
+
+      <BuyCreditsModal
+        isOpen={isBuyCreditsModalOpen}
+        onClose={() => setIsBuyCreditsModalOpen(false)}
+        onSuccess={() => {
+          loadExternalData();
+        }}
       />
 
     </Layout >
