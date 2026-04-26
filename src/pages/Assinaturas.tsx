@@ -317,7 +317,7 @@ export default function Assinaturas() {
                     {limit != null && limit !== -1 && (
                       <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
                     )}
-                    {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / ∞</span>}
+                    {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>}
                   </p>
                   {limit != null && limit !== -1 && (
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4">
@@ -344,12 +344,12 @@ export default function Assinaturas() {
                   <p className="text-sm font-medium text-slate-400">WhatsApp Enviados</p>
                   <p className="text-2xl font-black text-slate-900 mt-1">
                     {used.toLocaleString()}
-                    {limit != null && limit !== -1 && limit !== 0 && (
+                    {limit != null && limit !== -1 && (
                       <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
                     )}
-                    {(limit === -1 || limit === true) && <span className="text-sm font-medium text-slate-400 ml-1"> / ∞</span>}
+                    {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>}
                   </p>
-                  {limit != null && limit !== -1 && limit !== 0 && (
+                  {limit != null && limit !== -1 && (
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4">
                       <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
                     </div>
@@ -377,7 +377,7 @@ export default function Assinaturas() {
                     {limit != null && limit !== -1 && (
                       <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
                     )}
-                    {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / ∞</span>}
+                    {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>}
                   </p>
                   {limit != null && limit !== -1 && (
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4">
