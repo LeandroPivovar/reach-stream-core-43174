@@ -137,11 +137,13 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
   const addNode = (type: WorkflowStep['type']) => {
     if (type === 'whatsapp') {
-      const hasCredits = whatsappLimit === true || whatsappLimit === -1 || (Number(whatsappLimit || 0) - (whatsappSent || 0)) > 0;
+      // Solução Definitiva: Enquanto carrega (undefined/null), permitimos o clique. 
+      // Só bloqueia se tiver certeza absoluta que o saldo é 0 ou menor.
+      const isLoading = whatsappLimit === undefined || whatsappLimit === null;
+      const hasCredits = isLoading || whatsappLimit === true || whatsappLimit === -1 || (Number(whatsappLimit) - (whatsappSent || 0)) > 0;
+      
       if (!hasCredits) {
-        if (onBuyCredits) {
-          onBuyCredits();
-        }
+        if (onBuyCredits) onBuyCredits();
         return;
       }
     }
@@ -270,7 +272,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               onClick={() => addNode('whatsapp')}
               className={cn(
                 "gap-2",
-                whatsappLimit !== undefined && whatsappLimit !== null && !(whatsappLimit === true || whatsappLimit === -1 || (Number(whatsappLimit || 0) - (whatsappSent || 0)) > 0) && "opacity-50 border-dashed"
+                whatsappLimit !== undefined && whatsappLimit !== null && !(whatsappLimit === true || whatsappLimit === -1 || (Number(whatsappLimit) - (whatsappSent || 0)) > 0) && "opacity-50 border-dashed"
               )}
             >
               <Phone className="w-4 h-4 text-green-500" />
