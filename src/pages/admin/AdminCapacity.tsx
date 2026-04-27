@@ -15,6 +15,21 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Settings, Save, Loader2 } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from "@/hooks/use-toast";
 
 const AdminCapacity = () => {
     const { data: stats, isLoading } = useQuery({
@@ -146,6 +161,16 @@ const AdminCapacity = () => {
                 />
             </div>
 
+            <div className="mt-8 flex justify-end">
+                <CapacitySettingsDialog 
+                    currentSettings={{
+                        email: stats?.email?.providerLimit || 0,
+                        sms: stats?.sms?.providerLimit || 0,
+                        whatsapp: stats?.whatsapp?.providerLimit || 0
+                    }} 
+                />
+            </div>
+
             <div className="mt-8">
                 <Card className="bg-slate-900 border-slate-800 text-slate-100">
                     <CardHeader>
@@ -167,6 +192,114 @@ const AdminCapacity = () => {
                 </Card>
             </div>
         </AdminLayout>
+    );
+};
+
+const CapacitySettingsDialog = ({ currentSettings }: { currentSettings: { email: number, sms: number, whatsapp: number } }) => {
+    const [open, setOpen] = React.useState(false);
+    const [emailLimit, setEmailLimit] = React.useState(currentSettings.email.toString());
+    const [smsLimit, setSmsLimit] = React.useState(currentSettings.sms.toString());
+    const [whatsappLimit, setWhatsappLimit] = React.useState(currentSettings.whatsapp.toString());
+    
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
+
+    // Update state when currentSettings change (e.g. after initial load)
+    React.useEffect(() => {
+        setEmailLimit(currentSettings.email.toString());
+        setSmsLimit(currentSettings.sms.toString());
+        setWhatsappLimit(currentSettings.whatsapp.toString());
+    }, [currentSettings]);
+
+    const mutation = useMutation({
+        mutationFn: async () => {
+            const settings = [
+                { key: 'PROVIDER_EMAIL_LIMIT', value: emailLimit },
+                { key: 'PROVIDER_SMS_LIMIT', value: smsLimit },
+                { key: 'PROVIDER_WHATSAPP_LIMIT', value: whatsappLimit },
+            ];
+            return api.updateSystemSettingsBulk(settings);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-capacity-stats'] });
+            toast({
+                title: "Limites atualizados",
+                description: "As capacidades globais foram salvas com sucesso.",
+            });
+            setOpen(false);
+        },
+        onError: (error: any) => {
+            toast({
+                title: "Erro ao salvar",
+                description: error.message || "Ocorreu um erro ao atualizar os limites.",
+                variant: "destructive",
+            });
+        }
+    });
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                    <Settings className="w-4 h-4" />
+                    Gerenciar Capacidade
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Configurar Capacidade Global</DialogTitle>
+                    <DialogDescription>
+                        Ajuste os limites contratados com as provedoras para sincronizar as barras de consumo.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="email-limit">Limite E-mail (Mensal)</Label>
+                        <Input
+                            id="email-limit"
+                            type="number"
+                            value={emailLimit}
+                            onChange={(e) => setEmailLimit(e.target.value)}
+                            placeholder="Ex: 1000000"
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="sms-limit">Limite SMS (Mensal)</Label>
+                        <Input
+                            id="sms-limit"
+                            type="number"
+                            value={smsLimit}
+                            onChange={(e) => setSmsLimit(e.target.value)}
+                            placeholder="Ex: 100000"
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="whatsapp-limit">Limite WhatsApp (Mensal)</Label>
+                        <Input
+                            id="whatsapp-limit"
+                            type="number"
+                            value={whatsappLimit}
+                            onChange={(e) => setWhatsappLimit(e.target.value)}
+                            placeholder="Ex: 50000"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button 
+                        onClick={() => mutation.mutate()} 
+                        disabled={mutation.isPending}
+                        className="gap-2"
+                    >
+                        {mutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <Save className="w-4 h-4" />
+                        )}
+                        Salvar Alterações
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 };
 
