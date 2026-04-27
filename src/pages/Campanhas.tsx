@@ -1723,11 +1723,9 @@ export default function Campanhas() {
                         <p className="text-sm text-muted-foreground">
                           Mensagens via WhatsApp Business com suporte a mídia e botões interativos.
                         </p>
-                        {subscriptionStats && (
+                        {subscriptionStats && subscriptionStats.whatsappLimit !== -1 && (
                           <p className="text-xs mt-2 font-medium text-green-700">
-                            {subscriptionStats.whatsappLimit === -1
-                              ? '✅ Créditos Ilimitados'
-                              : subscriptionStats.whatsappLimit > 0
+                            {subscriptionStats.whatsappLimit > 0
                                 ? `✅ ${subscriptionStats.whatsappLimit.toLocaleString('pt-BR')} créditos disponíveis`
                                 : '❌ Nenhum crédito disponível'}
                           </p>
