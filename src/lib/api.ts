@@ -1558,6 +1558,12 @@ class ApiService {
     });
   }
 
+  async getTwilioConfig(): Promise<{ configured: boolean }> {
+    return this.request<{ configured: boolean }>('/twilio-connections/config', {
+      method: 'GET',
+    });
+  }
+
   // Nuvemshop Integration
   async initNuvemshopAuth(): Promise<{ authUrl: string; state: string }> {
     return this.request<{ authUrl: string; state: string }>('/nuvemshop/auth/init', {
