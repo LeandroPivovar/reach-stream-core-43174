@@ -159,45 +159,43 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                     <Label htmlFor="twilio-content-sid">Template Aprovado (Content API)</Label>
                     <div className="flex items-center gap-2">
                       <Select value={contentSid || 'none'} onValueChange={(val) => {
-                        setContentSid(val === 'none' ? '' : val);
-                        const tpl = templates.find(t => t.sid === val);
-                        let detectedVars: Record<string, string> = {};
-                        let bodyText = '';
-                        let primaryType = '';
+                          setContentSid(val === 'none' ? '' : val);
+                          const tpl = templates.find(t => t.sid === val);
+                          let detectedVars: Record<string, string> = {};
+                          let bodyText = '';
 
-                        if (tpl && val !== 'none') {
-                          const typeKeys = Object.keys(tpl.types || {});
-                          // Tentar encontrar o body e identificar o tipo principal
-                          for (const type of typeKeys) {
-                            primaryType = type.split('/').pop() || type;
-                            if (tpl.types[type].body) {
-                              bodyText = tpl.types[type].body;
-                              break;
+                          if (tpl && val !== 'none') {
+                            // 1. Priorizar os metadados de variáveis (Content API oficial)
+                            if (tpl.variables && Object.keys(tpl.variables).length > 0) {
+                              Object.keys(tpl.variables).forEach(k => {
+                                detectedVars[k] = '';
+                              });
                             }
+
+                            // 2. Tentar encontrar o body em qualquer um dos tipos e extrair via Regex se as variáveis ainda estiverem vazias
+                            const typeKeys = Object.keys(tpl.types || {});
+                            for (const type of typeKeys) {
+                              const typeData = tpl.types[type];
+                              if (typeData.body) {
+                                bodyText = typeData.body;
+                                if (Object.keys(detectedVars).length === 0) {
+                                  const matches = bodyText.match(/{{[^{}]+}}/g);
+                                  if (matches) {
+                                    matches.forEach(match => {
+                                      const varName = match.replace(/[{}]/g, '');
+                                      detectedVars[varName] = '';
+                                    });
+                                  }
+                                }
+                                break;
+                              }
+                            }
+                            
+                            if (bodyText) setContent(bodyText);
                           }
                           
-                          // 1. Extrair variáveis do corpo do texto usando Regex {{variável}}
-                          // Esta é a fonte da verdade para o que a Twilio espera no disparo
-                          const matches = bodyText.match(/{{[^{}]+}}/g);
-                          if (matches) {
-                            matches.forEach(match => {
-                              const varName = match.replace(/[{}]/g, '');
-                              detectedVars[varName] = '';
-                            });
-                          }
-
-                          // 2. Se não encontrou nada via regex, tenta usar os metadados (como fallback)
-                          if (Object.keys(detectedVars).length === 0 && tpl.variables) {
-                            Object.keys(tpl.variables).forEach(k => {
-                              detectedVars[k] = '';
-                            });
-                          }
-
-                          if (bodyText) setContent(bodyText);
-                        }
-                        
-                        setDynamicVariables(detectedVars);
-                      }}>
+                          setDynamicVariables(detectedVars);
+                        }}>
                         <SelectTrigger id="twilio-content-sid" className="flex-1">
                           <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
                         </SelectTrigger>
@@ -234,10 +232,16 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                         Solicitar Novo
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Selecione um modelo previamente aprovado na Meta para iniciar as conversas.
-                    </p>
                   </div>
+
+                  {contentSid && contentSid !== 'none' && (
+                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                      <Label className="text-[10px] uppercase font-bold text-primary mb-2 block tracking-wider">Conteúdo do Modelo</Label>
+                      <div className="text-sm p-3 bg-background rounded border whitespace-pre-wrap italic">
+                        {content || 'Conteúdo do template selecionado...'}
+                      </div>
+                    </div>
+                  )}
 
                   {contentSid && contentSid !== 'none' && Object.keys(dynamicVariables).length > 0 && (
                     <div className="space-y-3 pt-3 border-t border-primary/20">
