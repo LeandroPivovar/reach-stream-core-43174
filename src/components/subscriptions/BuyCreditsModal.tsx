@@ -57,18 +57,36 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
             try {
                 const settings = await api.getSystemSettings();
                 const newPrices = { ...prices };
-                settings.forEach(s => {
-                    if (s.key === 'UNIT_PRICE_WHATSAPP') newPrices.UNIT_PRICE_WHATSAPP = parseFloat(s.value);
-                    if (s.key === 'UNIT_PRICE_SMS') newPrices.UNIT_PRICE_SMS = parseFloat(s.value);
-                    if (s.key === 'UNIT_PRICE_EMAIL') newPrices.UNIT_PRICE_EMAIL = parseFloat(s.value);
-                });
+                const pkgs: any[] = [];
+                
+                const settingsMap = settings.reduce((acc: any, s) => ({ ...acc, [s.key]: s.value }), {});
+
+                if (settingsMap['UNIT_PRICE_WHATSAPP']) newPrices.UNIT_PRICE_WHATSAPP = parseFloat(settingsMap['UNIT_PRICE_WHATSAPP']);
+                if (settingsMap['UNIT_PRICE_SMS']) newPrices.UNIT_PRICE_SMS = parseFloat(settingsMap['UNIT_PRICE_SMS']);
+                if (settingsMap['UNIT_PRICE_EMAIL']) newPrices.UNIT_PRICE_EMAIL = parseFloat(settingsMap['UNIT_PRICE_EMAIL']);
+
+                // Parse WhatsApp packages
+                for (let i = 1; i <= 3; i++) {
+                    const amount = parseInt(settingsMap[`WHATSAPP_PKG${i}_AMOUNT`] || '0');
+                    const price = parseFloat(settingsMap[`WHATSAPP_PKG${i}_PRICE`] || '0');
+                    if (amount > 0) {
+                        pkgs.push({ id: i, amount, price });
+                    }
+                }
+
                 setPrices(newPrices);
+                setWhatsappPackages(pkgs);
+
+                // If whatsapp packages exist and we are on whatsapp, pre-select first
+                if (creditType === 'whatsapp' && pkgs.length > 0) {
+                    setAmount(pkgs[0].amount);
+                }
             } catch (error) {
                 console.error('Erro ao buscar preços:', error);
             }
         };
         fetchPrices();
-    }, []);
+    }, [isOpen]); // Refetch when modal opens to get latest admin changes
 
     const pricePerUnit = creditType === 'whatsapp' 
         ? prices.UNIT_PRICE_WHATSAPP 
@@ -104,8 +122,14 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
     useEffect(() => {
         if (creditType === 'email') setAmount(1000);
         else if (creditType === 'sms') setAmount(500);
-        else if (creditType === 'whatsapp') setAmount(500);
-    }, [creditType]);
+        else if (creditType === 'whatsapp') {
+            if (whatsappPackages.length > 0) {
+                setAmount(whatsappPackages[0].amount);
+            } else {
+                setAmount(500);
+            }
+        }
+    }, [creditType, whatsappPackages.length]);
 
     const handleBuy = async () => {
         if (amount < 100) {
@@ -222,43 +246,73 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                         </div>
 
                         <div className="space-y-3">
-                            <Label>Quantidade</Label>
-                            <div className="flex space-x-2">
-                                {[100, 500, 1000, 5000].map(val => (
-                                    <Button
-                                        key={val}
-                                        variant={amount === val ? 'default' : 'outline'}
-                                        size="sm"
-                                        className="flex-1"
-                                        onClick={() => setAmount(val)}
-                                    >
-                                        {val}
-                                    </Button>
-                                ))}
-                            </div>
-                            <div className="pt-2">
-                                <Label className="text-xs text-muted-foreground">Outro valor (Mín. 100)</Label>
-                                <Input
-                                    type="number"
-                                    min="100"
-                                    step="100"
-                                    value={amount}
-                                    onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
-                                    className="mt-1"
-                                />
-                            </div>
+                            <Label>{creditType === 'whatsapp' ? 'Escolha seu Pacote' : 'Quantidade'}</Label>
+                            
+                            {creditType === 'whatsapp' && whatsappPackages.length > 0 ? (
+                                <div className="grid grid-cols-1 gap-2">
+                                    {whatsappPackages.map(pkg => (
+                                        <Button
+                                            key={pkg.id}
+                                            variant={amount === pkg.amount ? 'default' : 'outline'}
+                                            className="h-auto py-3 px-4 flex justify-between items-center"
+                                            onClick={() => setAmount(pkg.amount)}
+                                        >
+                                            <div className="text-left">
+                                                <div className="font-bold">{pkg.amount.toLocaleString()} Disparos</div>
+                                                <div className="text-[10px] opacity-70">Pacote {pkg.id}</div>
+                                            </div>
+                                            <div className="font-bold">
+                                                {pkg.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                            </div>
+                                        </Button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex space-x-2">
+                                        {[100, 500, 1000, 5000].map(val => (
+                                            <Button
+                                                key={val}
+                                                variant={amount === val ? 'default' : 'outline'}
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={() => setAmount(val)}
+                                            >
+                                                {val}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <div className="pt-2">
+                                        <Label className="text-xs text-muted-foreground">Outro valor (Mín. 100)</Label>
+                                        <Input
+                                            type="number"
+                                            min="100"
+                                            step="100"
+                                            value={amount}
+                                            onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
+                                            className="mt-1"
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         <Card className="p-4 bg-muted/50">
                             <div className="flex justify-between items-center text-sm mb-1">
                                 <span className="text-muted-foreground">Preço por {creditType.toUpperCase()}</span>
                                 <span className="font-medium">
-                                    {`R$ ${pricePerUnit.toFixed(2).replace('.', ',')}`}
+                                    {(creditType === 'whatsapp' && whatsappPackages.find(p => p.amount === amount)) 
+                                        ? `Pacote Selecionado`
+                                        : `R$ ${pricePerUnit.toFixed(2).replace('.', ',')}`}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center border-t border-border pt-2 mt-2">
                                 <span className="font-semibold text-base">Total</span>
-                                <span className="font-bold text-lg text-primary">{totalValue}</span>
+                                <span className="font-bold text-lg text-primary">
+                                    {(creditType === 'whatsapp' && whatsappPackages.find(p => p.amount === amount))
+                                        ? whatsappPackages.find(p => p.amount === amount).price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                                        : totalValue}
+                                </span>
                             </div>
                         </Card>
 
