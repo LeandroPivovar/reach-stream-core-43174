@@ -1637,6 +1637,7 @@ export default function Campanhas() {
                     const hasWhatsapp = !isLoading && (
                       subscriptionStats.whatsappLimit === true || 
                       subscriptionStats.whatsappLimit === -1 || 
+                      (Number(subscriptionStats.whatsappLimit) === -1) ||
                       (Number(subscriptionStats.whatsappLimit) - (subscriptionStats.whatsappSent || 0)) > 0
                     );
 
@@ -1687,9 +1688,11 @@ export default function Campanhas() {
                         </p>
                         {subscriptionStats && (
                           <p className="text-xs mt-2 font-medium text-green-700">
-                            {subscriptionStats.whatsappLimit > 0
-                              ? `✅ ${subscriptionStats.whatsappLimit.toLocaleString('pt-BR')} créditos disponíveis`
-                              : '❌ Nenhum crédito disponível'}
+                            {subscriptionStats.whatsappLimit === -1
+                              ? '✅ Créditos Ilimitados'
+                              : subscriptionStats.whatsappLimit > 0
+                                ? `✅ ${subscriptionStats.whatsappLimit.toLocaleString('pt-BR')} créditos disponíveis`
+                                : '❌ Nenhum crédito disponível'}
                           </p>
                         )}
                       </div>
@@ -1746,30 +1749,32 @@ export default function Campanhas() {
                               let bodyText = newCampaign.email.content;
 
                               if (tpl && val !== 'none') {
-                                // Tentar encontrar o body em qualquer um dos tipos (text, media, list-picker, etc)
-                                const typeKeys = Object.keys(tpl.types || {});
-                                for (const type of typeKeys) {
-                                  if (tpl.types[type].body) {
-                                    bodyText = tpl.types[type].body;
-                                    break;
-                                  }
-                                }
-                                
-                                // 1. Extrair variáveis do corpo do texto usando Regex {{variável}}
-                                // Esta é a fonte da verdade para o que a Twilio espera no disparo
-                                const matches = bodyText.match(/{{[^{}]+}}/g);
-                                if (matches) {
-                                  matches.forEach(match => {
-                                    const varName = match.replace(/[{}]/g, '');
-                                    newVars[varName] = '';
-                                  });
-                                }
-
-                                // 2. Fallback: Metadados (caso regex não encontre mas a Twilio sugira algo)
-                                if (Object.keys(newVars).length === 0 && tpl.variables) {
+                                // 1. Usar metadados de variáveis (mais confiável para todos os tipos)
+                                if (tpl.variables && Object.keys(tpl.variables).length > 0) {
                                   Object.keys(tpl.variables).forEach(k => {
                                     newVars[k] = '';
                                   });
+                                }
+
+                                // 2. Tentar encontrar o body em qualquer um dos tipos (text, media, list-picker, etc)
+                                const typeKeys = Object.keys(tpl.types || {});
+                                for (const type of typeKeys) {
+                                  const typeData = tpl.types[type];
+                                  if (typeData.body) {
+                                    bodyText = typeData.body;
+                                    
+                                    // Se variáveis não vierem preenchidas pelos metadados, tenta Regex no body
+                                    if (Object.keys(newVars).length === 0) {
+                                      const matches = bodyText.match(/{{[^{}]+}}/g);
+                                      if (matches) {
+                                        matches.forEach(match => {
+                                          const varName = match.replace(/[{}]/g, '');
+                                          newVars[varName] = '';
+                                        });
+                                      }
+                                    }
+                                    break;
+                                  }
                                 }
                               }
                               
@@ -1821,6 +1826,17 @@ export default function Campanhas() {
                             </Button>
                           </div>
                         </div>
+
+                        {(newCampaign.email as any).contentSid && (
+                          <div className="mt-4 space-y-4">
+                            <div className="p-4 bg-muted/20 rounded-lg border border-primary/10">
+                              <Label className="text-[10px] uppercase font-bold text-primary mb-2 block">Conteúdo do Modelo</Label>
+                              <div className="text-sm p-3 bg-background rounded border whitespace-pre-wrap">
+                                {newCampaign.email.content || 'O conteúdo será exibido aqui...'}
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {(newCampaign.email as any).contentSid && Object.keys((newCampaign.email as any).templateVariables || {}).length > 0 && (
                           <div className="space-y-3 pt-3 border-t border-primary/20">
