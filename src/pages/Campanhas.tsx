@@ -1642,7 +1642,8 @@ export default function Campanhas() {
                       (Number(subscriptionStats.whatsappLimit) - (subscriptionStats.whatsappSent || 0)) > 0
                     );
 
-                    const hasWhatsapp = hasWhatsappCredits && twilioConfigured;
+                    // Permite selecionar se tiver créditos, mesmo sem configurar (conforme solicitado pelo usuário)
+                    const hasWhatsapp = hasWhatsappCredits;
 
                     return (
                       <Card
@@ -1659,45 +1660,58 @@ export default function Campanhas() {
                           }
                         }}
                       >
-                        {subscriptionStats && !hasWhatsapp && (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70 rounded-lg z-10 p-4">
-                            {!hasWhatsappCredits ? (
-                              <div className="bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3 text-center shadow-sm">
-                                <p className="text-xs font-bold text-destructive flex items-center justify-center gap-1.5 mb-1">
-                                  <ShieldCheck className="w-3.5 h-3.5" /> Sem Créditos de WhatsApp
-                                </p>
-                                <p className="text-[10px] text-muted-foreground mb-3 font-medium">Você atingiu o limite do seu plano.</p>
-                                <Button 
-                                  variant="destructive" 
-                                  size="sm" 
-                                  className="h-7 text-[10px] font-bold px-4"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate('/assinaturas');
-                                  }}
-                                >
-                                  <Zap className="w-3 h-3 mr-1" /> Comprar Créditos
-                                </Button>
-                              </div>
-                            ) : !twilioConfigured ? (
-                              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg px-4 py-3 text-center shadow-sm">
-                                <p className="text-xs font-bold text-orange-600 flex items-center justify-center gap-1.5 mb-1">
-                                  <Settings className="w-3.5 h-3.5" /> WhatsApp Não Configurado
-                                </p>
-                                <p className="text-[10px] text-muted-foreground mb-3 font-medium">Configure sua conta Twilio para disparar.</p>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="h-7 text-[10px] font-bold px-4 border-orange-200 text-orange-700 hover:bg-orange-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate('/conexoes');
-                                  }}
-                                >
-                                  <Settings className="w-3 h-3 mr-1" /> Configurar Agora
-                                </Button>
-                              </div>
-                            ) : null}
+                        {subscriptionStats && !hasWhatsappCredits && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/70 rounded-lg z-10 p-4 font-bold">
+                            <div className="bg-destructive/10 border border-destructive/30 rounded-lg px-4 py-3 text-center shadow-sm">
+                              <p className="text-xs font-bold text-destructive flex items-center justify-center gap-1.5 mb-1">
+                                <ShieldCheck className="w-3.5 h-3.5" /> Sem Créditos de WhatsApp
+                              </p>
+                              <p className="text-[10px] text-muted-foreground mb-3 font-medium">Você atingiu o limite do seu plano.</p>
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="h-7 text-[10px] font-bold px-4"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate('/assinaturas');
+                                }}
+                              >
+                                <Zap className="w-3 h-3 mr-1" /> Comprar Créditos
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {subscriptionStats && hasWhatsappCredits && !twilioConfigured && (
+                          <div className="absolute top-2 right-2 z-10">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <div className="bg-orange-500 rounded-full p-1 cursor-help animate-pulse">
+                                  <Settings className="w-3 h-3 text-white" />
+                                </div>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-64 p-3 translate-x-[-10px]">
+                                <div className="space-y-2">
+                                  <p className="text-xs font-bold text-orange-600 flex items-center gap-1">
+                                    <Settings className="w-3.5 h-3.5" /> Atenção: Não Configurado
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    Você pode preparar a campanha agora, mas o envio só funcionará após configurar sua conta Twilio.
+                                  </p>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="w-full h-7 text-[10px] border-orange-200 text-orange-700"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate('/conexoes');
+                                    }}
+                                  >
+                                    Configurar em Conexões
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
                           </div>
                         )}
                     <div className="flex items-start gap-4">
