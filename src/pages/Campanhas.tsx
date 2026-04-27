@@ -93,7 +93,8 @@ import {
   Library,
   ShieldCheck,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Settings
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
