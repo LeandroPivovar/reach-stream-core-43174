@@ -337,7 +337,7 @@ export default function Vendas() {
               <div className="h-[400px] w-full">
                 {dashboardStats?.dailyRevenue && dashboardStats.dailyRevenue.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
+                    <LineChart
                       data={dashboardStats.dailyRevenue.map(d => {
                         let formattedDate = 'Inválida';
                         if (d.date) {
@@ -367,12 +367,15 @@ export default function Vendas() {
                         formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Faturamento']}
                         labelFormatter={(label) => `Data: ${label}`}
                       />
-                      <Bar
+                      <Line
+                        type="monotone"
                         dataKey="faturamento"
-                        radius={[8, 8, 0, 0]}
-                        fill="hsl(var(--primary))"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        dot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 0 }}
+                        activeDot={{ r: 6 }}
                       />
-                    </BarChart>
+                    </LineChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted-foreground border border-dashed rounded-lg bg-muted/10">
