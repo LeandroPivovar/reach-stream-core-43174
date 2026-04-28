@@ -14,7 +14,14 @@ import {
   Phone,
   Filter,
   RefreshCcw,
-  UserCheck
+  UserCheck,
+  Eye,
+  Store,
+  Globe,
+  Instagram,
+  DollarSign,
+  HelpCircle,
+  ShoppingCart
 } from 'lucide-react';
 import { api, LeadRequest } from '@/lib/api';
 import { AdminLayout } from '@/components/layout/AdminLayout';
@@ -37,6 +44,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
@@ -54,6 +68,7 @@ export default function AdminLeadRequests() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = React.useState('');
+    const [selectedLead, setSelectedLead] = React.useState<LeadRequest | null>(null);
 
     const { data: leads, isLoading, refetch } = useQuery({
         queryKey: ['admin-lead-requests'],
@@ -202,6 +217,12 @@ export default function AdminLeadRequests() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="w-56">
+                                                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                                <DropdownMenuItem className="gap-2" onClick={() => setSelectedLead(lead)}>
+                                                    <Eye className="h-4 w-4" />
+                                                    Visualizar Detalhes
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
                                                 <DropdownMenuLabel>Alterar Status</DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
                                                 {Object.entries(STATUS_CONFIG).map(([key, config]) => (
@@ -230,6 +251,117 @@ export default function AdminLeadRequests() {
                     </TableBody>
                 </Table>
             </div>
+
+            <Dialog open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLead(null)}>
+                <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <UserCheck className="h-5 w-5 text-primary" />
+                            Detalhes da Solicitação
+                        </DialogTitle>
+                        <DialogDescription>
+                            Informações completas enviadas pelo lead.
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    {selectedLead && (
+                        <div className="grid gap-6 py-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Nome</p>
+                                    <p className="text-sm font-semibold">{selectedLead.name}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Empresa</p>
+                                    <p className="text-sm font-semibold flex items-center gap-1">
+                                        <Building2 className="h-3.5 w-3.5" /> {selectedLead.company}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">E-mail</p>
+                                    <p className="text-sm font-semibold flex items-center gap-1">
+                                        <Mail className="h-3.5 w-3.5" /> {selectedLead.email}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Telefone</p>
+                                    <p className="text-sm font-semibold flex items-center gap-1">
+                                        <Phone className="h-3.5 w-3.5" /> {selectedLead.phone}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="border-t pt-4 grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Segmento</p>
+                                    <p className="text-sm flex items-center gap-1.5">
+                                        <Store className="h-3.5 w-3.5 text-slate-400" />
+                                        {selectedLead.segmento || 'Não informado'}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Canal de Vendas</p>
+                                    <p className="text-sm flex items-center gap-1.5">
+                                        <ShoppingCart className="h-3.5 w-3.5 text-slate-400" />
+                                        {selectedLead.canalVendas || 'Não informado'}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Instagram</p>
+                                    {selectedLead.instagram ? (
+                                        <a 
+                                            href={`https://instagram.com/${selectedLead.instagram.replace('@', '')}`} 
+                                            target="_blank" 
+                                            rel="noreferrer"
+                                            className="text-sm text-primary hover:underline flex items-center gap-1.5"
+                                        >
+                                            <Instagram className="h-3.5 w-3.5" />
+                                            {selectedLead.instagram}
+                                        </a>
+                                    ) : (
+                                        <p className="text-sm text-slate-400 italic">Não informado</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Site/Loja</p>
+                                    {selectedLead.siteUrl ? (
+                                        <a 
+                                            href={selectedLead.siteUrl.startsWith('http') ? selectedLead.siteUrl : `https://${selectedLead.siteUrl}`} 
+                                            target="_blank" 
+                                            rel="noreferrer"
+                                            className="text-sm text-primary hover:underline flex items-center gap-1.5"
+                                        >
+                                            <Globe className="h-3.5 w-3.5" />
+                                            Site da Loja
+                                        </a>
+                                    ) : (
+                                        <p className="text-sm text-slate-400 italic">Não informado</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="border-t pt-4 space-y-3">
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Faturamento Médio</p>
+                                    <p className="text-sm font-medium flex items-center gap-1.5">
+                                        <DollarSign className="h-3.5 w-3.5 text-green-600" />
+                                        {selectedLead.faturamentoMedio || 'Não informado'}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Como podemos ajudar?</p>
+                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 min-h-[80px]">
+                                        <p className="text-sm text-slate-700 whitespace-pre-wrap flex gap-2">
+                                            <HelpCircle className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                                            {selectedLead.comoAjudar || 'Nenhuma observação enviada.'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </AdminLayout>
     );
 }

@@ -489,7 +489,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 email: document.getElementById('email').value,
                 phone: document.getElementById('telefone').value,
                 company: document.getElementById('company').value,
-                source: document.getElementById('source').value
+                source: document.getElementById('source').value,
+                segmento: document.getElementById('segmento')?.value || null,
+                canalVendas: document.getElementById('canal_vendas')?.value || null,
+                instagram: document.getElementById('instagram')?.value || null,
+                siteUrl: document.getElementById('site_url')?.value || null,
+                faturamentoMedio: document.getElementById('faturamento_medio')?.value || null,
+                comoAjudar: document.getElementById('como_ajudar')?.value || null
             };
 
             const API_URL = window.location.hostname === 'localhost' 
