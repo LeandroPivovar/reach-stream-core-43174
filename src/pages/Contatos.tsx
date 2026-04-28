@@ -322,7 +322,7 @@ export default function Contatos() {
     try {
       const [apiContacts, stats] = await Promise.all([
         api.getContacts(),
-        api.getSegmentationStats()
+        api.getSegmentationStats(7)
       ]);
       const frontendContacts = apiContacts.map(convertApiContactToFrontend);
       setContacts(frontendContacts);

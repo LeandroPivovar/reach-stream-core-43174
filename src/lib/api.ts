@@ -1011,36 +1011,36 @@ class ApiService {
     });
   }
 
-  async getDashboardStats(period: number, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<DashboardStats> {
+  async getDashboardStats(period: number = 7, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<DashboardStats> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
-    if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
-    if (filters.productId) params.append('productId', filters.productId.toString());
+    if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters?.productId) params.append('productId', filters.productId.toString());
 
     return this.request<DashboardStats>(`/sales/dashboard/stats?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getSalesByCampaign(period: number): Promise<SalesByCampaign[]> {
+  async getSalesByCampaign(period: number = 7): Promise<SalesByCampaign[]> {
     return this.request<SalesByCampaign[]>(`/sales/dashboard/campaigns?period=${period}`, {
       method: 'GET',
     });
   }
 
-  async getSalesByChannel(period: number): Promise<SalesByChannel[]> {
+  async getSalesByChannel(period: number = 7): Promise<SalesByChannel[]> {
     return this.request<SalesByChannel[]>(`/sales/dashboard/channels?period=${period}`, {
       method: 'GET',
     });
   }
 
-  async getTopProducts(period: number): Promise<TopProduct[]> {
+  async getTopProducts(period: number = 7): Promise<TopProduct[]> {
     return this.request<TopProduct[]>(`/sales/dashboard/products?period=${period}`, {
       method: 'GET',
     });
   }
 
-  async getPaymentMethods(period: number): Promise<PaymentMethodStats[]> {
+  async getPaymentMethods(period: number = 7): Promise<PaymentMethodStats[]> {
     return this.get<PaymentMethodStats[]>(`/sales/dashboard/payment-methods?period=${period}`);
   }
 
@@ -1233,22 +1233,22 @@ class ApiService {
 
   // --- Campaign Contacts ---
 
-  async getFunnelData(period: number, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<FunnelStage[]> {
+  async getFunnelData(period: number = 7, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<FunnelStage[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
-    if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
-    if (filters.productId) params.append('productId', filters.productId.toString());
+    if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters?.productId) params.append('productId', filters.productId.toString());
 
     return this.request<FunnelStage[]>(`/sales/dashboard/funnel?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getDashboardHeatmap(period: number, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<HeatmapSegment[]> {
+  async getDashboardHeatmap(period: number = 7, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<HeatmapSegment[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
-    if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
-    if (filters.productId) params.append('productId', filters.productId.toString());
+    if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters?.productId) params.append('productId', filters.productId.toString());
 
     return this.get<HeatmapSegment[]>(`/sales/dashboard/heatmap?${params.toString()}`);
   }
@@ -1273,11 +1273,11 @@ class ApiService {
     });
   }
 
-  async getSegmentationStats(period: number, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<any> {
+  async getSegmentationStats(period: number = 7, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<any> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
-    if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
-    if (filters.productId) params.append('productId', filters.productId.toString());
+    if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters?.productId) params.append('productId', filters.productId.toString());
 
     return this.get<any>(`/sales/dashboard/segmentation?${params.toString()}`);
   }
