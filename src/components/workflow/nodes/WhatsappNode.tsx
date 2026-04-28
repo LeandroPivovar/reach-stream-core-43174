@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Phone, Settings, Trash2, Upload, X, Link2, Plus } from 'lucide-react';
+import { Phone, Settings, Trash2, Upload, X, Link2, Plus, Library } from 'lucide-react';
 import { api } from '@/lib/api';
 
 interface WhatsappNodeData {
@@ -243,65 +243,95 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                     </div>
                   )}
 
-                  {contentSid && contentSid !== 'none' && Object.keys(dynamicVariables).length > 0 && (
-                    <div className="space-y-3 pt-3 border-t border-primary/20">
-                      <div className="flex items-center justify-between">
-                        <Label className="font-semibold text-primary">Preencher Variáveis do Template</Label>
-                        <div className="flex gap-1">
-                          {[
-                            { label: 'Cupom', value: '{{cupom_nome}}' },
-                            { label: 'Valor', value: '{{cupom_valor}}' },
-                            { label: 'Validade', value: '{{cupom_validade}}' },
-                            { label: 'Link', value: '{{link_rastreio}}' },
-                            { label: 'Nome', value: '{{nome}}' }
-                          ].map(v => (
-                            <Badge 
-                              key={v.value} 
-                              variant="outline" 
-                              className="cursor-help text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
-                              title={`Use ${v.value} para substituir pelo valor dinâmico`}
-                            >
-                              {v.label}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="grid gap-3">
-                        {Object.keys(dynamicVariables).map(key => (
-                          <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border group">
-                            <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center">
-                              {"{{" + key + "}}"}
-                            </Label>
-                            <div className="relative">
-                              <Input 
-                                value={dynamicVariables[key] || ''}
-                                onChange={e => setDynamicVariables({...dynamicVariables, [key]: e.target.value})}
-                                placeholder={`Ex: {{nome}} ou texto fixo`}
-                                className="h-8 text-sm pr-20"
-                              />
-                              <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {['{{nome}}', '{{cupom_nome}}', '{{link_rastreio}}'].map(v => (
-                                  <Button
-                                    key={v}
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-[10px]"
-                                    onClick={() => setDynamicVariables({...dynamicVariables, [key]: (dynamicVariables[key] || '') + v})}
-                                    title={`Inserir ${v}`}
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
+                  {contentSid && contentSid !== 'none' && (() => {
+                    const selectedTemplate = templates.find(t => t.sid === contentSid);
+                    const mediaVars: string[] = [];
+                    if (selectedTemplate) {
+                      Object.values(selectedTemplate.types || {}).forEach((typeData: any) => {
+                        if (typeData.media) {
+                          const matches = typeData.media.match(/{{[^{}]+}}/g);
+                          if (matches) {
+                            matches.forEach(m => mediaVars.push(m.replace(/[{}]/g, '')));
+                          }
+                        }
+                      });
+                    }
+
+                    const listData = selectedTemplate?.types?.['twilio/list-picker'];
+                    const displayVars = Object.keys(dynamicVariables).filter(key => !mediaVars.includes(key));
+
+                    if (displayVars.length === 0 && !listData) return null;
+
+                    return (
+                      <div className="space-y-3 pt-3 border-t border-primary/20">
+                        <div className="flex items-center justify-between">
+                          <Label className="font-semibold text-primary">Configurar Conteúdo do Template</Label>
+                          <div className="flex gap-1">
+                            {[
+                              { label: 'Cupom', value: '{{cupom_nome}}' },
+                              { label: 'Valor', value: '{{cupom_valor}}' },
+                              { label: 'Validade', value: '{{cupom_validade}}' },
+                              { label: 'Link', value: '{{link_rastreio}}' },
+                              { label: 'Nome', value: '{{nome}}' }
+                            ].map(v => (
+                              <Badge 
+                                key={v.value} 
+                                variant="outline" 
+                                className="cursor-help text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
+                                title={`Use ${v.value} para substituir pelo valor dinâmico`}
+                              >
+                                {v.label}
+                              </Badge>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+
+                        {displayVars.length > 0 && (
+                          <div className="grid gap-3">
+                            {displayVars.map(key => (
+                              <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border group">
+                                <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center">
+                                  {"{{" + key + "}}"}
+                                </Label>
+                                <div className="relative">
+                                  <Input 
+                                    value={dynamicVariables[key] || ''}
+                                    onChange={e => setDynamicVariables({...dynamicVariables, [key]: e.target.value})}
+                                    placeholder={`Ex: {{nome}} ou texto fixo`}
+                                    className="h-8 text-sm pr-20"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {listData && (
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-amber-700 flex items-center gap-1">
+                              <Library className="w-3 h-3" /> Opções da Lista (Preview)
+                            </Label>
+                            <div className="space-y-1">
+                              {listData.items?.map((item: any, idx: number) => (
+                                <div key={idx} className="text-xs p-2 bg-white rounded border border-amber-100 flex items-center justify-between">
+                                  <span className="font-medium text-amber-900">{item.item}</span>
+                                  {item.description && <span className="text-[10px] text-muted-foreground">{item.description}</span>}
+                                </div>
+                              ))}
+                            </div>
+                            <p className="text-[10px] text-amber-600 italic">
+                              Estas são as opções que aparecerão no menu para o cliente.
+                            </p>
+                          </div>
+                        )}
+
+                        <p className="text-[10px] text-muted-foreground italic">
+                          Dica: Você pode usar variáveis do sistema como <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{link_rastreio}}"}</strong> ou <strong>{"{{nome}}"}</strong>.
+                        </p>
                       </div>
-                      <p className="text-[10px] text-muted-foreground italic">
-                        Dica: Você pode usar variáveis do sistema como <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{link_rastreio}}"}</strong> ou <strong>{"{{nome}}"}</strong>.
-                      </p>
-                    </div>
-                  )}
+                    );
+                  })()}
+
                   
                   {(!contentSid || contentSid === 'none') && (
                     <div className="grid gap-2 pt-2 border-t border-primary/10">
