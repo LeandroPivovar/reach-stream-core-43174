@@ -94,9 +94,9 @@ export default function Dashboard() {
                 const [statsData, funnelData, segData, campData, heatData] = await Promise.all([
                     api.getDashboardStats(periodInDays, filters),
                     api.getFunnelData(periodInDays, filters),
-                    api.getSegmentationStats(filters),
+                    api.getSegmentationStats(periodInDays, filters),
                     api.getCampaignDashboardPerformance(chartPeriod, filters),
-                    api.getDashboardHeatmap(filters)
+                    api.getDashboardHeatmap(periodInDays, filters)
                 ]);
 
                 setDashboardStats(statsData);
@@ -240,7 +240,7 @@ export default function Dashboard() {
             <div className="space-y-6">
                 {/* Filtros GLOBAIS do Dashboard */}
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
-                    <div className="flex-1">
+                    <div className="flex-[2]">
                         <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
                             <SelectTrigger className="w-full bg-card border-border">
                                 <Target className="w-4 h-4 mr-2 text-primary" />
@@ -257,7 +257,7 @@ export default function Dashboard() {
                         </Select>
                     </div>
 
-                    <div className="flex-1">
+                    <div className="flex-[2]">
                         <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                             <SelectTrigger className="w-full bg-card border-border">
                                 <Package className="w-4 h-4 mr-2 text-primary" />
@@ -274,9 +274,24 @@ export default function Dashboard() {
                         </Select>
                     </div>
 
+                    <div className="flex-1">
+                        <Select value={chartPeriod} onValueChange={setChartPeriod}>
+                            <SelectTrigger className="w-full bg-card border-border">
+                                <Calendar className="w-4 h-4 mr-2 text-primary" />
+                                <SelectValue placeholder="Período" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="diario">Diário</SelectItem>
+                                <SelectItem value="semanal">Semanal</SelectItem>
+                                <SelectItem value="mensal">Mensal</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
                     <Button variant="outline" className="md:w-auto" onClick={() => {
                         setSelectedCampaign('all');
                         setSelectedProduct('all');
+                        setChartPeriod('semanal');
                     }}>
                         <Filter className="w-4 h-4 mr-2" />
                         Limpar Filtros
@@ -295,17 +310,6 @@ export default function Dashboard() {
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle>Desempenho das Campanhas</CardTitle>
-                            <Select value={chartPeriod} onValueChange={setChartPeriod}>
-                                <SelectTrigger className="w-[180px]">
-                                    <Calendar className="w-4 h-4 mr-2" />
-                                    <SelectValue placeholder="Período" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="diario">Diário</SelectItem>
-                                    <SelectItem value="semanal">Semanal</SelectItem>
-                                    <SelectItem value="mensal">Mensal</SelectItem>
-                                </SelectContent>
-                            </Select>
                         </div>
                         <p className="text-sm text-muted-foreground mt-2">{getPeriodLabel()}</p>
                     </CardHeader>
