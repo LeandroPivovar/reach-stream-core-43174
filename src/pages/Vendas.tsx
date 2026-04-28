@@ -334,33 +334,52 @@ export default function Vendas() {
           <CardContent>
             <div className="space-y-6">
               {/* Gráfico de Faturamento Diário */}
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart
-                  data={dashboardStats?.dailyRevenue?.length ? dashboardStats.dailyRevenue.map(d => ({
-                    date: format(new Date(d.date), 'dd/MM', { locale: ptBR }),
-                    faturamento: d.faturamento
-                  })) : []}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" className="text-xs" />
-                  <YAxis className="text-xs" tickFormatter={(value) => `R$ ${value}`} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
-                    }}
-                    formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Faturamento']}
-                    labelFormatter={(label) => `Data: ${label}`}
-                  />
-                  <Bar
-                    dataKey="faturamento"
-                    radius={[8, 8, 0, 0]}
-                    fill="hsl(var(--primary))"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="h-[400px] w-full">
+                {dashboardStats?.dailyRevenue && dashboardStats.dailyRevenue.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={dashboardStats.dailyRevenue.map(d => {
+                        let formattedDate = 'Inválida';
+                        if (d.date) {
+                          const parsed = new Date(d.date);
+                          if (!isNaN(parsed.getTime())) {
+                            formattedDate = format(parsed, 'dd/MM', { locale: ptBR });
+                          } else {
+                            formattedDate = String(d.date);
+                          }
+                        }
+                        return {
+                          date: formattedDate,
+                          faturamento: d.faturamento
+                        };
+                      })}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="date" className="text-xs" />
+                      <YAxis className="text-xs" tickFormatter={(value) => `R$ ${value}`} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                        formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Faturamento']}
+                        labelFormatter={(label) => `Data: ${label}`}
+                      />
+                      <Bar
+                        dataKey="faturamento"
+                        radius={[8, 8, 0, 0]}
+                        fill="hsl(var(--primary))"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground border border-dashed rounded-lg bg-muted/10">
+                    {isLoading ? 'Carregando gráfico...' : 'Nenhum dado de faturamento no período selecionado.'}
+                  </div>
+                )}
+              </div>
 
               {/* Insights do Período */}
               <div className="p-4 bg-muted/30 rounded-lg border border-border">
