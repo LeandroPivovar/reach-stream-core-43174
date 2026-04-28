@@ -326,30 +326,24 @@ export default function Vendas() {
           ))}
         </div>
 
-        {/* Comparison Revenue Chart */}
+        {/* Daily Revenue Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Comparação de Faturamento entre Período</CardTitle>
+            <CardTitle>Faturamento no Período</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Gráfico de Faturamento */}
+              {/* Gráfico de Faturamento Diário */}
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart
-                  data={[
-                    {
-                      period: 'Período Anterior',
-                      faturamento: dashboardStats?.previousFaturamento || 0,
-                    },
-                    {
-                      period: 'Período Selecionado',
-                      faturamento: dashboardStats?.faturamento || 0,
-                    }
-                  ]}
+                  data={dashboardStats?.dailyRevenue?.length ? dashboardStats.dailyRevenue.map(d => ({
+                    date: format(new Date(d.date), 'dd/MM', { locale: ptBR }),
+                    faturamento: d.faturamento
+                  })) : []}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="period" className="text-xs" />
+                  <XAxis dataKey="date" className="text-xs" />
                   <YAxis className="text-xs" tickFormatter={(value) => `R$ ${value}`} />
                   <Tooltip
                     contentStyle={{
@@ -358,15 +352,13 @@ export default function Vendas() {
                       borderRadius: '8px'
                     }}
                     formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Faturamento']}
+                    labelFormatter={(label) => `Data: ${label}`}
                   />
                   <Bar
                     dataKey="faturamento"
                     radius={[8, 8, 0, 0]}
-                  >
-                    {[0, 1].map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary))'} />
-                    ))}
-                  </Bar>
+                    fill="hsl(var(--primary))"
+                  />
                 </BarChart>
               </ResponsiveContainer>
 
