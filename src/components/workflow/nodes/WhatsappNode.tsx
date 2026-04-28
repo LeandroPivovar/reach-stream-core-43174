@@ -249,10 +249,16 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                     if (selectedTemplate) {
                       Object.values(selectedTemplate.types || {}).forEach((typeData: any) => {
                         if (typeData.media) {
-                          const matches = typeData.media.match(/{{[^{}]+}}/g);
-                          if (matches) {
-                            matches.forEach(m => mediaVars.push(m.replace(/[{}]/g, '')));
-                          }
+                          // Pode ser string ou array de strings
+                          const mediaFields = Array.isArray(typeData.media) ? typeData.media : [typeData.media];
+                          mediaFields.forEach((field: any) => {
+                            if (typeof field === 'string') {
+                              const matches = field.match(/{{[^{}]+}}/g);
+                              if (matches) {
+                                matches.forEach(m => mediaVars.push(m.replace(/[{}]/g, '')));
+                              }
+                            }
+                          });
                         }
                       });
                     }
