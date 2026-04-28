@@ -2396,6 +2396,12 @@ export interface LeadRequest {
   company: string;
   source?: string;
   status: string;
+  segmento?: string;
+  canalVendas?: string;
+  instagram?: string;
+  siteUrl?: string;
+  faturamentoMedio?: string;
+  comoAjudar?: string;
   createdAt: string;
   updatedAt: string;
 }
