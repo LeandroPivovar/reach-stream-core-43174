@@ -102,6 +102,7 @@ export interface CreateSaleData {
 export interface DashboardStats {
   faturamento: number;
   previousFaturamento?: number;
+  dailyRevenue?: Array<{ date: string; faturamento: number }>;
   vendas: number;
   ticketMedio: number;
   trends: {
