@@ -1244,15 +1244,13 @@ class ApiService {
     });
   }
 
-  async getDashboardHeatmap(filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<HeatmapSegment[]> {
+  async getDashboardHeatmap(period: number, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<HeatmapSegment[]> {
     const params = new URLSearchParams();
+    params.append('period', period.toString());
     if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters.productId) params.append('productId', filters.productId.toString());
 
-    const query = params.toString();
-    const endpoint = `/sales/dashboard/heatmap${query ? `?${query}` : ''}`;
-
-    return this.get<HeatmapSegment[]>(endpoint);
+    return this.get<HeatmapSegment[]>(`/sales/dashboard/heatmap?${params.toString()}`);
   }
 
   // Contacts
@@ -1275,15 +1273,13 @@ class ApiService {
     });
   }
 
-  async getSegmentationStats(filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<any> {
+  async getSegmentationStats(period: number, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<any> {
     const params = new URLSearchParams();
+    params.append('period', period.toString());
     if (filters.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters.productId) params.append('productId', filters.productId.toString());
 
-    const query = params.toString();
-    const endpoint = `/sales/dashboard/segmentation${query ? `?${query}` : ''}`;
-
-    return this.get<any>(endpoint);
+    return this.get<any>(`/sales/dashboard/segmentation?${params.toString()}`);
   }
 
   async getContactSegmentationStats(): Promise<Record<string, number>> {
