@@ -585,7 +585,7 @@ export default function Vendas() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold">{(pagamento.percentual || 0).toFixed(1)}%</p>
+                          <p className="text-2xl font-bold">R$ {(pagamento.faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                         </div>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">

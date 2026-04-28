@@ -134,6 +134,7 @@ export interface TopProduct {
 export interface PaymentMethodStats {
   metodo: string;
   transacoes: number;
+  faturamento?: number;
   percentual: number;
   tempoMedio: string;
 }
