@@ -101,6 +101,7 @@ export interface CreateSaleData {
 
 export interface DashboardStats {
   faturamento: number;
+  previousFaturamento?: number;
   vendas: number;
   ticketMedio: number;
   trends: {
@@ -1011,37 +1012,65 @@ class ApiService {
     });
   }
 
-  async getDashboardStats(period: number = 7, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<DashboardStats> {
+  async getDashboardStats(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<DashboardStats> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
 
     return this.request<DashboardStats>(`/sales/dashboard/stats?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getSalesByCampaign(period: number = 7): Promise<SalesByCampaign[]> {
-    return this.request<SalesByCampaign[]>(`/sales/dashboard/campaigns?period=${period}`, {
+  async getSalesByCampaign(period: number = 7, filters: { productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<SalesByCampaign[]> {
+    const params = new URLSearchParams();
+    params.append('period', period.toString());
+    if (filters?.productId) params.append('productId', filters.productId.toString());
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+
+    return this.request<SalesByCampaign[]>(`/sales/dashboard/campaigns?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getSalesByChannel(period: number = 7): Promise<SalesByChannel[]> {
-    return this.request<SalesByChannel[]>(`/sales/dashboard/channels?period=${period}`, {
+  async getSalesByChannel(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<SalesByChannel[]> {
+    const params = new URLSearchParams();
+    params.append('period', period.toString());
+    if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters?.productId) params.append('productId', filters.productId.toString());
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+
+    return this.request<SalesByChannel[]>(`/sales/dashboard/channels?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getTopProducts(period: number = 7): Promise<TopProduct[]> {
-    return this.request<TopProduct[]>(`/sales/dashboard/products?period=${period}`, {
+  async getTopProducts(period: number = 7, filters: { campaignId?: string | number; startDate?: string; endDate?: string } = {}): Promise<TopProduct[]> {
+    const params = new URLSearchParams();
+    params.append('period', period.toString());
+    if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+
+    return this.request<TopProduct[]>(`/sales/dashboard/products?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getPaymentMethods(period: number = 7): Promise<PaymentMethodStats[]> {
-    return this.get<PaymentMethodStats[]>(`/sales/dashboard/payment-methods?period=${period}`);
+  async getPaymentMethods(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<PaymentMethodStats[]> {
+    const params = new URLSearchParams();
+    params.append('period', period.toString());
+    if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
+    if (filters?.productId) params.append('productId', filters.productId.toString());
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+
+    return this.get<PaymentMethodStats[]>(`/sales/dashboard/payment-methods?${params.toString()}`);
   }
 
   async getCampaignDashboardPerformance(period: string, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<any> {
@@ -1233,22 +1262,26 @@ class ApiService {
 
   // --- Campaign Contacts ---
 
-  async getFunnelData(period: number = 7, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<FunnelStage[]> {
+  async getFunnelData(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<FunnelStage[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
 
     return this.request<FunnelStage[]>(`/sales/dashboard/funnel?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getDashboardHeatmap(period: number = 7, filters: { campaignId?: string | number; productId?: string | number } = {}): Promise<HeatmapSegment[]> {
+  async getDashboardHeatmap(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<HeatmapSegment[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
 
     return this.get<HeatmapSegment[]>(`/sales/dashboard/heatmap?${params.toString()}`);
   }

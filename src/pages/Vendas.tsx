@@ -80,10 +80,14 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
 
 export default function Vendas() {
   const { toast } = useToast();
-  const [period, setPeriod] = useState('15');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date()
+  });
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncingBackground, setIsSyncingBackground] = useState(false);
@@ -105,24 +109,25 @@ export default function Vendas() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   // Datas de comparação
-  const [compareStartDate, setCompareStartDate] = useState<Date>(new Date(new Date().setDate(new Date().getDate() - 15)));
-  const [compareEndDate, setCompareEndDate] = useState<Date>(new Date());
-
   const [isManualSaleOpen, setIsManualSaleOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const days = parseInt(period);
+      const days = dateRange?.from && dateRange?.to ? Math.max(1, Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))) : 30;
+      const filters = {
+        startDate: dateRange?.from?.toISOString(),
+        endDate: dateRange?.to?.toISOString() || dateRange?.from?.toISOString()
+      };
 
       const [stats, campaigns, channels, products, payments, funnel] = await Promise.all([
-        api.getDashboardStats(days),
-        api.getSalesByCampaign(days),
-        api.getSalesByChannel(days),
-        api.getTopProducts(days),
-        api.getPaymentMethods(days),
-        api.getFunnelData(days)
+        api.getDashboardStats(days, filters),
+        api.getSalesByCampaign(days, filters),
+        api.getSalesByChannel(days, filters),
+        api.getTopProducts(days, filters),
+        api.getPaymentMethods(days, filters),
+        api.getFunnelData(days, filters)
       ]);
 
       setDashboardStats(stats);
@@ -164,7 +169,7 @@ export default function Vendas() {
     fetchData().then(() => {
       syncAllPlatforms();
     });
-  }, [period]);
+  }, [dateRange]);
 
   const stats = [
     {
@@ -172,7 +177,7 @@ export default function Vendas() {
       value: dashboardStats ? `R$ ${dashboardStats.faturamento.toLocaleString('pt-BR')}` : 'R$ 0,00',
       icon: DollarSign,
       trend: { value: dashboardStats?.trends?.faturamento || 0, isPositive: (dashboardStats?.trends?.faturamento || 0) >= 0 },
-      description: `Últimos ${period} dias`
+      description: `Período selecionado`
     },
     {
       title: 'Vendas Realizadas',
@@ -248,13 +253,7 @@ export default function Vendas() {
   const currentCampaignDetails = selectedCampaign ? campaignDetails[selectedCampaign] : null;
 
   // Use funnelData from API
-  const comparisonFunnelData = funnelData.length > 0 ? funnelData : [
-    { stage: 'Leads Gerados', value: 0, percentage: 0 },
-    { stage: 'Abriram Campanha', value: 0, percentage: 0 },
-    { stage: 'Clicaram Link', value: 0, percentage: 0 },
-    { stage: 'Adicionaram Carrinho', value: 0, percentage: 0 },
-    { stage: 'Finalizaram Compra', value: 0, percentage: 0 }
-  ];
+  const comparisonFunnelData = funnelData.length > 0 ? funnelData : [];
 
   return (
     <Layout
@@ -280,17 +279,41 @@ export default function Vendas() {
           </Button>
           <div className="h-6 w-[1px] bg-border mx-1 hidden sm:block" />
           <div className="flex items-center gap-3">
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-[180px]">
-                <CalendarIcon className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Selecione o período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Últimos 7 dias</SelectItem>
-                <SelectItem value="15">Últimos 15 dias</SelectItem>
-                <SelectItem value="30">Últimos 30 dias</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover>
+               <PopoverTrigger asChild>
+                 <Button
+                   variant="outline"
+                   className={cn(
+                     "w-[260px] justify-start text-left font-normal",
+                     !dateRange && "text-muted-foreground"
+                   )}
+                 >
+                   <CalendarIcon className="mr-2 h-4 w-4" />
+                   {dateRange?.from ? (
+                     dateRange.to ? (
+                       <>
+                         {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                         {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+                       </>
+                     ) : (
+                       format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })
+                     )
+                   ) : (
+                     <span>Selecione o período</span>
+                   )}
+                 </Button>
+               </PopoverTrigger>
+               <PopoverContent className="w-auto p-0" align="end">
+                 <Calendar
+                   initialFocus
+                   mode="range"
+                   defaultMonth={dateRange?.from}
+                   selected={dateRange}
+                   onSelect={setDateRange}
+                   numberOfMonths={2}
+                 />
+               </PopoverContent>
+             </Popover>
           </div>
         </div>
       }
@@ -303,122 +326,49 @@ export default function Vendas() {
           ))}
         </div>
 
-        {/* Comparison Funnel Chart */}
+        {/* Comparison Revenue Chart */}
         <Card>
           <CardHeader>
-            <div className="flex flex-col gap-4">
-              <CardTitle>Comparação de Funil entre Períodos</CardTitle>
-
-              {/* Seletores de Data */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground">Selecione o período para análise</p>
-                <div className="flex items-center gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "justify-start text-left font-normal flex-1",
-                          !compareStartDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {compareStartDate ? format(compareStartDate, "dd/MM/yyyy", { locale: ptBR }) : "Data de início"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={compareStartDate}
-                        onSelect={(date) => date && setCompareStartDate(date)}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <span className="text-muted-foreground">até</span>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "justify-start text-left font-normal flex-1",
-                          !compareEndDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {compareEndDate ? format(compareEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Data de fim"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={compareEndDate}
-                        onSelect={(date) => date && setCompareEndDate(date)}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            </div>
+            <CardTitle>Comparação de Faturamento entre Período</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Gráfico de Funil */}
+              {/* Gráfico de Faturamento */}
               <ResponsiveContainer width="100%" height={400}>
                 <BarChart
-                  data={comparisonFunnelData}
+                  data={[
+                    {
+                      period: 'Período Anterior',
+                      faturamento: dashboardStats?.previousFaturamento || 0,
+                    },
+                    {
+                      period: 'Período Selecionado',
+                      faturamento: dashboardStats?.faturamento || 0,
+                    }
+                  ]}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis
-                    dataKey="stage"
-                    className="text-xs"
-                  />
-                  <YAxis className="text-xs" />
+                  <XAxis dataKey="period" className="text-xs" />
+                  <YAxis className="text-xs" tickFormatter={(value) => `R$ ${value}`} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }}
-                    formatter={(value: number) => [value, '']}
+                    formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Faturamento']}
                   />
                   <Bar
-                    dataKey="value"
-                    fill="hsl(var(--primary))"
+                    dataKey="faturamento"
                     radius={[8, 8, 0, 0]}
-                  />
+                  >
+                    {[0, 1].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary))'} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
-
-              {/* Detalhes do Funil */}
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-muted/50">
-                    <tr>
-                      <th className="text-left py-3 px-4 font-medium text-sm">Etapa do Funil</th>
-                      <th className="text-right py-3 px-4 font-medium text-sm">Quantidade</th>
-                      <th className="text-right py-3 px-4 font-medium text-sm">Taxa de Conversão</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {comparisonFunnelData.map((stage, index) => (
-                      <tr key={index} className="border-t border-border">
-                        <td className="py-3 px-4 font-medium">{stage.stage}</td>
-                        <td className="py-3 px-4 text-right">{(stage.value || 0).toLocaleString('pt-BR')}</td>
-                        <td className="py-3 px-4 text-right">
-                          <span className="font-semibold text-primary">
-                            {(stage.percentage || 0).toFixed(1)}%
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
 
               {/* Insights do Período */}
               <div className="p-4 bg-muted/30 rounded-lg border border-border">
@@ -427,10 +377,9 @@ export default function Vendas() {
                   <div>
                     <h5 className="font-medium mb-2">Insights do Período</h5>
                     <ul className="space-y-1 text-sm text-muted-foreground">
-                      <li>• Total de {comparisonFunnelData[0].value} leads gerados no período selecionado</li>
-                      <li>• Taxa de conversão final de {(comparisonFunnelData[4].percentage || 0).toFixed(1)}% (leads para compras)</li>
-                      <li>• Maior queda entre "{comparisonFunnelData[1].stage}" e "{comparisonFunnelData[2].stage}"</li>
-                      <li>• Ajuste o período para comparar diferentes intervalos de tempo</li>
+                      <li>• Faturamento do período selecionado: R$ {(dashboardStats?.faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</li>
+                      <li>• Faturamento do período anterior: R$ {(dashboardStats?.previousFaturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</li>
+                      <li>• Crescimento: {(dashboardStats?.trends?.faturamento || 0).toFixed(1)}% em relação ao período anterior</li>
                     </ul>
                   </div>
                 </div>
@@ -445,7 +394,7 @@ export default function Vendas() {
             <div className="flex items-center justify-between">
               <CardTitle>Vendas por Campanha</CardTitle>
               <Badge variant="outline">
-                Comparado aos {period} dias anteriores
+                Comparado ao período anterior
               </Badge>
             </div>
           </CardHeader>
