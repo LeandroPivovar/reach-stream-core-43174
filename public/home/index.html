@@ -509,25 +509,27 @@
 
                     <form id="lead-form" class="lead-form">
                         <div class="form-group">
-                            <input type="text" id="name" placeholder="Seu nome" required title="Informe seu nome">
+                            <label for="name">Seu nome*</label>
+                            <input type="text" id="name" required title="Informe seu nome">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <input type="email" id="email" placeholder="E-mail profissional" required
-                                    title="Informe seu e-mail">
+                                <label for="email">E-mail profissional*</label>
+                                <input type="email" id="email" required title="Informe seu e-mail">
                             </div>
                             <div class="form-group">
-                                <input type="tel" id="telefone" placeholder="Telefone" required
-                                    title="Informe seu telefone">
+                                <label for="telefone">Telefone*</label>
+                                <input type="tel" id="telefone" required title="Informe seu telefone">
                             </div>
                         </div>
                         <div class="form-group">
-                            <input type="text" id="company" placeholder="Nome da marca/loja" required
-                                title="Qual o nome da sua marca/loja?">
+                            <label for="company">Nome da marca/loja*</label>
+                            <input type="text" id="company" required title="Qual o nome da sua marca/loja?">
                         </div>
                         <div class="form-group">
+                            <label for="source">Por onde conheceu a Núcleo CRM?*</label>
                             <select id="source" required title="Por onde conheceu a Núcleo CRM?">
-                                <option value="" disabled selected>Por onde conheceu?</option>
+                                <option value="" disabled selected></option>
                                 <option value="Influenciadores">Influenciadores</option>
                                 <option value="Evento">Evento</option>
                                 <option value="Indicação">Indicação</option>
@@ -536,6 +538,54 @@
                                 <option value="Pesquisa no Google">Pesquisa no Google</option>
                                 <option value="Outros">Outros</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="segmento">Qual o segmento da sua loja?*</label>
+                            <select id="segmento" required title="Qual o segmento da sua loja?">
+                                <option value="" disabled selected></option>
+                                <option value="Moda, Acessórios ou Calçados">Moda, Acessórios ou Calçados</option>
+                                <option value="Beleza e Cosméticos">Beleza e Cosméticos</option>
+                                <option value="Wellness e Suplementos">Wellness e Suplementos</option>
+                                <option value="Eletrônicos">Eletrônicos</option>
+                                <option value="Pet">Pet</option>
+                                <option value="Papelaria e Escritório">Papelaria e Escritório</option>
+                                <option value="Joalheria e Relógios">Joalheria e Relógios</option>
+                                <option value="Casa e Decoração">Casa e Decoração</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="canal_vendas">Qual o seu canal de vendas?*</label>
+                            <select id="canal_vendas" required title="Qual o seu canal de vendas?">
+                                <option value="" disabled selected></option>
+                                <option value="Loja Física">Loja Física</option>
+                                <option value="E-commerce">E-commerce</option>
+                                <option value="Somente Whatsapp e(ou) Instagram">Somente Whatsapp e(ou) Instagram</option>
+                                <option value="Vendo em Loja Física e E-commerce">Vendo em Loja Física e E-commerce</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="instagram">Qual é o @ do Instagram da sua loja?*</label>
+                            <input type="text" id="instagram" required title="Qual é o @ do Instagram da sua loja?">
+                        </div>
+                        <div class="form-group">
+                            <label for="site_url">Qual a URL do site da sua loja?*</label>
+                            <input type="url" id="site_url" required title="Qual a URL do site da sua loja?">
+                        </div>
+                        <div class="form-group">
+                            <label for="faturamento_medio">Qual a média de faturamento mensal da sua loja?*</label>
+                            <select id="faturamento_medio" required title="Qual a média de faturamento mensal da sua loja?">
+                                <option value="" disabled selected></option>
+                                <option value="Nenhum, estou só começando">Nenhum, estou só começando</option>
+                                <option value="Vendo até R$10.000,00 por mês">Vendo até R$10.000,00 por mês</option>
+                                <option value="Entre R$10.000,00 a R$60.000,00 por mês">Entre R$10.000,00 a R$60.000,00 por mês</option>
+                                <option value="Entre R$60.000,00 a R$150.000,00 por mês">Entre R$60.000,00 a R$150.000,00 por mês</option>
+                                <option value="Entre R$150.000,00 a R$500.000,00 por mês">Entre R$150.000,00 a R$500.000,00 por mês</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="como_ajudar">Como a Núcleo CRM poderia te ajudar?</label>
+                            <textarea id="como_ajudar" rows="3" title="Como a Núcleo CRM poderia te ajudar?" style="width: 100%; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: #fff; font-family: inherit; font-size: 1rem;"></textarea>
                         </div>
                         <div class="form-btns">
                             <button type="submit" class="btn btn-primary btn-lg">Enviar</button>
