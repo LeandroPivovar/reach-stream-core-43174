@@ -355,54 +355,64 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                 </Button>
               </div>
 
-              <div className="grid gap-2">
-                <Label>Anexar Imagem ou Vídeo</Label>
-                <div className="flex flex-col gap-3">
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept="image/*,video/*"
-                      multiple
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="whatsapp-media-upload"
-                    />
-                    <label htmlFor="whatsapp-media-upload">
-                      <Button type="button" variant="outline" className="w-full" asChild>
-                        <div className="cursor-pointer">
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload de Mídia
+              {(() => {
+                const selectedTemplate = templates.find(t => t.sid === contentSid);
+                const isMediaTemplate = selectedTemplate && Object.keys(selectedTemplate.types || {}).some(type => type.toLowerCase().includes('media'));
+                
+                if (!isMediaTemplate) return null;
+
+                return (
+                  <div className="grid gap-2">
+                    <Label>Anexar Imagem ou Vídeo</Label>
+                    <div className="flex flex-col gap-3">
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          multiple
+                          onChange={handleFileUpload}
+                          className="hidden"
+                          id="whatsapp-media-upload"
+                        />
+                        <label htmlFor="whatsapp-media-upload">
+                          <Button type="button" variant="outline" className="w-full" asChild>
+                            <div className="cursor-pointer">
+                              <Upload className="w-4 h-4 mr-2" />
+                              Upload de Mídia
+                            </div>
+                          </Button>
+                        </label>
+                      </div>
+                      {media.length > 0 && (
+                        <div className="grid grid-cols-2 gap-2">
+                          {media.map((item, index) => (
+                            <div key={index} className="relative group border rounded-md p-2">
+                              <div className="flex items-center gap-2">
+                                {item.type === 'image' ? (
+                                  <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                                ) : (
+                                  <video src={item.url} className="w-12 h-12 object-cover rounded" />
+                                )}
+                                <span className="text-xs truncate flex-1">{item.name}</span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => removeMedia(index)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </Button>
-                    </label>
-                  </div>
-                  {media.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2">
-                      {media.map((item, index) => (
-                        <div key={index} className="relative group border rounded-md p-2">
-                          <div className="flex items-center gap-2">
-                            {item.type === 'image' ? (
-                              <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
-                            ) : (
-                              <video src={item.url} className="w-12 h-12 object-cover rounded" />
-                            )}
-                            <span className="text-xs truncate flex-1">{item.name}</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => removeMedia(index)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
+                );
+              })()}
+
             </div>
           </div>
           
