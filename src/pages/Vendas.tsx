@@ -524,7 +524,7 @@ export default function Vendas() {
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className={`h-2 rounded-full ${getChannelColor(canalData.canal)}`}
-                        style={{ width: `${percentual}%` }}
+                        style={{ width: `${Math.min(percentual, 100)}%` }}
                       ></div>
                     </div>
                   </div>
