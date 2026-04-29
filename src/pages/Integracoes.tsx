@@ -1106,10 +1106,6 @@ export default function Integracoes() {
             </div>
           )}
 
-              </div>
-            </div>
-          )}
-
           {/* Configuração Tray - OAuth */}
           {selectedEcommerce === 'Tray' && (
             <div className="space-y-6 py-4">
@@ -1394,91 +1390,7 @@ export default function Integracoes() {
             </div>
           )}
 
-          {/* Configuração Tray */}
-          {selectedEcommerce === 'Tray' && (
-            <div className="space-y-6 py-4">
-              <div className="bg-orange-500/10 p-3 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Preencha os dados para conectar sua conta Tray
-                </p>
-              </div>
 
-              <div className="space-y-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="tray-api-key">API Key *</Label>
-                  <Input
-                    id="tray-api-key"
-                    type="password"
-                    value={trayData.apiKey}
-                    onChange={(e) => setTrayData({ ...trayData, apiKey: e.target.value })}
-                    placeholder="Cole sua API Key da Tray"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Encontre nas configurações da sua conta Tray em Integrações
-                  </p>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="tray-secret-key">Secret Key *</Label>
-                  <Input
-                    id="tray-secret-key"
-                    type="password"
-                    value={trayData.secretKey}
-                    onChange={(e) => setTrayData({ ...trayData, secretKey: e.target.value })}
-                    placeholder="Cole sua Secret Key"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Mantenha esta chave em segredo e nunca a compartilhe
-                  </p>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="tray-endpoint">Endpoint *</Label>
-                  <Input
-                    id="tray-endpoint"
-                    value={trayData.endpoint}
-                    onChange={(e) => setTrayData({ ...trayData, endpoint: e.target.value })}
-                    placeholder="https://api.tray.com.br/v1"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    URL base da API Tray (geralmente https://api.tray.com.br/v1)
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm font-medium mb-2">Recursos incluídos:</p>
-                <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                  <li>API de produtos e catálogo</li>
-                  <li>Sincronização de pedidos</li>
-                  <li>Webhooks em tempo real</li>
-                  <li>Gestão de estoque integrada</li>
-                </ul>
-              </div>
-
-              <div className="flex justify-between gap-2">
-                <Button variant="outline" onClick={() => setSelectedEcommerce(null)}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleTestConnection('tray')}
-                    disabled={!trayData.apiKey || !trayData.secretKey || !trayData.endpoint || testingConnection}
-                  >
-                    {testingConnection ? 'Testando...' : 'Testar Conexão'}
-                  </Button>
-                  <Button
-                    onClick={handleConnect}
-                    disabled={!trayData.apiKey || !trayData.secretKey || !trayData.endpoint}
-                  >
-                    Conectar Tray
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Configuração VTEX */}
           {selectedEcommerce === 'VTEX' && (
