@@ -106,6 +106,7 @@ export function SegmentationPicker({
 
     { id: 'clicked_campaign', label: 'Engajados (cliques)', description: 'Contatos que clicaram em links de campanhas', affectedCount: stats['clicked_campaign'] || 0 },
     { id: 'abandoned_cart', label: 'Carrinho Abandonado', description: 'Contatos com carrinhos não finalizados', affectedCount: stats['abandoned_cart'] || 0 },
+    { id: 'abandoned_cart_products', label: 'Carrinho Abandonado por Produto', description: 'Contatos com produtos específicos pendentes no carrinho', affectedCount: stats['abandoned_cart_products'] || 0 },
     { id: 'cart_recovered_customer', label: 'Cliente Recuperado', description: 'Clientes que voltaram após abandonar o carrinho', affectedCount: stats['cart_recovered_customer'] || 0 },
     { id: 'purchased_product', label: 'Compraram Produto Específico', description: 'Clientes que compraram itens selecionados', affectedCount: stats['purchased_product'] || 0 },
   ];
@@ -356,7 +357,7 @@ export function SegmentationPicker({
       );
     }
 
-    if (segmentId === 'purchased_product') {
+    if (segmentId === 'purchased_product' || segmentId === 'abandoned_cart_products') {
       const selectedProductIds = params?.productIds || [];
       const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
