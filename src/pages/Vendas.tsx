@@ -337,7 +337,7 @@ export default function Vendas() {
               <div className="h-[400px] w-full">
                 {dashboardStats?.dailyRevenue && dashboardStats.dailyRevenue.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
+                    <AreaChart
                       data={dashboardStats.dailyRevenue.map(d => {
                         let formattedDate = 'Inválida';
                         if (d.date) {
@@ -355,27 +355,43 @@ export default function Vendas() {
                       })}
                       margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="date" className="text-xs" />
-                      <YAxis className="text-xs" tickFormatter={(value) => `R$ ${value}`} />
+                      <defs>
+                        <linearGradient id="colorFaturamento" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="hsl(var(--muted-foreground))"
+                        style={{ fontSize: '12px' }}
+                      />
+                      <YAxis 
+                        stroke="hsl(var(--muted-foreground))"
+                        style={{ fontSize: '12px' }}
+                        tickFormatter={(value) => `R$ ${value}`} 
+                      />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: 'hsl(var(--background))',
+                          backgroundColor: 'hsl(var(--popover))',
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
+                          borderRadius: '8px',
+                          color: 'hsl(var(--popover-foreground))'
                         }}
                         formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Faturamento']}
                         labelFormatter={(label) => `Data: ${label}`}
                       />
-                      <Line
+                      <Area
                         type="monotone"
                         dataKey="faturamento"
                         stroke="hsl(var(--primary))"
                         strokeWidth={2}
-                        dot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 0 }}
-                        activeDot={{ r: 6 }}
+                        fillOpacity={1}
+                        fill="url(#colorFaturamento)"
+                        name="Faturamento"
                       />
-                    </LineChart>
+                    </AreaChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted-foreground border border-dashed rounded-lg bg-muted/10">
