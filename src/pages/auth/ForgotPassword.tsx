@@ -131,11 +131,12 @@ export default function ForgotPassword() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center space-x-2 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-hover rounded-xl flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">N</span>
-            </div>
-            <span className="text-2xl font-bold text-gradient">Núcleo</span>
+          <div className="mb-4">
+            <img 
+              src="/home/assets/logo-fundo-escuro.png" 
+              alt="Núcleo CRM" 
+              className="h-16 mx-auto"
+            />
           </div>
           <p className="text-muted-foreground">
             {step === 'email' && 'Recuperação de senha'}
