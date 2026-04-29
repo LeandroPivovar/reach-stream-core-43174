@@ -82,6 +82,9 @@ export default function Integracoes() {
     storeName: '',
     apiKey: ''
   });
+  const [trayConnections, setTrayConnections] = useState<any[]>([]);
+  const [isConnectingTray, setIsConnectingTray] = useState(false);
+  const [trayShopUrl, setTrayShopUrl] = useState('');
 
   // Mapeamento de eventos técnicos para nomes amigáveis
   const eventLabels: Record<string, string> = {
@@ -126,7 +129,7 @@ export default function Integracoes() {
       name: 'Tray',
       description: 'Integração com a plataforma Tray para gestão de vendas',
       imageUrl: '/icons/tray.png',
-      status: 'Em desenvolvimento',
+      status: 'Disponível',
       color: 'bg-orange-500',
       features: ['API de produtos', 'Sincronização de pedidos', 'Webhooks em tempo real']
     },
@@ -135,7 +138,7 @@ export default function Integracoes() {
       name: 'VTEX',
       description: 'Conecte sua loja VTEX para automação completa',
       imageUrl: '/icons/vtex.png',
-      status: 'Em desenvolvimento',
+      status: 'Disponível',
       color: 'bg-[#F71963]', // VTEX Official Pink
       features: ['Catálogo unificado', 'OMS integrado', 'Sincronização de Clientes']
     }
@@ -149,11 +152,12 @@ export default function Integracoes() {
   const loadConnections = async () => {
     try {
       setLoadingConnections(true);
-      const [nuvemshop, shopify, vtex, li] = await Promise.all([
+      const [nuvemshop, shopify, vtex, li, tray] = await Promise.all([
         api.getNuvemshopConnections().catch(() => []),
         api.getShopifyConnections().catch(() => []),
         api.getVtexConnections().catch(() => []),
         api.lojaIntegradaApi.getConnection().catch(() => null),
+        api.trayApi.sync().catch(() => []), // Placeholder for getConnections
       ]);
 
       const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
@@ -252,7 +256,7 @@ export default function Integracoes() {
   };
 
   // Contar integrações ativas
-  const activeIntegrationsCount = nuvemshopConnections.length + shopifyConnections.length + vtexConnections.length + liConnections.length;
+  const activeIntegrationsCount = nuvemshopConnections.length + shopifyConnections.length + vtexConnections.length + liConnections.length + trayConnections.length;
 
   const handleOpenNewIntegration = () => {
     setIntegrationType(null);
@@ -338,6 +342,36 @@ export default function Integracoes() {
         variant: "destructive",
       });
       setIsConnectingNuvemshop(false);
+    }
+  };
+
+  const handleConnectTray = async () => {
+    if (!trayShopUrl) {
+      toast({
+        title: "Erro",
+        description: "Por favor, insira o domínio da sua loja Tray (ex: sualoja.com.br)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsConnectingTray(true);
+    try {
+      const callbackUrl = `${window.location.origin}/integrations/tray/callback`;
+      const response = await api.trayApi.getAuthUrl(trayShopUrl, callbackUrl);
+
+      // Salvar shopUrl para usar no callback
+      localStorage.setItem('tray_shop_url', trayShopUrl);
+
+      // Redirecionar para a URL de autorização
+      window.location.href = response.url;
+    } catch (error) {
+      toast({
+        title: "Erro ao iniciar conexão",
+        description: error instanceof Error ? error.message : "Não foi possível conectar com a Tray",
+        variant: "destructive",
+      });
+      setIsConnectingTray(false);
     }
   };
 
@@ -598,6 +632,9 @@ export default function Integracoes() {
                               handleDisconnect('shopify', connection.shop);
                             } else if (integration.name === 'VTEX' && connection) {
                               handleDisconnect('vtex', connection.accountName);
+                            } else if (integration.name === 'Tray' && connection) {
+                              // Adicionar lógica de desconexão para Tray
+                              toast({ title: 'Ação necessária', description: 'A desconexão da Tray será implementada em breve.' });
                             }
                           }}
                           disabled={
@@ -1062,6 +1099,78 @@ export default function Integracoes() {
                     <>
                       <ExternalLink className="w-4 h-4 mr-2" />
                       Conectar Shopify
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+              </div>
+            </div>
+          )}
+
+          {/* Configuração Tray - OAuth */}
+          {selectedEcommerce === 'Tray' && (
+            <div className="space-y-6 py-4">
+              <div className="bg-orange-500/10 p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white border">
+                    <img src="/icons/tray.png" alt="Tray" className="w-full h-full object-cover" />
+                  </div>
+                  <span className="font-medium text-orange-700">Conectar com Tray</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Conecte sua loja Tray para sincronizar produtos, clientes e pedidos.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="tray-shop-url">Domínio da Loja Tray *</Label>
+                  <Input
+                    id="tray-shop-url"
+                    value={trayShopUrl}
+                    onChange={(e) => setTrayShopUrl(e.target.value)}
+                    placeholder="sualoja.com.br"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Insira o domínio principal da sua loja (sem http:// ou https://)
+                  </p>
+                </div>
+
+                <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20">
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Check className="w-4 h-4 text-blue-500" />
+                    Como funciona?
+                  </h4>
+                  <ul className="text-xs text-muted-foreground space-y-2 list-disc list-inside">
+                    <li>Você será redirecionado para o painel da Tray</li>
+                    <li>Clique em "Autorizar" para permitir o acesso do CRM</li>
+                    <li>Sincronizaremos automaticamente seus últimos dados</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-4">
+                <Button variant="outline" onClick={() => setSelectedEcommerce(null)}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <Button
+                  onClick={handleConnectTray}
+                  disabled={!trayShopUrl || isConnectingTray}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {isConnectingTray ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Iniciando...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Autorizar na Tray
                     </>
                   )}
                 </Button>
