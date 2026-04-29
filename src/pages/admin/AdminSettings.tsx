@@ -117,6 +117,9 @@ export default function AdminSettings() {
                     <TabsTrigger value="whatsapp" className="flex items-center gap-2">
                         <MessageSquare className="w-4 h-4" /> WhatsApp
                     </TabsTrigger>
+                    <TabsTrigger value="ecommerce" className="flex items-center gap-2">
+                        <Globe className="w-4 h-4" /> E-commerce
+                    </TabsTrigger>
                     <TabsTrigger value="security" className="flex items-center gap-2">
                         <Shield className="w-4 h-4" /> Segurança
                     </TabsTrigger>
@@ -280,6 +283,47 @@ export default function AdminSettings() {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        </CardContent>
+                        <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
+                            <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
+                                {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Salvar Configurações
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="ecommerce" className="space-y-4">
+                    <Card className="border-border/60 shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-xl">Integração Tray</CardTitle>
+                            <CardDescription>
+                                Configure as chaves globais do aplicativo Tray (Consumer Key e Consumer Secret).
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="tray_consumer_key" className="text-sm font-semibold">Consumer Key</Label>
+                                <Input
+                                    id="tray_consumer_key"
+                                    type="password"
+                                    className="font-mono"
+                                    value={localSettings['tray_consumer_key'] || ''}
+                                    onChange={(e) => handleInputChange('tray_consumer_key', e.target.value)}
+                                    placeholder="Consumer Key do portal do parceiro"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="tray_consumer_secret" className="text-sm font-semibold">Consumer Secret</Label>
+                                <Input
+                                    id="tray_consumer_secret"
+                                    type="password"
+                                    className="font-mono"
+                                    value={localSettings['tray_consumer_secret'] || ''}
+                                    onChange={(e) => handleInputChange('tray_consumer_secret', e.target.value)}
+                                    placeholder="Consumer Secret do portal do parceiro"
+                                />
                             </div>
                         </CardContent>
                         <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">

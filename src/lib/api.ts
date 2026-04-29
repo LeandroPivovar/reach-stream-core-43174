@@ -300,6 +300,15 @@ export interface EmailConnection {
   createdAt: string;
 }
 
+export interface TrayConnection {
+  id: number;
+  shopUrl: string;
+  apiUrl?: string;
+  isActive: boolean;
+  lastSyncAt?: string;
+  createdAt: string;
+}
+
 export interface TwilioConnection {
   id: number;
   friendlyName?: string;
@@ -674,6 +683,22 @@ class ApiService {
       }),
     sync: () =>
       this.request<{ products: any; orders: any; checkouts: any }>('/loja-integrada/sync', {
+        method: 'POST',
+      }),
+  };
+
+  public trayApi = {
+    getAuthUrl: (shopUrl: string, callbackUrl: string) =>
+      this.request<{ url: string }>(`/tray/auth-url?shopUrl=${encodeURIComponent(shopUrl)}&callbackUrl=${encodeURIComponent(callbackUrl)}`, {
+        method: 'GET',
+      }),
+    finalizeConnection: (code: string, shopUrl: string) =>
+      this.request<{ success: boolean; connection: TrayConnection }>('/tray/finalize-connection', {
+        method: 'POST',
+        body: JSON.stringify({ code, shopUrl }),
+      }),
+    sync: () =>
+      this.request<{ products: any; customers: any; orders: any; checkouts: any }>('/tray/sync', {
         method: 'POST',
       }),
   };
