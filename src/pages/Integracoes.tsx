@@ -296,10 +296,10 @@ export default function Integracoes() {
   };
 
   const handleConnectShopify = async () => {
-    if (!shopifyShop || !shopifyShop.includes('.myshopify.com')) {
+    if (!shopifyShop) {
       toast({
         title: "Erro",
-        description: "Por favor, insira um domínio válido da Shopify (ex: sualoja.myshopify.com)",
+        description: "Por favor, insira o domínio da sua loja Shopify",
         variant: "destructive",
       });
       return;
@@ -1050,10 +1050,10 @@ export default function Integracoes() {
                     id="shopify-shop"
                     value={shopifyShop}
                     onChange={(e) => setShopifyShop(e.target.value)}
-                    placeholder="minhaloja.myshopify.com"
+                    placeholder="sualoja.myshopify.com ou seudominio.com"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Digite apenas o domínio da sua loja (ex: minhaloja.myshopify.com)
+                    Digite o domínio da sua loja (ex: sualoja.myshopify.com ou sualoja.com)
                   </p>
                 </div>
 
