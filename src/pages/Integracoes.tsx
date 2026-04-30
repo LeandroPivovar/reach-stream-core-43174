@@ -674,6 +674,10 @@ export default function Integracoes() {
                               setIsShopifyInfoOpen(true);
                             } else if (integration.name === 'Nuvemshop') {
                               setIsNuvemshopInfoOpen(true);
+                            } else if (['Loja Integrada', 'Tray', 'VTEX'].includes(integration.name)) {
+                              setIntegrationType('ecommerce');
+                              setSelectedEcommerce(integration.name);
+                              setIsNewIntegrationOpen(true);
                             } else {
                               handleOpenNewIntegration();
                             }
@@ -697,7 +701,10 @@ export default function Integracoes() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleOpenNewIntegration}
+              onClick={() => {
+                setIntegrationType('webhook');
+                setIsNewIntegrationOpen(true);
+              }}
             >
               <Webhook className="w-4 h-4 mr-2" />
               Novo Webhook
