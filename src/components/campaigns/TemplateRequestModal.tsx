@@ -146,7 +146,7 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-background">
+            <DialogContent className="w-[98vw] max-w-[600px] max-h-[98vh] p-0 overflow-hidden bg-background flex flex-col">
                 {/* Header */}
                 <div className="bg-gradient-to-br from-whatsapp/10 via-background to-background p-6 border-b border-border">
                     <div className="flex items-center justify-between mb-4">
@@ -164,7 +164,7 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                     </DialogDescription>
                 </div>
 
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto flex-1">
                     {/* Setup Progress */}
                     {step < 3 && (
                         <div className="flex items-center gap-2 mb-6">
@@ -219,7 +219,7 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                         <RadioGroupItem value="CREDIT_CARD" className="sr-only" />
                                         <CreditCard className="h-6 w-6 mb-2 text-slate-700 dark:text-slate-300" />
                                         <span className="font-medium">Cartão</span>
-                                        <span className="text-[10px] text-muted-foreground mt-1">Até 12x</span>
+                                        <span className="text-[10px] text-primary font-bold mt-1 uppercase">À Vista</span>
                                     </Label>
                                 </RadioGroup>
                             </div>
@@ -286,21 +286,31 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                 </div>
                             )}
 
-                            <div className="flex gap-3">
-                                <Button variant="outline" className="h-12 w-full" onClick={() => setStep(1)} disabled={loading}>
-                                    Voltar
-                                </Button>
-                                <Button onClick={handleBuy} className="w-full h-12 text-md font-medium" disabled={loading}>
-                                    {loading ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Processando...
-                                        </>
-                                    ) : (
-                                        `Pagar ${totalValue}`
-                                    )}
-                                </Button>
-                            </div>
+                                <Card className="p-3 bg-primary/5 mb-4">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <span className="text-xs font-semibold block">Total Compra:</span>
+                                            <span className="text-[10px] text-primary font-bold uppercase">Pagamento à Vista</span>
+                                        </div>
+                                        <span className="text-sm font-bold text-primary">{totalValue}</span>
+                                    </div>
+                                </Card>
+
+                                <div className="flex gap-3">
+                                    <Button variant="outline" className="h-12 w-full" onClick={() => setStep(1)} disabled={loading}>
+                                        Voltar
+                                    </Button>
+                                    <Button onClick={handleBuy} className="w-full h-12 text-md font-medium" disabled={loading}>
+                                        {loading ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Processando...
+                                            </>
+                                        ) : (
+                                            `Pagar Agora`
+                                        )}
+                                    </Button>
+                                </div>
                         </div>
                     )}
 
