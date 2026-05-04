@@ -26,6 +26,8 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
     const [qrCode, setQrCode] = useState<any>(null);
     const [paymentSuccess, setPaymentSuccess] = useState(false);
     const [whatsappPackages, setWhatsappPackages] = useState<any[]>([]);
+    const [emailPackages, setEmailPackages] = useState<any[]>([]);
+    const [smsPackages, setSmsPackages] = useState<any[]>([]);
 
     const [cardData, setCardData] = useState({
         number: '',
@@ -43,6 +45,8 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
 
     useEffect(() => {
         setWhatsappPackages([]);
+        setEmailPackages([]);
+        setSmsPackages([]);
     }, [isOpen]);
 
 
@@ -56,8 +60,9 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
         const fetchPrices = async () => {
             try {
                 const settings = await api.getSystemSettings();
-                const newPrices = { ...prices };
-                const pkgs: any[] = [];
+                const emailPkgs: any[] = [];
+                const smsPkgs: any[] = [];
+                const waPkgs: any[] = [];
                 
                 const settingsMap = settings.reduce((acc: any, s) => ({ ...acc, [s.key]: s.value }), {});
 
@@ -65,22 +70,33 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                 if (settingsMap['UNIT_PRICE_SMS']) newPrices.UNIT_PRICE_SMS = parseFloat(settingsMap['UNIT_PRICE_SMS']);
                 if (settingsMap['UNIT_PRICE_EMAIL']) newPrices.UNIT_PRICE_EMAIL = parseFloat(settingsMap['UNIT_PRICE_EMAIL']);
 
-                // Parse WhatsApp packages
+                // Parse Packages for all types
                 for (let i = 1; i <= 3; i++) {
-                    const amount = parseInt(settingsMap[`WHATSAPP_PKG${i}_AMOUNT`] || '0');
-                    const price = parseFloat(settingsMap[`WHATSAPP_PKG${i}_PRICE`] || '0');
-                    if (amount > 0) {
-                        pkgs.push({ id: i, amount, price });
-                    }
+                    // WhatsApp
+                    const waAmount = parseInt(settingsMap[`WHATSAPP_PKG${i}_AMOUNT`] || '0');
+                    const waPrice = parseFloat(settingsMap[`WHATSAPP_PKG${i}_PRICE`] || '0');
+                    if (waAmount > 0) waPkgs.push({ id: i, amount: waAmount, price: waPrice });
+
+                    // Email
+                    const emailAmount = parseInt(settingsMap[`EMAIL_PKG${i}_AMOUNT`] || '0');
+                    const emailPrice = parseFloat(settingsMap[`EMAIL_PKG${i}_PRICE`] || '0');
+                    if (emailAmount > 0) emailPkgs.push({ id: i, amount: emailAmount, price: emailPrice });
+
+                    // SMS
+                    const smsAmount = parseInt(settingsMap[`SMS_PKG${i}_AMOUNT`] || '0');
+                    const smsPrice = parseFloat(settingsMap[`SMS_PKG${i}_PRICE`] || '0');
+                    if (smsAmount > 0) smsPkgs.push({ id: i, amount: smsAmount, price: smsPrice });
                 }
 
                 setPrices(newPrices);
-                setWhatsappPackages(pkgs);
+                setWhatsappPackages(waPkgs);
+                setEmailPackages(emailPkgs);
+                setSmsPackages(smsPkgs);
 
-                // If whatsapp packages exist and we are on whatsapp, pre-select first
-                if (creditType === 'whatsapp' && pkgs.length > 0) {
-                    setAmount(pkgs[0].amount);
-                }
+                // Pre-select first package if available for current type
+                if (creditType === 'whatsapp' && waPkgs.length > 0) setAmount(waPkgs[0].amount);
+                else if (creditType === 'email' && emailPkgs.length > 0) setAmount(emailPkgs[0].amount);
+                else if (creditType === 'sms' && smsPkgs.length > 0) setAmount(smsPkgs[0].amount);
             } catch (error) {
                 console.error('Erro ao buscar preços:', error);
             }
@@ -120,16 +136,16 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
     }, [isOpen]);
 
     useEffect(() => {
-        if (creditType === 'email') setAmount(1000);
-        else if (creditType === 'sms') setAmount(500);
-        else if (creditType === 'whatsapp') {
-            if (whatsappPackages.length > 0) {
-                setAmount(whatsappPackages[0].amount);
-            } else {
-                setAmount(500);
-            }
+        const currentPkgs = creditType === 'whatsapp' ? whatsappPackages : (creditType === 'email' ? emailPackages : smsPackages);
+        
+        if (currentPkgs.length > 0) {
+            setAmount(currentPkgs[0].amount);
+        } else {
+            if (creditType === 'email') setAmount(1000);
+            else if (creditType === 'sms') setAmount(500);
+            else if (creditType === 'whatsapp') setAmount(500);
         }
-    }, [creditType, whatsappPackages.length]);
+    }, [creditType, whatsappPackages.length, emailPackages.length, smsPackages.length]);
 
     const handleBuy = async () => {
         if (amount < 100) {
@@ -248,70 +264,82 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                         <div className="space-y-3">
                             <Label>{creditType === 'whatsapp' ? 'Escolha seu Pacote' : 'Quantidade'}</Label>
                             
-                            {creditType === 'whatsapp' && whatsappPackages.length > 0 ? (
-                                <div className="grid grid-cols-1 gap-2">
-                                    {whatsappPackages.map(pkg => (
-                                        <Button
-                                            key={pkg.id}
-                                            variant={amount === pkg.amount ? 'default' : 'outline'}
-                                            className="h-auto py-3 px-4 flex justify-between items-center"
-                                            onClick={() => setAmount(pkg.amount)}
-                                        >
-                                            <div className="text-left">
-                                                <div className="font-bold">{pkg.amount.toLocaleString()} Disparos</div>
-                                                <div className="text-[10px] opacity-70">Pacote {pkg.id}</div>
-                                            </div>
-                                            <div className="font-bold">
-                                                {pkg.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                            </div>
-                                        </Button>
-                                    ))}
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="flex space-x-2">
-                                        {[100, 500, 1000, 5000].map(val => (
-                                            <Button
-                                                key={val}
-                                                variant={amount === val ? 'default' : 'outline'}
-                                                size="sm"
-                                                className="flex-1"
-                                                onClick={() => setAmount(val)}
-                                            >
-                                                {val}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                    <div className="pt-2">
-                                        <Label className="text-xs text-muted-foreground">Outro valor (Mín. 100)</Label>
-                                        <Input
-                                            type="number"
-                                            min="100"
-                                            step="100"
-                                            value={amount}
-                                            onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
-                                            className="mt-1"
-                                        />
-                                    </div>
-                                </>
-                            )}
+                            {(() => {
+                                const currentPkgs = creditType === 'whatsapp' ? whatsappPackages : (creditType === 'email' ? emailPackages : smsPackages);
+                                
+                                if (currentPkgs.length > 0) {
+                                    return (
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {currentPkgs.map(pkg => (
+                                                <Button
+                                                    key={pkg.id}
+                                                    variant={amount === pkg.amount ? 'default' : 'outline'}
+                                                    className="h-auto py-3 px-4 flex justify-between items-center"
+                                                    onClick={() => setAmount(pkg.amount)}
+                                                >
+                                                    <div className="text-left">
+                                                        <div className="font-bold">{pkg.amount.toLocaleString()} {creditType === 'email' ? 'Créditos' : 'Disparos'}</div>
+                                                        <div className="text-[10px] opacity-70">Pacote {pkg.id}</div>
+                                                    </div>
+                                                    <div className="font-bold">
+                                                        {pkg.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                    </div>
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    );
+                                }
+                                
+                                return (
+                                    <>
+                                        <div className="flex space-x-2">
+                                            {[100, 500, 1000, 5000].map(val => (
+                                                <Button
+                                                    key={val}
+                                                    variant={amount === val ? 'default' : 'outline'}
+                                                    size="sm"
+                                                    className="flex-1"
+                                                    onClick={() => setAmount(val)}
+                                                >
+                                                    {val}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                        <div className="pt-2">
+                                            <Label className="text-xs text-muted-foreground">Outro valor (Mín. 100)</Label>
+                                            <Input
+                                                type="number"
+                                                min="100"
+                                                step="100"
+                                                value={amount}
+                                                onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                    </>
+                                );
+                            })()}
                         </div>
 
                         <Card className="p-4 bg-muted/50">
                             <div className="flex justify-between items-center text-sm mb-1">
                                 <span className="text-muted-foreground">Preço por {creditType.toUpperCase()}</span>
                                 <span className="font-medium">
-                                    {(creditType === 'whatsapp' && whatsappPackages.find(p => p.amount === amount)) 
-                                        ? `Pacote Selecionado`
-                                        : `R$ ${pricePerUnit.toFixed(2).replace('.', ',')}`}
+                                    {(() => {
+                                        const currentPkgs = creditType === 'whatsapp' ? whatsappPackages : (creditType === 'email' ? emailPackages : smsPackages);
+                                        const pkg = currentPkgs.find(p => p.amount === amount);
+                                        return pkg ? 'Pacote Selecionado' : `R$ ${pricePerUnit.toFixed(creditType === 'email' ? 3 : 2).replace('.', ',')}`;
+                                    })()}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center border-t border-border pt-2 mt-2">
                                 <span className="font-semibold text-base">Total</span>
                                 <span className="font-bold text-lg text-primary">
-                                    {(creditType === 'whatsapp' && whatsappPackages.find(p => p.amount === amount))
-                                        ? whatsappPackages.find(p => p.amount === amount).price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                                        : totalValue}
+                                    {(() => {
+                                        const currentPkgs = creditType === 'whatsapp' ? whatsappPackages : (creditType === 'email' ? emailPackages : smsPackages);
+                                        const pkg = currentPkgs.find(p => p.amount === amount);
+                                        return pkg ? pkg.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : totalValue;
+                                    })()}
                                 </span>
                             </div>
                         </Card>
