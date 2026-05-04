@@ -21,6 +21,7 @@ import {
     MessageSquare,
     Zap,
     LifeBuoy,
+    Share2,
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -28,6 +29,7 @@ const adminMenuItems = [
     { title: 'Visão do Sistema', href: '/admin/overview', icon: Monitor },
     { title: 'Dashboard Financeiro', href: '/admin/finance', icon: TrendingUp },
     { title: 'Usuários', href: '/admin/users', icon: Users },
+    { title: 'Indicações', href: '/admin/referrals', icon: Share2 },
     { title: 'Campanhas', href: '/admin/campaigns', icon: Zap },
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
     { title: 'Segmentações', href: '/admin/segmentations', icon: Filter },

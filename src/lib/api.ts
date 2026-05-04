@@ -2209,6 +2209,39 @@ class ApiService {
       body: JSON.stringify({ level }),
     });
   }
+
+  // Admin Referrals
+  public referralsAdminApi = {
+    getStats: () =>
+      this.request<any>('/referrals/admin/stats', { method: 'GET' }),
+    getList: (params?: any) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request<any[]>(`/referrals/admin/list${query ? `?${query}` : ''}`, { method: 'GET' });
+    },
+    updateStatus: (id: number, status: string) =>
+      this.request<any>(`/referrals/admin/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }),
+    getCommissions: (params?: any) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request<any[]>(`/referrals/admin/commissions${query ? `?${query}` : ''}`, { method: 'GET' });
+    },
+    updateCommissionStatus: (id: number, status: string) =>
+      this.request<any>(`/referrals/admin/commissions/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }),
+    getRanking: () =>
+      this.request<any[]>('/referrals/admin/ranking', { method: 'GET' }),
+    getRewardsConfig: () =>
+      this.request<any[]>('/referrals/admin/rewards-config', { method: 'GET' }),
+    updateRewardsConfig: (data: any) =>
+      this.request<any>('/referrals/admin/rewards-config', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  };
 }
 
 export const api = new ApiService();
