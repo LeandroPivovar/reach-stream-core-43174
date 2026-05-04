@@ -59,7 +59,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
     useEffect(() => {
         const fetchPrices = async () => {
             try {
-                const settings = await api.getSystemSettings();
+                const settings = await api.getPublicSettings();
                 const newPrices = { ...prices };
                 const emailPkgs: any[] = [];
                 const smsPkgs: any[] = [];
