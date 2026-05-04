@@ -109,7 +109,7 @@ export default function Register() {
         <div className="text-center mb-8">
           <div className="mb-4">
             <img 
-              src="/home/assets/logo-fundo-escuro.png" 
+              src="/home/assets/new-logo.png" 
               alt="Núcleo CRM" 
               className="h-16 mx-auto"
             />
