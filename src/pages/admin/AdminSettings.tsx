@@ -187,237 +187,94 @@ export default function AdminSettings() {
                 </TabsContent>
 
                 <TabsContent value="email" className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Card className="border-border/60 shadow-sm opacity-80 bg-muted/20">
-                            <CardHeader>
-                                <CardTitle className="text-xl">Configuração de E-mail (Zenvia)</CardTitle>
-                                <CardDescription>
-                                    Configure o endereço de e-mail que aparecerá como remetente nas mensagens enviadas pelo sistema.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6 pt-4 pb-8">
-                                <div className="space-y-2">
-                                    <Label htmlFor="SMTP_FROM_EMAIL" className="text-sm font-semibold">E-mail de Remetente (FROM)</Label>
-                                    <Input
-                                        id="SMTP_FROM_EMAIL"
-                                        type="email"
-                                        value={localSettings['SMTP_FROM_EMAIL'] || ''}
-                                        onChange={(e) => handleInputChange('SMTP_FROM_EMAIL', e.target.value)}
-                                        placeholder="contato@nucleocrm.com.br"
-                                    />
-                                    <p className="text-[12px] text-muted-foreground">O endereço de e-mail que os clientes verão ao receber mensagens.</p>
-                                </div>
+                    <Card className="border-border/60 shadow-sm opacity-80 bg-muted/20">
+                        <CardHeader>
+                            <CardTitle className="text-xl">Configuração de E-mail (Zenvia)</CardTitle>
+                            <CardDescription>
+                                Configure o endereço de e-mail que aparecerá como remetente nas mensagens enviadas pelo sistema.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6 pt-4 pb-8">
+                            <div className="space-y-2">
+                                <Label htmlFor="SMTP_FROM_EMAIL" className="text-sm font-semibold">E-mail de Remetente (FROM)</Label>
+                                <Input
+                                    id="SMTP_FROM_EMAIL"
+                                    type="email"
+                                    value={localSettings['SMTP_FROM_EMAIL'] || ''}
+                                    onChange={(e) => handleInputChange('SMTP_FROM_EMAIL', e.target.value)}
+                                    placeholder="contato@nucleocrm.com.br"
+                                />
+                                <p className="text-[12px] text-muted-foreground">O endereço de e-mail que os clientes verão ao receber mensagens.</p>
+                            </div>
 
-                                <Separator />
+                            <Separator />
 
-                                <div className="flex flex-col items-center pt-4 text-center">
-                                    <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                                    <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                                        O envio de e-mails agora é gerenciado oficialmente pela API da Zenvia. Dispare um teste abaixo para verificar a conexão.
-                                    </p>
-                                    <Button variant="outline" onClick={() => setTestEmailModalOpen(true)} className="flex items-center gap-2 mt-4">
-                                        <Mail className="w-4 h-4" /> Testar Integração Zenvia
-                                    </Button>
-                                </div>
-                            </CardContent>
-                            <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
-                                <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
-                                    {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Salvar Configurações
+                            <div className="flex flex-col items-center pt-4 text-center">
+                                <Mail className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                                    O envio de e-mails agora é gerenciado oficialmente pela API da Zenvia. Dispare um teste abaixo para verificar a conexão.
+                                </p>
+                                <Button variant="outline" onClick={() => setTestEmailModalOpen(true)} className="flex items-center gap-2 mt-4">
+                                    <Mail className="w-4 h-4" /> Testar Integração Zenvia
                                 </Button>
-                            </CardFooter>
-                        </Card>
-
-                        <Card className="border-border/60 shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="text-xl">Preço e Pacotes de E-mail</CardTitle>
-                                <CardDescription>
-                                    Preço unitário e pacotes promocionais de e-mail.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="UNIT_PRICE_EMAIL">Preço Unitário (R$)</Label>
-                                    <Input
-                                        id="UNIT_PRICE_EMAIL"
-                                        type="number"
-                                        step="0.001"
-                                        value={localSettings['UNIT_PRICE_EMAIL'] || ''}
-                                        onChange={(e) => handleInputChange('UNIT_PRICE_EMAIL', e.target.value)}
-                                        placeholder="Ex: 0.01"
-                                    />
-                                </div>
-                                <Separator />
-                                <div className="grid grid-cols-1 gap-4">
-                                    {[1, 2, 3].map((num) => (
-                                        <div key={num} className="space-y-2 p-3 border rounded-lg bg-muted/5">
-                                            <h4 className="text-xs font-bold uppercase text-muted-foreground">Pacote {num}</h4>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div className="space-y-1">
-                                                    <Label htmlFor={`EMAIL_PKG${num}_AMOUNT`} className="text-[10px]">Quantidade</Label>
-                                                    <Input
-                                                        id={`EMAIL_PKG${num}_AMOUNT`}
-                                                        size={1}
-                                                        type="number"
-                                                        value={localSettings[`EMAIL_PKG${num}_AMOUNT`] || ''}
-                                                        onChange={(e) => handleInputChange(`EMAIL_PKG${num}_AMOUNT`, e.target.value)}
-                                                        placeholder="1000"
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <Label htmlFor={`EMAIL_PKG${num}_PRICE`} className="text-[10px]">Preço Total</Label>
-                                                    <Input
-                                                        id={`EMAIL_PKG${num}_PRICE`}
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={localSettings[`EMAIL_PKG${num}_PRICE`] || ''}
-                                                        onChange={(e) => handleInputChange(`EMAIL_PKG${num}_PRICE`, e.target.value)}
-                                                        placeholder="10.00"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                            <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
-                                <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
-                                    {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Salvar Configurações
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    </div>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
+                            <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
+                                {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Salvar Configurações
+                            </Button>
+                        </CardFooter>
+                    </Card>
                 </TabsContent>
 
                 <TabsContent value="zenvia" className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Card className="border-border/60 shadow-sm opacity-80 bg-muted/20">
-                            <CardHeader>
-                                <CardTitle className="text-xl">Configuração Zenvia (SMS)</CardTitle>
-                                <CardDescription>
-                                    Credenciais globais para envio de mensagens via SMS.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4 py-8 text-center">
-                                <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                                    Estas configurações são gerenciadas via variáveis de ambiente.
-                                </p>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-border/60 shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="text-xl">Preço e Pacotes de SMS</CardTitle>
-                                <CardDescription>
-                                    Preço unitário e pacotes promocionais de SMS.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="UNIT_PRICE_SMS">Preço Unitário (R$)</Label>
-                                    <Input
-                                        id="UNIT_PRICE_SMS"
-                                        type="number"
-                                        step="0.01"
-                                        value={localSettings['UNIT_PRICE_SMS'] || ''}
-                                        onChange={(e) => handleInputChange('UNIT_PRICE_SMS', e.target.value)}
-                                        placeholder="Ex: 0.10"
-                                    />
-                                </div>
-                                <Separator />
-                                <div className="grid grid-cols-1 gap-4">
-                                    {[1, 2, 3].map((num) => (
-                                        <div key={num} className="space-y-2 p-3 border rounded-lg bg-muted/5">
-                                            <h4 className="text-xs font-bold uppercase text-muted-foreground">Pacote {num}</h4>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div className="space-y-1">
-                                                    <Label htmlFor={`SMS_PKG${num}_AMOUNT`} className="text-[10px]">Quantidade</Label>
-                                                    <Input
-                                                        id={`SMS_PKG${num}_AMOUNT`}
-                                                        type="number"
-                                                        value={localSettings[`SMS_PKG${num}_AMOUNT`] || ''}
-                                                        onChange={(e) => handleInputChange(`SMS_PKG${num}_AMOUNT`, e.target.value)}
-                                                        placeholder="500"
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <Label htmlFor={`SMS_PKG${num}_PRICE`} className="text-[10px]">Preço Total</Label>
-                                                    <Input
-                                                        id={`SMS_PKG${num}_PRICE`}
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={localSettings[`SMS_PKG${num}_PRICE`] || ''}
-                                                        onChange={(e) => handleInputChange(`SMS_PKG${num}_PRICE`, e.target.value)}
-                                                        placeholder="45.00"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                            <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
-                                <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
-                                    {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Salvar Configurações
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    </div>
+                    <Card className="border-border/60 shadow-sm opacity-80 bg-muted/20">
+                        <CardHeader>
+                            <CardTitle className="text-xl">Configuração Zenvia (SMS)</CardTitle>
+                            <CardDescription>
+                                Credenciais globais para envio de mensagens via SMS.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4 py-8 text-center">
+                            <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                                Estas configurações são gerenciadas via variáveis de ambiente.
+                            </p>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
-                <TabsContent value="whatsapp" className="space-y-4">
+                <TabsContent value="ecommerce" className="space-y-4">
                     <Card className="border-border/60 shadow-sm">
                         <CardHeader>
-                            <CardTitle className="text-xl">Preço e Pacotes WhatsApp</CardTitle>
+                            <CardTitle className="text-xl">Integração Tray</CardTitle>
                             <CardDescription>
-                                Configure o preço unitário e os 3 pacotes disponíveis para os usuários comprarem créditos adicionais de WhatsApp.
+                                Configure as chaves globais do aplicativo Tray (Consumer Key e Consumer Secret).
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="space-y-2 max-w-xs">
-                                <Label htmlFor="UNIT_PRICE_WHATSAPP">Preço Unitário (R$)</Label>
+                            <div className="space-y-2">
+                                <Label htmlFor="tray_consumer_key" className="text-sm font-semibold">Consumer Key</Label>
                                 <Input
-                                    id="UNIT_PRICE_WHATSAPP"
-                                    type="number"
-                                    step="0.01"
-                                    value={localSettings['UNIT_PRICE_WHATSAPP'] || ''}
-                                    onChange={(e) => handleInputChange('UNIT_PRICE_WHATSAPP', e.target.value)}
-                                    placeholder="Ex: 0.15"
+                                    id="tray_consumer_key"
+                                    type="password"
+                                    className="font-mono"
+                                    value={localSettings['tray_consumer_key'] || ''}
+                                    onChange={(e) => handleInputChange('tray_consumer_key', e.target.value)}
+                                    placeholder="Consumer Key do portal do parceiro"
                                 />
                             </div>
-                            <Separator />
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {[1, 2, 3].map((num) => (
-                                    <div key={num} className="space-y-4 p-4 border rounded-lg bg-muted/10">
-                                        <h3 className="font-bold flex items-center gap-2 text-primary">
-                                            Pacote {num}
-                                        </h3>
-                                        <div className="space-y-2">
-                                            <Label htmlFor={`WHATSAPP_PKG${num}_AMOUNT`}>Quantidade de Disparos</Label>
-                                            <Input
-                                                id={`WHATSAPP_PKG${num}_AMOUNT`}
-                                                type="number"
-                                                value={localSettings[`WHATSAPP_PKG${num}_AMOUNT`] || ''}
-                                                onChange={(e) => handleInputChange(`WHATSAPP_PKG${num}_AMOUNT`, e.target.value)}
-                                                placeholder="Ex: 1000"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor={`WHATSAPP_PKG${num}_PRICE`}>Preço (R$)</Label>
-                                            <Input
-                                                id={`WHATSAPP_PKG${num}_PRICE`}
-                                                type="number"
-                                                step="0.01"
-                                                value={localSettings[`WHATSAPP_PKG${num}_PRICE`] || ''}
-                                                onChange={(e) => handleInputChange(`WHATSAPP_PKG${num}_PRICE`, e.target.value)}
-                                                placeholder="Ex: 50.00"
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="space-y-2">
+                                <Label htmlFor="tray_consumer_secret" className="text-sm font-semibold">Consumer Secret</Label>
+                                <Input
+                                    id="tray_consumer_secret"
+                                    type="password"
+                                    className="font-mono"
+                                    value={localSettings['tray_consumer_secret'] || ''}
+                                    onChange={(e) => handleInputChange('tray_consumer_secret', e.target.value)}
+                                    placeholder="Consumer Secret do portal do parceiro"
+                                />
                             </div>
                         </CardContent>
                         <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">

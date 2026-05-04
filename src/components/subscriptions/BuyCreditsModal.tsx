@@ -60,6 +60,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
         const fetchPrices = async () => {
             try {
                 const settings = await api.getSystemSettings();
+                const newPrices = { ...prices };
                 const emailPkgs: any[] = [];
                 const smsPkgs: any[] = [];
                 const waPkgs: any[] = [];
@@ -104,9 +105,8 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
         fetchPrices();
     }, [isOpen]); // Refetch when modal opens to get latest admin changes
 
-    const pricePerUnit = creditType === 'whatsapp' 
-        ? prices.UNIT_PRICE_WHATSAPP 
-        : (creditType === 'email' ? prices.UNIT_PRICE_EMAIL : prices.UNIT_PRICE_SMS);
+    const pricePerUnit = creditType === 'whatsapp' ? prices.UNIT_PRICE_WHATSAPP : 
+                        (creditType === 'email' ? prices.UNIT_PRICE_EMAIL / 1000 : prices.UNIT_PRICE_SMS);
     
     // Total value based on price per unit
     const totalValueRaw = amount * pricePerUnit;
