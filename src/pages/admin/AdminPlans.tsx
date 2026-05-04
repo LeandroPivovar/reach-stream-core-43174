@@ -168,17 +168,26 @@ export default function AdminPlans() {
         queryFn: () => api.getSystemSettings()
     });
 
-    const [packageSettings, setPackageSettings] = useState({
+    const [packageSettings, setPackageSettings] = useState<any>({
         UNIT_PRICE_WHATSAPP: '0.15',
         UNIT_PRICE_SMS: '0.10',
-        UNIT_PRICE_EMAIL: '0.01'
+        UNIT_PRICE_EMAIL: '0.01',
+        WHATSAPP_PKG1_AMOUNT: '', WHATSAPP_PKG1_PRICE: '',
+        WHATSAPP_PKG2_AMOUNT: '', WHATSAPP_PKG2_PRICE: '',
+        WHATSAPP_PKG3_AMOUNT: '', WHATSAPP_PKG3_PRICE: '',
+        SMS_PKG1_AMOUNT: '', SMS_PKG1_PRICE: '',
+        SMS_PKG2_AMOUNT: '', SMS_PKG2_PRICE: '',
+        SMS_PKG3_AMOUNT: '', SMS_PKG3_PRICE: '',
+        EMAIL_PKG1_AMOUNT: '', EMAIL_PKG1_PRICE: '',
+        EMAIL_PKG2_AMOUNT: '', EMAIL_PKG2_PRICE: '',
+        EMAIL_PKG3_AMOUNT: '', EMAIL_PKG3_PRICE: ''
     });
 
     React.useEffect(() => {
         if (systemSettings) {
-            const settings = {};
+            const settings: any = {};
             systemSettings.forEach(s => {
-                if (['UNIT_PRICE_WHATSAPP', 'UNIT_PRICE_SMS', 'UNIT_PRICE_EMAIL'].includes(s.key)) {
+                if (s.key.includes('UNIT_PRICE_') || s.key.includes('_PKG')) {
                     settings[s.key] = s.value;
                 }
             });
@@ -298,73 +307,140 @@ export default function AdminPlans() {
 
                 <TabsContent value="packages">
                     <Card className="p-8 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                        <div className="max-w-2xl">
+                        <div className="max-w-4xl">
                             <h2 className="text-xl font-bold mb-2">Configurar Valores de Pacotes</h2>
                             <p className="text-sm text-slate-500 mb-8">
-                                Defina o custo unitário para cada tipo de disparo quando o usuário compra créditos adicionais fora do plano base.
+                                Defina o custo unitário e os pacotes promocionais para cada tipo de disparo.
                             </p>
 
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="space-y-2">
-                                        <Label className="flex items-center gap-2">
-                                            <MessageCircle className="w-4 h-4 text-green-500" />
-                                            Preço WhatsApp
-                                        </Label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2.5 text-slate-400 text-sm">R$</span>
+                            <div className="space-y-12">
+                                {/* WhatsApp Section */}
+                                <div className="space-y-6">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2">
+                                        <MessageCircle className="w-5 h-5 text-green-500" /> WhatsApp
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <div className="space-y-2">
+                                            <Label>Preço Unitário (R$)</Label>
                                             <Input
                                                 type="number"
                                                 step="0.01"
-                                                className="pl-9"
                                                 value={packageSettings.UNIT_PRICE_WHATSAPP}
                                                 onChange={e => setPackageSettings(prev => ({ ...prev, UNIT_PRICE_WHATSAPP: e.target.value }))}
                                             />
+                                            <p className="text-[10px] text-slate-400">Usado se não houver pacotes</p>
                                         </div>
-                                        <p className="text-[10px] text-slate-400">Custo por mensagem enviada</p>
+                                        {[1, 2, 3].map(num => (
+                                            <div key={num} className="p-3 border rounded-lg bg-slate-50 dark:bg-slate-800/50 space-y-3">
+                                                <Label className="text-xs font-bold uppercase">Pacote {num}</Label>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px]">Qtd. Mensagens</Label>
+                                                    <Input
+                                                        size={1}
+                                                        type="number"
+                                                        value={packageSettings[`WHATSAPP_PKG${num}_AMOUNT`] || ''}
+                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`WHATSAPP_PKG${num}_AMOUNT`]: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px]">Preço Total (R$)</Label>
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={packageSettings[`WHATSAPP_PKG${num}_PRICE`] || ''}
+                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`WHATSAPP_PKG${num}_PRICE`]: e.target.value }))}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
+                                </div>
 
-                                    <div className="space-y-2">
-                                        <Label className="flex items-center gap-2">
-                                            <MessageSquare className="w-4 h-4 text-blue-500" />
-                                            Preço SMS
-                                        </Label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2.5 text-slate-400 text-sm">R$</span>
+                                {/* SMS Section */}
+                                <div className="space-y-6">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2">
+                                        <MessageSquare className="w-5 h-5 text-blue-500" /> SMS
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <div className="space-y-2">
+                                            <Label>Preço Unitário (R$)</Label>
                                             <Input
                                                 type="number"
                                                 step="0.01"
-                                                className="pl-9"
                                                 value={packageSettings.UNIT_PRICE_SMS}
                                                 onChange={e => setPackageSettings(prev => ({ ...prev, UNIT_PRICE_SMS: e.target.value }))}
                                             />
                                         </div>
-                                        <p className="text-[10px] text-slate-400">Custo por crédito de SMS</p>
+                                        {[1, 2, 3].map(num => (
+                                            <div key={num} className="p-3 border rounded-lg bg-slate-50 dark:bg-slate-800/50 space-y-3">
+                                                <Label className="text-xs font-bold uppercase">Pacote {num}</Label>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px]">Qtd. SMS</Label>
+                                                    <Input
+                                                        type="number"
+                                                        value={packageSettings[`SMS_PKG${num}_AMOUNT`] || ''}
+                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`SMS_PKG${num}_AMOUNT`]: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px]">Preço Total (R$)</Label>
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={packageSettings[`SMS_PKG${num}_PRICE`] || ''}
+                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`SMS_PKG${num}_PRICE`]: e.target.value }))}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
+                                </div>
 
-                                    <div className="space-y-2">
-                                        <Label className="flex items-center gap-2">
-                                            <Mail className="w-4 h-4 text-amber-500" />
-                                            Preço E-mail
-                                        </Label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2.5 text-slate-400 text-sm">R$</span>
+                                {/* Email Section */}
+                                <div className="space-y-6">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2">
+                                        <Mail className="w-5 h-5 text-amber-500" /> E-mail
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <div className="space-y-2">
+                                            <Label>Preço p/ 1.000 (R$)</Label>
                                             <Input
                                                 type="number"
                                                 step="0.01"
-                                                className="pl-9"
                                                 value={packageSettings.UNIT_PRICE_EMAIL}
                                                 onChange={e => setPackageSettings(prev => ({ ...prev, UNIT_PRICE_EMAIL: e.target.value }))}
                                             />
+                                            <p className="text-[10px] text-slate-400">Custo a cada 1.000 disparos</p>
                                         </div>
-                                        <p className="text-[10px] text-slate-400">Custo por 1.000 e-mails</p>
+                                        {[1, 2, 3].map(num => (
+                                            <div key={num} className="p-3 border rounded-lg bg-slate-50 dark:bg-slate-800/50 space-y-3">
+                                                <Label className="text-xs font-bold uppercase">Pacote {num}</Label>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px]">Qtd. E-mails</Label>
+                                                    <Input
+                                                        type="number"
+                                                        value={packageSettings[`EMAIL_PKG${num}_AMOUNT`] || ''}
+                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`EMAIL_PKG${num}_AMOUNT`]: e.target.value }))}
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px]">Preço Total (R$)</Label>
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={packageSettings[`EMAIL_PKG${num}_PRICE`] || ''}
+                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`EMAIL_PKG${num}_PRICE`]: e.target.value }))}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
 
                                 <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                                     <Button onClick={handleSavePrices} disabled={updateSettingsMutation.isPending} className="gap-2 px-8">
                                         {updateSettingsMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                        Salvar Valores
+                                        Salvar Todos os Valores
                                     </Button>
                                 </div>
                             </div>
