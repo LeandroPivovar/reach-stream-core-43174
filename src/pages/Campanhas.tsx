@@ -472,6 +472,20 @@ export default function Campanhas() {
       const advancedWhatsapp = newCampaign.campaignComplexity === 'advanced' &&
         (newCampaign.workflow?.nodes || []).some((n: any) => n.type === 'whatsapp');
 
+      // Check for WhatsApp credits before creating
+      const hasWhatsapp = simpleWhatsapp || advancedWhatsapp;
+      const noCredits = hasWhatsapp && subscriptionStats && (
+        subscriptionStats.whatsappLimit !== true && 
+        subscriptionStats.whatsappLimit !== -1 && 
+        (Number(subscriptionStats.whatsappLimit) - (subscriptionStats.whatsappSent || 0)) <= 0
+      );
+
+      if (noCredits) {
+        setIsBuyCreditsModalOpen(true);
+        setIsSaving(false);
+        return;
+      }
+
       let finalStatus = newCampaign.scheduleType === 'schedule' ? 'agendada' : 'ativa';
       let finalScheduledAt = newCampaign.scheduleType === 'schedule'
         ? `${newCampaign.scheduleDate}T${newCampaign.scheduleTime}:00`
@@ -1673,7 +1687,7 @@ export default function Campanhas() {
                                 className="h-7 text-[10px] font-bold px-4"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate('/assinaturas');
+                                  setIsBuyCreditsModalOpen(true);
                                 }}
                               >
                                 <Zap className="w-3 h-3 mr-1" /> Comprar Créditos
@@ -3035,8 +3049,7 @@ export default function Campanhas() {
                   onClick={handleCreateCampaign}
                   disabled={
                     (newCampaign.scheduleType === 'schedule' &&
-                      (!newCampaign.scheduleDate || !newCampaign.scheduleTime)) ||
-                    (newCampaign.channel === 'whatsapp' && subscriptionStats && subscriptionStats.whatsappLimit === 0)
+                      (!newCampaign.scheduleDate || !newCampaign.scheduleTime))
                   }
                 >
                   {newCampaign.scheduleType === 'now' ? (
