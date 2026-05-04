@@ -1277,6 +1277,10 @@ class ApiService {
     return this.get<SystemSetting[]>('/admin/settings');
   }
 
+  async getPublicSettings(): Promise<SystemSetting[]> {
+    return this.get<SystemSetting[]>('/settings/public');
+  }
+
   async updateSystemSettings(key: string, value: string): Promise<any> {
     return this.request<any>(`/system-settings/${key}`, {
       method: 'PATCH',
