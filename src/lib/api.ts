@@ -2242,6 +2242,24 @@ class ApiService {
         body: JSON.stringify(data),
       }),
   };
+
+  // Knowledge Base (Tutorials)
+  public knowledgeBaseApi = {
+    list: () =>
+      this.request<any[]>('/admin/knowledge-base', { method: 'GET' }),
+    create: (data: FormData) =>
+      this.request<any>('/admin/knowledge-base', {
+        method: 'POST',
+        body: data, // Note: fetch will set the correct Content-Type with boundary for FormData
+      }),
+    update: (id: number, data: FormData) =>
+      this.request<any>(`/admin/knowledge-base/${id}`, {
+        method: 'PATCH',
+        body: data,
+      }),
+    delete: (id: number) =>
+      this.request<any>(`/admin/knowledge-base/${id}`, { method: 'DELETE' }),
+  };
 }
 
 export const api = new ApiService();

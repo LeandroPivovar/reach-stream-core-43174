@@ -22,11 +22,13 @@ import {
     Zap,
     LifeBuoy,
     Share2,
+    BookOpen,
 } from 'lucide-react';
 
 const adminMenuItems = [
     { title: 'Painel Geral', href: '/admin', icon: LayoutDashboard },
     { title: 'Visão do Sistema', href: '/admin/overview', icon: Monitor },
+    { title: 'Base de Conhecimento', href: '/admin/knowledge-base', icon: BookOpen },
     { title: 'Dashboard Financeiro', href: '/admin/finance', icon: TrendingUp },
     { title: 'Usuários', href: '/admin/users', icon: Users },
     { title: 'Indicações', href: '/admin/referrals', icon: Share2 },
