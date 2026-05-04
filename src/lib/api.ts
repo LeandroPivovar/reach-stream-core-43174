@@ -2241,6 +2241,13 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    getAdminUsers: () =>
+      this.request<any[]>('/referrals/admin/users', { method: 'GET' }),
+    updateUserPercentage: (id: number, percentage: number) =>
+      this.request<any>(`/referrals/admin/users/${id}/percentage`, {
+        method: 'PATCH',
+        body: JSON.stringify({ percentage }),
+      }),
   };
 
   // Knowledge Base (Tutorials)

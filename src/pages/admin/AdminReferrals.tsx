@@ -41,9 +41,11 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminReferrals() {
     const { toast } = useToast();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<any>(null);
     const [referrals, setReferrals] = useState<any[]>([]);
@@ -52,6 +54,8 @@ export default function AdminReferrals() {
     const [config, setConfig] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [referralUsers, setReferralUsers] = useState<any[]>([]);
+    const [userSearch, setUserSearch] = useState('');
 
     useEffect(() => {
         fetchData();
@@ -60,17 +64,19 @@ export default function AdminReferrals() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [statsRes, referralsRes, rankingRes, configRes] = await Promise.all([
+            const [statsRes, referralsRes, rankingRes, configRes, usersRes] = await Promise.all([
                 api.referralsAdminApi.getStats(),
                 api.referralsAdminApi.getList(),
                 api.referralsAdminApi.getRanking(),
-                api.referralsAdminApi.getRewardsConfig()
+                api.referralsAdminApi.getRewardsConfig(),
+                api.referralsAdminApi.getAdminUsers()
             ]);
 
             setStats(statsRes);
             setReferrals(referralsRes);
             setRanking(rankingRes);
             setConfig(configRes);
+            setReferralUsers(usersRes);
 
             // Fetch commissions separately as they might be many
             const commissionsRes = await api.referralsAdminApi.getCommissions();
@@ -84,6 +90,24 @@ export default function AdminReferrals() {
             });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUpdateUserPercentage = async (userId: number, percentage: number) => {
+        try {
+            await api.referralsAdminApi.updateUserPercentage(userId, percentage);
+            toast({
+                title: "Sucesso",
+                description: "Porcentagem de comissão atualizada!"
+            });
+            // Update local state instead of refetching all
+            setReferralUsers(prev => prev.map(u => u.id === userId ? { ...u, referralPercentage: percentage } : u));
+        } catch (error) {
+            toast({
+                title: "Erro",
+                description: "Não foi possível atualizar a porcentagem.",
+                variant: "destructive"
+            });
         }
     };
 
@@ -417,90 +441,79 @@ export default function AdminReferrals() {
                     </TabsContent>
 
                     <TabsContent value="config" className="space-y-4 mt-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <Card className="p-6">
-                                <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                                    <Settings className="w-5 h-5 text-primary" />
-                                    Regras de Recompensa Ativas
-                                </h3>
-                                <div className="space-y-4">
-                                    {config.length === 0 ? (
-                                        <div className="text-center py-8 bg-muted/30 rounded-lg">
-                                            <p className="text-sm text-muted-foreground">Nenhuma regra configurada.</p>
-                                            <Button variant="link" className="mt-2">Criar primeira regra</Button>
-                                        </div>
-                                    ) : (
-                                        config.map((rule) => (
-                                            <div key={rule.id} className="p-4 border rounded-lg flex items-center justify-between bg-card hover:shadow-md transition-shadow">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                                        <Award className="w-5 h-5 text-primary" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium capitalize">{rule.type}</p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {rule.type === 'percentage' ? `${rule.value}% da mensalidade` : `R$ ${rule.value} fixo`}
-                                                            {rule.durationMonths ? ` por ${rule.durationMonths} meses` : ''}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant={rule.isActive ? 'default' : 'secondary'}>
-                                                        {rule.isActive ? 'Ativa' : 'Inativa'}
-                                                    </Badge>
-                                                    <Button variant="ghost" size="icon">
-                                                        <Settings className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                    <Button className="w-full mt-4" variant="outline">
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        Adicionar Nova Regra
-                                    </Button>
+                        <Card className="p-6">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold">Porcentagem por Usuário</h3>
+                                    <p className="text-sm text-muted-foreground">Configure quanto cada parceiro ganha por indicação convertida.</p>
                                 </div>
-                            </Card>
+                                <div className="relative w-full max-w-sm">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Buscar usuário..."
+                                        className="pl-8"
+                                        value={userSearch}
+                                        onChange={(e) => setUserSearch(e.target.value)}
+                                    />
+                                </div>
+                            </div>
 
-                            <Card className="p-6">
-                                <h3 className="text-lg font-semibold mb-6">Validação Automática</h3>
-                                <div className="space-y-6">
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-5 h-5 mt-1">
-                                            <input type="checkbox" className="rounded border-gray-300 text-primary focus:ring-primary" defaultChecked />
-                                        </div>
-                                        <div>
-                                            <Label className="text-base">Validar contratação real</Label>
-                                            <p className="text-sm text-muted-foreground">Apenas pagar se o indicado tiver um plano ativo.</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-5 h-5 mt-1">
-                                            <input type="checkbox" className="rounded border-gray-300 text-primary focus:ring-primary" defaultChecked />
-                                        </div>
-                                        <div>
-                                            <Label className="text-base">Período de carência (30 dias)</Label>
-                                            <p className="text-sm text-muted-foreground">Aguardar a primeira mensalidade ser paga e compensada.</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-4">
-                                        <div className="w-5 h-5 mt-1">
-                                            <input type="checkbox" className="rounded border-gray-300 text-primary focus:ring-primary" defaultChecked />
-                                        </div>
-                                        <div>
-                                            <Label className="text-base">Verificar duplicidade</Label>
-                                            <p className="text-sm text-muted-foreground">Impedir que a mesma pessoa seja indicada por múltiplos parceiros.</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start gap-4 text-orange-600 bg-orange-50 p-4 rounded-lg border border-orange-200">
-                                        <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
-                                        <p className="text-sm">
-                                            Essas configurações ajudam a evitar fraudes e pagamentos indevidos no programa de parcerias.
-                                        </p>
-                                    </div>
-                                </div>
-                            </Card>
-                        </div>
+                            <div className="rounded-md border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Usuário</TableHead>
+                                            <TableHead>E-mail</TableHead>
+                                            <TableHead>Código</TableHead>
+                                            <TableHead>Comissão (%)</TableHead>
+                                            <TableHead className="text-right">Ações</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {referralUsers
+                                            .filter(u => 
+                                                u.firstName?.toLowerCase().includes(userSearch.toLowerCase()) || 
+                                                u.lastName?.toLowerCase().includes(userSearch.toLowerCase()) ||
+                                                u.email?.toLowerCase().includes(userSearch.toLowerCase())
+                                            )
+                                            .map((user) => (
+                                            <TableRow key={user.id}>
+                                                <TableCell className="font-medium">
+                                                    {user.firstName} {user.lastName}
+                                                </TableCell>
+                                                <TableCell className="text-muted-foreground text-sm">
+                                                    {user.email}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline" className="font-mono">{user.referralCode || 'N/A'}</Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2 max-w-[120px]">
+                                                        <Input 
+                                                            type="number" 
+                                                            defaultValue={user.referralPercentage}
+                                                            className="h-8"
+                                                            onBlur={(e) => {
+                                                                const val = parseFloat(e.target.value);
+                                                                if (val !== user.referralPercentage) {
+                                                                    handleUpdateUserPercentage(user.id, val);
+                                                                }
+                                                            }}
+                                                        />
+                                                        <span className="text-muted-foreground">%</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/users?id=${user.id}`)}>
+                                                        Ver Usuário
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </Card>
                     </TabsContent>
 
                     <TabsContent value="ranking" className="space-y-4 mt-6">
