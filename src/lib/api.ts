@@ -779,9 +779,13 @@ class ApiService {
   ): Promise<T> {
     const token = this.getAuthToken();
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
       ...options.headers,
     };
+
+    // Only add JSON content type if body is NOT FormData
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
