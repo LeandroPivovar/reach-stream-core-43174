@@ -224,7 +224,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className={billingType === 'CREDIT_CARD' && step === 2 ? "sm:max-w-[600px]" : "sm:max-w-[500px]"}>
+            <DialogContent className={`${billingType === 'CREDIT_CARD' && step === 2 ? "sm:max-w-[600px]" : "sm:max-w-[500px]"} w-[95vw] max-h-[95vh] overflow-y-auto p-6`}>
                 <DialogHeader>
                     <DialogTitle>Comprar Créditos Avulsos</DialogTitle>
                     <DialogDescription>
@@ -425,7 +425,10 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                 </div>
                                 <Card className="p-3 bg-primary/5">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs font-semibold">Total Compra:</span>
+                                        <div>
+                                            <span className="text-xs font-semibold block">Total Compra:</span>
+                                            <span className="text-[10px] text-primary font-bold uppercase">Pagamento à Vista</span>
+                                        </div>
                                         <span className="text-sm font-bold text-primary">{totalValue}</span>
                                     </div>
                                 </Card>
