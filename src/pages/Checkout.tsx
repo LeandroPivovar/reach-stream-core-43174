@@ -349,7 +349,10 @@ export default function Checkout() {
                                     </div>
                                     <hr className="my-2" />
                                     <div className="flex justify-between font-bold text-lg">
-                                        <span>Total Hoje</span>
+                                        <div>
+                                            <span>Total Hoje</span>
+                                            <div className="text-[10px] text-primary uppercase tracking-wider font-bold">À Vista no Cartão</div>
+                                        </div>
                                         <span>R$ {plan.price.toString().replace('.', ',')}</span>
                                     </div>
                                 </div>
