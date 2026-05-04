@@ -179,7 +179,7 @@ export default function AdminReferrals() {
                                 <Badge variant="secondary" className="bg-blue-500/10 text-blue-500">Taxa</Badge>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold">{stats.conversionRate.toFixed(1)}%</p>
+                                <p className="text-2xl font-bold">{Number(stats.conversionRate || 0).toFixed(1)}%</p>
                                 <p className="text-xs text-muted-foreground">De conversão</p>
                             </div>
                         </Card>
@@ -299,7 +299,7 @@ export default function AdminReferrals() {
                                                         {getStatusBadge(ref.status)}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <div className="font-medium">R$ {ref.commissionGenerated?.toFixed(2)}</div>
+                                                        <div className="font-medium">R$ {Number(ref.commissionGenerated || 0).toFixed(2)}</div>
                                                         <div className="text-xs text-muted-foreground">{ref.paymentStatus}</div>
                                                     </TableCell>
                                                     <TableCell className="text-right">
@@ -371,13 +371,13 @@ export default function AdminReferrals() {
                                                         {comm.referred?.firstName} {comm.referred?.lastName}
                                                     </TableCell>
                                                     <TableCell>
-                                                        R$ {comm.subscription?.amount?.toFixed(2) || '0,00'}
+                                                        R$ {Number(comm.subscription?.amount || 0).toFixed(2)}
                                                     </TableCell>
                                                     <TableCell className="capitalize text-xs">
                                                         {comm.commissionType}
                                                     </TableCell>
                                                     <TableCell className="font-bold text-emerald-600">
-                                                        R$ {comm.amount?.toFixed(2)}
+                                                        R$ {Number(comm.amount || 0).toFixed(2)}
                                                     </TableCell>
                                                     <TableCell>
                                                         {getStatusBadge(comm.status)}
@@ -539,7 +539,7 @@ export default function AdminReferrals() {
                                                                 style={{ width: `${item.conversionRate}%` }}
                                                             />
                                                         </div>
-                                                        <span className="text-xs font-medium">{item.conversionRate.toFixed(1)}%</span>
+                                                        <span className="text-xs font-medium">{Number(item.conversionRate || 0).toFixed(1)}%</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="font-medium text-emerald-600">
