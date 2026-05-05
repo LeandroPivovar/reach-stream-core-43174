@@ -217,8 +217,28 @@ export default function AdminPlans() {
         onError: () => toast({ title: 'Erro', description: 'Falha ao atualizar preços.', variant: 'destructive' })
     });
 
+    const handleUnitPriceChange = (type: string, value: string) => {
+        const numericPrice = parseFloat(value) || 0;
+        const prefix = type.toUpperCase();
+        
+        setPackageSettings(prev => {
+            const next = { ...prev, [`UNIT_PRICE_${prefix}`]: value };
+            
+            // Auto-update package prices
+            [1, 2, 3, 4].forEach(num => {
+                const amount = parseFloat(prev[`${prefix}_PKG${num}_AMOUNT`]) || 0;
+                if (amount > 0) {
+                    const divisor = type === 'email' ? 1000 : 1;
+                    next[`${prefix}_PKG${num}_PRICE`] = ((amount * numericPrice) / divisor).toFixed(2);
+                }
+            });
+            
+            return next;
+        });
+    };
+
     const handleSavePrices = () => {
-        const payload = Object.entries(packageSettings).map(([key, value]) => ({ key, value }));
+        const payload = Object.entries(packageSettings).map(([key, value]) => ({ key, value: String(value) }));
         updateSettingsMutation.mutate(payload);
     };
 
@@ -328,41 +348,60 @@ export default function AdminPlans() {
 
                             <div className="space-y-12">
                                 {/* WhatsApp Section */}
-                                <div className="space-y-6">
-                                    <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2">
-                                        <MessageCircle className="w-5 h-5 text-green-500" /> WhatsApp
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                        <div className="space-y-2">
-                                            <Label>Preço Unitário (R$)</Label>
-                                            <Input
-                                                type="number"
-                                                step="0.01"
-                                                value={packageSettings.UNIT_PRICE_WHATSAPP}
-                                                onChange={e => setPackageSettings(prev => ({ ...prev, UNIT_PRICE_WHATSAPP: e.target.value }))}
-                                            />
-                                            <p className="text-[10px] text-slate-400">Usado se não houver pacotes</p>
+                                <div className="p-6 border rounded-xl bg-slate-50/30">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-green-500/10 rounded-lg">
+                                                <MessageCircle className="w-5 h-5 text-green-600" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-800">WhatsApp</h3>
+                                                <p className="text-[10px] text-slate-500">Mensagens avulsas e promocionais</p>
+                                            </div>
                                         </div>
+                                        <div className="flex items-center gap-3 bg-white p-2 px-4 rounded-lg border shadow-sm">
+                                            <Label className="text-xs font-semibold whitespace-nowrap">Preço Unitário:</Label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">R$</span>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    className="w-24 h-8 pl-8 text-sm font-bold border-none bg-transparent focus-visible:ring-0"
+                                                    value={packageSettings.UNIT_PRICE_WHATSAPP}
+                                                    onChange={e => handleUnitPriceChange('whatsapp', e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                         {[1, 2, 3, 4].map(num => (
-                                            <div key={num} className="p-3 border rounded-lg bg-slate-50 dark:bg-slate-800/50 space-y-3">
-                                                <Label className="text-xs font-bold uppercase">Pacote {num}</Label>
-                                                <div className="space-y-2">
-                                                    <Label className="text-[10px]">Qtd. Mensagens</Label>
-                                                    <Input
-                                                        size={1}
-                                                        type="number"
-                                                        value={packageSettings[`WHATSAPP_PKG${num}_AMOUNT`] ?? ''}
-                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`WHATSAPP_PKG${num}_AMOUNT`]: e.target.value }))}
-                                                    />
+                                            <div key={num} className="bg-white p-4 rounded-xl border shadow-sm space-y-3 relative overflow-hidden group">
+                                                <div className="absolute top-0 left-0 w-1 h-full bg-green-500 opacity-20 group-hover:opacity-100 transition-opacity" />
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pacote {num}</span>
+                                                    <Zap className="w-3 h-3 text-green-500 opacity-50" />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <Label className="text-[10px]">Preço Total (R$)</Label>
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={packageSettings[`WHATSAPP_PKG${num}_PRICE`] ?? ''}
-                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`WHATSAPP_PKG${num}_PRICE`]: e.target.value }))}
-                                                    />
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[9px] uppercase text-slate-500">Qtd.</Label>
+                                                        <Input
+                                                            type="number"
+                                                            className="h-8 text-xs font-semibold"
+                                                            value={packageSettings[`WHATSAPP_PKG${num}_AMOUNT`] ?? ''}
+                                                            onChange={e => setPackageSettings(prev => ({ ...prev, [`WHATSAPP_PKG${num}_AMOUNT`]: e.target.value }))}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[9px] uppercase text-slate-500">Preço (R$)</Label>
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            className="h-8 text-xs font-bold text-primary"
+                                                            value={packageSettings[`WHATSAPP_PKG${num}_PRICE`] ?? ''}
+                                                            onChange={e => setPackageSettings(prev => ({ ...prev, [`WHATSAPP_PKG${num}_PRICE`]: e.target.value }))}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
@@ -370,39 +409,60 @@ export default function AdminPlans() {
                                 </div>
 
                                 {/* SMS Section */}
-                                <div className="space-y-6">
-                                    <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2">
-                                        <MessageSquare className="w-5 h-5 text-blue-500" /> SMS
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                        <div className="space-y-2">
-                                            <Label>Preço Unitário (R$)</Label>
-                                            <Input
-                                                type="number"
-                                                step="0.01"
-                                                value={packageSettings.UNIT_PRICE_SMS}
-                                                onChange={e => setPackageSettings(prev => ({ ...prev, UNIT_PRICE_SMS: e.target.value }))}
-                                            />
+                                <div className="p-6 border rounded-xl bg-slate-50/30">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-blue-500/10 rounded-lg">
+                                                <MessageSquare className="w-5 h-5 text-blue-600" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-800">SMS</h3>
+                                                <p className="text-[10px] text-slate-500">Disparos de texto curtos</p>
+                                            </div>
                                         </div>
+                                        <div className="flex items-center gap-3 bg-white p-2 px-4 rounded-lg border shadow-sm">
+                                            <Label className="text-xs font-semibold whitespace-nowrap">Preço Unitário:</Label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">R$</span>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    className="w-24 h-8 pl-8 text-sm font-bold border-none bg-transparent focus-visible:ring-0"
+                                                    value={packageSettings.UNIT_PRICE_SMS}
+                                                    onChange={e => handleUnitPriceChange('sms', e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                         {[1, 2, 3, 4].map(num => (
-                                            <div key={num} className="p-3 border rounded-lg bg-slate-50 dark:bg-slate-800/50 space-y-3">
-                                                <Label className="text-xs font-bold uppercase">Pacote {num}</Label>
-                                                <div className="space-y-2">
-                                                    <Label className="text-[10px]">Qtd. SMS</Label>
-                                                    <Input
-                                                        type="number"
-                                                        value={packageSettings[`SMS_PKG${num}_AMOUNT`] ?? ''}
-                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`SMS_PKG${num}_AMOUNT`]: e.target.value }))}
-                                                    />
+                                            <div key={num} className="bg-white p-4 rounded-xl border shadow-sm space-y-3 relative overflow-hidden group">
+                                                <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 opacity-20 group-hover:opacity-100 transition-opacity" />
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pacote {num}</span>
+                                                    <Zap className="w-3 h-3 text-blue-500 opacity-50" />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <Label className="text-[10px]">Preço Total (R$)</Label>
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={packageSettings[`SMS_PKG${num}_PRICE`] ?? ''}
-                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`SMS_PKG${num}_PRICE`]: e.target.value }))}
-                                                    />
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[9px] uppercase text-slate-500">Qtd.</Label>
+                                                        <Input
+                                                            type="number"
+                                                            className="h-8 text-xs font-semibold"
+                                                            value={packageSettings[`SMS_PKG${num}_AMOUNT`] ?? ''}
+                                                            onChange={e => setPackageSettings(prev => ({ ...prev, [`SMS_PKG${num}_AMOUNT`]: e.target.value }))}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[9px] uppercase text-slate-500">Preço (R$)</Label>
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            className="h-8 text-xs font-bold text-primary"
+                                                            value={packageSettings[`SMS_PKG${num}_PRICE`] ?? ''}
+                                                            onChange={e => setPackageSettings(prev => ({ ...prev, [`SMS_PKG${num}_PRICE`]: e.target.value }))}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
@@ -410,40 +470,60 @@ export default function AdminPlans() {
                                 </div>
 
                                 {/* Email Section */}
-                                <div className="space-y-6">
-                                    <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2">
-                                        <Mail className="w-5 h-5 text-amber-500" /> E-mail
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                        <div className="space-y-2">
-                                            <Label>Preço p/ 1.000 (R$)</Label>
-                                            <Input
-                                                type="number"
-                                                step="0.01"
-                                                value={packageSettings.UNIT_PRICE_EMAIL}
-                                                onChange={e => setPackageSettings(prev => ({ ...prev, UNIT_PRICE_EMAIL: e.target.value }))}
-                                            />
-                                            <p className="text-[10px] text-slate-400">Custo a cada 1.000 disparos</p>
+                                <div className="p-6 border rounded-xl bg-slate-50/30">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-amber-500/10 rounded-lg">
+                                                <Mail className="w-5 h-5 text-amber-600" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-800">E-mail</h3>
+                                                <p className="text-[10px] text-slate-500">Preço base por 1.000 disparos</p>
+                                            </div>
                                         </div>
+                                        <div className="flex items-center gap-3 bg-white p-2 px-4 rounded-lg border shadow-sm">
+                                            <Label className="text-xs font-semibold whitespace-nowrap">Preço p/ 1.000:</Label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">R$</span>
+                                                <Input
+                                                    type="number"
+                                                    step="0.01"
+                                                    className="w-24 h-8 pl-8 text-sm font-bold border-none bg-transparent focus-visible:ring-0"
+                                                    value={packageSettings.UNIT_PRICE_EMAIL}
+                                                    onChange={e => handleUnitPriceChange('email', e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                         {[1, 2, 3, 4].map(num => (
-                                            <div key={num} className="p-3 border rounded-lg bg-slate-50 dark:bg-slate-800/50 space-y-3">
-                                                <Label className="text-xs font-bold uppercase">Pacote {num}</Label>
-                                                <div className="space-y-2">
-                                                    <Label className="text-[10px]">Qtd. E-mails</Label>
-                                                    <Input
-                                                        type="number"
-                                                        value={packageSettings[`EMAIL_PKG${num}_AMOUNT`] ?? ''}
-                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`EMAIL_PKG${num}_AMOUNT`]: e.target.value }))}
-                                                    />
+                                            <div key={num} className="bg-white p-4 rounded-xl border shadow-sm space-y-3 relative overflow-hidden group">
+                                                <div className="absolute top-0 left-0 w-1 h-full bg-amber-500 opacity-20 group-hover:opacity-100 transition-opacity" />
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pacote {num}</span>
+                                                    <Zap className="w-3 h-3 text-amber-500 opacity-50" />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <Label className="text-[10px]">Preço Total (R$)</Label>
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={packageSettings[`EMAIL_PKG${num}_PRICE`] ?? ''}
-                                                        onChange={e => setPackageSettings(prev => ({ ...prev, [`EMAIL_PKG${num}_PRICE`]: e.target.value }))}
-                                                    />
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[9px] uppercase text-slate-500">Qtd.</Label>
+                                                        <Input
+                                                            type="number"
+                                                            className="h-8 text-xs font-semibold"
+                                                            value={packageSettings[`EMAIL_PKG${num}_AMOUNT`] ?? ''}
+                                                            onChange={e => setPackageSettings(prev => ({ ...prev, [`EMAIL_PKG${num}_AMOUNT`]: e.target.value }))}
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[9px] uppercase text-slate-500">Preço (R$)</Label>
+                                                        <Input
+                                                            type="number"
+                                                            step="0.01"
+                                                            className="h-8 text-xs font-bold text-primary"
+                                                            value={packageSettings[`EMAIL_PKG${num}_PRICE`] ?? ''}
+                                                            onChange={e => setPackageSettings(prev => ({ ...prev, [`EMAIL_PKG${num}_PRICE`]: e.target.value }))}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
