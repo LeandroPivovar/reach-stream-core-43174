@@ -67,26 +67,26 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                 
                 const settingsMap = settings.reduce((acc: any, s) => ({ ...acc, [s.key]: s.value }), {});
 
-                if (settingsMap['UNIT_PRICE_WHATSAPP']) newPrices.UNIT_PRICE_WHATSAPP = parseFloat(settingsMap['UNIT_PRICE_WHATSAPP']);
-                if (settingsMap['UNIT_PRICE_SMS']) newPrices.UNIT_PRICE_SMS = parseFloat(settingsMap['UNIT_PRICE_SMS']);
-                if (settingsMap['UNIT_PRICE_EMAIL']) newPrices.UNIT_PRICE_EMAIL = parseFloat(settingsMap['UNIT_PRICE_EMAIL']);
+                if (settingsMap['UNIT_PRICE_WHATSAPP'] !== undefined) newPrices.UNIT_PRICE_WHATSAPP = parseFloat(settingsMap['UNIT_PRICE_WHATSAPP']);
+                if (settingsMap['UNIT_PRICE_SMS'] !== undefined) newPrices.UNIT_PRICE_SMS = parseFloat(settingsMap['UNIT_PRICE_SMS']);
+                if (settingsMap['UNIT_PRICE_EMAIL'] !== undefined) newPrices.UNIT_PRICE_EMAIL = parseFloat(settingsMap['UNIT_PRICE_EMAIL']);
 
                 // Parse Packages for all types
                 for (let i = 1; i <= 3; i++) {
                     // WhatsApp
                     const waAmount = parseInt(settingsMap[`WHATSAPP_PKG${i}_AMOUNT`] || '0');
                     const waPrice = parseFloat(settingsMap[`WHATSAPP_PKG${i}_PRICE`] || '0');
-                    if (waAmount > 0) waPkgs.push({ id: i, amount: waAmount, price: waPrice });
+                    if (waAmount > 0 && !isNaN(waPrice)) waPkgs.push({ id: i, amount: waAmount, price: waPrice });
 
                     // Email
                     const emailAmount = parseInt(settingsMap[`EMAIL_PKG${i}_AMOUNT`] || '0');
                     const emailPrice = parseFloat(settingsMap[`EMAIL_PKG${i}_PRICE`] || '0');
-                    if (emailAmount > 0) emailPkgs.push({ id: i, amount: emailAmount, price: emailPrice });
+                    if (emailAmount > 0 && !isNaN(emailPrice)) emailPkgs.push({ id: i, amount: emailAmount, price: emailPrice });
 
                     // SMS
                     const smsAmount = parseInt(settingsMap[`SMS_PKG${i}_AMOUNT`] || '0');
                     const smsPrice = parseFloat(settingsMap[`SMS_PKG${i}_PRICE`] || '0');
-                    if (smsAmount > 0) smsPkgs.push({ id: i, amount: smsAmount, price: smsPrice });
+                    if (smsAmount > 0 && !isNaN(smsPrice)) smsPkgs.push({ id: i, amount: smsAmount, price: smsPrice });
                 }
 
                 setPrices(newPrices);
@@ -108,9 +108,24 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
     const pricePerUnit = creditType === 'whatsapp' ? prices.UNIT_PRICE_WHATSAPP : 
                         (creditType === 'email' ? prices.UNIT_PRICE_EMAIL / 1000 : prices.UNIT_PRICE_SMS);
     
-    // Total value based on price per unit
-    const totalValueRaw = amount * pricePerUnit;
-    const totalValue = totalValueRaw.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    // Total value logic: check if selected amount matches a package, otherwise use unit price
+    const getCurrentPackages = () => {
+        return creditType === 'whatsapp' ? whatsappPackages : (creditType === 'email' ? emailPackages : smsPackages);
+    };
+
+    const getSelectedPackage = () => {
+        const pkgs = getCurrentPackages();
+        return pkgs.find(p => p.amount === amount);
+    };
+
+    const calculateTotalValue = () => {
+        const pkg = getSelectedPackage();
+        if (pkg) return pkg.price;
+        return amount * pricePerUnit;
+    };
+
+    const finalTotalValueRaw = calculateTotalValue();
+    const finalTotalValueFormatted = finalTotalValueRaw.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     // Sync billing info if user data arrives
     useEffect(() => {
@@ -323,23 +338,21 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
 
                         <Card className="p-4 bg-muted/50">
                             <div className="flex justify-between items-center text-sm mb-1">
-                                <span className="text-muted-foreground">Preço por {creditType.toUpperCase()}</span>
+                                <span className="text-muted-foreground">Preço por {creditType === 'email' ? '1.000 E-MAILS' : creditType.toUpperCase()}</span>
                                 <span className="font-medium">
                                     {(() => {
-                                        const currentPkgs = creditType === 'whatsapp' ? whatsappPackages : (creditType === 'email' ? emailPackages : smsPackages);
-                                        const pkg = currentPkgs.find(p => p.amount === amount);
-                                        return pkg ? 'Pacote Selecionado' : `R$ ${pricePerUnit.toFixed(creditType === 'email' ? 3 : 2).replace('.', ',')}`;
+                                        const pkg = getSelectedPackage();
+                                        if (pkg) return 'Pacote Selecionado';
+                                        
+                                        const displayPrice = creditType === 'email' ? prices.UNIT_PRICE_EMAIL : pricePerUnit;
+                                        return `R$ ${displayPrice.toFixed(2).replace('.', ',')}`;
                                     })()}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center border-t border-border pt-2 mt-2">
                                 <span className="font-semibold text-base">Total</span>
                                 <span className="font-bold text-lg text-primary">
-                                    {(() => {
-                                        const currentPkgs = creditType === 'whatsapp' ? whatsappPackages : (creditType === 'email' ? emailPackages : smsPackages);
-                                        const pkg = currentPkgs.find(p => p.amount === amount);
-                                        return pkg ? pkg.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : totalValue;
-                                    })()}
+                                    {finalTotalValueFormatted}
                                 </span>
                             </div>
                         </Card>
@@ -365,7 +378,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                         </div>
 
                         <Button className="w-full" onClick={() => billingType === 'CREDIT_CARD' ? setStep(2) : handleBuy()} disabled={loading || amount < 100}>
-                            {loading ? 'Processando...' : billingType === 'PIX' ? `Pagar ${totalValue} via PIX` : `Continuar para o Cartão`}
+                            {loading ? 'Processando...' : billingType === 'PIX' ? `Pagar ${finalTotalValueFormatted} via PIX` : `Continuar para o Cartão`}
                         </Button>
                     </div>
                 )}
@@ -429,7 +442,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                             <span className="text-xs font-semibold block">Total Compra:</span>
                                             <span className="text-[10px] text-primary font-bold uppercase">Pagamento à Vista</span>
                                         </div>
-                                        <span className="text-sm font-bold text-primary">{totalValue}</span>
+                                        <span className="text-sm font-bold text-primary">{finalTotalValueFormatted}</span>
                                     </div>
                                 </Card>
                             </div>
