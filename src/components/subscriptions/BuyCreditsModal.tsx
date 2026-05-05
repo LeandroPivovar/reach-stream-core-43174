@@ -347,7 +347,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                         </div>
                                     </>
                                 );
-                            })()
+                            })()}
 
                         <Card className="p-4 bg-muted/50">
                             <div className="flex justify-between items-center text-sm mb-1">
