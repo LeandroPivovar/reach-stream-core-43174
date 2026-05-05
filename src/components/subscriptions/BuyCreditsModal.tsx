@@ -76,17 +76,17 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                     // WhatsApp
                     const waAmount = parseInt(settingsMap[`WHATSAPP_PKG${i}_AMOUNT`] || '0');
                     const waPrice = parseFloat(settingsMap[`WHATSAPP_PKG${i}_PRICE`] || '0');
-                    if (waAmount > 0 && !isNaN(waPrice)) waPkgs.push({ id: i, amount: waAmount, price: waPrice });
+                    if (waAmount > 0 && !isNaN(waPrice)) waPkgs.push({ id: i, name: `Pacote WhatsApp ${i}`, amount: waAmount, price: waPrice });
 
                     // Email
                     const emailAmount = parseInt(settingsMap[`EMAIL_PKG${i}_AMOUNT`] || '0');
                     const emailPrice = parseFloat(settingsMap[`EMAIL_PKG${i}_PRICE`] || '0');
-                    if (emailAmount > 0 && !isNaN(emailPrice)) emailPkgs.push({ id: i, amount: emailAmount, price: emailPrice });
+                    if (emailAmount > 0 && !isNaN(emailPrice)) emailPkgs.push({ id: i, name: `Pacote E-mail ${i}`, amount: emailAmount, price: emailPrice });
 
                     // SMS
                     const smsAmount = parseInt(settingsMap[`SMS_PKG${i}_AMOUNT`] || '0');
                     const smsPrice = parseFloat(settingsMap[`SMS_PKG${i}_PRICE`] || '0');
-                    if (smsAmount > 0 && !isNaN(smsPrice)) smsPkgs.push({ id: i, amount: smsAmount, price: smsPrice });
+                    if (smsAmount > 0 && !isNaN(smsPrice)) smsPkgs.push({ id: i, name: `Pacote SMS ${i}`, amount: smsAmount, price: smsPrice });
                 }
 
                 setPrices(newPrices);
@@ -239,6 +239,11 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
         }
     };
 
+    const selectedPackage = getSelectedPackage();
+    const handlePackageSelect = (pkg: any) => {
+        setAmount(pkg.amount);
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className={`${billingType === 'CREDIT_CARD' && step === 3 ? "sm:max-w-[700px]" : "sm:max-w-[500px]"} w-[98vw] md:w-[95vw] h-[95vh] md:h-auto max-h-[95vh] p-0 overflow-hidden flex flex-col`}>
@@ -311,8 +316,8 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                                             <span className="font-mono text-xs font-bold text-primary">R$ {pkg.price.toFixed(2).replace('.', ',')}</span>
                                                         </div>
                                                         <div className="flex justify-between w-full items-center">
-                                                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{pkg.quantity} {creditType === 'email' ? 'envios' : 'créditos'}</span>
-                                                            <span className="text-[10px] opacity-60">R$ {(pkg.price / pkg.quantity).toFixed(4).replace('.', ',')} / un</span>
+                                                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{pkg.amount} {creditType === 'email' ? 'envios' : 'créditos'}</span>
+                                                            <span className="text-[10px] opacity-60">R$ {(pkg.price / pkg.amount).toFixed(4).replace('.', ',')} / un</span>
                                                         </div>
                                                     </Button>
                                                 ))}
