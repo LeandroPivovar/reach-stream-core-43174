@@ -348,7 +348,7 @@ export default function AdminPlans() {
                                                     <Input
                                                         size={1}
                                                         type="number"
-                                                        value={packageSettings[`WHATSAPP_PKG${num}_AMOUNT`] || ''}
+                                                        value={packageSettings[`WHATSAPP_PKG${num}_AMOUNT`] ?? ''}
                                                         onChange={e => setPackageSettings(prev => ({ ...prev, [`WHATSAPP_PKG${num}_AMOUNT`]: e.target.value }))}
                                                     />
                                                 </div>
@@ -357,7 +357,7 @@ export default function AdminPlans() {
                                                     <Input
                                                         type="number"
                                                         step="0.01"
-                                                        value={packageSettings[`WHATSAPP_PKG${num}_PRICE`] || ''}
+                                                        value={packageSettings[`WHATSAPP_PKG${num}_PRICE`] ?? ''}
                                                         onChange={e => setPackageSettings(prev => ({ ...prev, [`WHATSAPP_PKG${num}_PRICE`]: e.target.value }))}
                                                     />
                                                 </div>
@@ -388,7 +388,7 @@ export default function AdminPlans() {
                                                     <Label className="text-[10px]">Qtd. SMS</Label>
                                                     <Input
                                                         type="number"
-                                                        value={packageSettings[`SMS_PKG${num}_AMOUNT`] || ''}
+                                                        value={packageSettings[`SMS_PKG${num}_AMOUNT`] ?? ''}
                                                         onChange={e => setPackageSettings(prev => ({ ...prev, [`SMS_PKG${num}_AMOUNT`]: e.target.value }))}
                                                     />
                                                 </div>
@@ -397,7 +397,7 @@ export default function AdminPlans() {
                                                     <Input
                                                         type="number"
                                                         step="0.01"
-                                                        value={packageSettings[`SMS_PKG${num}_PRICE`] || ''}
+                                                        value={packageSettings[`SMS_PKG${num}_PRICE`] ?? ''}
                                                         onChange={e => setPackageSettings(prev => ({ ...prev, [`SMS_PKG${num}_PRICE`]: e.target.value }))}
                                                     />
                                                 </div>
@@ -429,7 +429,7 @@ export default function AdminPlans() {
                                                     <Label className="text-[10px]">Qtd. E-mails</Label>
                                                     <Input
                                                         type="number"
-                                                        value={packageSettings[`EMAIL_PKG${num}_AMOUNT`] || ''}
+                                                        value={packageSettings[`EMAIL_PKG${num}_AMOUNT`] ?? ''}
                                                         onChange={e => setPackageSettings(prev => ({ ...prev, [`EMAIL_PKG${num}_AMOUNT`]: e.target.value }))}
                                                     />
                                                 </div>
@@ -438,7 +438,7 @@ export default function AdminPlans() {
                                                     <Input
                                                         type="number"
                                                         step="0.01"
-                                                        value={packageSettings[`EMAIL_PKG${num}_PRICE`] || ''}
+                                                        value={packageSettings[`EMAIL_PKG${num}_PRICE`] ?? ''}
                                                         onChange={e => setPackageSettings(prev => ({ ...prev, [`EMAIL_PKG${num}_PRICE`]: e.target.value }))}
                                                     />
                                                 </div>
