@@ -170,8 +170,6 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                     </DialogDescription>
                 </div>
 
-                </div>
-
                 {/* Scrollable Content Area */}
                 <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-primary/10">
                     {/* Setup Progress */}
