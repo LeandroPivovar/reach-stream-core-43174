@@ -569,6 +569,12 @@ export default function Campanhas() {
             giftValue: '',
             maxRedemptions: '',
             validityDate: undefined
+          },
+          enableShippingCoupon: false,
+          shippingCoupon: {
+            code: '',
+            minPurchaseValue: '',
+            expirationDays: '30'
           }
         },
         email: {
@@ -660,8 +666,10 @@ export default function Campanhas() {
       campaignConfig: campaign.config?.campaignConfig || {
         enableCoupon: false,
         enableGiftback: false,
+        enableShippingCoupon: false,
         coupon: { discountType: 'percentage', discountValue: '', validityDate: undefined },
-        giftback: { giftValue: '', maxRedemptions: '', validityDate: undefined }
+        giftback: { giftValue: '', maxRedemptions: '', validityDate: undefined },
+        shippingCoupon: { code: '', minPurchaseValue: '', expirationDays: '30' }
       },
       email: campaign.config?.email || { subject: '', content: '', mode: 'text', media: [] },
       workflow: campaign.config?.workflow?.nodes ? campaign.config.workflow : { nodes: [], edges: [] },
@@ -2900,13 +2908,16 @@ export default function Campanhas() {
                       <Label htmlFor="shipping-code">Prefixo/Código do Cupom</Label>
                       <Input
                         id="shipping-code"
-                        value={newCampaign.campaignConfig.shippingCoupon.code}
+                        value={newCampaign.campaignConfig.shippingCoupon?.code || ''}
                         onChange={(e) => setNewCampaign({
                           ...newCampaign,
                           campaignConfig: {
                             ...newCampaign.campaignConfig,
                             shippingCoupon: {
-                              ...newCampaign.campaignConfig.shippingCoupon,
+                              ...(newCampaign.campaignConfig.shippingCoupon || {
+                                minPurchaseValue: '',
+                                expirationDays: '30'
+                              }),
                               code: e.target.value
                             }
                           }
@@ -2922,13 +2933,16 @@ export default function Campanhas() {
                         min="0"
                         step="0.01"
                         placeholder="Ex: 100.00"
-                        value={newCampaign.campaignConfig.shippingCoupon.minPurchaseValue}
+                        value={newCampaign.campaignConfig.shippingCoupon?.minPurchaseValue || ''}
                         onChange={(e) => setNewCampaign({
                           ...newCampaign,
                           campaignConfig: {
                             ...newCampaign.campaignConfig,
                             shippingCoupon: {
-                              ...newCampaign.campaignConfig.shippingCoupon,
+                              ...(newCampaign.campaignConfig.shippingCoupon || {
+                                code: '',
+                                expirationDays: '30'
+                              }),
                               minPurchaseValue: e.target.value
                             }
                           }
@@ -2942,13 +2956,16 @@ export default function Campanhas() {
                         type="number"
                         min="1"
                         placeholder="Ex: 30"
-                        value={newCampaign.campaignConfig.shippingCoupon.expirationDays}
+                        value={newCampaign.campaignConfig.shippingCoupon?.expirationDays || '30'}
                         onChange={(e) => setNewCampaign({
                           ...newCampaign,
                           campaignConfig: {
                             ...newCampaign.campaignConfig,
                             shippingCoupon: {
-                              ...newCampaign.campaignConfig.shippingCoupon,
+                              ...(newCampaign.campaignConfig.shippingCoupon || {
+                                code: '',
+                                minPurchaseValue: ''
+                              }),
                               expirationDays: e.target.value
                             }
                           }
