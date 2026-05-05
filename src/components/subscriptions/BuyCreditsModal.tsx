@@ -241,13 +241,15 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className={`${billingType === 'CREDIT_CARD' && step === 2 ? "sm:max-w-[600px]" : "sm:max-w-[500px]"} w-[95vw] max-h-[95vh] overflow-y-auto p-6`}>
-                <DialogHeader>
+            <DialogContent className={`${billingType === 'CREDIT_CARD' && step === 3 ? "sm:max-w-[700px]" : "sm:max-w-[500px]"} w-[98vw] md:w-[95vw] h-[95vh] md:h-auto max-h-[95vh] p-0 overflow-hidden flex flex-col`}>
+                <div className="p-6 border-b bg-muted/5">
                     <DialogTitle>Comprar Créditos Avulsos</DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="mt-1">
                         {step === 3 ? 'Pagamento' : 'Adicione saldo para disparos extras caso o limite do seu plano acabe. Os créditos não expiram.'}
                     </DialogDescription>
-                </DialogHeader>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-primary/10">
 
                 {/* Setup Progress */}
                 {step <= 3 && !paymentSuccess && (
@@ -347,6 +349,8 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                             })()}
                         </div>
 
+                        </div>
+
                         <Card className="p-4 bg-muted/50">
                             <div className="flex justify-between items-center text-sm mb-1">
                                 <span className="text-muted-foreground">Preço por {creditType === 'email' ? '1.000 E-MAILS' : creditType.toUpperCase()}</span>
@@ -367,10 +371,6 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                 </span>
                             </div>
                         </Card>
-
-                        <Button className="w-full h-11" onClick={() => setStep(2)} disabled={loading || amount < 100}>
-                            Próximo <ChevronRight className="w-4 h-4 ml-2" />
-                        </Button>
                     </div>
                 )}
 
@@ -413,15 +413,6 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                             <span className="text-sm font-semibold">Total a pagar:</span>
                             <span className="text-lg font-bold text-primary">{finalTotalValueFormatted}</span>
                         </Card>
-
-                        <div className="flex gap-3">
-                            <Button variant="outline" className="w-full h-11" onClick={() => setStep(1)}>
-                                Voltar
-                            </Button>
-                            <Button onClick={goToStep3} className="w-full h-11">
-                                Prosseguir
-                            </Button>
-                        </div>
                     </div>
                 )}
 
@@ -444,7 +435,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                             placeholder="0000 0000 0000 0000"
                                             value={cardData.number}
                                             onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
-                                            className="h-10 text-sm"
+                                            className="h-11 md:h-10 text-base md:text-sm"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
@@ -459,7 +450,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                                     setCardData({ ...cardData, expiry: val });
                                                 }}
                                                 maxLength={5}
-                                                className="h-10 text-sm"
+                                                className="h-11 md:h-10 text-base md:text-sm"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -470,7 +461,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                                 maxLength={4}
                                                 value={cardData.cvc}
                                                 onChange={(e) => setCardData({ ...cardData, cvc: e.target.value })}
-                                                className="h-10 text-sm"
+                                                className="h-11 md:h-10 text-base md:text-sm"
                                             />
                                         </div>
                                     </div>
@@ -480,7 +471,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                             placeholder="NOME COMO NO CARTÃO"
                                             value={cardData.name}
                                             onChange={(e) => setCardData({ ...cardData, name: e.target.value.toUpperCase() })}
-                                            className="h-10 text-sm"
+                                            className="h-11 md:h-10 text-base md:text-sm"
                                         />
                                     </div>
                                 </div>
@@ -491,7 +482,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                             placeholder="000.000.000-00"
                                             value={billingInfo.document}
                                             onChange={(e) => setBillingInfo({ ...billingInfo, document: e.target.value })}
-                                            className="h-10 text-sm"
+                                            className="h-11 md:h-10 text-base md:text-sm"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -500,7 +491,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                             placeholder="00000-000"
                                             value={billingInfo.postalCode}
                                             onChange={(e) => setBillingInfo({ ...billingInfo, postalCode: e.target.value })}
-                                            className="h-10 text-sm"
+                                            className="h-11 md:h-10 text-base md:text-sm"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -509,7 +500,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                             placeholder="Rua, Número, Bairro..."
                                             value={billingInfo.address}
                                             onChange={(e) => setBillingInfo({ ...billingInfo, address: e.target.value })}
-                                            className="h-10 text-sm"
+                                            className="h-11 md:h-10 text-base md:text-sm"
                                         />
                                     </div>
                                     <Card className="p-3 bg-primary/5 flex justify-between items-center">
@@ -518,22 +509,6 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                     </Card>
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <Button variant="outline" className="w-full h-11" onClick={() => setStep(2)} disabled={loading}>
-                                Voltar
-                            </Button>
-                            <Button onClick={handleBuy} className="w-full h-11" disabled={loading}>
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Processando...
-                                    </>
-                                ) : (
-                                    `Finalizar Pagamento`
-                                )}
-                            </Button>
                         </div>
                     </div>
                 )}
@@ -580,19 +555,12 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                     Copiar
                                 </Button>
                             </div>
-                            
-                            <Button variant="outline" className="w-full h-11" onClick={() => {
-                                onSuccess();
-                                onClose();
-                            }}>
-                                Já paguei, concluir
-                            </Button>
                         </div>
                     </div>
                 )}
 
                 {step === 3 && paymentSuccess && (
-                    <div className="flex flex-col items-center justify-center space-y-6 py-8">
+                    <div className="flex flex-col items-center justify-center space-y-6 py-8 animate-in zoom-in-95 duration-300">
                         <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center">
                             <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                         </div>
@@ -602,14 +570,65 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                 Os créditos foram adicionados ao seu saldo com sucesso.
                             </p>
                         </div>
-                        <Button className="w-full" onClick={() => {
+                    </div>
+                )}
+                </div>
+
+                {/* Fixed Footer Area */}
+                <div className="p-4 md:p-6 bg-background border-t border-border flex gap-3">
+                    {step === 1 && (
+                        <Button className="w-full h-12 md:h-11" onClick={() => setStep(2)} disabled={loading || amount < 100}>
+                            Próximo <ChevronRight className="w-4 h-4 ml-2" />
+                        </Button>
+                    )}
+
+                    {step === 2 && (
+                        <>
+                            <Button variant="outline" className="w-full h-12 md:h-11" onClick={() => setStep(1)}>
+                                Voltar
+                            </Button>
+                            <Button onClick={goToStep3} className="w-full h-12 md:h-11">
+                                Prosseguir
+                            </Button>
+                        </>
+                    )}
+
+                    {step === 3 && !paymentSuccess && billingType === 'CREDIT_CARD' && (
+                        <>
+                            <Button variant="outline" className="w-full h-12 md:h-11" onClick={() => setStep(2)} disabled={loading}>
+                                Voltar
+                            </Button>
+                            <Button onClick={handleBuy} className="w-full h-12 md:h-11" disabled={loading}>
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    `Finalizar Pagamento`
+                                )}
+                            </Button>
+                        </>
+                    )}
+
+                    {step === 3 && qrCode && !paymentSuccess && (
+                        <Button variant="outline" className="w-full h-12 md:h-11" onClick={() => {
+                            onSuccess();
+                            onClose();
+                        }}>
+                            Já paguei, concluir
+                        </Button>
+                    )}
+
+                    {paymentSuccess && (
+                        <Button className="w-full h-12 md:h-11" onClick={() => {
                             onSuccess();
                             onClose();
                         }}>
                             Fechar
                         </Button>
-                    </div>
-                )}
+                    )}
+                </div>
             </DialogContent>
         </Dialog>
     );
