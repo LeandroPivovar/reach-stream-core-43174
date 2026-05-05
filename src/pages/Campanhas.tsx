@@ -94,7 +94,8 @@ import {
   ShieldCheck,
   ChevronDown,
   ChevronUp,
-  Settings
+  Settings,
+  Truck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
