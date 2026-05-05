@@ -183,8 +183,10 @@ export default function AdminPlans() {
         EMAIL_PKG3_AMOUNT: '', EMAIL_PKG3_PRICE: ''
     });
 
+    const [isInitialized, setIsInitialized] = useState(false);
+
     React.useEffect(() => {
-        if (systemSettings) {
+        if (systemSettings && !isInitialized) {
             const settings: any = {};
             systemSettings.forEach(s => {
                 if (s.key.includes('UNIT_PRICE_') || s.key.includes('_PKG')) {
@@ -192,8 +194,9 @@ export default function AdminPlans() {
                 }
             });
             setPackageSettings(prev => ({ ...prev, ...settings }));
+            setIsInitialized(true);
         }
-    }, [systemSettings]);
+    }, [systemSettings, isInitialized]);
 
     const updateSettingsMutation = useMutation({
         mutationFn: (data: { key: string, value: string }[]) => api.updateSystemSettingsBulk(data),
