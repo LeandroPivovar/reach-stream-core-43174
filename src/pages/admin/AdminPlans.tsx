@@ -387,7 +387,7 @@ export default function AdminPlans() {
                                                         <Label className="text-[9px] uppercase text-slate-500">Qtd.</Label>
                                                         <Input
                                                             type="number"
-                                                            className="h-8 text-xs font-semibold"
+                                                            className="h-9 text-[11px] font-semibold px-2"
                                                             value={packageSettings[`WHATSAPP_PKG${num}_AMOUNT`] ?? ''}
                                                             onChange={e => setPackageSettings(prev => ({ ...prev, [`WHATSAPP_PKG${num}_AMOUNT`]: e.target.value }))}
                                                         />
@@ -397,7 +397,7 @@ export default function AdminPlans() {
                                                         <Input
                                                             type="number"
                                                             step="0.01"
-                                                            className="h-8 text-xs font-bold text-primary"
+                                                            className="h-9 text-[11px] font-bold text-primary px-2"
                                                             value={packageSettings[`WHATSAPP_PKG${num}_PRICE`] ?? ''}
                                                             onChange={e => setPackageSettings(prev => ({ ...prev, [`WHATSAPP_PKG${num}_PRICE`]: e.target.value }))}
                                                         />
@@ -448,7 +448,7 @@ export default function AdminPlans() {
                                                         <Label className="text-[9px] uppercase text-slate-500">Qtd.</Label>
                                                         <Input
                                                             type="number"
-                                                            className="h-8 text-xs font-semibold"
+                                                            className="h-9 text-[11px] font-semibold px-2"
                                                             value={packageSettings[`SMS_PKG${num}_AMOUNT`] ?? ''}
                                                             onChange={e => setPackageSettings(prev => ({ ...prev, [`SMS_PKG${num}_AMOUNT`]: e.target.value }))}
                                                         />
@@ -458,7 +458,7 @@ export default function AdminPlans() {
                                                         <Input
                                                             type="number"
                                                             step="0.01"
-                                                            className="h-8 text-xs font-bold text-primary"
+                                                            className="h-9 text-[11px] font-bold text-primary px-2"
                                                             value={packageSettings[`SMS_PKG${num}_PRICE`] ?? ''}
                                                             onChange={e => setPackageSettings(prev => ({ ...prev, [`SMS_PKG${num}_PRICE`]: e.target.value }))}
                                                         />
@@ -509,7 +509,7 @@ export default function AdminPlans() {
                                                         <Label className="text-[9px] uppercase text-slate-500">Qtd.</Label>
                                                         <Input
                                                             type="number"
-                                                            className="h-8 text-xs font-semibold"
+                                                            className="h-9 text-[11px] font-semibold px-2"
                                                             value={packageSettings[`EMAIL_PKG${num}_AMOUNT`] ?? ''}
                                                             onChange={e => setPackageSettings(prev => ({ ...prev, [`EMAIL_PKG${num}_AMOUNT`]: e.target.value }))}
                                                         />
@@ -519,7 +519,7 @@ export default function AdminPlans() {
                                                         <Input
                                                             type="number"
                                                             step="0.01"
-                                                            className="h-8 text-xs font-bold text-primary"
+                                                            className="h-9 text-[11px] font-bold text-primary px-2"
                                                             value={packageSettings[`EMAIL_PKG${num}_PRICE`] ?? ''}
                                                             onChange={e => setPackageSettings(prev => ({ ...prev, [`EMAIL_PKG${num}_PRICE`]: e.target.value }))}
                                                         />
