@@ -301,16 +301,17 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                             {currentPkgs.map(pkg => (
                                                 <Button
                                                     key={pkg.id}
-                                                    variant={amount === pkg.amount ? 'default' : 'outline'}
-                                                    className="h-auto py-3 px-4 flex justify-between items-center"
-                                                    onClick={() => setAmount(pkg.amount)}
+                                                    variant={selectedPackage?.id === pkg.id ? 'default' : 'outline'}
+                                                    className={`h-auto py-3 px-4 flex flex-col items-start gap-1 transition-all ${selectedPackage?.id === pkg.id ? 'border-primary ring-1 ring-primary' : 'hover:border-primary/50'}`}
+                                                    onClick={() => handlePackageSelect(pkg)}
                                                 >
-                                                    <div className="text-left">
-                                                        <div className="font-bold">{pkg.amount.toLocaleString()} {creditType === 'email' ? 'Créditos' : 'Disparos'}</div>
-                                                        <div className="text-[10px] opacity-70">Pacote {pkg.id}</div>
+                                                    <div className="flex justify-between w-full items-center">
+                                                        <span className="font-bold text-sm">{pkg.name}</span>
+                                                        <span className="font-mono text-xs font-bold text-primary">R$ {pkg.price.toFixed(2).replace('.', ',')}</span>
                                                     </div>
-                                                    <div className="font-bold">
-                                                        {pkg.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                    <div className="flex justify-between w-full items-center">
+                                                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{pkg.quantity} {creditType === 'email' ? 'envios' : 'créditos'}</span>
+                                                        <span className="text-[10px] opacity-60">R$ {(pkg.price / pkg.quantity).toFixed(4).replace('.', ',')} / un</span>
                                                     </div>
                                                 </Button>
                                             ))}
@@ -346,7 +347,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                         </div>
                                     </>
                                 );
-                             })()}
+                            })()
 
                         <Card className="p-4 bg-muted/50">
                             <div className="flex justify-between items-center text-sm mb-1">
