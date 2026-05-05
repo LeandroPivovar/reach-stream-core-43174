@@ -207,26 +207,28 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
             if (res.success) {
                 if (billingType === 'PIX' && res.qrCode) {
                     setQrCode(res.qrCode);
-                    setStep(3);
-                    toast.success('QR Code gerado com sucesso!');
                 } else if (billingType === 'CREDIT_CARD') {
                     setPaymentSuccess(true);
-                    setStep(3);
                     toast.success('Pagamento processado com sucesso!');
                     onSuccess();
-                } else {
-                    toast.success('Cobrança gerada com sucesso! Verifique seu email.');
-                    onSuccess();
-                    onClose();
                 }
             } else {
                 toast.error('Erro ao processar pagamento.');
+                setStep(2); // Go back if error
             }
         } catch (error: any) {
             console.error(error);
             toast.error(error.message || 'Erro ao processar compra de créditos.');
+            setStep(2); // Go back if error
         } finally {
             setLoading(false);
+        }
+    };
+
+    const goToStep3 = () => {
+        setStep(3);
+        if (billingType === 'PIX') {
+            handleBuy();
         }
     };
 
@@ -246,6 +248,15 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                         {step === 3 ? 'Pagamento' : 'Adicione saldo para disparos extras caso o limite do seu plano acabe. Os créditos não expiram.'}
                     </DialogDescription>
                 </DialogHeader>
+
+                {/* Setup Progress */}
+                {step <= 3 && !paymentSuccess && (
+                    <div className="flex items-center gap-2 mb-6">
+                        <div className={`h-2 flex-1 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-muted'}`} />
+                        <div className={`h-2 flex-1 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-muted'}`} />
+                        <div className={`h-2 flex-1 rounded-full ${step >= 3 ? 'bg-primary' : 'bg-muted'}`} />
+                    </div>
+                )}
 
                 {step === 1 && (
                     <div className="space-y-6 py-4">
@@ -357,149 +368,226 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                             </div>
                         </Card>
 
-                        <div className="space-y-3">
-                            <Label>Forma de Pagamento</Label>
-                            <RadioGroup value={billingType} onValueChange={(val: any) => setBillingType(val)} className="flex space-x-4">
-                                <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                    <RadioGroupItem value="PIX" id="p_pix" />
-                                    <Label htmlFor="p_pix" className="flex items-center space-x-2 cursor-pointer w-full">
-                                        <QrCode className="w-4 h-4 text-primary" />
-                                        <span>PIX</span>
-                                    </Label>
-                                </div>
-                                <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                    <RadioGroupItem value="CREDIT_CARD" id="p_card" />
-                                    <Label htmlFor="p_card" className="flex items-center space-x-2 cursor-pointer w-full">
-                                        <CreditCard className="w-4 h-4 text-primary" />
-                                        <span>Cartão</span>
-                                    </Label>
-                                </div>
-                            </RadioGroup>
-                        </div>
-
-                        <Button className="w-full" onClick={() => billingType === 'CREDIT_CARD' ? setStep(2) : handleBuy()} disabled={loading || amount < 100}>
-                            {loading ? 'Processando...' : billingType === 'PIX' ? `Pagar ${finalTotalValueFormatted} via PIX` : `Continuar para o Cartão`}
+                        <Button className="w-full h-11" onClick={() => setStep(2)} disabled={loading || amount < 100}>
+                            Próximo <ChevronRight className="w-4 h-4 ml-2" />
                         </Button>
                     </div>
                 )}
 
                 {step === 2 && (
-                    <div className="space-y-6 py-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                                <h4 className="text-sm font-semibold flex items-center gap-2">
-                                    <CreditCard className="w-4 h-4" /> Dados do Cartão
-                                </h4>
-                                <div className="space-y-3">
-                                    <div className="grid gap-1.5">
-                                        <Label htmlFor="card_num" className="text-xs">Número do Cartão</Label>
-                                        <Input id="card_num" placeholder="0000 0000 0000 0000" value={cardData.number} onChange={e => setCardData({ ...cardData, number: e.target.value })} />
+                    <div className="space-y-6 py-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-4">
+                            <Label className="text-sm font-semibold">Escolha como deseja pagar</Label>
+                            <RadioGroup value={billingType} onValueChange={(v: any) => setBillingType(v)} className="grid grid-cols-1 gap-3">
+                                <Label
+                                    className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all ${billingType === 'PIX' ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'hover:bg-muted/50'}`}
+                                >
+                                    <RadioGroupItem value="PIX" className="sr-only" />
+                                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${billingType === 'PIX' ? 'bg-primary/20' : 'bg-muted'}`}>
+                                        <QrCode className="h-6 w-6 text-primary" />
                                     </div>
-                                    <div className="grid gap-1.5">
-                                        <Label htmlFor="card_name" className="text-xs">Nome no Cartão</Label>
-                                        <Input id="card_name" placeholder="TITULAR DO CARTÃO" value={cardData.name} onChange={e => setCardData({ ...cardData, name: e.target.value.toUpperCase() })} />
+                                    <div className="flex-1">
+                                        <span className="font-bold block text-sm">PIX</span>
+                                        <span className="text-[10px] text-emerald-600 font-medium">Aprovação imediata</span>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div className="grid gap-1.5">
-                                            <Label htmlFor="card_exp" className="text-xs">Validade (MM/AA)</Label>
-                                            <Input id="card_exp" placeholder="MM/AA" value={cardData.expiry} onChange={e => {
-                                                let val = e.target.value.replace(/\D/g, '');
-                                                if (val.length > 2) val = val.substring(0, 2) + '/' + val.substring(2, 4);
-                                                setCardData({ ...cardData, expiry: val });
-                                            }} maxLength={5} />
-                                        </div>
-                                        <div className="grid gap-1.5">
-                                            <Label htmlFor="card_cvc" className="text-xs">CVV</Label>
-                                            <Input id="card_cvc" placeholder="123" value={cardData.cvc} onChange={e => setCardData({ ...cardData, cvc: e.target.value })} maxLength={4} />
-                                        </div>
+                                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                </Label>
+                                
+                                <Label
+                                    className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all ${billingType === 'CREDIT_CARD' ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'hover:bg-muted/50'}`}
+                                >
+                                    <RadioGroupItem value="CREDIT_CARD" className="sr-only" />
+                                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${billingType === 'CREDIT_CARD' ? 'bg-primary/20' : 'bg-muted'}`}>
+                                        <CreditCard className="h-6 w-6 text-primary" />
                                     </div>
-                                </div>
-                                <div className="p-3 bg-muted/50 rounded-lg border border-dashed border-border flex items-center gap-2">
-                                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Pagamento 100% Seguro</span>
-                                </div>
-                            </div>
+                                    <div className="flex-1">
+                                        <span className="font-bold block text-sm">Cartão de Crédito</span>
+                                        <span className="text-[10px] text-primary font-bold uppercase">À Vista</span>
+                                    </div>
+                                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                </Label>
+                            </RadioGroup>
+                        </div>
 
-                            <div className="space-y-4">
-                                <h4 className="text-sm font-semibold">Informações de Cobrança</h4>
-                                <div className="space-y-3">
-                                    <div className="grid gap-1.5">
-                                        <Label htmlFor="bil_doc" className="text-xs">CPF / CNPJ</Label>
-                                        <Input id="bil_doc" placeholder="000.000.000-00" value={billingInfo.document} onChange={e => setBillingInfo({ ...billingInfo, document: e.target.value })} />
+                        <Card className="p-4 bg-primary/5 flex justify-between items-center">
+                            <span className="text-sm font-semibold">Total a pagar:</span>
+                            <span className="text-lg font-bold text-primary">{finalTotalValueFormatted}</span>
+                        </Card>
+
+                        <div className="flex gap-3">
+                            <Button variant="outline" className="w-full h-11" onClick={() => setStep(1)}>
+                                Voltar
+                            </Button>
+                            <Button onClick={goToStep3} className="w-full h-11">
+                                Prosseguir
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {step === 3 && !paymentSuccess && billingType === 'CREDIT_CARD' && (
+                    <div className="space-y-6 py-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 pb-2 border-b">
+                                <CreditCard className="w-4 h-4 text-primary" />
+                                <h4 className="text-xs font-bold uppercase tracking-wider">Dados do Cartão</h4>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <Label className="text-xs">Número do Cartão</Label>
+                                            <ShieldCheck className="h-3 w-3 text-emerald-500" />
+                                        </div>
+                                        <Input
+                                            placeholder="0000 0000 0000 0000"
+                                            value={cardData.number}
+                                            onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
+                                            className="h-10 text-sm"
+                                        />
                                     </div>
-                                    <div className="grid gap-1.5">
-                                        <Label htmlFor="bil_cep" className="text-xs">CEP</Label>
-                                        <Input id="bil_cep" placeholder="00000-000" value={billingInfo.postalCode} onChange={e => setBillingInfo({ ...billingInfo, postalCode: e.target.value })} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-xs">Validade</Label>
+                                            <Input
+                                                placeholder="MM/AA"
+                                                value={cardData.expiry}
+                                                onChange={(e) => {
+                                                    let val = e.target.value.replace(/\D/g, '');
+                                                    if (val.length > 2) val = val.substring(0, 2) + '/' + val.substring(2, 4);
+                                                    setCardData({ ...cardData, expiry: val });
+                                                }}
+                                                maxLength={5}
+                                                className="h-10 text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-xs">CVC</Label>
+                                            <Input
+                                                type="password"
+                                                placeholder="123"
+                                                maxLength={4}
+                                                value={cardData.cvc}
+                                                onChange={(e) => setCardData({ ...cardData, cvc: e.target.value })}
+                                                className="h-10 text-sm"
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="grid gap-1.5">
-                                        <Label htmlFor="bil_addr" className="text-xs">Endereço Completo</Label>
-                                        <Input id="bil_addr" placeholder="Rua, Número, Bairro..." value={billingInfo.address} onChange={e => setBillingInfo({ ...billingInfo, address: e.target.value })} />
+                                    <div className="space-y-2">
+                                        <Label className="text-xs">Nome Impresso</Label>
+                                        <Input
+                                            placeholder="NOME COMO NO CARTÃO"
+                                            value={cardData.name}
+                                            onChange={(e) => setCardData({ ...cardData, name: e.target.value.toUpperCase() })}
+                                            className="h-10 text-sm"
+                                        />
                                     </div>
                                 </div>
-                                <Card className="p-3 bg-primary/5">
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <span className="text-xs font-semibold block">Total Compra:</span>
-                                            <span className="text-[10px] text-primary font-bold uppercase">Pagamento à Vista</span>
-                                        </div>
-                                        <span className="text-sm font-bold text-primary">{finalTotalValueFormatted}</span>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs">CPF/CNPJ do Titular</Label>
+                                        <Input
+                                            placeholder="000.000.000-00"
+                                            value={billingInfo.document}
+                                            onChange={(e) => setBillingInfo({ ...billingInfo, document: e.target.value })}
+                                            className="h-10 text-sm"
+                                        />
                                     </div>
-                                </Card>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs">CEP do Titular</Label>
+                                        <Input
+                                            placeholder="00000-000"
+                                            value={billingInfo.postalCode}
+                                            onChange={(e) => setBillingInfo({ ...billingInfo, postalCode: e.target.value })}
+                                            className="h-10 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs">Endereço Completo</Label>
+                                        <Input
+                                            placeholder="Rua, Número, Bairro..."
+                                            value={billingInfo.address}
+                                            onChange={(e) => setBillingInfo({ ...billingInfo, address: e.target.value })}
+                                            className="h-10 text-sm"
+                                        />
+                                    </div>
+                                    <Card className="p-3 bg-primary/5 flex justify-between items-center">
+                                        <span className="text-[10px] font-bold text-primary uppercase">Pagamento à Vista</span>
+                                        <span className="text-sm font-bold text-primary">{finalTotalValueFormatted}</span>
+                                    </Card>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="flex gap-3 pt-2">
-                            <Button variant="outline" className="flex-1" onClick={() => setStep(1)} disabled={loading}>
+                        <div className="flex gap-3">
+                            <Button variant="outline" className="w-full h-11" onClick={() => setStep(2)} disabled={loading}>
                                 Voltar
                             </Button>
-                            <Button className="flex-[2]" onClick={handleBuy} disabled={loading}>
+                            <Button onClick={handleBuy} className="w-full h-11" disabled={loading}>
                                 {loading ? (
                                     <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         Processando...
                                     </>
                                 ) : (
-                                    <>
-                                        Pagar Agora <ChevronRight className="w-4 h-4 ml-1" />
-                                    </>
+                                    `Finalizar Pagamento`
                                 )}
                             </Button>
                         </div>
                     </div>
                 )}
 
-                {step === 3 && qrCode && (
-                    <div className="flex flex-col items-center justify-center space-y-6 py-4">
-                        <div className="bg-white p-4 rounded-xl shadow-sm border">
-                            <img
-                                src={`data:image/jpeg;base64,${qrCode.encodedImage}`}
-                                alt="QR Code PIX"
-                                className="w-48 h-48"
-                            />
+                {step === 3 && qrCode && !paymentSuccess && (
+                    <div className="flex flex-col items-center justify-center py-6 text-center animate-in zoom-in-95 duration-300">
+                        <div className="flex items-center gap-2 mb-6 pb-2 border-b w-full justify-center">
+                            <QrCode className="w-4 h-4 text-primary" />
+                            <h4 className="text-xs font-bold uppercase tracking-wider">Pagamento PIX</h4>
+                        </div>
+                        
+                        <div className="bg-white dark:bg-slate-900 border rounded-2xl p-6 shadow-sm mb-4">
+                            <div className="bg-muted min-h-[200px] w-[200px] rounded-xl flex items-center justify-center p-2 mx-auto">
+                                {qrCode?.encodedImage ? (
+                                    <img 
+                                        src={`data:image/jpeg;base64,${qrCode.encodedImage}`} 
+                                        alt="QR Code PIX" 
+                                        className="w-full h-full object-contain" 
+                                    />
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                        <span className="text-[10px] font-medium text-muted-foreground">Gerando QR Code...</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="text-center space-y-2">
-                            <p className="font-medium">Escaneie o QR Code com o app do seu banco</p>
-                            <p className="text-sm text-muted-foreground max-w-[300px] break-words">
-                                Ou copie o código PIX abaixo para realizar o pagamento.
+                        <div className="text-center space-y-2 mb-6">
+                            <p className="text-sm font-medium">Escaneie o QR Code com o app do seu banco</p>
+                            <p className="text-[11px] text-muted-foreground max-w-[280px] mx-auto">
+                                Ou copie o código abaixo para pagar via "PIX Copia e Cola".
                             </p>
                         </div>
 
-                        <div className="w-full flex space-x-2">
-                            <Input value={qrCode.payload} readOnly className="font-mono text-xs" />
-                            <Button onClick={copyPixCode} variant="secondary">Copiar</Button>
+                        <div className="w-full flex flex-col gap-3">
+                            <div className="relative">
+                                <Input value={qrCode.payload} readOnly className="pr-20 h-11 text-[11px] font-mono bg-muted/30" />
+                                <Button 
+                                    size="sm" 
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-9"
+                                    onClick={copyPixCode}
+                                >
+                                    Copiar
+                                </Button>
+                            </div>
+                            
+                            <Button variant="outline" className="w-full h-11" onClick={() => {
+                                onSuccess();
+                                onClose();
+                            }}>
+                                Já paguei, concluir
+                            </Button>
                         </div>
-
-                        <p className="text-xs text-muted-foreground text-center mt-4">
-                            Após o pagamento, os créditos serão adicionados automaticamente à sua conta em instantes.
-                        </p>
-
-                        <Button variant="outline" className="w-full mt-4" onClick={() => {
-                            onSuccess();
-                            onClose();
-                        }}>
-                            Concluído
-                        </Button>
                     </div>
                 )}
 
