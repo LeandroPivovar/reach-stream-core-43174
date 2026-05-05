@@ -170,7 +170,10 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                     </DialogDescription>
                 </div>
 
-                <div className="p-6 overflow-y-auto flex-1">
+                </div>
+
+                {/* Scrollable Content Area */}
+                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-primary/10">
                     {/* Setup Progress */}
                     {step <= 3 && !paymentSuccess && (
                         <div className="flex items-center gap-2 mb-6">
@@ -182,14 +185,14 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
 
                     {/* Step 1: Text Content */}
                     {step === 1 && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 pb-2">
                             <div className="space-y-4">
                                 <Label>Conteúdo do Template</Label>
                                 <Textarea
                                     value={content}
                                     onChange={(e) => setContent(e.target.value)}
                                     placeholder="Ex: Olá {{nome_cliente}}, seu pedido #{{numero_pedido}} foi confirmado! Acompanhe em: {{link_rastreio}}"
-                                    className="min-h-[150px] resize-none"
+                                    className="min-h-[180px] md:min-h-[150px] resize-none"
                                 />
                                 <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-lg p-4 space-y-2">
                                     <h4 className="font-medium text-sm text-blue-800 dark:text-blue-300">💡 Como usar variáveis</h4>
@@ -198,17 +201,12 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                     </p>
                                 </div>
                             </div>
-
-                            <Button onClick={handleNext} className="w-full h-12 text-md font-medium group transition-all" size="lg">
-                                Prosseguir
-                                <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                            </Button>
                         </div>
                     )}
 
                     {/* Step 2: Payment Method Selection */}
                     {step === 2 && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 pb-2">
                             <div className="space-y-4">
                                 <Label>Escolha como deseja pagar</Label>
                                 <RadioGroup value={billingType} onValueChange={(v: any) => setBillingType(v)} className="grid grid-cols-1 gap-3">
@@ -248,21 +246,12 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                     <span className="text-sm font-bold text-primary">{totalValue}</span>
                                 </div>
                             </Card>
-
-                            <div className="flex gap-3">
-                                <Button variant="outline" className="h-12 w-full" onClick={() => setStep(1)}>
-                                    Voltar
-                                </Button>
-                                <Button onClick={goToStep3} className="w-full h-12 text-md font-medium">
-                                    Prosseguir
-                                </Button>
-                            </div>
                         </div>
                     )}
 
                     {/* Step 3: Payment Details or QR */}
                     {step === 3 && !paymentSuccess && billingType === 'CREDIT_CARD' && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300 pb-2">
                             <div className="space-y-4">
                                 <div className="flex items-center gap-2 pb-2 border-b">
                                     <CreditCard className="w-4 h-4 text-primary" />
@@ -278,7 +267,7 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                             placeholder="0000 0000 0000 0000"
                                             value={cardData.number}
                                             onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
-                                            className="h-10"
+                                            className="h-11 md:h-10 text-base md:text-sm"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
@@ -288,7 +277,7 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                                 placeholder="MM/AA"
                                                 value={cardData.expiry}
                                                 onChange={(e) => setCardData({ ...cardData, expiry: e.target.value })}
-                                                className="h-10"
+                                                className="h-11 md:h-10 text-base md:text-sm"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -299,7 +288,7 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                                 maxLength={4}
                                                 value={cardData.cvc}
                                                 onChange={(e) => setCardData({ ...cardData, cvc: e.target.value })}
-                                                className="h-10"
+                                                className="h-11 md:h-10 text-base md:text-sm"
                                             />
                                         </div>
                                     </div>
@@ -309,7 +298,7 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                             placeholder="NOME COMO NO CARTÃO"
                                             value={cardData.name}
                                             onChange={(e) => setCardData({ ...cardData, name: e.target.value.toUpperCase() })}
-                                            className="h-10"
+                                            className="h-11 md:h-10 text-base md:text-sm"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
@@ -319,7 +308,7 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                                 placeholder="000.000.000-00"
                                                 value={billingInfo.document}
                                                 onChange={(e) => setBillingInfo({ ...billingInfo, document: e.target.value })}
-                                                className="h-10"
+                                                className="h-11 md:h-10 text-base md:text-sm"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -328,7 +317,7 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                                 placeholder="00000-000"
                                                 value={billingInfo.postalCode}
                                                 onChange={(e) => setBillingInfo({ ...billingInfo, postalCode: e.target.value })}
-                                                className="h-10"
+                                                className="h-11 md:h-10 text-base md:text-sm"
                                             />
                                         </div>
                                     </div>
@@ -341,22 +330,6 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                     <span className="text-sm font-bold text-primary">{totalValue}</span>
                                 </div>
                             </Card>
-
-                            <div className="flex gap-3">
-                                <Button variant="outline" className="h-12 w-full" onClick={() => setStep(2)} disabled={loading}>
-                                    Voltar
-                                </Button>
-                                <Button onClick={handleBuy} className="w-full h-12 text-md font-medium" disabled={loading}>
-                                    {loading ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Processando...
-                                        </>
-                                    ) : (
-                                        `Finalizar Pagamento`
-                                    )}
-                                </Button>
-                            </div>
                         </div>
                     )}
 
@@ -401,9 +374,6 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                                     Copiar
                                                 </Button>
                                             </div>
-                                            <Button variant="outline" className="w-full h-11" onClick={() => { onClose(); onSuccess(); }}>
-                                                Já paguei, fechar
-                                            </Button>
                                         </div>
                                     )}
                                 </>
@@ -416,12 +386,60 @@ export function TemplateRequestModal({ isOpen, onClose, onSuccess }: TemplateReq
                                     <p className="text-muted-foreground mt-2 max-w-[280px]">
                                         Sua solicitação de template foi recebida com sucesso.
                                     </p>
-                                    <Button className="w-full mt-8 h-12" onClick={() => { onClose(); onSuccess(); }}>
-                                        Finalizar
-                                    </Button>
                                 </>
                             ) : null}
                         </div>
+                    )}
+                </div>
+
+                {/* Fixed Footer Area */}
+                <div className="p-4 md:p-6 bg-background border-t border-border flex gap-3">
+                    {step === 1 && (
+                        <Button onClick={handleNext} className="w-full h-12 md:h-11 text-md font-medium group transition-all" size="lg">
+                            Prosseguir
+                            <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Button>
+                    )}
+
+                    {step === 2 && (
+                        <>
+                            <Button variant="outline" className="h-12 md:h-11 w-full" onClick={() => setStep(1)}>
+                                Voltar
+                            </Button>
+                            <Button onClick={goToStep3} className="w-full h-12 md:h-11 text-md font-medium">
+                                Prosseguir
+                            </Button>
+                        </>
+                    )}
+
+                    {step === 3 && !paymentSuccess && billingType === 'CREDIT_CARD' && (
+                        <>
+                            <Button variant="outline" className="h-12 md:h-11 w-full" onClick={() => setStep(2)} disabled={loading}>
+                                Voltar
+                            </Button>
+                            <Button onClick={handleBuy} className="w-full h-12 md:h-11 text-md font-medium" disabled={loading}>
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Processando...
+                                    </>
+                                ) : (
+                                    `Finalizar Pagamento`
+                                )}
+                            </Button>
+                        </>
+                    )}
+
+                    {step === 3 && billingType === 'PIX' && (
+                        <Button variant="outline" className="w-full h-12 md:h-11" onClick={() => { onClose(); onSuccess(); }}>
+                            Já paguei, fechar
+                        </Button>
+                    )}
+
+                    {paymentSuccess && (
+                        <Button className="w-full h-12 md:h-11" onClick={() => { onClose(); onSuccess(); }}>
+                            Finalizar
+                        </Button>
                     )}
                 </div>
             </DialogContent>
