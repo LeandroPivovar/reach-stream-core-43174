@@ -163,7 +163,7 @@ export default function AdminPlans() {
     ];
 
     // Packages Settings
-    const { data: systemSettings } = useQuery({
+    const { data: systemSettings, isSuccess: isSettingsLoaded } = useQuery({
         queryKey: ['system-settings'],
         queryFn: () => api.getSystemSettings()
     });
@@ -186,17 +186,24 @@ export default function AdminPlans() {
     const [isInitialized, setIsInitialized] = useState(false);
 
     React.useEffect(() => {
-        if (systemSettings && !isInitialized) {
-            const settings: any = {};
-            systemSettings.forEach(s => {
-                if (s.key.includes('UNIT_PRICE_') || s.key.includes('_PKG')) {
-                    settings[s.key] = s.value;
+        // Só inicializa se o request terminou com sucesso e temos dados
+        if (isSettingsLoaded && systemSettings && !isInitialized) {
+            if (systemSettings.length > 0) {
+                const settings: any = {};
+                systemSettings.forEach(s => {
+                    const upperKey = s.key.toUpperCase();
+                    if (upperKey.includes('UNIT_PRICE_') || upperKey.includes('_PKG')) {
+                        settings[upperKey] = s.value;
+                    }
+                });
+                
+                if (Object.keys(settings).length > 0) {
+                    setPackageSettings(prev => ({ ...prev, ...settings }));
+                    setIsInitialized(true);
                 }
-            });
-            setPackageSettings(prev => ({ ...prev, ...settings }));
-            setIsInitialized(true);
+            }
         }
-    }, [systemSettings, isInitialized]);
+    }, [systemSettings, isSettingsLoaded, isInitialized]);
 
     const updateSettingsMutation = useMutation({
         mutationFn: (data: { key: string, value: string }[]) => api.updateSystemSettingsBulk(data),
