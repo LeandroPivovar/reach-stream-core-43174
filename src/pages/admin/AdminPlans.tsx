@@ -169,18 +169,21 @@ export default function AdminPlans() {
     });
 
     const [packageSettings, setPackageSettings] = useState<any>({
-        UNIT_PRICE_WHATSAPP: '0.15',
-        UNIT_PRICE_SMS: '0.10',
+        UNIT_PRICE_WHATSAPP: '0.55',
+        UNIT_PRICE_SMS: '0.30',
         UNIT_PRICE_EMAIL: '0.01',
-        WHATSAPP_PKG1_AMOUNT: '', WHATSAPP_PKG1_PRICE: '',
-        WHATSAPP_PKG2_AMOUNT: '', WHATSAPP_PKG2_PRICE: '',
-        WHATSAPP_PKG3_AMOUNT: '', WHATSAPP_PKG3_PRICE: '',
-        SMS_PKG1_AMOUNT: '', SMS_PKG1_PRICE: '',
-        SMS_PKG2_AMOUNT: '', SMS_PKG2_PRICE: '',
-        SMS_PKG3_AMOUNT: '', SMS_PKG3_PRICE: '',
-        EMAIL_PKG1_AMOUNT: '', EMAIL_PKG1_PRICE: '',
-        EMAIL_PKG2_AMOUNT: '', EMAIL_PKG2_PRICE: '',
-        EMAIL_PKG3_AMOUNT: '', EMAIL_PKG3_PRICE: ''
+        WHATSAPP_PKG1_AMOUNT: '60', WHATSAPP_PKG1_PRICE: '33',
+        WHATSAPP_PKG2_AMOUNT: '100', WHATSAPP_PKG2_PRICE: '55',
+        WHATSAPP_PKG3_AMOUNT: '500', WHATSAPP_PKG3_PRICE: '275',
+        WHATSAPP_PKG4_AMOUNT: '1000', WHATSAPP_PKG4_PRICE: '550',
+        SMS_PKG1_AMOUNT: '60', SMS_PKG1_PRICE: '18',
+        SMS_PKG2_AMOUNT: '100', SMS_PKG2_PRICE: '30',
+        SMS_PKG3_AMOUNT: '500', SMS_PKG3_PRICE: '150',
+        SMS_PKG4_AMOUNT: '1000', SMS_PKG4_PRICE: '300',
+        EMAIL_PKG1_AMOUNT: '60', EMAIL_PKG1_PRICE: '0.60',
+        EMAIL_PKG2_AMOUNT: '100', EMAIL_PKG2_PRICE: '1',
+        EMAIL_PKG3_AMOUNT: '500', EMAIL_PKG3_PRICE: '5',
+        EMAIL_PKG4_AMOUNT: '1000', EMAIL_PKG4_PRICE: '10'
     });
 
     const [isInitialized, setIsInitialized] = useState(false);
@@ -340,7 +343,7 @@ export default function AdminPlans() {
                                             />
                                             <p className="text-[10px] text-slate-400">Usado se não houver pacotes</p>
                                         </div>
-                                        {[1, 2, 3].map(num => (
+                                        {[1, 2, 3, 4].map(num => (
                                             <div key={num} className="p-3 border rounded-lg bg-slate-50 dark:bg-slate-800/50 space-y-3">
                                                 <Label className="text-xs font-bold uppercase">Pacote {num}</Label>
                                                 <div className="space-y-2">
@@ -381,7 +384,7 @@ export default function AdminPlans() {
                                                 onChange={e => setPackageSettings(prev => ({ ...prev, UNIT_PRICE_SMS: e.target.value }))}
                                             />
                                         </div>
-                                        {[1, 2, 3].map(num => (
+                                        {[1, 2, 3, 4].map(num => (
                                             <div key={num} className="p-3 border rounded-lg bg-slate-50 dark:bg-slate-800/50 space-y-3">
                                                 <Label className="text-xs font-bold uppercase">Pacote {num}</Label>
                                                 <div className="space-y-2">
@@ -422,7 +425,7 @@ export default function AdminPlans() {
                                             />
                                             <p className="text-[10px] text-slate-400">Custo a cada 1.000 disparos</p>
                                         </div>
-                                        {[1, 2, 3].map(num => (
+                                        {[1, 2, 3, 4].map(num => (
                                             <div key={num} className="p-3 border rounded-lg bg-slate-50 dark:bg-slate-800/50 space-y-3">
                                                 <Label className="text-xs font-bold uppercase">Pacote {num}</Label>
                                                 <div className="space-y-2">

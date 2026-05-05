@@ -72,7 +72,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                 if (settingsMap['UNIT_PRICE_EMAIL'] !== undefined) newPrices.UNIT_PRICE_EMAIL = parseFloat(settingsMap['UNIT_PRICE_EMAIL']);
 
                 // Parse Packages for all types
-                for (let i = 1; i <= 3; i++) {
+                for (let i = 1; i <= 4; i++) {
                     // WhatsApp
                     const waAmount = parseInt(settingsMap[`WHATSAPP_PKG${i}_AMOUNT`] || '0');
                     const waPrice = parseFloat(settingsMap[`WHATSAPP_PKG${i}_PRICE`] || '0');
