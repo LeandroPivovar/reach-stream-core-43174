@@ -18,7 +18,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Mail, MessageSquare, Phone, Clock, GitBranch, Send, Calendar, Tag, Gift, Eraser } from 'lucide-react';
+import { Mail, MessageSquare, Phone, Clock, GitBranch, Send, Calendar, Tag, Gift, Eraser, Truck } from 'lucide-react';
 import { EmailNode } from './nodes/EmailNode';
 import { SmsNode } from './nodes/SmsNode';
 import { WhatsappNode } from './nodes/WhatsappNode';
@@ -28,10 +28,11 @@ import { SendNowNode } from './nodes/SendNowNode';
 import { ScheduleNode } from './nodes/ScheduleNode';
 import { CouponNode } from './nodes/CouponNode';
 import { GiftbackNode } from './nodes/GiftbackNode';
+import { ShippingCouponNode } from './nodes/ShippingCouponNode';
 
 export interface WorkflowStep {
   id: string;
-  type: 'email' | 'sms' | 'whatsapp' | 'delay' | 'condition' | 'sendnow' | 'schedule' | 'coupon' | 'giftback';
+  type: 'email' | 'sms' | 'whatsapp' | 'delay' | 'condition' | 'sendnow' | 'schedule' | 'coupon' | 'giftback' | 'shipping_coupon';
   action?: 'send';
   delay?: number;
   delayUnit?: 'minutes' | 'hours' | 'days';
@@ -70,6 +71,7 @@ const nodeTypes: NodeTypes = {
   schedule: ScheduleNode,
   coupon: CouponNode,
   giftback: GiftbackNode,
+  shipping_coupon: ShippingCouponNode,
 };
 
 export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
@@ -302,6 +304,15 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               <Gift className="w-4 h-4 text-green-500" />
               Giftback
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addNode('shipping_coupon')}
+              className="gap-2"
+            >
+              <Truck className="w-4 h-4 text-blue-500" />
+              Frete Grátis
+            </Button>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-sm font-semibold mr-2">Fluxo:</span>
@@ -386,6 +397,8 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
                   return '#f97316';
                 case 'giftback':
                   return '#22c55e';
+                case 'shipping_coupon':
+                  return '#3b82f6';
                 default:
                   return '#7255F7';
               }

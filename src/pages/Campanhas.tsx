@@ -148,6 +148,7 @@ export default function Campanhas() {
     campaignConfig: {
       enableCoupon: false,
       enableGiftback: false,
+      enableShippingCoupon: false,
       coupon: {
         couponName: '',
         discountType: 'percentage' as 'percentage' | 'fixed',
@@ -159,6 +160,11 @@ export default function Campanhas() {
         giftValue: '',
         maxRedemptions: '',
         validityDate: undefined as Date | undefined
+      },
+      shippingCoupon: {
+        code: '',
+        minPurchaseValue: '',
+        expirationDays: '30'
       }
     },
     email: {
@@ -2572,6 +2578,22 @@ export default function Campanhas() {
                       Giftback
                     </label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="enable-shipping"
+                      checked={newCampaign.campaignConfig.enableShippingCoupon}
+                      onCheckedChange={(checked) => setNewCampaign({
+                        ...newCampaign,
+                        campaignConfig: {
+                          ...newCampaign.campaignConfig,
+                          enableShippingCoupon: checked as boolean
+                        }
+                      })}
+                    />
+                    <label htmlFor="enable-shipping" className="text-sm font-medium cursor-pointer">
+                      Frete Grátis
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -2852,6 +2874,85 @@ export default function Campanhas() {
                           />
                         </PopoverContent>
                       </Popover>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {/* Frete Grátis */}
+              {newCampaign.campaignConfig.enableShippingCoupon && (
+                <Card className="p-4">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Truck className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-1">Frete Grátis</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Configure o cupom de frete grátis
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="shipping-code">Prefixo/Código do Cupom</Label>
+                      <Input
+                        id="shipping-code"
+                        value={newCampaign.campaignConfig.shippingCoupon.code}
+                        onChange={(e) => setNewCampaign({
+                          ...newCampaign,
+                          campaignConfig: {
+                            ...newCampaign.campaignConfig,
+                            shippingCoupon: {
+                              ...newCampaign.campaignConfig.shippingCoupon,
+                              code: e.target.value
+                            }
+                          }
+                        })}
+                        placeholder="Ex: FRETEGRATIS"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="shipping-min-purchase">Valor Mínimo de Compra (R$)</Label>
+                      <Input
+                        id="shipping-min-purchase"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Ex: 100.00"
+                        value={newCampaign.campaignConfig.shippingCoupon.minPurchaseValue}
+                        onChange={(e) => setNewCampaign({
+                          ...newCampaign,
+                          campaignConfig: {
+                            ...newCampaign.campaignConfig,
+                            shippingCoupon: {
+                              ...newCampaign.campaignConfig.shippingCoupon,
+                              minPurchaseValue: e.target.value
+                            }
+                          }
+                        })}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="shipping-expiration">Dias para Expirar</Label>
+                      <Input
+                        id="shipping-expiration"
+                        type="number"
+                        min="1"
+                        placeholder="Ex: 30"
+                        value={newCampaign.campaignConfig.shippingCoupon.expirationDays}
+                        onChange={(e) => setNewCampaign({
+                          ...newCampaign,
+                          campaignConfig: {
+                            ...newCampaign.campaignConfig,
+                            shippingCoupon: {
+                              ...newCampaign.campaignConfig.shippingCoupon,
+                              expirationDays: e.target.value
+                            }
+                          }
+                        })}
+                      />
                     </div>
                   </div>
                 </Card>
