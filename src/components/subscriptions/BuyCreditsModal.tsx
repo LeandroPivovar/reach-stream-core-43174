@@ -261,93 +261,96 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                 )}
 
                 {step === 1 && (
-                    <div className="space-y-6 py-4">
-                        <div className="space-y-3">
-                            <Label>Tipo de Crédito</Label>
-                            <RadioGroup value={creditType} onValueChange={(val: any) => setCreditType(val)} className="flex flex-wrap gap-3">
-                                <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 min-w-[120px] cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                    <RadioGroupItem value="email" id="c_email" />
-                                    <Label htmlFor="c_email" className="flex items-center space-x-2 cursor-pointer w-full">
-                                        <Mail className="w-4 h-4 text-primary" />
-                                        <span>E-mail</span>
-                                    </Label>
-                                </div>
-                                <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 min-w-[120px] cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                    <RadioGroupItem value="sms" id="c_sms" />
-                                    <Label htmlFor="c_sms" className="flex items-center space-x-2 cursor-pointer w-full">
-                                        <Smartphone className="w-4 h-4 text-primary" />
-                                        <span>SMS</span>
-                                    </Label>
-                                </div>
-                                <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 min-w-[120px] cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                    <RadioGroupItem value="whatsapp" id="c_whatsapp" />
-                                    <Label htmlFor="c_whatsapp" className="flex items-center space-x-2 cursor-pointer w-full">
-                                        <MessageSquare className="w-4 h-4 text-primary" />
-                                        <span>WhatsApp</span>
-                                    </Label>
-                                </div>
-                            </RadioGroup>
-                        </div>
+                    <>
+                        <div className="space-y-6 py-4">
+                            <div className="space-y-3">
+                                <Label>Tipo de Crédito</Label>
+                                <RadioGroup value={creditType} onValueChange={(val: any) => setCreditType(val)} className="flex flex-wrap gap-3">
+                                    <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 min-w-[120px] cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                        <RadioGroupItem value="email" id="c_email" />
+                                        <Label htmlFor="c_email" className="flex items-center space-x-2 cursor-pointer w-full">
+                                            <Mail className="w-4 h-4 text-primary" />
+                                            <span>E-mail</span>
+                                        </Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 min-w-[120px] cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                        <RadioGroupItem value="sms" id="c_sms" />
+                                        <Label htmlFor="c_sms" className="flex items-center space-x-2 cursor-pointer w-full">
+                                            <Smartphone className="w-4 h-4 text-primary" />
+                                            <span>SMS</span>
+                                        </Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2 border rounded-lg p-3 flex-1 min-w-[120px] cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                        <RadioGroupItem value="whatsapp" id="c_whatsapp" />
+                                        <Label htmlFor="c_whatsapp" className="flex items-center space-x-2 cursor-pointer w-full">
+                                            <MessageSquare className="w-4 h-4 text-primary" />
+                                            <span>WhatsApp</span>
+                                        </Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
 
-                        <div className="space-y-3">
-                            <Label>{creditType === 'whatsapp' ? 'Escolha seu Pacote' : 'Quantidade'}</Label>
-                            
-                            {(() => {
-                                const currentPkgs = creditType === 'whatsapp' ? whatsappPackages : (creditType === 'email' ? emailPackages : smsPackages);
+                            <div className="space-y-3">
+                                <Label>{creditType === 'whatsapp' ? 'Escolha seu Pacote' : 'Quantidade'}</Label>
                                 
-                                if (currentPkgs.length > 0) {
+                                {(() => {
+                                    const currentPkgs = creditType === 'whatsapp' ? whatsappPackages : (creditType === 'email' ? emailPackages : smsPackages);
+                                    
+                                    if (currentPkgs.length > 0) {
+                                        return (
+                                            <div className="grid grid-cols-1 gap-2">
+                                                {currentPkgs.map(pkg => (
+                                                    <Button
+                                                        key={pkg.id}
+                                                        variant={selectedPackage?.id === pkg.id ? 'default' : 'outline'}
+                                                        className={`h-auto py-3 px-4 flex flex-col items-start gap-1 transition-all ${selectedPackage?.id === pkg.id ? 'border-primary ring-1 ring-primary' : 'hover:border-primary/50'}`}
+                                                        onClick={() => handlePackageSelect(pkg)}
+                                                    >
+                                                        <div className="flex justify-between w-full items-center">
+                                                            <span className="font-bold text-sm">{pkg.name}</span>
+                                                            <span className="font-mono text-xs font-bold text-primary">R$ {pkg.price.toFixed(2).replace('.', ',')}</span>
+                                                        </div>
+                                                        <div className="flex justify-between w-full items-center">
+                                                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{pkg.quantity} {creditType === 'email' ? 'envios' : 'créditos'}</span>
+                                                            <span className="text-[10px] opacity-60">R$ {(pkg.price / pkg.quantity).toFixed(4).replace('.', ',')} / un</span>
+                                                        </div>
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        );
+                                    }
+                                    
                                     return (
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {currentPkgs.map(pkg => (
-                                                <Button
-                                                    key={pkg.id}
-                                                    variant={selectedPackage?.id === pkg.id ? 'default' : 'outline'}
-                                                    className={`h-auto py-3 px-4 flex flex-col items-start gap-1 transition-all ${selectedPackage?.id === pkg.id ? 'border-primary ring-1 ring-primary' : 'hover:border-primary/50'}`}
-                                                    onClick={() => handlePackageSelect(pkg)}
-                                                >
-                                                    <div className="flex justify-between w-full items-center">
-                                                        <span className="font-bold text-sm">{pkg.name}</span>
-                                                        <span className="font-mono text-xs font-bold text-primary">R$ {pkg.price.toFixed(2).replace('.', ',')}</span>
-                                                    </div>
-                                                    <div className="flex justify-between w-full items-center">
-                                                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{pkg.quantity} {creditType === 'email' ? 'envios' : 'créditos'}</span>
-                                                        <span className="text-[10px] opacity-60">R$ {(pkg.price / pkg.quantity).toFixed(4).replace('.', ',')} / un</span>
-                                                    </div>
-                                                </Button>
-                                            ))}
-                                        </div>
+                                        <>
+                                            <div className="flex space-x-2">
+                                                {[100, 500, 1000, 5000].map(val => (
+                                                    <Button
+                                                        key={val}
+                                                        variant={amount === val ? 'default' : 'outline'}
+                                                        size="sm"
+                                                        className="flex-1"
+                                                        onClick={() => setAmount(val)}
+                                                    >
+                                                        {val}
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                            <div className="pt-2">
+                                                <Label className="text-xs text-muted-foreground">Outro valor (Mín. 100)</Label>
+                                                <Input
+                                                    type="number"
+                                                    min="100"
+                                                    step="100"
+                                                    value={amount}
+                                                    onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
+                                                    className="mt-1"
+                                                />
+                                            </div>
+                                        </>
                                     );
-                                }
-                                
-                                return (
-                                    <>
-                                        <div className="flex space-x-2">
-                                            {[100, 500, 1000, 5000].map(val => (
-                                                <Button
-                                                    key={val}
-                                                    variant={amount === val ? 'default' : 'outline'}
-                                                    size="sm"
-                                                    className="flex-1"
-                                                    onClick={() => setAmount(val)}
-                                                >
-                                                    {val}
-                                                </Button>
-                                            ))}
-                                        </div>
-                                        <div className="pt-2">
-                                            <Label className="text-xs text-muted-foreground">Outro valor (Mín. 100)</Label>
-                                            <Input
-                                                type="number"
-                                                min="100"
-                                                step="100"
-                                                value={amount}
-                                                onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
-                                                className="mt-1"
-                                            />
-                                        </div>
-                                    </>
-                                );
-                            })()}
+                                })()}
+                            </div>
+                        </div>
 
                         <Card className="p-4 bg-muted/50">
                             <div className="flex justify-between items-center text-sm mb-1">
@@ -369,7 +372,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                 </span>
                             </div>
                         </Card>
-                    </div>
+                    </>
                 )}
 
                 {step === 2 && (
