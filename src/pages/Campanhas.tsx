@@ -52,6 +52,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
 import {
   Pagination,
   PaginationContent,
@@ -2531,16 +2532,23 @@ export default function Campanhas() {
                             {(totalContacts * emailNodesCount).toLocaleString('pt-BR')}
                           </p>
                           {subscriptionStats ? (
-                            <div className="space-y-0.5">
-                              <p className="text-xs text-blue-600/80 font-medium">
-                                DISPONÍVEL: {(subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR')}
-                              </p>
-                              {subscriptionStats.extraEmailsBalance && subscriptionStats.extraEmailsBalance > 0 ? (
-                                <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
-                                  <span>Plano: {Math.max(0, (subscriptionStats.emailsLimit - subscriptionStats.extraEmailsBalance) - subscriptionStats.emailsSent).toLocaleString('pt-BR')}</span>
-                                  <span>Adicional: {Math.min(subscriptionStats.extraEmailsBalance, Math.max(0, subscriptionStats.emailsLimit - subscriptionStats.emailsSent)).toLocaleString('pt-BR')}</span>
-                                </div>
-                              ) : null}
+                            <div className="space-y-2">
+                              <div className="space-y-0.5">
+                                <p className="text-xs text-blue-600/80 font-medium">
+                                  DISPONÍVEL: {(subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR')}
+                                </p>
+                                {subscriptionStats.extraEmailsBalance && subscriptionStats.extraEmailsBalance > 0 ? (
+                                  <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
+                                    <span>Plano: {Math.max(0, (subscriptionStats.emailsLimit - subscriptionStats.extraEmailsBalance) - subscriptionStats.emailsSent).toLocaleString('pt-BR')}</span>
+                                    <span>Adicional: {Math.min(subscriptionStats.extraEmailsBalance, Math.max(0, subscriptionStats.emailsLimit - subscriptionStats.emailsSent)).toLocaleString('pt-BR')}</span>
+                                  </div>
+                                ) : null}
+                              </div>
+                              <Progress 
+                                value={(subscriptionStats.emailsSent / subscriptionStats.emailsLimit) * 100} 
+                                className="h-1 bg-blue-500/20"
+                                indicatorClassName="bg-blue-500"
+                              />
                             </div>
                           ) : (
                             <p className="text-xs text-blue-600/80 font-medium">LIMITE: ...</p>
@@ -2558,16 +2566,23 @@ export default function Campanhas() {
                             {(totalContacts * smsNodesCount).toLocaleString('pt-BR')}
                           </p>
                           {subscriptionStats ? (
-                            <div className="space-y-0.5">
-                              <p className="text-xs text-green-600/80 font-medium">
-                                DISPONÍVEL: {(subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR')}
-                              </p>
-                              {subscriptionStats.extraSmsBalance && subscriptionStats.extraSmsBalance > 0 ? (
-                                <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
-                                  <span>Plano: {Math.max(0, (subscriptionStats.smsLimit - subscriptionStats.extraSmsBalance) - subscriptionStats.smsSent).toLocaleString('pt-BR')}</span>
-                                  <span>Adicional: {Math.min(subscriptionStats.extraSmsBalance, Math.max(0, subscriptionStats.smsLimit - subscriptionStats.smsSent)).toLocaleString('pt-BR')}</span>
-                                </div>
-                              ) : null}
+                            <div className="space-y-2">
+                              <div className="space-y-0.5">
+                                <p className="text-xs text-green-600/80 font-medium">
+                                  DISPONÍVEL: {(subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR')}
+                                </p>
+                                {subscriptionStats.extraSmsBalance && subscriptionStats.extraSmsBalance > 0 ? (
+                                  <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
+                                    <span>Plano: {Math.max(0, (subscriptionStats.smsLimit - subscriptionStats.extraSmsBalance) - subscriptionStats.smsSent).toLocaleString('pt-BR')}</span>
+                                    <span>Adicional: {Math.min(subscriptionStats.extraSmsBalance, Math.max(0, subscriptionStats.smsLimit - subscriptionStats.smsSent)).toLocaleString('pt-BR')}</span>
+                                  </div>
+                                ) : null}
+                              </div>
+                              <Progress 
+                                value={(subscriptionStats.smsSent / subscriptionStats.smsLimit) * 100} 
+                                className="h-1 bg-green-500/20"
+                                indicatorClassName="bg-green-500"
+                              />
                             </div>
                           ) : (
                             <p className="text-xs text-green-600/80 font-medium">LIMITE: ...</p>
@@ -2585,16 +2600,25 @@ export default function Campanhas() {
                             {(totalContacts * whatsappNodesCount).toLocaleString('pt-BR')}
                           </p>
                           {subscriptionStats ? (
-                            <div className="space-y-0.5">
-                              <p className="text-xs text-indigo-600/80 font-medium">
-                                DISPONÍVEL: {subscriptionStats.whatsappLimit === -1 ? 'Ilimitado' : (subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')}
-                              </p>
-                              {subscriptionStats.whatsappLimit !== -1 && subscriptionStats.extraWhatsappBalance && subscriptionStats.extraWhatsappBalance > 0 ? (
-                                <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
-                                  <span>Plano: {Math.max(0, (subscriptionStats.whatsappLimit - subscriptionStats.extraWhatsappBalance) - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')}</span>
-                                  <span>Adicional: {Math.min(subscriptionStats.extraWhatsappBalance, Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0))).toLocaleString('pt-BR')}</span>
-                                </div>
-                              ) : null}
+                            <div className="space-y-2">
+                              <div className="space-y-0.5">
+                                <p className="text-xs text-indigo-600/80 font-medium">
+                                  DISPONÍVEL: {subscriptionStats.whatsappLimit === -1 ? 'Ilimitado' : (subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')}
+                                </p>
+                                {subscriptionStats.whatsappLimit !== -1 && subscriptionStats.extraWhatsappBalance && subscriptionStats.extraWhatsappBalance > 0 ? (
+                                  <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
+                                    <span>Plano: {Math.max(0, (subscriptionStats.whatsappLimit - subscriptionStats.extraWhatsappBalance) - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')}</span>
+                                    <span>Adicional: {Math.min(subscriptionStats.extraWhatsappBalance, Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0))).toLocaleString('pt-BR')}</span>
+                                  </div>
+                                ) : null}
+                              </div>
+                              {subscriptionStats.whatsappLimit !== -1 && (
+                                <Progress 
+                                  value={((subscriptionStats.whatsappSent || 0) / subscriptionStats.whatsappLimit) * 100} 
+                                  className="h-1 bg-indigo-500/20"
+                                  indicatorClassName="bg-indigo-500"
+                                />
+                              )}
                             </div>
                           ) : (
                             <p className="text-xs text-indigo-600/80 font-medium">LIMITE: ...</p>
@@ -3160,33 +3184,40 @@ export default function Campanhas() {
                           {subscriptionStats ? (remaining === -1 ? 'Ilimitado' : remaining.toLocaleString('pt-BR')) : '...'}
                         </p>
                         {subscriptionStats && (
-                          <div className="space-y-1">
-                            {(() => {
-                              let extra = 0;
-                              let total = 0;
-                              if (channel === 'email') { extra = subscriptionStats.extraEmailsBalance || 0; total = subscriptionStats.emailsLimit; }
-                              else if (channel === 'sms') { extra = subscriptionStats.extraSmsBalance || 0; total = subscriptionStats.smsLimit; }
-                              else if (channel === 'whatsapp') { extra = subscriptionStats.extraWhatsappBalance || 0; total = subscriptionStats.whatsappLimit; }
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              {(() => {
+                                let extra = 0;
+                                let total = 0;
+                                let used = 0;
+                                if (channel === 'email') { extra = subscriptionStats.extraEmailsBalance || 0; total = subscriptionStats.emailsLimit; used = subscriptionStats.emailsSent; }
+                                else if (channel === 'sms') { extra = subscriptionStats.extraSmsBalance || 0; total = subscriptionStats.smsLimit; used = subscriptionStats.smsSent; }
+                                else if (channel === 'whatsapp') { extra = subscriptionStats.extraWhatsappBalance || 0; total = subscriptionStats.whatsappLimit; used = subscriptionStats.whatsappSent || 0; }
 
-                              if (extra > 0 && total !== -1) {
-                                const sent = channel === 'email' ? subscriptionStats.emailsSent : (channel === 'sms' ? subscriptionStats.smsSent : (subscriptionStats.whatsappSent || 0));
-                                const planAvailable = Math.max(0, (total - extra) - sent);
-                                const extraAvailable = Math.min(extra, Math.max(0, total - sent));
-                                
                                 return (
-                                  <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
-                                    <span>Plano: {planAvailable.toLocaleString('pt-BR')}</span>
-                                    <span>Adicional: {extraAvailable.toLocaleString('pt-BR')}</span>
-                                  </div>
+                                  <>
+                                    {extra > 0 && total !== -1 && (
+                                      <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
+                                        <span>Plano: {Math.max(0, (total - extra) - used).toLocaleString('pt-BR')}</span>
+                                        <span>Adicional: {Math.min(extra, Math.max(0, total - used)).toLocaleString('pt-BR')}</span>
+                                      </div>
+                                    )}
+                                    {total !== -1 && (
+                                      <Progress 
+                                        value={(used / total) * 100} 
+                                        className={`h-1 ${isWhatsapp && willExceed ? 'bg-destructive/20' : 'bg-green-500/20'}`}
+                                        indicatorClassName={isWhatsapp && willExceed ? 'bg-destructive' : 'bg-green-500'}
+                                      />
+                                    )}
+                                  </>
                                 );
-                              }
-                              return null;
-                            })()}
-                            {isWhatsapp && (
-                              <p className="text-xs text-muted-foreground">
-                                Serão consumidos: <strong>{remaining === -1 ? filteredContacts.length.toLocaleString('pt-BR') : Math.min(filteredContacts.length, remaining).toLocaleString('pt-BR')}</strong>
-                              </p>
-                            )}
+                              })()}
+                              {isWhatsapp && (
+                                <p className="text-xs text-muted-foreground">
+                                  Serão consumidos: <strong>{remaining === -1 ? filteredContacts.length.toLocaleString('pt-BR') : Math.min(filteredContacts.length, remaining).toLocaleString('pt-BR')}</strong>
+                                </p>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
