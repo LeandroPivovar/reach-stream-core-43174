@@ -2466,6 +2466,9 @@ export interface SubscriptionStats {
   campaignsLimit: number;
   currentPlan: string;
   price: number;
+  extraEmailsBalance?: number;
+  extraSmsBalance?: number;
+  extraWhatsappBalance?: number;
 }
 
 export interface LojaIntegradaConnection {

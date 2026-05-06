@@ -15,6 +15,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Phone, Settings, Trash2, Upload, X, Link2, Plus, Library } from 'lucide-react';
 import { api } from '@/lib/api';
+import { translateTemplateName } from '@/lib/utils';
 
 interface WhatsappNodeData {
   content?: string;
@@ -46,6 +47,37 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
   const [templates, setTemplates] = useState<any[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [dynamicVariables, setDynamicVariables] = useState<Record<string, string>>((data as any)?.templateVariables || {});
+  const [lastFocusedField, setLastFocusedField] = useState<{ id: string; varKey?: string; selectionStart: number } | null>(null);
+
+  const handleFieldBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setLastFocusedField({
+      id: e.target.id,
+      varKey: e.target.getAttribute('data-var-key') || undefined,
+      selectionStart: e.target.selectionStart || 0
+    });
+  };
+
+  const handleInsertVariable = (variable: string) => {
+    if (!lastFocusedField) {
+      // Default to content if nothing focused
+      setContent(prev => prev + variable);
+      return;
+    }
+
+    const { id, varKey, selectionStart } = lastFocusedField;
+
+    if (id === 'whatsapp-content') {
+      const newContent = content.substring(0, selectionStart) + variable + content.substring(selectionStart);
+      setContent(newContent);
+    } else if (varKey) {
+      const currentVal = dynamicVariables[varKey] || '';
+      const newVal = currentVal.substring(0, selectionStart) + variable + currentVal.substring(selectionStart);
+      setDynamicVariables(prev => ({ ...prev, [varKey]: newVal }));
+    }
+
+    // Update selection start for consecutive insertions
+    setLastFocusedField(prev => prev ? { ...prev, selectionStart: prev.selectionStart + variable.length } : null);
+  };
 
   React.useEffect(() => {
     if (isEditing && templates.length === 0) {
@@ -206,7 +238,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                                   return (
                                     <SelectItem key={t.sid} value={t.sid}>
                                       <div className="flex items-center gap-2">
-                                        <span>{t.friendlyName}</span>
+                                      <span>{translateTemplateName(t.friendlyName)}</span>
                                         <span className={`text-[10px] px-1 rounded border font-mono ${
                                           type === 'list-picker' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'
                                         }`}>
@@ -283,8 +315,9 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                               <Badge 
                                 key={v.value} 
                                 variant="outline" 
-                                className="cursor-help text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
-                                title={`Use ${v.value} para substituir pelo valor dinâmico`}
+                                className="cursor-pointer text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
+                                title={`Clique para inserir ${v.value}`}
+                                onClick={() => handleInsertVariable(v.value)}
                               >
                                 {v.label}
                               </Badge>
@@ -302,6 +335,8 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                                 <div className="relative">
                                   <Input 
                                     value={dynamicVariables[key] || ''}
+                                    data-var-key={key}
+                                    onBlur={handleFieldBlur}
                                     onChange={e => setDynamicVariables({...dynamicVariables, [key]: e.target.value})}
                                     placeholder={`Ex: {{nome}} ou texto fixo`}
                                     className="h-8 text-sm pr-20"
@@ -353,6 +388,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                 <textarea
                   id="whatsapp-content"
                   value={content}
+                  onBlur={handleFieldBlur}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Digite a mensagem..."
                   rows={6}

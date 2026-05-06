@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, translateTemplateName } from '@/lib/utils';
 import { WorkflowCanvas, WorkflowStep } from '@/components/workflow/WorkflowCanvas';
 import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
 import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
@@ -197,6 +197,52 @@ export default function Campanhas() {
     maxRevenue: ''
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [lastFocusedField, setLastFocusedField] = useState<{ id: string; varKey?: string; selectionStart: number } | null>(null);
+
+  const handleFieldBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setLastFocusedField({
+      id: e.target.id,
+      varKey: e.target.getAttribute('data-var-key') || undefined,
+      selectionStart: e.target.selectionStart || 0
+    });
+  };
+
+  const handleInsertVariable = (variable: string) => {
+    if (!lastFocusedField) {
+      // Default to content if nothing focused
+      setNewCampaign(prev => ({
+        ...prev,
+        email: { ...prev.email, content: prev.email.content + variable }
+      }));
+      return;
+    }
+
+    const { id, varKey, selectionStart } = lastFocusedField;
+
+    if (id === 'whatsapp-content' || id === 'email-content' || id === 'sms-content') {
+      const content = newCampaign.email.content;
+      const newContent = content.substring(0, selectionStart) + variable + content.substring(selectionStart);
+      setNewCampaign(prev => ({
+        ...prev,
+        email: { ...prev.email, content: newContent }
+      }));
+    } else if (varKey) {
+      const vars = { ...((newCampaign.email as any).templateVariables || {}) };
+      const currentVal = vars[varKey] || '';
+      const newVal = currentVal.substring(0, selectionStart) + variable + currentVal.substring(selectionStart);
+      vars[varKey] = newVal;
+      setNewCampaign(prev => ({
+        ...prev,
+        email: {
+          ...prev.email,
+          ...({ templateVariables: vars } as any)
+        }
+      }));
+    }
+
+    // Update selection start for consecutive insertions
+    setLastFocusedField(prev => prev ? { ...prev, selectionStart: prev.selectionStart + variable.length } : null);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -1863,7 +1909,7 @@ export default function Campanhas() {
                                 return (
                                   <SelectItem key={t.sid} value={t.sid}>
                                     <div className="flex items-center gap-2">
-                                      <span>{t.friendlyName}</span>
+                                      <span>{translateTemplateName(t.friendlyName)}</span>
                                       <span className={`text-[10px] px-1 rounded border font-mono ${
                                         type === 'list-picker' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'
                                       }`}>
@@ -1942,8 +1988,9 @@ export default function Campanhas() {
                                     <Badge 
                                       key={v.value} 
                                       variant="outline" 
-                                      className="cursor-help text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
-                                      title={`Use ${v.value} para substituir pelo valor dinâmico`}
+                                      className="cursor-pointer text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
+                                      title={`Clique para inserir ${v.value}`}
+                                      onClick={() => handleInsertVariable(v.value)}
                                     >
                                       {v.label}
                                     </Badge>
@@ -1961,6 +2008,8 @@ export default function Campanhas() {
                                       <div className="relative">
                                         <Input 
                                           value={(newCampaign.email as any).templateVariables[key] || ''}
+                                            data-var-key={key}
+                                            onBlur={handleFieldBlur}
                                           onChange={e => {
                                             const vars = { ...((newCampaign.email as any).templateVariables || {}) };
                                             vars[key] = e.target.value;
@@ -2022,6 +2071,7 @@ export default function Campanhas() {
                       <Textarea
                         id="whatsapp-content"
                         value={newCampaign.email.content}
+                        onBlur={handleFieldBlur}
                         onChange={(e) => setNewCampaign({
                           ...newCampaign,
                           email: { ...newCampaign.email, content: e.target.value }
@@ -2171,6 +2221,7 @@ export default function Campanhas() {
                         <Textarea
                           id="email-content"
                           value={newCampaign.email.content}
+                          onBlur={handleFieldBlur}
                           onChange={(e) => setNewCampaign({
                             ...newCampaign,
                             email: { ...newCampaign.email, content: e.target.value }
@@ -2293,6 +2344,7 @@ export default function Campanhas() {
                         <Textarea
                           id="sms-content"
                           value={newCampaign.email.content}
+                          onBlur={handleFieldBlur}
                           onChange={(e) => {
                             if (e.target.value.length <= 160) {
                               setNewCampaign({
@@ -2478,9 +2530,21 @@ export default function Campanhas() {
                           <p className="text-2xl font-bold text-foreground">
                             {(totalContacts * emailNodesCount).toLocaleString('pt-BR')}
                           </p>
-                          <p className="text-xs text-blue-600/80 font-medium">
-                            LIMITE: {subscriptionStats ? (subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR') : '...'}
-                          </p>
+                          {subscriptionStats ? (
+                            <div className="space-y-0.5">
+                              <p className="text-xs text-blue-600/80 font-medium">
+                                DISPONÍVEL: {(subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR')}
+                              </p>
+                              {subscriptionStats.extraEmailsBalance && subscriptionStats.extraEmailsBalance > 0 ? (
+                                <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
+                                  <span>Plano: {Math.max(0, (subscriptionStats.emailsLimit - subscriptionStats.extraEmailsBalance) - subscriptionStats.emailsSent).toLocaleString('pt-BR')}</span>
+                                  <span>Adicional: {Math.min(subscriptionStats.extraEmailsBalance, Math.max(0, subscriptionStats.emailsLimit - subscriptionStats.emailsSent)).toLocaleString('pt-BR')}</span>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-blue-600/80 font-medium">LIMITE: ...</p>
+                          )}
                         </div>
                       </Card>
 
@@ -2493,9 +2557,21 @@ export default function Campanhas() {
                           <p className="text-2xl font-bold text-foreground">
                             {(totalContacts * smsNodesCount).toLocaleString('pt-BR')}
                           </p>
-                          <p className="text-xs text-green-600/80 font-medium">
-                            LIMITE: {subscriptionStats ? (subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR') : '...'}
-                          </p>
+                          {subscriptionStats ? (
+                            <div className="space-y-0.5">
+                              <p className="text-xs text-green-600/80 font-medium">
+                                DISPONÍVEL: {(subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR')}
+                              </p>
+                              {subscriptionStats.extraSmsBalance && subscriptionStats.extraSmsBalance > 0 ? (
+                                <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
+                                  <span>Plano: {Math.max(0, (subscriptionStats.smsLimit - subscriptionStats.extraSmsBalance) - subscriptionStats.smsSent).toLocaleString('pt-BR')}</span>
+                                  <span>Adicional: {Math.min(subscriptionStats.extraSmsBalance, Math.max(0, subscriptionStats.smsLimit - subscriptionStats.smsSent)).toLocaleString('pt-BR')}</span>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-green-600/80 font-medium">LIMITE: ...</p>
+                          )}
                         </div>
                       </Card>
 
@@ -2508,9 +2584,21 @@ export default function Campanhas() {
                           <p className="text-2xl font-bold text-foreground">
                             {(totalContacts * whatsappNodesCount).toLocaleString('pt-BR')}
                           </p>
-                          <p className="text-xs text-indigo-600/80 font-medium">
-                            LIMITE: {subscriptionStats ? (subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR') : '...'}
-                          </p>
+                          {subscriptionStats ? (
+                            <div className="space-y-0.5">
+                              <p className="text-xs text-indigo-600/80 font-medium">
+                                DISPONÍVEL: {subscriptionStats.whatsappLimit === -1 ? 'Ilimitado' : (subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')}
+                              </p>
+                              {subscriptionStats.whatsappLimit !== -1 && subscriptionStats.extraWhatsappBalance && subscriptionStats.extraWhatsappBalance > 0 ? (
+                                <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
+                                  <span>Plano: {Math.max(0, (subscriptionStats.whatsappLimit - subscriptionStats.extraWhatsappBalance) - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')}</span>
+                                  <span>Adicional: {Math.min(subscriptionStats.extraWhatsappBalance, Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0))).toLocaleString('pt-BR')}</span>
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-indigo-600/80 font-medium">LIMITE: ...</p>
+                          )}
                         </div>
                       </Card>
                     </div>
@@ -3044,7 +3132,11 @@ export default function Campanhas() {
                   if (subscriptionStats) {
                     if (channel === 'email') remaining = Math.max(0, subscriptionStats.emailsLimit - subscriptionStats.emailsSent);
                     else if (channel === 'sms') remaining = Math.max(0, subscriptionStats.smsLimit - subscriptionStats.smsSent);
-                    else if (channel === 'whatsapp') remaining = Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0));
+                    else if (channel === 'whatsapp') {
+                      remaining = subscriptionStats.whatsappLimit === -1 
+                        ? -1 
+                        : Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0));
+                    }
                   }
 
                   const willExceed = subscriptionStats && filteredContacts.length > remaining;
@@ -3061,16 +3153,43 @@ export default function Campanhas() {
                           {isWhatsapp ? 'Créditos WhatsApp restantes' : 'Envios restantes'}
                         </span>
                       </div>
-                      <p className={`text-2xl font-bold ${
-                        isWhatsapp && willExceed ? 'text-destructive' : 'text-foreground'
-                      }`}>
-                        {subscriptionStats ? remaining.toLocaleString('pt-BR') : '...'}
-                      </p>
-                      {isWhatsapp && subscriptionStats && (
-                        <p className="text-xs mt-1 text-muted-foreground">
-                          Serão consumidos: <strong>{Math.min(filteredContacts.length, remaining).toLocaleString('pt-BR')}</strong>
+                      <div className="space-y-1">
+                        <p className={`text-2xl font-bold ${
+                          isWhatsapp && willExceed ? 'text-destructive' : 'text-foreground'
+                        }`}>
+                          {subscriptionStats ? (remaining === -1 ? 'Ilimitado' : remaining.toLocaleString('pt-BR')) : '...'}
                         </p>
-                      )}
+                        {subscriptionStats && (
+                          <div className="space-y-1">
+                            {(() => {
+                              let extra = 0;
+                              let total = 0;
+                              if (channel === 'email') { extra = subscriptionStats.extraEmailsBalance || 0; total = subscriptionStats.emailsLimit; }
+                              else if (channel === 'sms') { extra = subscriptionStats.extraSmsBalance || 0; total = subscriptionStats.smsLimit; }
+                              else if (channel === 'whatsapp') { extra = subscriptionStats.extraWhatsappBalance || 0; total = subscriptionStats.whatsappLimit; }
+
+                              if (extra > 0 && total !== -1) {
+                                const sent = channel === 'email' ? subscriptionStats.emailsSent : (channel === 'sms' ? subscriptionStats.smsSent : (subscriptionStats.whatsappSent || 0));
+                                const planAvailable = Math.max(0, (total - extra) - sent);
+                                const extraAvailable = Math.min(extra, Math.max(0, total - sent));
+                                
+                                return (
+                                  <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
+                                    <span>Plano: {planAvailable.toLocaleString('pt-BR')}</span>
+                                    <span>Adicional: {extraAvailable.toLocaleString('pt-BR')}</span>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
+                            {isWhatsapp && (
+                              <p className="text-xs text-muted-foreground">
+                                Serão consumidos: <strong>{remaining === -1 ? filteredContacts.length.toLocaleString('pt-BR') : Math.min(filteredContacts.length, remaining).toLocaleString('pt-BR')}</strong>
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </Card>
                   );
                 })()}
