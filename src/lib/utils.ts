@@ -29,15 +29,30 @@ export function translateTemplateName(name: string): string {
     'Receipt': 'Recibo',
     'Invoice': 'Fatura',
     'Appointment': 'Agendamento/Consulta',
-    'Reservation': 'Reserva'
+    'Reservation': 'Reserva',
+    'inactive_clients': 'Clientes Inativos',
+    'high_ticket_clients': 'Clientes de Alto Valor',
+    'automatic_rebuy': 'Recompra Automática',
+    'buyers_especific_product': 'Compradores de Produto Específico',
+    'almost_loss': 'Quase Perda',
+    'cross_sell': 'Venda Cruzada',
+    'recovered_client': 'Cliente Recuperado',
+    'loyalty_campaign': 'Campanha de Fidelidade',
+    'black_friday': 'Black Friday',
+    'valentines_day': 'Dia dos Namorados',
+    'media': 'Mídia'
   };
 
-  let translatedName = name;
+  let translatedName = name.replace(/_/g, ' ');
   Object.entries(translations).forEach(([en, pt]) => {
-    // Case insensitive match with word boundaries
-    const regex = new RegExp(`\\b${en}\\b`, 'gi');
+    const cleanEn = en.replace(/_/g, ' ');
+    const regex = new RegExp(`\\b${cleanEn}\\b`, 'gi');
     translatedName = translatedName.replace(regex, pt);
   });
 
-  return translatedName;
+  return translatedName
+    .split(' ')
+    .filter(Boolean)
+    .map((word, i) => i === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word)
+    .join(' ');
 }
