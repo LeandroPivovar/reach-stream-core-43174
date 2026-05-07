@@ -347,7 +347,16 @@ export default function Assinaturas() {
                     {limit != null && limit !== -1 && (
                       <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
                     )}
-                    {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>}
+                    {limit === -1 && (
+                      <>
+                        <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>
+                        {(stats as any)?.extraWhatsappBalance > 0 && (
+                          <span className="block text-[10px] text-emerald-600 font-bold mt-1">
+                            + {(stats as any).extraWhatsappBalance.toLocaleString()} créditos extras
+                          </span>
+                        )}
+                      </>
+                    )}
                   </p>
                   {limit != null && limit !== -1 && (
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4">
