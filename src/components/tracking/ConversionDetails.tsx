@@ -11,6 +11,7 @@ import {
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { translatePaymentMethod } from '@/lib/utils';
 
 interface ConversionDetailsProps {
   periodDays?: number;
@@ -145,7 +146,7 @@ export function ConversionDetails({ periodDays = 30 }: ConversionDetailsProps) {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${payment.color}`} />
-                        <span className="font-medium text-sm">{payment.method}</span>
+                        <span className="font-medium text-sm">{translatePaymentMethod(payment.method)}</span>
                       </div>
                       <Badge variant="outline" className="text-xs">
                         {payment.percentage}%
@@ -177,7 +178,7 @@ export function ConversionDetails({ periodDays = 30 }: ConversionDetailsProps) {
                     <div className="flex items-center gap-2">
                       <ArrowRight className="w-3 h-3" />
                       <span>
-                        <strong className="text-foreground">{paymentMethods[0].method}</strong> é o método preferido, com <strong className="text-foreground">{paymentMethods[0].percentage}%</strong> das conversões
+                        <strong className="text-foreground">{translatePaymentMethod(paymentMethods[0].method)}</strong> é o método preferido, com <strong className="text-foreground">{paymentMethods[0].percentage}%</strong> das conversões
                       </span>
                     </div>
                   )}

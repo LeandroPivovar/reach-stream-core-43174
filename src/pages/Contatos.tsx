@@ -2864,7 +2864,7 @@ export default function Contatos() {
         }
       }
       }>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Importar Contatos</DialogTitle>
             <DialogDescription>
@@ -2899,6 +2899,8 @@ export default function Contatos() {
                         Etiquetas: 'Cliente Premium; Fidelidade',
                         Estado: 'SP',
                         Cidade: 'São Paulo',
+                        'Data de Nascimento': '1990-05-15',
+                        'Gênero': 'M',
                         Segmentações: 'by_purchase_count; high_ticket'
                       },
                       {
@@ -2910,6 +2912,8 @@ export default function Contatos() {
                         Etiquetas: 'Newsletter',
                         Estado: 'RJ',
                         Cidade: 'Rio de Janeiro',
+                        'Data de Nascimento': '1985-10-20',
+                        'Gênero': 'F',
                         Segmentações: 'birthday'
                       },
                       {
@@ -2921,6 +2925,8 @@ export default function Contatos() {
                         Etiquetas: '',
                         Estado: 'MG',
                         Cidade: 'Belo Horizonte',
+                        'Data de Nascimento': '',
+                        'Gênero': '',
                         Segmentações: ''
                       }
                     ];
@@ -3010,6 +3016,8 @@ export default function Contatos() {
                 <p>• <strong>Status</strong>: Ativo, Inativo, etc.</p>
                 <p>• <strong>Etiquetas</strong>: Separadas por ponto e vírgula (;)</p>
                 <p>• <strong>Estado, Cidade</strong>: Localização</p>
+                <p>• <strong>Data de Nascimento</strong>: Formato AAAA-MM-DD</p>
+                <p>• <strong>Gênero</strong>: M ou F</p>
                 <p>• <strong>Segmentações</strong>: IDs separados por ponto e vírgula (;)</p>
               </div>
             </div>

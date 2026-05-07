@@ -40,7 +40,43 @@ export function translateTemplateName(name: string): string {
     'loyalty_campaign': 'Campanha de Fidelidade',
     'black_friday': 'Black Friday',
     'valentines_day': 'Dia dos Namorados',
-    'media': 'Mídia'
+    'media': 'Mídia',
+    'upsell': 'Venda Adicional (Upsell)',
+    'urgency': 'Urgência',
+    'active_coupon': 'Cupom Ativo',
+    'movement_campaign': 'Campanha de Movimentação',
+    'client_day': 'Dia do Cliente',
+    'inactive_cart': 'Carrinho Inativo',
+    'state_location': 'Localização por Estado',
+    'remarketing': 'Remarketing',
+    'birthday_monthly': 'Aniversariantes do Mês',
+    'news': 'Novidades',
+    'lead_first_contact': 'Primeiro Contato (Lead)',
+    'discret_benefit': 'Benefício Discreto',
+    'message_remember_you': 'Mensagem "Lembrei de Você"',
+    'relationship_benefit_nopression': 'Benefício de Relacionamento',
+    'surprise': 'Surpresa',
+    'abandoned_cart': 'Carrinho Abandonado',
+    'christmas': 'Natal',
+    'highticket_giftback': 'Giftback Alto Valor',
+    'moms_day': 'Dia das Mães',
+    'giftback': 'Giftback',
+    'micro_interation': 'Micro Interação',
+    'preference_list': 'Lista de Preferências',
+    'micro_feedback': 'Micro Feedback',
+    'relacionamento': 'Relacionamento',
+    'storytelling': 'Storytelling',
+    'checkin': 'Check-in',
+    'open_conversation': 'Abrir Conversa',
+    'content_information': 'Conteúdo e Informação',
+    'promotional_cupom': 'Cupom Promocional',
+    'hello_message_new_user': 'Boas-vindas Novo Usuário',
+    'notification_order_tracking': 'Rastreamento de Pedido',
+    'marketing_welcome_template': 'Boas-vindas (Marketing)',
+    'marketing_birthday_discount_template': 'Desconto de Aniversário (Marketing)',
+    'message_opt_in': 'Opt-in de Mensagens',
+    'marketing_holiday_template': 'Campanha de Feriado (Marketing)',
+    'copy': 'Cópia',
   };
 
   let translatedName = name.replace(/_/g, ' ');
@@ -55,4 +91,22 @@ export function translateTemplateName(name: string): string {
     .filter(Boolean)
     .map((word, i) => i === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word)
     .join(' ');
+}
+
+export function translatePaymentMethod(method: string): string {
+  if (!method) return method;
+  
+  const translations: Record<string, string> = {
+    'credit_card': 'Cartão de Crédito',
+    'bank_transfer': 'Transferência Bancária',
+    'boleto': 'Boleto',
+    'pix': 'Pix',
+    'paypal': 'PayPal',
+    'other': 'Outro',
+    'debit_card': 'Cartão de Débito',
+    'manual': 'Manual',
+    'cash': 'Dinheiro'
+  };
+
+  return translations[method.toLowerCase()] || method;
 }

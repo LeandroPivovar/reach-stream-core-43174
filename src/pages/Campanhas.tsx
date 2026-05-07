@@ -135,6 +135,7 @@ export default function Campanhas() {
   const [isStatusUpdateOpen, setIsStatusUpdateOpen] = useState(false);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isBuyCreditsModalOpen, setIsBuyCreditsModalOpen] = useState(false);
+  const [buyCreditsInitialType, setBuyCreditsInitialType] = useState<'email' | 'sms' | 'whatsapp' | undefined>();
   const [campaignForStatusUpdate, setCampaignForStatusUpdate] = useState<Campaign | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const contactsPerPage = 10;
@@ -535,6 +536,7 @@ export default function Campanhas() {
       );
 
       if (noCredits) {
+        setBuyCreditsInitialType('whatsapp');
         setIsBuyCreditsModalOpen(true);
         setIsSaving(false);
         return;
@@ -1749,6 +1751,7 @@ export default function Campanhas() {
                                 className="h-7 text-[10px] font-bold px-4"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  setBuyCreditsInitialType('whatsapp');
                                   setIsBuyCreditsModalOpen(true);
                                 }}
                               >
@@ -2483,7 +2486,10 @@ export default function Campanhas() {
                 twilioConfigured={twilioConfigured}
                 whatsappLimit={subscriptionStats?.whatsappLimit}
                 whatsappSent={subscriptionStats?.whatsappSent}
-                onBuyCredits={() => setIsBuyCreditsModalOpen(true)}
+                onBuyCredits={() => {
+                  setBuyCreditsInitialType('whatsapp');
+                  setIsBuyCreditsModalOpen(true);
+                }}
                 onOpenTemplateModal={() => setIsTemplateModalOpen(true)}
               />
 
@@ -3579,6 +3585,7 @@ export default function Campanhas() {
       <BuyCreditsModal
         isOpen={isBuyCreditsModalOpen}
         onClose={() => setIsBuyCreditsModalOpen(false)}
+        initialType={buyCreditsInitialType}
         onSuccess={() => {
           loadExternalData();
         }}
