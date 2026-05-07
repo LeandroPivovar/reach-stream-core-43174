@@ -79,7 +79,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
+import { cn, translatePaymentMethod } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 
 export default function Vendas() {
@@ -590,7 +590,7 @@ export default function Vendas() {
                         <div className="flex items-center gap-3">
                           <CreditCard className="w-5 h-5 text-muted-foreground" />
                           <div>
-                            <p className="font-medium">{pagamento.metodo}</p>
+                            <p className="font-medium">{translatePaymentMethod(pagamento.metodo)}</p>
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <span>{pagamento.transacoes} transações</span>
                               <span className="flex items-center gap-1">

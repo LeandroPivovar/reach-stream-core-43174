@@ -14,12 +14,13 @@ interface BuyCreditsModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    initialType?: 'email' | 'sms' | 'whatsapp';
 }
 
-export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalProps) {
+export function BuyCreditsModal({ isOpen, onClose, onSuccess, initialType }: BuyCreditsModalProps) {
     const { user } = useAuth();
     const [step, setStep] = useState(1); // 1: Config, 2: Checkout (if Card), 3: Success/QR
-    const [creditType, setCreditType] = useState<'email' | 'sms' | 'whatsapp'>('email');
+    const [creditType, setCreditType] = useState<'email' | 'sms' | 'whatsapp'>(initialType || 'email');
     const [amount, setAmount] = useState<number>(1000);
     const [billingType, setBillingType] = useState<'PIX' | 'CREDIT_CARD'>('PIX');
     const [loading, setLoading] = useState(false);
@@ -42,6 +43,12 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
         postalCode: user?.postalCode || '',
         address: user?.address || ''
     });
+
+    useEffect(() => {
+        if (isOpen && initialType) {
+            setCreditType(initialType);
+        }
+    }, [isOpen, initialType]);
 
     useEffect(() => {
         setWhatsappPackages([]);
@@ -303,22 +310,16 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                     
                                     if (currentPkgs.length > 0) {
                                         return (
-                                            <div className="grid grid-cols-1 gap-2">
+                                            <div className="grid grid-cols-2 gap-3">
                                                 {currentPkgs.map(pkg => (
                                                     <Button
                                                         key={pkg.id}
                                                         variant={selectedPackage?.id === pkg.id ? 'default' : 'outline'}
-                                                        className={`h-auto py-3 px-4 flex flex-col items-start gap-1 transition-all ${selectedPackage?.id === pkg.id ? 'border-primary ring-1 ring-primary' : 'hover:border-primary/50'}`}
+                                                        className={`h-auto py-4 px-4 flex flex-col items-center gap-1 transition-all ${selectedPackage?.id === pkg.id ? 'border-primary ring-1 ring-primary' : 'hover:border-primary/50'}`}
                                                         onClick={() => handlePackageSelect(pkg)}
                                                     >
-                                                        <div className="flex justify-between w-full items-center">
-                                                            <span className="font-bold text-sm">{pkg.name}</span>
-                                                            <span className="font-mono text-xs font-bold text-primary">R$ {pkg.price.toFixed(2).replace('.', ',')}</span>
-                                                        </div>
-                                                        <div className="flex justify-between w-full items-center">
-                                                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{pkg.amount} {creditType === 'email' ? 'envios' : 'créditos'}</span>
-                                                            <span className="text-[10px] opacity-60">R$ {(pkg.price / pkg.amount).toFixed(4).replace('.', ',')} / un</span>
-                                                        </div>
+                                                        <span className="font-bold text-sm">{pkg.amount} {creditType === 'email' ? 'Envios' : 'Créditos'}</span>
+                                                        <span className="text-xs font-bold text-primary">R$ {pkg.price.toFixed(2).replace('.', ',')}</span>
                                                     </Button>
                                                 ))}
                                             </div>
@@ -327,13 +328,12 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess }: BuyCreditsModalP
                                     
                                     return (
                                         <>
-                                            <div className="flex space-x-2">
+                                            <div className="grid grid-cols-4 gap-2">
                                                 {[100, 500, 1000, 5000].map(val => (
                                                     <Button
                                                         key={val}
                                                         variant={amount === val ? 'default' : 'outline'}
                                                         size="sm"
-                                                        className="flex-1"
                                                         onClick={() => setAmount(val)}
                                                     >
                                                         {val}
