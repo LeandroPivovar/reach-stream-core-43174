@@ -319,7 +319,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess, initialType }: Buy
                                                         onClick={() => handlePackageSelect(pkg)}
                                                     >
                                                         <span className="font-bold text-sm">{pkg.amount} {creditType === 'email' ? 'Envios' : 'Créditos'}</span>
-                                                        <span className="text-xs font-bold text-primary">R$ {pkg.price.toFixed(2).replace('.', ',')}</span>
+                                                        <span className={cn("text-xs font-bold", selectedPackage?.id === pkg.id ? "text-white/90" : "text-primary")}>R$ {pkg.price.toFixed(2).replace('.', ',')}</span>
                                                     </Button>
                                                 ))}
                                             </div>
