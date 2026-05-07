@@ -69,18 +69,32 @@ export default function ShopifyCallback() {
         const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
         const endpoint = `/api/shopify/auth/callback?code=${code}&shop=${encodeURIComponent(shop)}&state=${encodeURIComponent(state)}`;
 
-        const response = await fetch(`${baseUrl}${endpoint}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+        // Verificar se já temos o token na URL (redirecionamento direto do backend)
+        let jwtToken = searchParams.get('token');
+        let connectionData = null;
 
-        if (!response.ok) {
-          throw new Error('Falha ao processar callback');
+        if (!jwtToken) {
+          const response = await fetch(`${baseUrl}${endpoint}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Falha ao processar callback');
+          }
+
+          const data = await response.json();
+          jwtToken = data.token;
+          connectionData = data.connection;
         }
 
-        const data = await response.json();
+        // Se o backend retornou um token (auto-login/registro), salva no localStorage
+        if (jwtToken) {
+          localStorage.setItem('token', jwtToken);
+          // Opcional: recarregar o contexto de autenticação se necessário
+        }
 
         // Limpar dados temporários
         localStorage.removeItem('shopify_oauth_state');
