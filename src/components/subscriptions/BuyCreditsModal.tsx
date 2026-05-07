@@ -9,6 +9,7 @@ import { Smartphone, Mail, QrCode, CreditCard, ShieldCheck, Loader2, ChevronRigh
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 
 interface BuyCreditsModalProps {
     isOpen: boolean;
