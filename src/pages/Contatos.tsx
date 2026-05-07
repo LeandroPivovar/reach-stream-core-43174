@@ -226,6 +226,11 @@ export default function Contatos() {
     city: '',
     birthDate: '',
     gender: 'all',
+    lastName: '',
+    company: '',
+    position: '',
+    notes: '',
+    source: '',
   });
 
 
@@ -914,7 +919,7 @@ export default function Contatos() {
         // Editar contato existente
         const apiContact = await api.updateContact(editingContactId, {
           name: newContact.name,
-          lastName: newContact.name.split(' ').slice(1).join(' ') || undefined,
+          lastName: newContact.lastName || (newContact.name.split(' ').slice(1).join(' ')) || undefined,
           email: newContact.email || undefined,
           phone: newContact.phone || undefined,
           status: newContact.status || undefined,
@@ -923,8 +928,11 @@ export default function Contatos() {
           groupId: groupId || null,
           tagIds: tagIds.length > 0 ? tagIds : [],
           birthDate: newContact.birthDate || undefined,
-
           gender: newContact.gender !== 'all' ? newContact.gender : undefined,
+          company: newContact.company || undefined,
+          position: newContact.position || undefined,
+          notes: newContact.notes || undefined,
+          source: newContact.source || undefined,
         });
         const updatedContact = convertApiContactToFrontend(apiContact);
         setContacts(contacts.map(c => c.id === editingContactId ? updatedContact : c));
@@ -935,20 +943,22 @@ export default function Contatos() {
         setEditingContactId(null);
         trackAction('Editar Contato', { contactId: editingContactId });
       } else {
-        // Criar novo contato
         const apiContact = await api.createContact({
           name: newContact.name,
-          lastName: newContact.name.split(' ').slice(1).join(' ') || undefined,
+          lastName: newContact.lastName || (newContact.name.split(' ').slice(1).join(' ')) || undefined,
           email: newContact.email || undefined,
           phone: newContact.phone || undefined,
           status: newContact.status || undefined,
           state: newContact.state || undefined,
           city: newContact.city || undefined,
-          groupId: groupId,
+          groupId: groupId || undefined,
           tagIds: tagIds.length > 0 ? tagIds : undefined,
           birthDate: newContact.birthDate || undefined,
-
           gender: newContact.gender !== 'all' ? newContact.gender : undefined,
+          company: newContact.company || undefined,
+          position: newContact.position || undefined,
+          notes: newContact.notes || undefined,
+          source: newContact.source || undefined,
         });
         const newContactFrontend = convertApiContactToFrontend(apiContact);
         setContacts([...contacts, newContactFrontend]);
@@ -1034,6 +1044,11 @@ export default function Contatos() {
       city: contact.city,
       birthDate: contact.birthDate,
       gender: contact.gender,
+      lastName: contact.lastName || '',
+      company: (contact as any).company || '',
+      position: (contact as any).position || '',
+      notes: (contact as any).notes || '',
+      source: (contact as any).source || '',
     });
 
     setIsNewContactOpen(true);
@@ -2648,14 +2663,25 @@ export default function Contatos() {
             <DialogTitle>{editingContactId ? 'Editar Contato' : 'Novo Contato'}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Nome *</Label>
-              <Input
-                id="name"
-                value={newContact.name}
-                onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-                placeholder="Digite o nome completo"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Nome *</Label>
+                <Input
+                  id="name"
+                  value={newContact.name}
+                  onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
+                  placeholder="Nome"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="lastName">Sobrenome</Label>
+                <Input
+                  id="lastName"
+                  value={newContact.lastName}
+                  onChange={(e) => setNewContact({ ...newContact, lastName: e.target.value })}
+                  placeholder="Sobrenome"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -2808,6 +2834,48 @@ export default function Contatos() {
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="company">Empresa</Label>
+                <Input
+                  id="company"
+                  value={newContact.company}
+                  onChange={(e) => setNewContact({ ...newContact, company: e.target.value })}
+                  placeholder="Nome da empresa"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="position">Cargo</Label>
+                <Input
+                  id="position"
+                  value={newContact.position}
+                  onChange={(e) => setNewContact({ ...newContact, position: e.target.value })}
+                  placeholder="Cargo na empresa"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="source">Origem</Label>
+              <Input
+                id="source"
+                value={newContact.source}
+                onChange={(e) => setNewContact({ ...newContact, source: e.target.value })}
+                placeholder="Ex: Instagram, Indicação, Evento..."
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="notes">Notas / Observações</Label>
+              <textarea
+                id="notes"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={newContact.notes}
+                onChange={(e) => setNewContact({ ...newContact, notes: e.target.value })}
+                placeholder="Informações adicionais sobre o contato..."
+              />
+            </div>
+
             <div className="flex justify-end gap-3 mt-4">
               <Button variant="outline" onClick={() => setIsNewContactOpen(false)}>
                 Cancelar
@@ -2901,6 +2969,11 @@ export default function Contatos() {
                         Cidade: 'São Paulo',
                         'Data de Nascimento': '1990-05-15',
                         'Gênero': 'M',
+                        Sobrenome: 'Silva',
+                        Empresa: 'Exemplo Corp',
+                        Cargo: 'Gerente',
+                        Notas: 'Cliente muito importante',
+                        Origem: 'Indicação',
                         Segmentações: 'by_purchase_count; high_ticket'
                       },
                       {
@@ -2914,6 +2987,11 @@ export default function Contatos() {
                         Cidade: 'Rio de Janeiro',
                         'Data de Nascimento': '1985-10-20',
                         'Gênero': 'F',
+                        Sobrenome: 'Santos',
+                        Empresa: '',
+                        Cargo: '',
+                        Notas: '',
+                        Origem: 'Instagram',
                         Segmentações: 'birthday'
                       },
                       {
@@ -2927,6 +3005,11 @@ export default function Contatos() {
                         Cidade: 'Belo Horizonte',
                         'Data de Nascimento': '',
                         'Gênero': '',
+                        Sobrenome: 'Oliveira',
+                        Empresa: '',
+                        Cargo: '',
+                        Notas: '',
+                        Origem: '',
                         Segmentações: ''
                       }
                     ];
