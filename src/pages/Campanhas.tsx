@@ -1973,15 +1973,32 @@ export default function Campanhas() {
                               {isLoadingTemplates && <SelectItem value="loading" disabled>Carregando templates...</SelectItem>}
                               {twilioTemplates.map(t => {
                                 const type = Object.keys(t.types || {})[0]?.split('/').pop() || 'unknown';
+                                const status = t.status || 'unknown';
                                 return (
                                   <SelectItem key={t.sid} value={t.sid}>
-                                    <div className="flex items-center gap-2">
-                                      <span>{translateTemplateName(t.friendlyName)}</span>
-                                      <span className={`text-[10px] px-1 rounded border font-mono ${
-                                        type === 'list-picker' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'
-                                      }`}>
-                                        {type.toUpperCase()}
-                                      </span>
+                                    <div className="flex items-center justify-between w-full gap-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">{translateTemplateName(t.friendlyName)}</span>
+                                        <span className={`text-[10px] px-1 rounded border font-mono ${
+                                          type === 'list-picker' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'
+                                        }`}>
+                                          {type.toUpperCase()}
+                                        </span>
+                                      </div>
+                                      
+                                      <Badge 
+                                        variant="outline" 
+                                        className={cn(
+                                          "text-[9px] uppercase px-1.5 py-0 h-4",
+                                          status === 'approved' ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                          status === 'rejected' ? "bg-red-50 text-red-700 border-red-200" :
+                                          "bg-slate-50 text-slate-600 border-slate-200"
+                                        )}
+                                      >
+                                        {status === 'approved' ? 'Aprovado' : 
+                                         status === 'rejected' ? 'Rejeitado' : 
+                                         status === 'pending' ? 'Pendente' : 'Desconhecido'}
+                                      </Badge>
                                     </div>
                                   </SelectItem>
                                 );
