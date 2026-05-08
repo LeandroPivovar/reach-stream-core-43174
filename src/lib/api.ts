@@ -1818,7 +1818,7 @@ class ApiService {
   async uploadCampaignMedia(file: File): Promise<{ url: string; name: string; type: string }> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.request<{ url: string; name: string; type: string }>('/uploads/campaign-media', {
+    return this.request<{ url: string; name: string; type: string }>('/campaign-assets/upload', {
       method: 'POST',
       body: formData,
     });
