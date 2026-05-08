@@ -2032,8 +2032,8 @@ export default function Campanhas() {
                             });
                           }
 
+                          const variablesToShow = Object.keys((newCampaign.email as any).templateVariables || {});
                           const listPickerData = selectedWhatsappTemplate?.types?.['twilio/list-picker'];
-                          const variablesToShow = Object.keys((newCampaign.email as any).templateVariables || {}).filter(key => !mediaVariables.includes(key));
 
                           if (variablesToShow.length === 0 && !listPickerData) return null;
 
@@ -2066,9 +2066,14 @@ export default function Campanhas() {
                                 <div className="grid gap-3">
                                   {variablesToShow.map(key => (
                                     <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border group">
-                                      <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center">
-                                        {"{{" + key + "}}"}
-                                      </Label>
+                                      <div className="flex flex-col gap-0.5 items-center">
+                                        <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center w-full">
+                                          {"{{" + key + "}}"}
+                                        </Label>
+                                        {mediaVariables.includes(key) && (
+                                          <Badge variant="outline" className="text-[8px] px-1 py-0 border-amber-300 text-amber-700 bg-amber-50">MÍDIA</Badge>
+                                        )}
+                                      </div>
                                       <div className="relative">
                                         <Input 
                                           value={(newCampaign.email as any).templateVariables[key] || ''}
