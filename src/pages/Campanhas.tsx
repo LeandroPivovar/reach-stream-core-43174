@@ -252,9 +252,12 @@ export default function Campanhas() {
       const uploadPromises = Array.from(files).map(async file => {
         try {
           const res = await api.uploadCampaignMedia(file);
-          // O backend retorna /api/uploads/campaign-media/filename
-          // Precisamos prefixar com o API_URL se não for absoluto
-          const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+          // O backend retorna /api/campaign-assets/filename/view
+          // Precisamos prefixar com a URL do backend para que o preview funcione (evitando conflito com Nginx)
+          const baseUrl = API_URL.includes('://') 
+            ? (API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL)
+            : window.location.origin;
+          
           const fullUrl = res.url.startsWith('http') ? res.url : `${baseUrl}${res.url}`;
           
           return {
@@ -2003,6 +2006,27 @@ export default function Campanhas() {
 
                         {(newCampaign.email as any).contentSid && (
                           <div className="mt-4 space-y-4">
+                            {(() => {
+                              const tpl = twilioTemplates.find(t => t.sid === (newCampaign.email as any).contentSid);
+                              const type = Object.keys(tpl?.types || {})[0]?.split('/').pop() || 'unknown';
+                              if (type === 'list-picker') {
+                                return (
+                                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex gap-3 items-start animate-in fade-in slide-in-from-top-1">
+                                    <div className="bg-amber-100 p-1.5 rounded-full text-amber-600 flex-shrink-0 mt-0.5">
+                                      <Zap className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-xs font-bold text-amber-800">Restrição de List Picker</p>
+                                      <p className="text-[10px] text-amber-700 leading-relaxed">
+                                        Este modelo de lista <strong>não pode iniciar conversas</strong>. Ele só aparecerá para o cliente se ele tiver enviado uma mensagem para você nas últimas 24 horas. Para disparos em massa proativos, prefira modelos de <strong>Texto com Mídia</strong> ou <strong>Botões</strong>.
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
+
                             <div className="p-4 bg-muted/20 rounded-lg border border-primary/10">
                               <Label className="text-[10px] uppercase font-bold text-primary mb-2 block">Conteúdo do Modelo</Label>
                               <div className="text-sm p-3 bg-background rounded border whitespace-pre-wrap">
