@@ -2226,9 +2226,9 @@ export default function Campanhas() {
                                   <div key={index} className="relative group border rounded-md p-2">
                                     <div className="flex items-center gap-2">
                                       {item.type === 'image' ? (
-                                        <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
+                                        <img src={item.url} alt={item.name} crossOrigin="anonymous" className="w-12 h-12 object-cover rounded" />
                                       ) : (
-                                        <video src={item.url} className="w-12 h-12 object-cover rounded" />
+                                        <video src={item.url} crossOrigin="anonymous" className="w-12 h-12 object-cover rounded" />
                                       )}
                                       <span className="text-xs truncate flex-1">{item.name}</span>
                                       <Button
