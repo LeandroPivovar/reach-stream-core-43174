@@ -37,7 +37,7 @@ import { cn, translateTemplateName } from '@/lib/utils';
 import { WorkflowCanvas, WorkflowStep } from '@/components/workflow/WorkflowCanvas';
 import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
 import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
-import { api, Campaign, Contact, Group, SegmentationParam } from '@/lib/api';
+import { api, API_URL, Campaign, Contact, Group, SegmentationParam } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useScoreConfig } from '@/hooks/use-score-config';
 import { useSegmentationStats, evaluateSegmentation } from '@/hooks/use-segmentation-stats';
@@ -246,21 +246,81 @@ export default function Campanhas() {
     setLastFocusedField(prev => prev ? { ...prev, selectionStart: prev.selectionStart + variable.length } : null);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newMedia = Array.from(files).map(file => ({
-        url: URL.createObjectURL(file),
-        type: (file.type.startsWith('video/') ? 'video' : 'image') as 'image' | 'video',
-        name: file.name
-      }));
-      setNewCampaign({
-        ...newCampaign,
-        email: {
-          ...newCampaign.email,
-          media: [...newCampaign.email.media, ...newMedia]
+      const uploadPromises = Array.from(files).map(async file => {
+        try {
+          const res = await api.uploadCampaignMedia(file);
+          // O backend retorna /api/uploads/campaign-media/filename
+          // Precisamos prefixar com o API_URL se não for absoluto
+          const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+          const fullUrl = res.url.startsWith('http') ? res.url : `${baseUrl}${res.url}`;
+          
+          return {
+            url: fullUrl,
+            type: res.type as 'image' | 'video',
+            name: res.name
+          };
+        } catch (err) {
+          console.error('Erro no upload:', err);
+          toast({
+            title: 'Erro no upload',
+            description: `Não foi possível enviar o arquivo ${file.name}`,
+            variant: 'destructive',
+          });
+          return null;
         }
       });
+
+      const uploadedMedia = (await Promise.all(uploadPromises)).filter(m => m !== null) as { url: string; type: 'image' | 'video'; name: string }[];
+      
+      if (uploadedMedia.length > 0) {
+        setNewCampaign(prev => {
+          const updatedMedia = [...prev.email.media, ...uploadedMedia];
+          const updatedCampaign = {
+            ...prev,
+            email: {
+              ...prev.email,
+              media: updatedMedia
+            }
+          };
+
+          // Auto-fill template variables if it's a media template
+          const contentSid = (prev.email as any).contentSid;
+          if (contentSid) {
+            const selectedWhatsappTemplate = twilioTemplates.find(t => t.sid === contentSid);
+            if (selectedWhatsappTemplate) {
+              const mediaVars: string[] = [];
+              Object.values(selectedWhatsappTemplate.types || {}).forEach((typeData: any) => {
+                if (typeData.media) {
+                  const mediaFields = Array.isArray(typeData.media) ? typeData.media : [typeData.media];
+                  mediaFields.forEach((field: any) => {
+                    if (typeof field === 'string') {
+                      const matches = field.match(/{{[^{}]+}}/g);
+                      if (matches) {
+                        matches.forEach(m => mediaVars.push(m.replace(/[{}]/g, '')));
+                      }
+                    }
+                  });
+                }
+              });
+
+              if (mediaVars.length > 0) {
+                const vars = { ...((updatedCampaign.email as any).templateVariables || {}) };
+                // Fill the first empty media variable with the first uploaded file URL
+                const firstEmptyMediaVar = mediaVars.find(mv => !vars[mv]);
+                if (firstEmptyMediaVar) {
+                  vars[firstEmptyMediaVar] = uploadedMedia[0].url;
+                  (updatedCampaign.email as any).templateVariables = vars;
+                }
+              }
+            }
+          }
+
+          return updatedCampaign;
+        });
+      }
     }
   };
 
@@ -2070,23 +2130,25 @@ export default function Campanhas() {
                         )}
                       </div>
 
-                    <div className="grid gap-2">
-                      <Label htmlFor="whatsapp-content">Mensagem WhatsApp {(newCampaign.email as any).contentSid ? '(Fallback)' : '*'}</Label>
-                      <Textarea
-                        id="whatsapp-content"
-                        value={newCampaign.email.content}
-                        onBlur={handleFieldBlur}
-                        onChange={(e) => setNewCampaign({
-                          ...newCampaign,
-                          email: { ...newCampaign.email, content: e.target.value }
-                        })}
-                        placeholder="Digite a mensagem do WhatsApp..."
-                        rows={8}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Use *negrito*, _itálico_, ~tachado~ para formatar o texto
-                      </p>
-                    </div>
+                    {!(newCampaign.email as any).contentSid && (
+                      <div className="grid gap-2">
+                        <Label htmlFor="whatsapp-content">Mensagem WhatsApp *</Label>
+                        <Textarea
+                          id="whatsapp-content"
+                          value={newCampaign.email.content}
+                          onBlur={handleFieldBlur}
+                          onChange={(e) => setNewCampaign({
+                            ...newCampaign,
+                            email: { ...newCampaign.email, content: e.target.value }
+                          })}
+                          placeholder="Digite a mensagem do WhatsApp..."
+                          rows={8}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Use *negrito*, _itálico_, ~tachado~ para formatar o texto
+                        </p>
+                      </div>
+                    )}
 
                     <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
                       <div className="flex items-center gap-2">

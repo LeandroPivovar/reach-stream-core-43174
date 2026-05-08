@@ -1815,6 +1815,15 @@ class ApiService {
     });
   }
 
+  async uploadCampaignMedia(file: File): Promise<{ url: string; name: string; type: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.request<{ url: string; name: string; type: string }>('/uploads/campaign-media', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
   async updateCampaign(id: number, data: Partial<CreateCampaignData>): Promise<Campaign> {
     return this.request<Campaign>(`/campaigns/${id}`, {
       method: 'PATCH',
