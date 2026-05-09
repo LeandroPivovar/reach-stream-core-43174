@@ -171,8 +171,8 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess, initialType }: Buy
     }, [creditType, whatsappPackages.length, emailPackages.length, smsPackages.length]);
 
     const handleBuy = async () => {
-        if (amount < 100) {
-            toast.error('A quantidade mínima é de 100 créditos.');
+        if (amount < 1) {
+            toast.error('A quantidade mínima é de 1 crédito.');
             return;
         }
 
@@ -342,10 +342,10 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess, initialType }: Buy
                                                 ))}
                                             </div>
                                             <div className="pt-2">
-                                                <Label className="text-xs text-muted-foreground">Outro valor (Mín. 100)</Label>
+                                                <Label className="text-xs text-muted-foreground">Outro valor (Mín. 1)</Label>
                                                 <Input
                                                     type="number"
-                                                    min="100"
+                                                    min="1"
                                                     step="100"
                                                     value={amount}
                                                     onChange={(e) => setAmount(parseInt(e.target.value) || 0)}
@@ -584,7 +584,7 @@ export function BuyCreditsModal({ isOpen, onClose, onSuccess, initialType }: Buy
                 {/* Fixed Footer Area */}
                 <div className="p-4 md:p-6 bg-background border-t border-border flex gap-3">
                     {step === 1 && (
-                        <Button className="w-full h-12 md:h-11" onClick={() => setStep(2)} disabled={loading || amount < 100}>
+                        <Button className="w-full h-12 md:h-11" onClick={() => setStep(2)} disabled={loading || amount < 1}>
                             Próximo <ChevronRight className="w-4 h-4 ml-2" />
                         </Button>
                     )}
