@@ -28,14 +28,34 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
   const [media, setMedia] = useState<{ url: string; type: 'image' | 'video'; name: string }[]>((data as any)?.media || []);
   const [destinationUrl, setDestinationUrl] = useState((data as any)?.destinationUrl || '');
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newMedia = Array.from(files).map(file => ({
-        url: URL.createObjectURL(file),
-        type: (file.type.startsWith('video/') ? 'video' : 'image') as 'image' | 'video',
-        name: file.name
-      }));
+      const newMedia: { url: string; type: 'image' | 'video'; name: string }[] = [];
+      
+      for (const file of Array.from(files)) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/uploads`, {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            newMedia.push({
+              url: data.url,
+              type: (file.type.startsWith('video/') ? 'video' : 'image') as 'image' | 'video',
+              name: file.name
+            });
+          }
+        } catch (error) {
+          console.error('Erro ao fazer upload:', error);
+        }
+      }
+      
       setMedia([...media, ...newMedia]);
     }
   };
