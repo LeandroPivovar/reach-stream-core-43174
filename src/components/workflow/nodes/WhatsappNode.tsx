@@ -351,9 +351,9 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                     if (displayVars.length === 0 && !listData) return null;
 
                     return (
-                      <div className="space-y-4 pt-4 border-t border-primary/20">
+                      <div className="space-y-3 pt-3 border-t border-primary/20">
                         <div className="flex items-center justify-between">
-                          <Label className="font-semibold text-primary text-sm">Configurar Variáveis</Label>
+                          <Label className="font-semibold text-primary">Configurar Conteúdo do Template</Label>
                           <div className="flex gap-1">
                             {[
                               { label: 'Cupom', value: '{{cupom_nome}}' },
@@ -363,7 +363,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                               <Badge 
                                 key={v.value} 
                                 variant="outline" 
-                                className="cursor-pointer text-[10px] px-2 py-0.5 hover:bg-primary/10 transition-colors bg-white/50"
+                                className="cursor-pointer text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
                                 onClick={() => handleInsertVariable(v.value)}
                               >
                                 {v.label}
@@ -375,8 +375,8 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                         {displayVars.length > 0 && (
                           <div className="grid gap-3">
                             {displayVars.map(key => (
-                              <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-3 bg-white/80 p-2.5 rounded-lg border group shadow-sm">
-                                <div className="flex flex-col gap-1 items-center">
+                              <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border group">
+                                <div className="flex flex-col gap-0.5 items-center">
                                   <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center w-full">
                                     {"{{" + key + "}}"}
                                   </Label>
@@ -391,7 +391,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                                     onBlur={handleFieldBlur}
                                     onChange={e => setDynamicVariables({...dynamicVariables, [key]: e.target.value})}
                                     placeholder={mediaVars.includes(key) ? "URL da imagem ou vídeo" : `Ex: {{nome}} ou texto fixo`}
-                                    className="h-9 text-sm pr-20 bg-background"
+                                    className="h-8 text-sm pr-20"
                                   />
                                 </div>
                               </div>
@@ -400,20 +400,26 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                         )}
 
                         {listData && (
-                          <div className="p-3 bg-amber-50/50 border border-amber-200 rounded-xl space-y-3">
-                            <Label className="text-[10px] uppercase font-bold text-amber-700 flex items-center gap-1.5 tracking-wider">
-                              <Library className="w-3.5 h-3.5" /> Opções da Lista (Preview)
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-amber-700 flex items-center gap-1">
+                              <Library className="w-3 h-3" /> Opções da Lista (Preview)
                             </Label>
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                               {listData.items?.map((item: any, idx: number) => (
-                                <div key={idx} className="text-xs p-2.5 bg-white rounded-lg border border-amber-100 flex items-center justify-between shadow-sm">
+                                <div key={idx} className="text-xs p-2 bg-white rounded border border-amber-100 flex items-center justify-between shadow-sm">
                                   <span className="font-semibold text-amber-900">{item.item}</span>
                                   {item.description && <span className="text-[10px] text-muted-foreground italic">{item.description}</span>}
                                 </div>
                               ))}
                             </div>
+                            <p className="text-[10px] text-amber-600 italic">
+                                Estas são as opções que aparecerão no menu para o cliente.
+                            </p>
                           </div>
                         )}
+                        <p className="text-[10px] text-muted-foreground italic">
+                            Dica: Você pode usar variáveis do sistema como <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{link_rastreio}}"}</strong> ou <strong>{"{{nome}}"}</strong>.
+                        </p>
                       </div>
                     );
                   })()}
@@ -429,7 +435,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
 
                 <div className="grid gap-3">
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="whatsapp-content" className="font-bold text-sm">Corpo da Mensagem</Label>
+                        <Label htmlFor="whatsapp-content">Mensagem WhatsApp *</Label>
                         <div className="flex gap-1.5">
                             {[
                                 { label: 'Nome', value: '{{nome}}' },
@@ -452,9 +458,9 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                         value={content}
                         onBlur={handleFieldBlur}
                         onChange={(e) => setContent(e.target.value)}
-                        placeholder="Digite a mensagem..."
+                        placeholder="Digite a mensagem do WhatsApp..."
                         rows={6}
-                        className="flex w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-shadow shadow-sm resize-none"
+                        className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-shadow shadow-sm resize-none"
                     />
                     <div className="flex justify-between items-center px-1">
                         <p className="text-[11px] text-muted-foreground italic">
@@ -464,32 +470,31 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                     </div>
                 </div>
 
-                <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 space-y-4">
+
+                <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Link2 className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <span className="text-sm font-bold text-blue-900">Configuração do Rastreamento</span>
+                    <Link2 className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-blue-900">Configuração do Rastreamento</span>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="node-dest-url" className="text-xs font-semibold text-blue-700">URL de Destino Final</Label>
+                    <Label htmlFor="node-dest-url" className="text-xs font-semibold">URL de Destino Final</Label>
                     <Input
                       id="node-dest-url"
                       placeholder="https://meusite.com.br/promocao"
                       value={destinationUrl}
                       onChange={(e) => setDestinationUrl(e.target.value)}
-                      className="h-10 text-sm bg-white border-blue-200"
+                      className="h-9 text-sm bg-white"
                     />
                   </div>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="w-full text-xs h-9 bg-white hover:bg-blue-50 border-blue-200 text-blue-700 rounded-lg shadow-sm"
+                    className="w-full text-xs"
                     onClick={() => setContent(content + ' {{link_rastreio}}')}
                   >
                     <Plus className="w-3.5 h-3.5 mr-2" />
-                    Adicionar Variável de Link ao Texto
+                    Inserir Variável de Link
                   </Button>
                 </div>
 
@@ -500,9 +505,9 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                   if (!isMediaTemplate) return null;
 
                   return (
-                    <div className="grid gap-3 pt-2">
-                      <Label className="font-bold text-sm">Mídia do Template (Imagem ou Vídeo)</Label>
-                      <div className="flex flex-col gap-4">
+                    <div className="grid gap-2 pt-2 border-t border-primary/10">
+                      <Label className="font-semibold text-sm">Anexar Imagem ou Vídeo</Label>
+                      <div className="flex flex-col gap-3">
                         <div className="relative">
                           <input
                             type="file"
@@ -513,36 +518,33 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                             id="whatsapp-media-upload"
                           />
                           <label htmlFor="whatsapp-media-upload">
-                            <Button type="button" variant="outline" className="w-full h-12 border-dashed border-2 hover:border-primary hover:bg-primary/5 transition-all" asChild>
+                            <Button type="button" variant="outline" className="w-full" asChild>
                               <div className="cursor-pointer">
                                 <Upload className="w-4 h-4 mr-2" />
-                                Escolher arquivos do dispositivo
+                                Upload de Mídia
                               </div>
                             </Button>
                           </label>
                         </div>
                         {media.length > 0 && (
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-2 gap-2">
                             {media.map((item, index) => (
-                              <div key={index} className="relative group border-2 border-primary/10 rounded-xl p-2.5 bg-white shadow-sm hover:border-primary/30 transition-all">
-                                <div className="flex items-center gap-3">
+                              <div key={index} className="relative group border rounded-md p-2 bg-white">
+                                <div className="flex items-center gap-2">
                                   {item.type === 'image' ? (
-                                    <img src={item.url} alt={item.name} crossOrigin="anonymous" className="w-14 h-14 object-cover rounded-lg shadow-inner" />
+                                    <img src={item.url} alt={item.name} crossOrigin="anonymous" className="w-12 h-12 object-cover rounded" />
                                   ) : (
-                                    <video src={item.url} crossOrigin="anonymous" className="w-14 h-14 object-cover rounded-lg shadow-inner" />
+                                    <video src={item.url} crossOrigin="anonymous" className="w-12 h-12 object-cover rounded" />
                                   )}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[11px] font-medium truncate">{item.name}</p>
-                                    <p className="text-[9px] text-muted-foreground uppercase">{item.type}</p>
-                                  </div>
+                                  <span className="text-xs truncate flex-1 font-medium">{item.name}</span>
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 hover:bg-red-50 hover:text-red-500 rounded-full"
+                                    className="h-6 w-6 hover:bg-red-50 hover:text-red-500"
                                     onClick={() => removeMedia(index)}
                                   >
-                                    <X className="h-4 w-4" />
+                                    <X className="h-3 w-3" />
                                   </Button>
                                 </div>
                               </div>
@@ -557,29 +559,14 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
             </div>
 
             {/* Direita: Preview */}
-            <div className="flex-1 bg-slate-50 dark:bg-slate-900/50 p-8 flex flex-col items-center justify-center space-y-6">
-                <div className="w-full max-w-[320px]">
-                    <div className="flex items-center gap-2 mb-4 px-1">
-                        <Badge variant="outline" className="bg-white/80 backdrop-blur-sm">Pré-visualização</Badge>
-                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Mockup do WhatsApp</span>
-                    </div>
-                    
-                    <div className="transform scale-110 origin-top">
-                        <WhatsappPreview
-                            content={content}
-                            media={media}
-                        />
-                    </div>
-                </div>
-
-                <div className="max-w-[280px] text-center space-y-2">
-                    <p className="text-xs font-semibold text-slate-500">
-                        Como a mensagem aparecerá para o seu cliente
-                    </p>
-                    <p className="text-[10px] text-slate-400 italic">
-                        Nota: Variáveis dinâmicas como {"{{nome}}"} serão substituídas pelos dados reais no momento do envio.
-                    </p>
-                </div>
+            <div className="flex-1 bg-slate-50 dark:bg-slate-900/50 p-6 flex flex-col items-center justify-start space-y-4">
+                <WhatsappPreview
+                    content={content}
+                    media={media}
+                />
+                <p className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10 max-w-[320px]">
+                  💡 <strong>Dica:</strong> Você pode usar as variáveis <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong> e <strong>{"{{cupom_validade}}"}</strong> no texto. Elas serão substituídas automaticamente pelos dados do cupom/giftback selecionado.
+                </p>
             </div>
           </div>
           
