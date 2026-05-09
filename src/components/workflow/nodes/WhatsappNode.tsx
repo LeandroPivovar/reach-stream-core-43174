@@ -344,23 +344,6 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
 
                   {contentSid && contentSid !== 'none' && (() => {
                     const selectedTemplate = templates.find(t => t.sid === contentSid);
-                    const mediaVars: string[] = [];
-                    if (selectedTemplate) {
-                      Object.values(selectedTemplate.types || {}).forEach((typeData: any) => {
-                        if (typeData.media) {
-                          const mediaFields = Array.isArray(typeData.media) ? typeData.media : [typeData.media];
-                          mediaFields.forEach((field: any) => {
-                            if (typeof field === 'string') {
-                              const matches = field.match(/{{[^{}]+}}/g);
-                              if (matches) {
-                                matches.forEach(m => mediaVars.push(m.replace(/[{}]/g, '')));
-                              }
-                            }
-                          });
-                        }
-                      });
-                    }
-
                     const mediaVars = getMediaVariables();
                     const listData = selectedTemplate?.types?.['twilio/list-picker'];
                     const displayVars = Object.keys(dynamicVariables);
