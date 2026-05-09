@@ -105,6 +105,27 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
     }
   }, [isEditing, templates]);
 
+  const getMediaVariables = () => {
+    const selectedTemplate = templates.find(t => t.sid === contentSid);
+    const mediaVars: string[] = [];
+    if (selectedTemplate) {
+      Object.values(selectedTemplate.types || {}).forEach((typeData: any) => {
+        if (typeData.media) {
+          const mediaFields = Array.isArray(typeData.media) ? typeData.media : [typeData.media];
+          mediaFields.forEach((field: any) => {
+            if (typeof field === 'string') {
+              const matches = field.match(/{{[^{}]+}}/g);
+              if (matches) {
+                matches.forEach(m => mediaVars.push(m.replace(/[{}]/g, '')));
+              }
+            }
+          });
+        }
+      });
+    }
+    return mediaVars;
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -124,9 +145,17 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
           });
           
           if (response.ok) {
-            const data = await response.json();
+            const resData = await response.json();
+            
+            // Construir URL absoluta para o preview e para o Twilio (mesma lógica do Campanhas.tsx)
+            const baseUrl = (import.meta.env.VITE_API_URL || '').includes('://') 
+              ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') : import.meta.env.VITE_API_URL)
+              : window.location.origin;
+            
+            const fullUrl = resData.url.startsWith('http') ? resData.url : `${baseUrl}${resData.url}`;
+
             newMedia.push({
-              url: data.url,
+              url: fullUrl,
               type: (file.type.startsWith('video/') ? 'video' : 'image') as 'image' | 'video',
               name: file.name
             });
@@ -136,7 +165,21 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
         }
       }
       
-      setMedia([...media, ...newMedia]);
+      if (newMedia.length > 0) {
+        const updatedMedia = [...media, ...newMedia];
+        setMedia(updatedMedia);
+
+        // Auto-preenchimento de variáveis de mídia (igual ao Campanhas.tsx)
+        const mediaVars = getMediaVariables();
+        if (mediaVars.length > 0) {
+          const vars = { ...dynamicVariables };
+          const firstEmptyMediaVar = mediaVars.find(mv => !vars[mv]);
+          if (firstEmptyMediaVar) {
+            vars[firstEmptyMediaVar] = newMedia[0].url;
+            setDynamicVariables(vars);
+          }
+        }
+      }
     }
   };
 
@@ -318,8 +361,9 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                       });
                     }
 
+                    const mediaVars = getMediaVariables();
                     const listData = selectedTemplate?.types?.['twilio/list-picker'];
-                    const displayVars = Object.keys(dynamicVariables).filter(key => !mediaVars.includes(key));
+                    const displayVars = Object.keys(dynamicVariables);
 
                     if (displayVars.length === 0 && !listData) return null;
 
@@ -349,16 +393,21 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                           <div className="grid gap-3">
                             {displayVars.map(key => (
                               <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-3 bg-white/80 p-2.5 rounded-lg border group shadow-sm">
-                                <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center">
-                                  {"{{" + key + "}}"}
-                                </Label>
+                                <div className="flex flex-col gap-1 items-center">
+                                  <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center w-full">
+                                    {"{{" + key + "}}"}
+                                  </Label>
+                                  {mediaVars.includes(key) && (
+                                    <Badge variant="outline" className="text-[8px] px-1 py-0 border-amber-300 text-amber-700 bg-amber-50">MÍDIA</Badge>
+                                  )}
+                                </div>
                                 <div className="relative">
                                   <Input 
                                     value={dynamicVariables[key] || ''}
                                     data-var-key={key}
                                     onBlur={handleFieldBlur}
                                     onChange={e => setDynamicVariables({...dynamicVariables, [key]: e.target.value})}
-                                    placeholder={`Ex: {{nome}} ou texto fixo`}
+                                    placeholder={mediaVars.includes(key) ? "URL da imagem ou vídeo" : `Ex: {{nome}} ou texto fixo`}
                                     className="h-9 text-sm pr-20 bg-background"
                                   />
                                 </div>
