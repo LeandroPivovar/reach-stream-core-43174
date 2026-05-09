@@ -116,6 +116,9 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
           
           const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/campaign-assets/upload`, {
             method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
             body: formData,
           });
           
