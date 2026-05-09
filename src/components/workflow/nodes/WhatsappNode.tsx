@@ -559,11 +559,13 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
             </div>
 
             {/* Direita: Preview */}
-            <div className="flex-1 bg-slate-50 dark:bg-slate-900/50 p-6 flex flex-col items-center justify-start space-y-4">
-                <WhatsappPreview
-                    content={content}
-                    media={media}
-                />
+            <div className="flex-1 bg-slate-50 dark:bg-slate-900/50 p-6 flex flex-col items-center justify-start space-y-4 overflow-y-auto max-h-[80vh]">
+                <div className="scale-[0.85] origin-top">
+                  <WhatsappPreview
+                      content={content}
+                      media={media}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10 max-w-[320px]">
                   💡 <strong>Dica:</strong> Você pode usar as variáveis <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong> e <strong>{"{{cupom_validade}}"}</strong> no texto. Elas serão substituídas automaticamente pelos dados do cupom/giftback selecionado.
                 </p>
