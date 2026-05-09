@@ -114,7 +114,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
           const formData = new FormData();
           formData.append('file', file);
           
-          const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/uploads`, {
+          const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/campaign-assets/upload`, {
             method: 'POST',
             body: formData,
           });
