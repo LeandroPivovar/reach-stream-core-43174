@@ -13,9 +13,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Phone, Settings, Trash2, Upload, X, Link2, Plus, Library } from 'lucide-react';
+import { Phone, Settings, Trash2, Upload, X, Link2, Plus, Library, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { translateTemplateName } from '@/lib/utils';
+import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
 
 interface WhatsappNodeData {
   content?: string;
@@ -203,15 +204,24 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
       </Card>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle>Configurar WhatsApp</DialogTitle>
+        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2 border-b">
+            <DialogTitle className="flex items-center gap-2">
+                <Phone className="w-5 h-5 text-green-500" />
+                Configurar Mensagem WhatsApp
+            </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6 custom-scrollbar">
-            <div className="space-y-6 py-4 pb-8">
-                <div className="space-y-4 rounded border p-4 bg-primary/5">
+          
+          <div className="flex-1 overflow-hidden flex">
+            {/* Esquerda: Configurações */}
+            <div className="w-3/5 overflow-y-auto p-6 border-r custom-scrollbar">
+              <div className="space-y-6 pb-8">
+                <div className="space-y-4 rounded-xl border border-primary/20 p-5 bg-primary/5">
                   <div className="grid gap-2">
-                    <Label htmlFor="twilio-content-sid">Template Aprovado (Content API)</Label>
+                    <Label htmlFor="twilio-content-sid" className="text-sm font-semibold flex items-center gap-2 text-primary">
+                        <Sparkles className="w-4 h-4" />
+                        Template Aprovado (Content API)
+                    </Label>
                     <div className="flex items-center gap-2">
                       <Select value={contentSid || 'none'} onValueChange={(val) => {
                           setContentSid(val === 'none' ? '' : val);
@@ -251,7 +261,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                           
                           setDynamicVariables(detectedVars);
                         }}>
-                        <SelectTrigger id="twilio-content-sid" className="flex-1">
+                        <SelectTrigger id="twilio-content-sid" className="flex-1 h-11 bg-background">
                           <SelectValue placeholder={isLoadingTemplates ? "Carregando templates..." : "Selecione um template..."} />
                         </SelectTrigger>
                         <SelectContent>
@@ -262,7 +272,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                                     <SelectItem key={t.sid} value={t.sid}>
                                       <div className="flex items-center gap-2">
                                       <span>{translateTemplateName(t.friendlyName)}</span>
-                                        <span className={`text-[10px] px-1 rounded border font-mono ${
+                                        <span className={`text-[10px] px-1.5 rounded-full border font-mono ${
                                           type === 'list-picker' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-blue-100 text-blue-700 border-blue-200'
                                         }`}>
                                           {type.toUpperCase()}
@@ -276,27 +286,18 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-10 text-xs border-primary/30 hover:bg-primary/5 flex items-center gap-1.5 whitespace-nowrap"
+                        className="h-11 px-4 text-xs border-primary/30 hover:bg-primary/10 flex items-center gap-1.5 whitespace-nowrap rounded-lg transition-all"
                         onClick={() => {
                           if ((data as any).onOpenTemplateModal) {
                             (data as any).onOpenTemplateModal();
                           }
                         }}
                       >
-                        <Plus className="w-3.5 h-3.5" />
-                        Solicitar Novo
+                        <Plus className="w-4 h-4" />
+                        Novo Template
                       </Button>
                     </div>
                   </div>
-
-                  {contentSid && contentSid !== 'none' && (
-                    <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                      <Label className="text-[10px] uppercase font-bold text-primary mb-2 block tracking-wider">Conteúdo do Modelo</Label>
-                      <div className="text-sm p-3 bg-background rounded border whitespace-pre-wrap italic">
-                        {content || 'Conteúdo do template selecionado...'}
-                      </div>
-                    </div>
-                  )}
 
                   {contentSid && contentSid !== 'none' && (() => {
                     const selectedTemplate = templates.find(t => t.sid === contentSid);
@@ -304,7 +305,6 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                     if (selectedTemplate) {
                       Object.values(selectedTemplate.types || {}).forEach((typeData: any) => {
                         if (typeData.media) {
-                          // Pode ser string ou array de strings
                           const mediaFields = Array.isArray(typeData.media) ? typeData.media : [typeData.media];
                           mediaFields.forEach((field: any) => {
                             if (typeof field === 'string') {
@@ -324,22 +324,19 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                     if (displayVars.length === 0 && !listData) return null;
 
                     return (
-                      <div className="space-y-3 pt-3 border-t border-primary/20">
+                      <div className="space-y-4 pt-4 border-t border-primary/20">
                         <div className="flex items-center justify-between">
-                          <Label className="font-semibold text-primary">Configurar Conteúdo do Template</Label>
+                          <Label className="font-semibold text-primary text-sm">Configurar Variáveis</Label>
                           <div className="flex gap-1">
                             {[
                               { label: 'Cupom', value: '{{cupom_nome}}' },
-                              { label: 'Valor', value: '{{cupom_valor}}' },
-                              { label: 'Validade', value: '{{cupom_validade}}' },
                               { label: 'Link', value: '{{link_rastreio}}' },
                               { label: 'Nome', value: '{{nome}}' }
                             ].map(v => (
                               <Badge 
                                 key={v.value} 
                                 variant="outline" 
-                                className="cursor-pointer text-[9px] px-1.5 py-0 hover:bg-primary/10 transition-colors"
-                                title={`Clique para inserir ${v.value}`}
+                                className="cursor-pointer text-[10px] px-2 py-0.5 hover:bg-primary/10 transition-colors bg-white/50"
                                 onClick={() => handleInsertVariable(v.value)}
                               >
                                 {v.label}
@@ -351,7 +348,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                         {displayVars.length > 0 && (
                           <div className="grid gap-3">
                             {displayVars.map(key => (
-                              <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-2 bg-background p-2 rounded border group">
+                              <div key={key} className="grid grid-cols-[80px_1fr] items-center gap-3 bg-white/80 p-2.5 rounded-lg border group shadow-sm">
                                 <Label className="text-xs font-mono text-muted-foreground bg-muted p-1 rounded text-center">
                                   {"{{" + key + "}}"}
                                 </Label>
@@ -362,7 +359,7 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                                     onBlur={handleFieldBlur}
                                     onChange={e => setDynamicVariables({...dynamicVariables, [key]: e.target.value})}
                                     placeholder={`Ex: {{nome}} ou texto fixo`}
-                                    className="h-8 text-sm pr-20"
+                                    className="h-9 text-sm pr-20 bg-background"
                                   />
                                 </div>
                               </div>
@@ -371,154 +368,204 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                         )}
 
                         {listData && (
-                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-2">
-                            <Label className="text-[10px] uppercase font-bold text-amber-700 flex items-center gap-1">
-                              <Library className="w-3 h-3" /> Opções da Lista (Preview)
+                          <div className="p-3 bg-amber-50/50 border border-amber-200 rounded-xl space-y-3">
+                            <Label className="text-[10px] uppercase font-bold text-amber-700 flex items-center gap-1.5 tracking-wider">
+                              <Library className="w-3.5 h-3.5" /> Opções da Lista (Preview)
                             </Label>
-                            <div className="space-y-1">
+                            <div className="space-y-2">
                               {listData.items?.map((item: any, idx: number) => (
-                                <div key={idx} className="text-xs p-2 bg-white rounded border border-amber-100 flex items-center justify-between">
-                                  <span className="font-medium text-amber-900">{item.item}</span>
-                                  {item.description && <span className="text-[10px] text-muted-foreground">{item.description}</span>}
+                                <div key={idx} className="text-xs p-2.5 bg-white rounded-lg border border-amber-100 flex items-center justify-between shadow-sm">
+                                  <span className="font-semibold text-amber-900">{item.item}</span>
+                                  {item.description && <span className="text-[10px] text-muted-foreground italic">{item.description}</span>}
                                 </div>
                               ))}
                             </div>
-                            <p className="text-[10px] text-amber-600 italic">
-                              Estas são as opções que aparecerão no menu para o cliente.
-                            </p>
                           </div>
                         )}
-
-                        <p className="text-[10px] text-muted-foreground italic">
-                          Dica: Você pode usar variáveis do sistema como <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{link_rastreio}}"}</strong> ou <strong>{"{{nome}}"}</strong>.
-                        </p>
                       </div>
                     );
                   })()}
 
-                  
                   {(!contentSid || contentSid === 'none') && (
-                    <div className="grid gap-2 pt-2 border-t border-primary/10">
-                    <p className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-200">
-                      🚫 <strong>Template obrigatório:</strong> Para campanhas proativas via WhatsApp, é OBRIGATÓRIO selecionar um template aprovado na Meta. Mensagens sem template serão bloqueadas.
-                    </p>
-                  </div>
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-xs text-red-700 font-medium leading-relaxed">
+                        🚫 <strong>Template obrigatório:</strong> Para campanhas proativas, a Meta exige o uso de templates aprovados. Mensagens de texto livre serão bloqueadas pelo provedor.
+                      </p>
+                    </div>
                   )}
                 </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="whatsapp-content">Mensagem WhatsApp</Label>
-                <textarea
-                  id="whatsapp-content"
-                  value={content}
-                  onBlur={handleFieldBlur}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Digite a mensagem..."
-                  rows={6}
-                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-                <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
-                  💡 Variáveis disponíveis: <br />
-                  <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong> e <strong>{"{{link_rastreio}}"}</strong>
-                </p>
-              </div>
-
-              <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
-                <div className="flex items-center gap-2">
-                  <Link2 className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">Link de Redirecionamento</span>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="node-dest-url" className="text-xs">URL de Destino</Label>
-                  <Input
-                    id="node-dest-url"
-                    placeholder="https://seusite.com.br/promo"
-                    value={destinationUrl}
-                    onChange={(e) => setDestinationUrl(e.target.value)}
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs h-8"
-                  onClick={() => setContent(content + ' {{link_rastreio}}')}
-                >
-                  <Plus className="w-3 h-3 mr-2" />
-                  Inserir Variável de Link
-                </Button>
-              </div>
-
-              {(() => {
-                const selectedTemplate = templates.find(t => t.sid === contentSid);
-                const isMediaTemplate = selectedTemplate && Object.keys(selectedTemplate.types || {}).some(type => type.toLowerCase().includes('media'));
-                
-                if (!isMediaTemplate) return null;
-
-                return (
-                  <div className="grid gap-2">
-                    <Label>Anexar Imagem ou Vídeo</Label>
-                    <div className="flex flex-col gap-3">
-                      <div className="relative">
-                        <input
-                          type="file"
-                          accept="image/*,video/*"
-                          multiple
-                          onChange={handleFileUpload}
-                          className="hidden"
-                          id="whatsapp-media-upload"
-                        />
-                        <label htmlFor="whatsapp-media-upload">
-                          <Button type="button" variant="outline" className="w-full" asChild>
-                            <div className="cursor-pointer">
-                              <Upload className="w-4 h-4 mr-2" />
-                              Upload de Mídia
-                            </div>
-                          </Button>
-                        </label>
-                      </div>
-                      {media.length > 0 && (
-                        <div className="grid grid-cols-2 gap-2">
-                          {media.map((item, index) => (
-                            <div key={index} className="relative group border rounded-md p-2">
-                              <div className="flex items-center gap-2">
-                                {item.type === 'image' ? (
-                                  <img src={item.url} alt={item.name} className="w-12 h-12 object-cover rounded" />
-                                ) : (
-                                  <video src={item.url} className="w-12 h-12 object-cover rounded" />
-                                )}
-                                <span className="text-xs truncate flex-1">{item.name}</span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => removeMedia(index)}
+                <div className="grid gap-3">
+                    <div className="flex items-center justify-between">
+                        <Label htmlFor="whatsapp-content" className="font-bold text-sm">Corpo da Mensagem</Label>
+                        <div className="flex gap-1.5">
+                            {[
+                                { label: 'Nome', value: '{{nome}}' },
+                                { label: 'Cupom', value: '{{cupom_nome}}' },
+                                { label: 'Link', value: '{{link_rastreio}}' }
+                            ].map(v => (
+                                <Badge 
+                                    key={v.value} 
+                                    variant="secondary" 
+                                    className="cursor-pointer text-[10px] h-6 px-2 hover:bg-primary hover:text-white transition-all"
+                                    onClick={() => handleInsertVariable(v.value)}
                                 >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+                                    {v.label}
+                                </Badge>
+                            ))}
                         </div>
-                      )}
                     </div>
-                  </div>
-                );
-              })()}
+                    <textarea
+                        id="whatsapp-content"
+                        value={content}
+                        onBlur={handleFieldBlur}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder="Digite a mensagem..."
+                        rows={6}
+                        className="flex w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-shadow shadow-sm resize-none"
+                    />
+                    <div className="flex justify-between items-center px-1">
+                        <p className="text-[11px] text-muted-foreground italic">
+                            Use *negrito*, _itálico_ ou ~tachado~ para formatar.
+                        </p>
+                        <span className="text-[11px] font-mono text-muted-foreground">{content.length} caracteres</span>
+                    </div>
+                </div>
 
+                <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Link2 className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-bold text-blue-900">Configuração do Rastreamento</span>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="node-dest-url" className="text-xs font-semibold text-blue-700">URL de Destino Final</Label>
+                    <Input
+                      id="node-dest-url"
+                      placeholder="https://meusite.com.br/promocao"
+                      value={destinationUrl}
+                      onChange={(e) => setDestinationUrl(e.target.value)}
+                      className="h-10 text-sm bg-white border-blue-200"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs h-9 bg-white hover:bg-blue-50 border-blue-200 text-blue-700 rounded-lg shadow-sm"
+                    onClick={() => setContent(content + ' {{link_rastreio}}')}
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-2" />
+                    Adicionar Variável de Link ao Texto
+                  </Button>
+                </div>
+
+                {(() => {
+                  const selectedTemplate = templates.find(t => t.sid === contentSid);
+                  const isMediaTemplate = selectedTemplate && Object.keys(selectedTemplate.types || {}).some(type => type.toLowerCase().includes('media'));
+                  
+                  if (!isMediaTemplate) return null;
+
+                  return (
+                    <div className="grid gap-3 pt-2">
+                      <Label className="font-bold text-sm">Mídia do Template (Imagem ou Vídeo)</Label>
+                      <div className="flex flex-col gap-4">
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="image/*,video/*"
+                            multiple
+                            onChange={handleFileUpload}
+                            className="hidden"
+                            id="whatsapp-media-upload"
+                          />
+                          <label htmlFor="whatsapp-media-upload">
+                            <Button type="button" variant="outline" className="w-full h-12 border-dashed border-2 hover:border-primary hover:bg-primary/5 transition-all" asChild>
+                              <div className="cursor-pointer">
+                                <Upload className="w-4 h-4 mr-2" />
+                                Escolher arquivos do dispositivo
+                              </div>
+                            </Button>
+                          </label>
+                        </div>
+                        {media.length > 0 && (
+                          <div className="grid grid-cols-2 gap-3">
+                            {media.map((item, index) => (
+                              <div key={index} className="relative group border-2 border-primary/10 rounded-xl p-2.5 bg-white shadow-sm hover:border-primary/30 transition-all">
+                                <div className="flex items-center gap-3">
+                                  {item.type === 'image' ? (
+                                    <img src={item.url} alt={item.name} crossOrigin="anonymous" className="w-14 h-14 object-cover rounded-lg shadow-inner" />
+                                  ) : (
+                                    <video src={item.url} crossOrigin="anonymous" className="w-14 h-14 object-cover rounded-lg shadow-inner" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[11px] font-medium truncate">{item.name}</p>
+                                    <p className="text-[9px] text-muted-foreground uppercase">{item.type}</p>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 hover:bg-red-50 hover:text-red-500 rounded-full"
+                                    onClick={() => removeMedia(index)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Direita: Preview */}
+            <div className="flex-1 bg-slate-50 dark:bg-slate-900/50 p-8 flex flex-col items-center justify-center space-y-6">
+                <div className="w-full max-w-[320px]">
+                    <div className="flex items-center gap-2 mb-4 px-1">
+                        <Badge variant="outline" className="bg-white/80 backdrop-blur-sm">Pré-visualização</Badge>
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Mockup do WhatsApp</span>
+                    </div>
+                    
+                    <div className="transform scale-110 origin-top">
+                        <WhatsappPreview
+                            content={content}
+                            media={media}
+                        />
+                    </div>
+                </div>
+
+                <div className="max-w-[280px] text-center space-y-2">
+                    <p className="text-xs font-semibold text-slate-500">
+                        Como a mensagem aparecerá para o seu cliente
+                    </p>
+                    <p className="text-[10px] text-slate-400 italic">
+                        Nota: Variáveis dinâmicas como {"{{nome}}"} serão substituídas pelos dados reais no momento do envio.
+                    </p>
+                </div>
             </div>
           </div>
           
-          <div className="flex justify-end gap-2 p-6 border-t bg-slate-50/50 dark:bg-slate-900/50">
-            <Button variant="outline" onClick={() => setIsEditing(false)}>
+          <div className="flex justify-end gap-3 p-6 border-t bg-white dark:bg-background">
+            <Button variant="ghost" onClick={() => setIsEditing(false)} className="rounded-xl px-6">
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={!contentSid || contentSid === 'none'}>Salvar</Button>
+            <Button 
+                onClick={handleSave} 
+                disabled={!contentSid || contentSid === 'none'}
+                className="rounded-xl px-8 bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/20"
+            >
+                Confirmar Configuração
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
     </>
   );
 };
+
