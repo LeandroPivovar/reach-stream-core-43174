@@ -11,7 +11,7 @@ export const WhatsappPreview: React.FC<WhatsappPreviewProps> = ({ content, media
   const now = new Date();
   
   return (
-    <div className="hidden lg:flex flex-col items-center justify-center flex-shrink-0 w-[320px]">
+    <div className="flex flex-col items-center justify-center flex-shrink-0 w-[320px]">
       {/* Phone Frame */}
       <div className="relative w-full max-w-[320px] h-[640px] bg-black rounded-[3rem] p-3 shadow-2xl">
         {/* Screen */}
