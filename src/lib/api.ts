@@ -692,6 +692,10 @@ class ApiService {
       this.request<{ url: string }>(`/tray/auth-url?shopUrl=${encodeURIComponent(shopUrl)}&callbackUrl=${encodeURIComponent(callbackUrl)}`, {
         method: 'GET',
       }),
+    getConnection: () =>
+      this.request<TrayConnection>('/tray/connection', {
+        method: 'GET',
+      }),
     finalizeConnection: (code: string, shopUrl: string) =>
       this.request<{ success: boolean; connection: TrayConnection }>('/tray/finalize-connection', {
         method: 'POST',

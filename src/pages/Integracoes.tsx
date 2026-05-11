@@ -157,7 +157,7 @@ export default function Integracoes() {
         api.getShopifyConnections().catch(() => []),
         api.getVtexConnections().catch(() => []),
         api.lojaIntegradaApi.getConnection().catch(() => null),
-        api.trayApi.sync().catch(() => []), // Placeholder for getConnections
+        api.trayApi.getConnection().catch(() => null),
       ]);
 
       const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
@@ -167,7 +167,8 @@ export default function Integracoes() {
       setNuvemshopConnections(activeNuvemshop);
       setShopifyConnections(activeShopify);
       setVtexConnections(activeVtex);
-      setLiConnections(li ? [li] : []);
+      setLiConnections(li && li.isActive ? [li] : []);
+      setTrayConnections(tray && tray.isActive ? [tray] : []);
 
       // Buscar webhooks de todas as conexões ativas
       const allWebhooks: any[] = [];
@@ -251,12 +252,20 @@ export default function Integracoes() {
     } else if (platformName === 'Loja Integrada') {
       const connection = liConnections.find(c => c.isActive);
       return { connected: !!connection, connection };
+    } else if (platformName === 'Tray') {
+      const connection = trayConnections.find(c => c.isActive);
+      return { connected: !!connection, connection };
     }
     return { connected: false };
   };
 
   // Contar integrações ativas
-  const activeIntegrationsCount = nuvemshopConnections.length + shopifyConnections.length + vtexConnections.length + liConnections.length + trayConnections.length;
+  const activeIntegrationsCount = 
+    nuvemshopConnections.filter(c => c.isActive).length + 
+    shopifyConnections.filter(c => c.isActive).length + 
+    vtexConnections.filter(c => c.isActive).length + 
+    liConnections.filter(c => c.isActive).length + 
+    trayConnections.filter(c => c.isActive).length;
 
   const handleOpenNewIntegration = () => {
     setIntegrationType(null);
