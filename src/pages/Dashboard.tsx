@@ -50,7 +50,7 @@ export default function Dashboard() {
     const [chartPeriod, setChartPeriod] = useState('semanal');
 
     // Simulação de integração ativa - em produção, isso viria de uma API
-    const hasIntegrations = true; // Alterar para false para ver o estado sem integrações
+    const hasIntegrations = dashboardStats?.isEcommerceConnected || false;
 
     const [funnelStats, setFunnelStats] = useState<any[]>([]);
     const [segmentationStats, setSegmentationStats] = useState<any>(null);
