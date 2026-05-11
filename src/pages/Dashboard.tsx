@@ -49,15 +49,15 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const [chartPeriod, setChartPeriod] = useState('semanal');
 
-    // Simulação de integração ativa - em produção, isso viria de uma API
-    const hasIntegrations = dashboardStats?.isEcommerceConnected || false;
-
     const [funnelStats, setFunnelStats] = useState<any[]>([]);
     const [segmentationStats, setSegmentationStats] = useState<any>(null);
     const [dashboardStats, setDashboardStats] = useState<any>(null);
     const [campaignStats, setCampaignStats] = useState<any>({ chartData: [], recentCampaigns: [] });
     const [heatmapData, setHeatmapData] = useState<any[]>([]);
     const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+    // Simulação de integração ativa - em produção, isso viria de uma API
+    const hasIntegrations = dashboardStats?.isEcommerceConnected || false;
 
     // Filters
     const [selectedCampaign, setSelectedCampaign] = useState<string>('all');
