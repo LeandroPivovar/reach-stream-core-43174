@@ -636,7 +636,7 @@ export default function Campanhas() {
           campaignType: newCampaign.campaignType,
           campaignConfig: newCampaign.campaignConfig,
           email: newCampaign.email,
-          workflow: newCampaign.workflow,
+          workflow: newCampaign.campaignComplexity === 'simple' ? { nodes: [], edges: [] } : newCampaign.workflow,
           tracking: newCampaign.tracking,
           groups: newCampaign.groups,
           segmentations: newCampaign.segmentations,
