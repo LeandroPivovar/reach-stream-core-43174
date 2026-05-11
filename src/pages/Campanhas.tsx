@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+
 import { useInternalAnalytics } from '@/hooks/use-internal-analytics';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
@@ -140,7 +140,7 @@ export default function Campanhas() {
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const contactsPerPage = 10;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [newCampaign, setNewCampaign] = useLocalStorage('campanhas_newCampaign', {
+  const [newCampaign, setNewCampaign] = useState({
     campaignComplexity: '' as 'simple' | 'advanced' | '',
     name: '',
     groups: [] as string[],
