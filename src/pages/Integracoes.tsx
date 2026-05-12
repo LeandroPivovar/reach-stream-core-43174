@@ -208,7 +208,7 @@ export default function Integracoes() {
     }
   };
 
-  const handleDisconnect = async (platform: 'nuvemshop' | 'shopify' | 'vtex', identifier: string) => {
+  const handleDisconnect = async (platform: 'nuvemshop' | 'shopify' | 'vtex' | 'loja_integrada' | 'tray', identifier: string) => {
     try {
       setDisconnecting(`${platform}-${identifier}`);
 
@@ -218,11 +218,15 @@ export default function Integracoes() {
         await api.disconnectShopify(identifier);
       } else if (platform === 'vtex') {
         await api.disconnectVtex(identifier);
+      } else if (platform === 'loja_integrada') {
+        await api.lojaIntegradaApi.disconnect();
+      } else if (platform === 'tray') {
+        await api.trayApi.disconnect();
       }
 
       toast({
         title: 'Desconectado com sucesso',
-        description: `A conexão com ${platform === 'nuvemshop' ? 'Nuvemshop' : platform === 'shopify' ? 'Shopify' : 'VTEX'} foi desconectada.`,
+        description: `A conexão com ${platform === 'nuvemshop' ? 'Nuvemshop' : platform === 'shopify' ? 'Shopify' : platform === 'vtex' ? 'VTEX' : platform === 'loja_integrada' ? 'Loja Integrada' : 'Tray'} foi desconectada.`,
       });
 
       // Recarregar conexões
@@ -642,19 +646,24 @@ export default function Integracoes() {
                             } else if (integration.name === 'VTEX' && connection) {
                               handleDisconnect('vtex', connection.accountName);
                             } else if (integration.name === 'Tray' && connection) {
-                              // Adicionar lógica de desconexão para Tray
-                              toast({ title: 'Ação necessária', description: 'A desconexão da Tray será implementada em breve.' });
+                              handleDisconnect('tray', connection.shopUrl);
+                            } else if (integration.name === 'Loja Integrada' && connection) {
+                              handleDisconnect('loja_integrada', connection.storeName);
                             }
                           }}
                           disabled={
                             (integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
                             (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
-                            (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`)
+                            (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`) ||
+                            (integration.name === 'Loja Integrada' && disconnecting === `loja_integrada-${connection?.storeName}`) ||
+                            (integration.name === 'Tray' && disconnecting === `tray-${connection?.shopUrl}`)
                           }
                         >
                           {((integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
                             (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
-                            (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`)) ? (
+                            (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`) ||
+                            (integration.name === 'Loja Integrada' && disconnecting === `loja_integrada-${connection?.storeName}`) ||
+                            (integration.name === 'Tray' && disconnecting === `tray-${connection?.shopUrl}`)) ? (
                             <>
                               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                               Desconectando...

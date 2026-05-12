@@ -685,6 +685,10 @@ class ApiService {
       this.request<{ products: any; orders: any; checkouts: any }>('/loja-integrada/sync', {
         method: 'POST',
       }),
+    disconnect: () =>
+      this.request<any>('/loja-integrada/disconnect', {
+        method: 'POST',
+      }),
   };
 
   public trayApi = {
@@ -703,6 +707,10 @@ class ApiService {
       }),
     sync: () =>
       this.request<{ products: any; customers: any; orders: any; checkouts: any }>('/tray/sync', {
+        method: 'POST',
+      }),
+    disconnect: () =>
+      this.request<any>('/tray/disconnect', {
         method: 'POST',
       }),
   };
