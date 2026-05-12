@@ -138,6 +138,7 @@ export default function Campanhas() {
   const [buyCreditsInitialType, setBuyCreditsInitialType] = useState<'email' | 'sms' | 'whatsapp' | undefined>();
   const [campaignForStatusUpdate, setCampaignForStatusUpdate] = useState<Campaign | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const contactsPerPage = 10;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [newCampaign, setNewCampaign] = useState({
@@ -640,16 +641,24 @@ export default function Campanhas() {
           tracking: newCampaign.tracking,
           groups: newCampaign.groups,
           segmentations: newCampaign.segmentations,
-          specificContacts: newCampaign.specificContacts
+          specificContacts: newCampaign.specificContacts,
+          manualContacts: editingId ? [] : undefined // Se estiver editando, limpamos manualContacts pois já foram movidos para specificContacts
         }
       };
 
-      await api.createCampaign(payload as any);
-
-      toast({
-        title: 'Campanha criada com sucesso!',
-        description: 'Sua campanha já está sendo processada.',
-      });
+      if (editingId) {
+        await api.updateCampaign(editingId, payload as any);
+        toast({
+          title: 'Campanha atualizada!',
+          description: 'As alterações foram salvas com sucesso.',
+        });
+      } else {
+        await api.createCampaign(payload as any);
+        toast({
+          title: 'Campanha criada com sucesso!',
+          description: 'Sua campanha já está sendo processada.',
+        });
+      }
 
       trackAction('Criar Campanha', { 
         name: newCampaign.name, 
@@ -658,6 +667,7 @@ export default function Campanhas() {
       });
 
       setIsNewCampaignOpen(false);
+      setEditingId(null);
       setCurrentStep(1);
       setNewCampaign({
         campaignComplexity: '',
@@ -766,13 +776,18 @@ export default function Campanhas() {
   };
 
   const handleEditCampaign = (campaign: Campaign) => {
+    // Carregar contatos manuais e específicos e unificar para exibição no formulário
+    const manual = campaign.config?.manualContacts || [];
+    const specific = campaign.config?.specificContacts || [];
+    const allSpecific = Array.from(new Set([...manual, ...specific]));
+
     // Populate newCampaign with existing data
     setNewCampaign({
       campaignComplexity: campaign.complexity as any,
       name: campaign.name,
       groups: campaign.config?.groups || [],
       segmentations: campaign.config?.segmentations || [],
-      specificContacts: campaign.config?.specificContacts || [],
+      specificContacts: allSpecific,
       channel: campaign.channel as any,
       campaignType: campaign.config?.campaignType || '',
       campaignConfig: campaign.config?.campaignConfig || {
@@ -791,13 +806,7 @@ export default function Campanhas() {
       scheduleTime: campaign.scheduledAt ? campaign.scheduledAt.split('T')[1].substring(0, 5) : ''
     });
 
-    // Set editing mode (this logic might need refinement if 'update' endpoint differs significantly from 'create')
-    // For now, we reuse the create modal but logic needs to handle update vs create.
-    // Ideally we should have an editing ID state, but for simplicity we might just open it as "New" pre-filled
-    // and handle "Update" if we had an ID.
-    // Given the current structure, let's just pre-fill to allow ease of "Cloning/Editing" or add an 'isEditing' state if strict editing is required.
-    // The requirement says "Editar Campanha", implying modification.
-    // I will add an `editingId` to the state to distinguish.
+    setEditingId(campaign.id);
     setIsNewCampaignOpen(true);
   };
 
@@ -1383,6 +1392,7 @@ export default function Campanhas() {
       <Dialog open={isNewCampaignOpen} onOpenChange={(open) => {
         setIsNewCampaignOpen(open);
         if (!open) {
+          setEditingId(null);
           setCurrentStep(1);
           setCurrentPage(1);
           setNewCampaign({
