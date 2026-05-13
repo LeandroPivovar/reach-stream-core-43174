@@ -50,6 +50,7 @@ export function AdminSidebar() {
     const location = useLocation();
     const navigate = useNavigate();
     const { logout } = useAuth();
+    const { isOpen, isCollapsed, toggleOpen } = useSidebar();
 
     const handleLogout = () => {
         logout();
@@ -57,20 +58,45 @@ export function AdminSidebar() {
     };
 
     return (
-        <div className="w-64 flex flex-col h-screen fixed left-0 top-0 z-40 bg-slate-900 border-r border-slate-800">
+        <div 
+            className={cn(
+                "flex flex-col h-screen fixed left-0 top-0 z-40 transition-all duration-300 ease-in-out bg-slate-900 border-r border-slate-800",
+                isCollapsed ? "w-20" : "w-64",
+                isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+            )}
+        >
             {/* Logo */}
-            <div className="p-6 border-b border-slate-800">
-                <div className="flex flex-col items-center justify-center gap-2">
-                    <img
-                        src={logoNucleocrm}
-                        alt="Núcleo CRM"
-                        className="h-5 w-auto brightness-0 invert"
-                    />
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30">
-                        <ShieldCheck className="w-3 h-3 text-primary" />
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Painel Admin</span>
+            <div className={cn(
+                "p-4 md:p-6 border-b border-slate-800 flex items-center min-h-[73px] relative",
+                isCollapsed ? "justify-center" : "justify-between"
+            )}>
+                {!isCollapsed && (
+                    <div className="flex flex-col items-center justify-center gap-2 overflow-hidden transition-all duration-300">
+                        <img
+                            src={logoNucleocrm}
+                            alt="Núcleo CRM"
+                            className="h-5 w-auto brightness-0 invert"
+                        />
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30">
+                            <ShieldCheck className="w-3 h-3 text-primary" />
+                            <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Painel Admin</span>
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {isCollapsed && (
+                    <ShieldCheck className="w-6 h-6 text-primary shrink-0" />
+                )}
+                
+                {/* Mobile Close Button */}
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="lg:hidden text-slate-400 hover:text-white hover:bg-slate-800 shrink-0 absolute right-2"
+                    onClick={toggleOpen}
+                >
+                    <X className="w-5 h-5" />
+                </Button>
             </div>
 
             {/* Navigation */}
@@ -84,14 +110,16 @@ export function AdminSidebar() {
                             key={item.href}
                             to={item.href}
                             className={cn(
-                                "flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                                "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+                                isCollapsed ? "justify-center px-2 py-2.5" : "space-x-3 px-3 py-2.5",
                                 isActive
                                     ? "bg-primary text-white shadow-lg shadow-primary/20"
                                     : "text-slate-400 hover:text-white hover:bg-slate-800"
                             )}
+                            title={isCollapsed ? item.title : undefined}
                         >
-                            <Icon className="w-4 h-4" />
-                            <span>{item.title}</span>
+                            <Icon className="w-4 h-4 shrink-0" />
+                            {!isCollapsed && <span className="truncate">{item.title}</span>}
                         </NavLink>
                     );
                 })}
@@ -101,18 +129,26 @@ export function AdminSidebar() {
             <div className="p-4 border-t border-slate-800 space-y-2">
                 <button
                     onClick={() => navigate('/visao-geral')}
-                    className="w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors border border-slate-800/50"
+                    className={cn(
+                        "w-full flex items-center text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors border border-slate-800/50",
+                        isCollapsed ? "justify-center px-2 py-2" : "space-x-3 px-3 py-2"
+                    )}
+                    title={isCollapsed ? "Ir para Plataforma" : undefined}
                 >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Ir para Plataforma</span>
+                    <ArrowLeft className="w-4 h-4 shrink-0" />
+                    {!isCollapsed && <span>Ir para Plataforma</span>}
                 </button>
 
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center space-x-3 px-3 py-2 text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors"
+                    className={cn(
+                        "w-full flex items-center text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors",
+                        isCollapsed ? "justify-center px-2 py-2" : "space-x-3 px-3 py-2"
+                    )}
+                    title={isCollapsed ? "Sair" : undefined}
                 >
-                    <LogOut className="w-4 h-4" />
-                    <span>Sair</span>
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    {!isCollapsed && <span>Sair</span>}
                 </button>
             </div>
         </div>
