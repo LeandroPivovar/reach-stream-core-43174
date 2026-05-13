@@ -3,6 +3,8 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import logoNucleocrm from '@/assets/logo-nucleocrm.png';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSidebar } from '@/contexts/SidebarContext';
+import { Button } from '@/components/ui/button';
 import {
     LayoutDashboard,
     Users,
@@ -23,6 +25,7 @@ import {
     LifeBuoy,
     Share2,
     BookOpen,
+    X,
 } from 'lucide-react';
 
 const adminMenuItems = [
