@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Settings, Shield, Globe, CreditCard, Save, RefreshCw, Mail, Cpu, MessageSquare } from 'lucide-react';
+import { Settings, Shield, Globe, CreditCard, Save, RefreshCw, Mail, Cpu, MessageSquare, Eye, EyeOff } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,8 @@ export default function AdminSettings() {
     const [testEmailModalOpen, setTestEmailModalOpen] = useState(false);
     const [testEmailAddress, setTestEmailAddress] = useState('');
     const [isTestingEmail, setIsTestingEmail] = useState(false);
+    const [showAsaasApiKey, setShowAsaasApiKey] = useState(false);
+    const [showAsaasWebhookToken, setShowAsaasWebhookToken] = useState(false);
 
     useEffect(() => {
         if (settings) {
@@ -139,26 +141,44 @@ export default function AdminSettings() {
                         <CardContent className="space-y-6">
                             <div className="space-y-2">
                                 <Label htmlFor="ASAAS_API_KEY" className="text-sm font-semibold">API Key</Label>
-                                <Input
-                                    id="ASAAS_API_KEY"
-                                    type="password"
-                                    className="font-mono"
-                                    value={localSettings['ASAAS_API_KEY'] || ''}
-                                    onChange={(e) => handleInputChange('ASAAS_API_KEY', e.target.value)}
-                                    placeholder="$asaas_api_key_..."
-                                />
+                                <div className="relative">
+                                    <Input
+                                        id="ASAAS_API_KEY"
+                                        type={showAsaasApiKey ? "text" : "password"}
+                                        className="font-mono pr-10"
+                                        value={localSettings['ASAAS_API_KEY'] || ''}
+                                        onChange={(e) => handleInputChange('ASAAS_API_KEY', e.target.value)}
+                                        placeholder="$asaas_api_key_..."
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAsaasApiKey(!showAsaasApiKey)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showAsaasApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
                                 <p className="text-[12px] text-muted-foreground">Encontrada no painel do Asaas em Configurações &gt; Integrações.</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="ASAAS_WEBHOOK_TOKEN" className="text-sm font-semibold">Webhook Token</Label>
-                                <Input
-                                    id="ASAAS_WEBHOOK_TOKEN"
-                                    type="password"
-                                    className="font-mono"
-                                    value={localSettings['ASAAS_WEBHOOK_TOKEN'] || ''}
-                                    onChange={(e) => handleInputChange('ASAAS_WEBHOOK_TOKEN', e.target.value)}
-                                    placeholder="Seu token personalizado"
-                                />
+                                <div className="relative">
+                                    <Input
+                                        id="ASAAS_WEBHOOK_TOKEN"
+                                        type={showAsaasWebhookToken ? "text" : "password"}
+                                        className="font-mono pr-10"
+                                        value={localSettings['ASAAS_WEBHOOK_TOKEN'] || ''}
+                                        onChange={(e) => handleInputChange('ASAAS_WEBHOOK_TOKEN', e.target.value)}
+                                        placeholder="Seu token personalizado"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAsaasWebhookToken(!showAsaasWebhookToken)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showAsaasWebhookToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
                                 <p className="text-[12px] text-muted-foreground">Token configurado no painel do Asaas para validar as chamadas ao webhook.</p>
                             </div>
                             <div className="space-y-2">

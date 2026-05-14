@@ -2378,6 +2378,9 @@ export interface AdminUser {
   extraSmsBalance?: number;
   templateId?: string;
   lastLoginAt?: string;
+  twilioAccountSid?: string;
+  twilioAuthToken?: string;
+  twilioWhatsappFrom?: string;
 }
 
 
