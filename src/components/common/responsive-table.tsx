@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -9,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface Column<T> {
   header: React.ReactNode;
@@ -27,6 +28,7 @@ interface ResponsiveTableProps<T> {
   emptyMessage?: string;
   onRowClick?: (item: T) => void;
   className?: string;
+  itemsPerPage?: number;
 }
 
 /**
@@ -42,7 +44,15 @@ function ResponsiveTable(props: any) {
     emptyMessage = "Nenhum dado encontrado",
     onRowClick,
     className,
+    itemsPerPage = 10,
   } = props;
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset page when data changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -61,8 +71,11 @@ function ResponsiveTable(props: any) {
     );
   }
 
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full space-y-4", className)}>
       {/* View Desktop: Table */}
       <div className="hidden md:block overflow-x-auto rounded-lg border border-border">
         <Table>
@@ -82,7 +95,7 @@ function ResponsiveTable(props: any) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item: any, rowIdx: number) => (
+            {paginatedData.map((item: any, rowIdx: number) => (
               <TableRow 
                 key={item.id || rowIdx}
                 className={cn(
@@ -106,7 +119,7 @@ function ResponsiveTable(props: any) {
 
       {/* View Mobile: Cards */}
       <div className="md:hidden space-y-4">
-        {data.map((item: any, idx: number) => (
+        {paginatedData.map((item: any, idx: number) => (
           <Card 
             key={item.id || idx} 
             className={cn(
@@ -135,6 +148,36 @@ function ResponsiveTable(props: any) {
           </Card>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-2 py-4">
+          <div className="text-sm text-muted-foreground hidden sm:block">
+            Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, data.length)} de {data.length} registros
+          </div>
+          <div className="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+            </Button>
+            <div className="text-sm font-medium sm:hidden">
+              Página {currentPage} de {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Próximo <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

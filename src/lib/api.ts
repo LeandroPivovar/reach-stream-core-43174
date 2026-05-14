@@ -1399,6 +1399,28 @@ class ApiService {
     }
 
     return response.json();
+  },
+
+  async importProducts(file: File): Promise<{ created: number; errors: string[] }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem('token');
+    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+    const response = await fetch(`${baseUrl}/api/products/import-excel`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Erro ao importar produtos' }));
+      throw new Error(error.message || 'Erro ao importar produtos');
+    }
+
+    return response.json();
   }
 
   // Groups
