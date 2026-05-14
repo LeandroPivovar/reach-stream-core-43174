@@ -60,6 +60,17 @@ function ResponsiveTable(props: any) {
     setCurrentPage(1);
   }, [data, searchTerm]);
 
+  const filteredData = React.useMemo(() => {
+    if (!searchable || !searchTerm) return data || [];
+    const lowerQuery = searchTerm.toLowerCase();
+    return (data || []).filter((item: any) => {
+      // deeply inspect object properties for text match
+      return Object.values(item).some(val => 
+        val !== null && val !== undefined && String(val).toLowerCase().includes(lowerQuery)
+      );
+    });
+  }, [data, searchable, searchTerm]);
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -76,17 +87,6 @@ function ResponsiveTable(props: any) {
       </div>
     );
   }
-
-  const filteredData = React.useMemo(() => {
-    if (!searchable || !searchTerm) return data;
-    const lowerQuery = searchTerm.toLowerCase();
-    return data.filter((item: any) => {
-      // deeply inspect object properties for text match
-      return Object.values(item).some(val => 
-        val !== null && val !== undefined && String(val).toLowerCase().includes(lowerQuery)
-      );
-    });
-  }, [data, searchable, searchTerm]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
