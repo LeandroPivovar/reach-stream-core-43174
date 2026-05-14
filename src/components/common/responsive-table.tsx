@@ -10,7 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 export interface Column<T> {
   header: React.ReactNode;
@@ -29,6 +30,8 @@ interface ResponsiveTableProps<T> {
   onRowClick?: (item: T) => void;
   className?: string;
   itemsPerPage?: number;
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }
 
 /**
@@ -45,14 +48,17 @@ function ResponsiveTable(props: any) {
     onRowClick,
     className,
     itemsPerPage = 10,
+    searchable = true,
+    searchPlaceholder = "Pesquisar...",
   } = props;
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Reset page when data changes
+  // Reset page when data or search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [data]);
+  }, [data, searchTerm]);
 
   if (isLoading) {
     return (
@@ -71,11 +77,34 @@ function ResponsiveTable(props: any) {
     );
   }
 
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const filteredData = React.useMemo(() => {
+    if (!searchable || !searchTerm) return data;
+    const lowerQuery = searchTerm.toLowerCase();
+    return data.filter((item: any) => {
+      // deeply inspect object properties for text match
+      return Object.values(item).some(val => 
+        val !== null && val !== undefined && String(val).toLowerCase().includes(lowerQuery)
+      );
+    });
+  }, [data, searchable, searchTerm]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className={cn("w-full space-y-4", className)}>
+      {searchable && (
+        <div className="flex items-center w-full md:max-w-sm relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input 
+            placeholder={searchPlaceholder} 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-background/50 h-10"
+          />
+        </div>
+      )}
+
       {/* View Desktop: Table */}
       <div className="hidden md:block overflow-x-auto rounded-lg border border-border">
         <Table>
@@ -95,65 +124,79 @@ function ResponsiveTable(props: any) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedData.map((item: any, rowIdx: number) => (
-              <TableRow 
-                key={item.id || rowIdx}
-                className={cn(
-                  "hover:bg-muted/40 transition-colors cursor-pointer",
-                  onRowClick && "cursor-pointer"
-                )}
-                onClick={() => onRowClick?.(item)}
-              >
-                {columns.map((col: any, colIdx: number) => (
-                  <TableCell key={colIdx} className={cn("py-4", col.className)}>
-                    {col.cell 
-                      ? col.cell(item) 
-                      : (col.accessorKey ? (item as any)[col.accessorKey] : null)}
-                  </TableCell>
-                ))}
+            {paginatedData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                  Nenhum resultado encontrado {searchTerm ? `para "${searchTerm}"` : ''}
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              paginatedData.map((item: any, rowIdx: number) => (
+                <TableRow 
+                  key={item.id || rowIdx}
+                  className={cn(
+                    "hover:bg-muted/40 transition-colors cursor-pointer",
+                    onRowClick && "cursor-pointer"
+                  )}
+                  onClick={() => onRowClick?.(item)}
+                >
+                  {columns.map((col: any, colIdx: number) => (
+                    <TableCell key={colIdx} className={cn("py-4", col.className)}>
+                      {col.cell 
+                        ? col.cell(item) 
+                        : (col.accessorKey ? (item as any)[col.accessorKey] : null)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       {/* View Mobile: Cards */}
       <div className="md:hidden space-y-4">
-        {paginatedData.map((item: any, idx: number) => (
-          <Card 
-            key={item.id || idx} 
-            className={cn(
-                "p-4 hover:border-primary transition-all active:scale-[0.98]",
-                onRowClick && "cursor-pointer"
-            )}
-            onClick={() => onRowClick?.(item)}
-          >
-            {renderMobileCard ? (
-              renderMobileCard(item)
-            ) : (
-                <div className="space-y-3">
-                    {/* Default Mobile View: Key/Value pairs */}
-                    {columns.filter((c: any) => !c.mobileHidden).map((col: any, cIdx: number) => (
-                        <div key={cIdx} className="flex justify-between items-start gap-4 pb-2 border-b border-border last:border-0 last:pb-0">
-                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{col.header}</span>
-                            <div className="text-sm font-semibold text-right">
-                                {col.cell 
-                                    ? col.cell(item) 
-                                    : (col.accessorKey ? (item as any)[col.accessorKey] : null)}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-          </Card>
-        ))}
+        {paginatedData.length === 0 ? (
+          <div className="text-center py-8 border border-dashed rounded-lg bg-muted/10 text-sm text-muted-foreground">
+            Nenhum resultado encontrado {searchTerm ? `para "${searchTerm}"` : ''}
+          </div>
+        ) : (
+          paginatedData.map((item: any, idx: number) => (
+            <Card 
+              key={item.id || idx} 
+              className={cn(
+                  "p-4 hover:border-primary transition-all active:scale-[0.98]",
+                  onRowClick && "cursor-pointer"
+              )}
+              onClick={() => onRowClick?.(item)}
+            >
+              {renderMobileCard ? (
+                renderMobileCard(item)
+              ) : (
+                  <div className="space-y-3">
+                      {/* Default Mobile View: Key/Value pairs */}
+                      {columns.filter((c: any) => !c.mobileHidden).map((col: any, cIdx: number) => (
+                          <div key={cIdx} className="flex justify-between items-start gap-4 pb-2 border-b border-border last:border-0 last:pb-0">
+                              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{col.header}</span>
+                              <div className="text-sm font-semibold text-right">
+                                  {col.cell 
+                                      ? col.cell(item) 
+                                      : (col.accessorKey ? (item as any)[col.accessorKey] : null)}
+                              </div>
+                          </div>
+                      ))}
+                  </div>
+              )}
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-2 py-4">
           <div className="text-sm text-muted-foreground hidden sm:block">
-            Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, data.length)} de {data.length} registros
+            Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, filteredData.length)} de {filteredData.length} registros
           </div>
           <div className="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end">
             <Button
