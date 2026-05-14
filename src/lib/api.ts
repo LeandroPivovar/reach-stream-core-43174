@@ -1399,7 +1399,8 @@ class ApiService {
     }
 
     return response.json();
-  },
+  }
+
 
   async importProducts(file: File): Promise<{ created: number; errors: string[] }> {
     const formData = new FormData();
