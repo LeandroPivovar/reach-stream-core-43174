@@ -271,7 +271,9 @@ export default function Assinaturas() {
             {/* SMS Card */}
             {(() => {
               const used = (stats as any)?.smsSent ?? 0;
-              const limit = (stats as any)?.smsLimit;
+              const extra = (stats as any)?.extraSmsBalance ?? 0;
+              const baseLimit = (stats as any)?.smsLimit;
+              const limit = baseLimit === -1 ? -1 : (baseLimit != null ? baseLimit + extra : null);
               const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
               return (
                 <Card className="p-6 border-slate-100 shadow-sm">
@@ -282,13 +284,20 @@ export default function Assinaturas() {
                     <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase">SMS</span>
                   </div>
                   <p className="text-sm font-medium text-slate-400">SMS Enviados</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">
-                    {used.toLocaleString()}
-                    {limit != null && limit !== -1 && (
-                      <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
+                  <div className="flex flex-col">
+                    <p className="text-2xl font-black text-slate-900 mt-1">
+                      {used.toLocaleString()}
+                      {limit != null && limit !== -1 && (
+                        <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
+                      )}
+                      {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / ∞</span>}
+                    </p>
+                    {extra > 0 && limit !== -1 && (
+                      <span className="text-[10px] text-blue-600 font-bold">
+                        (Plano: {baseLimit?.toLocaleString()} + Adicional: {extra.toLocaleString()})
+                      </span>
                     )}
-                    {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / ∞</span>}
-                  </p>
+                  </div>
                   {limit != null && limit !== -1 && (
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4">
                       <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -301,7 +310,9 @@ export default function Assinaturas() {
             {/* Emails Card */}
             {(() => {
               const used = (stats as any)?.emailsSent ?? 0;
-              const limit = (stats as any)?.emailsLimit;
+              const extra = (stats as any)?.extraEmailsBalance ?? 0;
+              const baseLimit = (stats as any)?.emailsLimit;
+              const limit = baseLimit === -1 ? -1 : (baseLimit != null ? baseLimit + extra : null);
               const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
               return (
                 <Card className="p-6 border-slate-100 shadow-sm">
@@ -312,13 +323,20 @@ export default function Assinaturas() {
                     <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-1 rounded font-bold uppercase">Email</span>
                   </div>
                   <p className="text-sm font-medium text-slate-400">Emails Enviados</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">
-                    {used.toLocaleString()}
-                    {limit != null && limit !== -1 && (
-                      <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
+                  <div className="flex flex-col">
+                    <p className="text-2xl font-black text-slate-900 mt-1">
+                      {used.toLocaleString()}
+                      {limit != null && limit !== -1 && (
+                        <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
+                      )}
+                      {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>}
+                    </p>
+                    {extra > 0 && limit !== -1 && (
+                      <span className="text-[10px] text-indigo-600 font-bold">
+                        (Plano: {baseLimit?.toLocaleString()} + Adicional: {extra.toLocaleString()})
+                      </span>
                     )}
-                    {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>}
-                  </p>
+                  </div>
                   {limit != null && limit !== -1 && (
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4">
                       <div className="bg-indigo-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -331,7 +349,9 @@ export default function Assinaturas() {
             {/* WhatsApp Card */}
             {(() => {
               const used = (stats as any)?.whatsappSent ?? 0;
-              const limit = (stats as any)?.whatsappLimit;
+              const extra = (stats as any)?.extraWhatsappBalance ?? 0;
+              const baseLimit = (stats as any)?.whatsappLimit;
+              const limit = baseLimit === -1 ? -1 : (baseLimit != null ? baseLimit + extra : null);
               const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
               return (
                 <Card className="p-6 border-slate-100 shadow-sm">
@@ -342,22 +362,29 @@ export default function Assinaturas() {
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded font-bold uppercase">WhatsApp</span>
                   </div>
                   <p className="text-sm font-medium text-slate-400">WhatsApp Enviados</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">
-                    {used.toLocaleString()}
-                    {limit != null && limit !== -1 && (
-                      <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
+                  <div className="flex flex-col">
+                    <p className="text-2xl font-black text-slate-900 mt-1">
+                      {used.toLocaleString()}
+                      {limit != null && limit !== -1 && (
+                        <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
+                      )}
+                      {limit === -1 && (
+                        <>
+                          <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>
+                          {extra > 0 && (
+                            <span className="block text-[10px] text-emerald-600 font-bold mt-1">
+                              + {extra.toLocaleString()} créditos extras
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </p>
+                    {extra > 0 && limit !== -1 && (
+                      <span className="text-[10px] text-emerald-600 font-bold">
+                        (Plano: {baseLimit?.toLocaleString()} + Adicional: {extra.toLocaleString()})
+                      </span>
                     )}
-                    {limit === -1 && (
-                      <>
-                        <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>
-                        {(stats as any)?.extraWhatsappBalance > 0 && (
-                          <span className="block text-[10px] text-emerald-600 font-bold mt-1">
-                            + {(stats as any).extraWhatsappBalance.toLocaleString()} créditos extras
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </p>
+                  </div>
                   {limit != null && limit !== -1 && (
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4">
                       <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} />

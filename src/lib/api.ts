@@ -1424,6 +1424,29 @@ class ApiService {
     return response.json();
   }
 
+  public async downloadProductsImportTemplate(): Promise<void> {
+    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+    const token = this.getAuthToken();
+    
+    const response = await fetch(`${baseUrl}/api/products/import/template`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) throw new Error('Erro ao baixar modelo');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modelo_importacao_produtos.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
+
   // Groups
   async getGroups(): Promise<Group[]> {
     return this.request<Group[]>('/groups', {

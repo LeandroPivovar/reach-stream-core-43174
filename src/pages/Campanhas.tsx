@@ -593,10 +593,11 @@ export default function Campanhas() {
 
       // Check for WhatsApp credits before creating
       const hasWhatsapp = simpleWhatsapp || advancedWhatsapp;
+      const whatsappLimit = subscriptionStats?.whatsappLimit === -1 ? -1 : (subscriptionStats?.whatsappLimit + (subscriptionStats?.extraWhatsappBalance || 0));
       const noCredits = hasWhatsapp && subscriptionStats && (
         subscriptionStats.whatsappLimit !== true && 
-        subscriptionStats.whatsappLimit !== -1 && 
-        (Number(subscriptionStats.whatsappLimit) - (subscriptionStats.whatsappSent || 0)) <= 0
+        whatsappLimit !== -1 && 
+        (Number(whatsappLimit) - (subscriptionStats.whatsappSent || 0)) <= 0
       );
 
       if (noCredits) {
@@ -1786,11 +1787,12 @@ export default function Campanhas() {
 
                   {(() => {
                     const isLoading = !subscriptionStats;
+                    const whatsappLimit = subscriptionStats?.whatsappLimit === -1 ? -1 : (subscriptionStats?.whatsappLimit + (subscriptionStats?.extraWhatsappBalance || 0));
                     const hasWhatsappCredits = !isLoading && (
                       subscriptionStats.whatsappLimit === true || 
-                      subscriptionStats.whatsappLimit === -1 || 
-                      (Number(subscriptionStats.whatsappLimit) === -1) ||
-                      (Number(subscriptionStats.whatsappLimit) - (subscriptionStats.whatsappSent || 0)) > 0
+                      whatsappLimit === -1 || 
+                      (Number(whatsappLimit) === -1) ||
+                      (Number(whatsappLimit) - (subscriptionStats.whatsappSent || 0)) > 0
                     );
 
                     // Permite selecionar se tiver créditos, mesmo sem configurar (conforme solicitado pelo usuário)
@@ -1875,11 +1877,19 @@ export default function Campanhas() {
                         <p className="text-sm text-muted-foreground">
                           Mensagens via WhatsApp Business com suporte a mídia e botões interativos.
                         </p>
-                        {subscriptionStats && subscriptionStats.whatsappLimit !== -1 && (
+                        {subscriptionStats && (subscriptionStats.whatsappLimit !== -1 || subscriptionStats.extraWhatsappBalance > 0) && (
                           <p className="text-xs mt-2 font-medium text-green-700">
-                            {subscriptionStats.whatsappLimit > 0
-                                ? `✅ ${subscriptionStats.whatsappLimit.toLocaleString('pt-BR')} créditos disponíveis`
-                                : '❌ Nenhum crédito disponível'}
+                            {(() => {
+                              const extra = subscriptionStats.extraWhatsappBalance || 0;
+                              const baseLimit = subscriptionStats.whatsappLimit;
+                              const totalLimit = baseLimit === -1 ? -1 : (baseLimit + extra);
+                              const available = totalLimit === -1 ? -1 : (totalLimit - (subscriptionStats.whatsappSent || 0));
+                              
+                              if (totalLimit === -1) return '✅ WhatsApp Ilimitado';
+                              return available > 0
+                                ? `✅ ${available.toLocaleString('pt-BR')} créditos disponíveis`
+                                : '❌ Nenhum crédito disponível';
+                            })()}
                           </p>
                         )}
                       </div>

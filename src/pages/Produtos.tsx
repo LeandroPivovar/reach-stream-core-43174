@@ -33,7 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Package, MoreHorizontal, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Upload, X, History, User, Filter, RefreshCw, Check, ImagePlus, Loader2, Plus, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Package, MoreHorizontal, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Upload, X, History, User, Filter, RefreshCw, Check, ImagePlus, Loader2, Plus, ChevronRight, ChevronLeft, FileSpreadsheet, Download } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import InternalResponsiveTable from '@/components/common/responsive-table';
 const ResponsiveTable = (typeof window !== 'undefined' && (window as any).ResponsiveTable) || InternalResponsiveTable;
@@ -2195,16 +2195,29 @@ export default function Produtos() {
 
             {/* Formato esperado */}
             <div className="p-4 bg-muted rounded-lg">
-              <p className="font-medium mb-2 text-sm">Formato esperado da Planilha:</p>
-              <p className="text-xs text-muted-foreground font-mono mb-2">
-                As seguintes colunas devem estar presentes (em qualquer ordem):
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-medium text-sm">Formato esperado:</p>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-primary text-xs hover:no-underline"
+                  onClick={() => api.downloadProductsImportTemplate()}
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Baixar modelo (.xlsx)
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
+                As seguintes colunas devem estar presentes na primeira linha da sua planilha:
               </p>
-              <div className="text-xs text-muted-foreground space-y-1 mt-2">
-                <p>• <strong>Nome</strong>: Obrigatório</p>
-                <p>• <strong>Descrição, SKU, Categoria</strong>: Opcionais</p>
-                <p>• <strong>Preço</strong>: Numérico ou texto com vírgula</p>
-                <p>• <strong>Estoque</strong>: Quantidade</p>
-                <p>• <strong>Status</strong>: Ativo, Inativo</p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                <p>• <strong>Nome</strong> (Obrigatório)</p>
+                <p>• <strong>Preço</strong></p>
+                <p>• <strong>SKU</strong></p>
+                <p>• <strong>Estoque</strong></p>
+                <p>• <strong>Categoria</strong></p>
+                <p>• <strong>Status</strong></p>
+                <p className="col-span-2">• <strong>Descrição</strong></p>
               </div>
             </div>
           </div>
