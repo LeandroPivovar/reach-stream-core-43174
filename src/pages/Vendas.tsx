@@ -779,18 +779,8 @@ export default function Vendas() {
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Anterior
                   </Button>
-                  <div className="flex items-center gap-1">
-                    {[...Array(totalPages)].map((_, i) => (
-                      <Button
-                        key={i}
-                        variant={currentPage === i + 1 ? "default" : "outline"}
-                        size="sm"
-                        className="w-8 h-8 p-0"
-                        onClick={() => handlePageChange(i + 1)}
-                      >
-                        {i + 1}
-                      </Button>
-                    ))}
+                  <div className="text-sm font-medium mx-2">
+                    Página {currentPage} de {totalPages}
                   </div>
                   <Button
                     variant="outline"
