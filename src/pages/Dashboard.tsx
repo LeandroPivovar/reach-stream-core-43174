@@ -173,7 +173,7 @@ export default function Dashboard() {
         },
         {
             title: 'Taxa de Entrega',
-            value: isLoadingStats ? '...' : `${(dashboardStats?.deliveryRate || 0).toFixed(1)}%`,
+            value: isLoadingStats ? '...' : `${(dashboardStats?.deliveryRate || 0).toFixed(2)}%`,
             icon: Eye,
             trend: {
                 value: dashboardStats?.trends?.deliveryRate || 0,
@@ -190,7 +190,7 @@ export default function Dashboard() {
                 value: dashboardStats?.trends?.cliques || 0,
                 isPositive: (dashboardStats?.trends?.cliques || 0) >= 0
             },
-            description: isLoadingStats ? '...' : `CTR de ${(dashboardStats?.ctr || 0).toFixed(1)}%`,
+            description: isLoadingStats ? '...' : `CTR de ${(dashboardStats?.ctr || 0).toFixed(2)}%`,
             colorClass: 'bg-orange-500/20 text-orange-900 dark:text-orange-100 border-orange-500/30'
         },
         {
@@ -201,7 +201,7 @@ export default function Dashboard() {
                 value: dashboardStats?.trends?.respostas || 0,
                 isPositive: (dashboardStats?.trends?.respostas || 0) >= 0
             },
-            description: isLoadingStats ? '...' : `Taxa de ${(dashboardStats?.responseRate || 0).toFixed(1)}%`,
+            description: isLoadingStats ? '...' : `Taxa de ${(dashboardStats?.responseRate || 0).toFixed(2)}%`,
             colorClass: 'bg-green-500/20 text-green-900 dark:text-green-100 border-green-500/30'
         },
         {
@@ -441,7 +441,7 @@ export default function Dashboard() {
                                         <p className="font-semibold text-primary">
                                             {formatCurrency(perf.receita || 0)}
                                         </p>
-                                        <p className="text-xs text-muted-foreground">{(perf.taxaEntrega || 0).toFixed(1)}% entrega</p>
+                                        <p className="text-xs text-muted-foreground">{(perf.taxaEntrega || 0).toFixed(2)}% entrega</p>
                                     </div>
                                 </div>
                             ))}

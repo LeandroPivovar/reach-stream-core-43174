@@ -1103,7 +1103,7 @@ export default function Campanhas() {
                   {(() => {
                     const totalSent = campaigns.reduce((acc, c) => acc + (c.sentCount || 0), 0);
                     const totalDelivered = campaigns.reduce((acc, c) => acc + (c.deliveredCount || 0), 0);
-                    return totalSent > 0 ? ((totalDelivered / totalSent) * 100).toFixed(1) : '0';
+                    return totalSent > 0 ? ((totalDelivered / totalSent) * 100).toFixed(2) : '0.00';
                   })()}%
                 </p>
               </div>
@@ -1222,7 +1222,7 @@ export default function Campanhas() {
                   <div className="text-right">
                     <div className="font-medium">{(campaign.deliveredCount || 0).toLocaleString()}</div>
                     <div className="text-[10px] text-muted-foreground">
-                      {campaign.sentCount > 0 ? ((campaign.deliveredCount / campaign.sentCount) * 100).toFixed(1) : 0}%
+                      {campaign.sentCount > 0 ? ((campaign.deliveredCount / campaign.sentCount) * 100).toFixed(2) : '0.00'}%
                     </div>
                   </div>
                 )
@@ -1234,7 +1234,7 @@ export default function Campanhas() {
                   <div className="text-right">
                     <div className="font-medium">{(campaign.clicksCount || 0).toLocaleString()}</div>
                     <div className="text-[10px] text-muted-foreground">
-                      {campaign.deliveredCount > 0 ? ((campaign.clicksCount / campaign.deliveredCount) * 100).toFixed(1) : 0}%
+                      {campaign.deliveredCount > 0 ? ((campaign.clicksCount / campaign.deliveredCount) * 100).toFixed(2) : '0.00'}%
                     </div>
                   </div>
                 )
@@ -1338,14 +1338,14 @@ export default function Campanhas() {
                     <p className="text-[9px] text-muted-foreground uppercase font-bold">Envios</p>
                     <p className="text-sm font-semibold">{(campaign.sentCount || 0).toLocaleString()}</p>
                     <p className="text-[10px] text-muted-foreground">
-                       Entrega: {campaign.sentCount > 0 ? ((campaign.deliveredCount / campaign.sentCount) * 100).toFixed(1) : 0}%
+                       Entrega: {campaign.sentCount > 0 ? ((campaign.deliveredCount / campaign.sentCount) * 100).toFixed(2) : '0.00'}%
                     </p>
                   </div>
                   <div className="space-y-1 border-l border-border/50 pl-2">
                     <p className="text-[9px] text-muted-foreground uppercase font-bold">Cliques</p>
                     <p className="text-sm font-semibold">{(campaign.clicksCount || 0).toLocaleString()}</p>
                     <p className="text-[10px] text-muted-foreground">
-                       Taxa: {campaign.deliveredCount > 0 ? ((campaign.clicksCount / campaign.deliveredCount) * 100).toFixed(1) : 0}%
+                       Taxa: {campaign.deliveredCount > 0 ? ((campaign.clicksCount / campaign.deliveredCount) * 100).toFixed(2) : '0.00'}%
                     </p>
                   </div>
                 </div>
@@ -3557,7 +3557,7 @@ export default function Campanhas() {
                     <span className="text-sm text-muted-foreground">Taxa de Cliques</span>
                     <span className="text-2xl font-bold text-green-500">
                       {selectedCampaign.deliveredCount > 0
-                        ? ((selectedCampaign.clicksCount / selectedCampaign.deliveredCount) * 100).toFixed(1)
+                        ? ((selectedCampaign.clicksCount / selectedCampaign.deliveredCount) * 100).toFixed(2)
                         : 0}%
                     </span>
                     <div className="mt-2 text-xs text-muted-foreground">{(selectedCampaign.clicksCount || 0).toLocaleString()} cliques</div>
