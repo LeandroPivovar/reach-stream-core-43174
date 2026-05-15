@@ -122,12 +122,12 @@ export default function Vendas() {
       };
 
       const [stats, campaigns, channels, products, payments, funnel] = await Promise.all([
-        api.getDashboardStats(days, { ...filters, onlyWithCampaigns: true }),
+        api.getDashboardStats(days, filters),
         api.getSalesByCampaign(days, { ...filters, onlyWithCampaigns: true }),
-        api.getSalesByChannel(days, { ...filters, onlyWithCampaigns: true }),
-        api.getTopProducts(days, { ...filters, onlyWithCampaigns: true }),
-        api.getPaymentMethods(days, { ...filters, onlyWithCampaigns: true }),
-        api.getFunnelData(days, filters) // Funnel usually includes leads (all), so keep as is or filter if needed
+        api.getSalesByChannel(days, filters),
+        api.getTopProducts(days, filters),
+        api.getPaymentMethods(days, filters),
+        api.getFunnelData(days, filters)
       ]);
 
       setDashboardStats(stats);
@@ -137,7 +137,7 @@ export default function Vendas() {
       setPaymentMethods(payments);
       setFunnelData(funnel);
 
-      const sales = await api.getAllSales({ onlyWithCampaigns: true });
+      const sales = await api.getAllSales();
       setRecentSales(sales);
 
     } catch (error) {
@@ -478,13 +478,19 @@ export default function Vendas() {
                   <tr className="font-semibold">
                     <td className="py-4 px-2" colSpan={2}>Total</td>
                     <td className="py-4 px-2 text-right">
-                      {(dashboardStats?.vendas || 0).toLocaleString()}
+                      {salesByCampaign.reduce((acc, c) => acc + c.vendas, 0).toLocaleString()}
                     </td>
                     <td className="py-4 px-2 text-right text-success">
-                      R$ {(dashboardStats?.faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      R$ {salesByCampaign.reduce((acc, c) => acc + c.faturamento, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="py-4 px-2 text-right text-muted-foreground">
-                      R$ {(dashboardStats?.ticketMedio || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      R$ {(() => {
+                        const totalVendas = salesByCampaign.reduce((acc, c) => acc + (c.vendas || 0), 0);
+                        const totalFaturamento = salesByCampaign.reduce((acc, c) => acc + (c.faturamento || 0), 0);
+                        return totalVendas > 0 
+                          ? (totalFaturamento / totalVendas).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                          : '0,00';
+                      })()}
                     </td>
                   </tr>
                 </tfoot>
