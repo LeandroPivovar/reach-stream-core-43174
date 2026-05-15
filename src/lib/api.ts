@@ -1042,8 +1042,11 @@ class ApiService {
     });
   }
 
-  async getAllSales(): Promise<Sale[]> {
-    return this.request<Sale[]>('/sales', {
+  async getAllSales(filters: { onlyWithCampaigns?: boolean } = {}): Promise<Sale[]> {
+    const params = new URLSearchParams();
+    if (filters.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<Sale[]>(`/sales${query}`, {
       method: 'GET',
     });
   }
@@ -1055,63 +1058,68 @@ class ApiService {
     });
   }
 
-  async getDashboardStats(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<DashboardStats> {
+  async getDashboardStats(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string; onlyWithCampaigns?: boolean } = {}): Promise<DashboardStats> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
 
     return this.request<DashboardStats>(`/sales/dashboard/stats?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getSalesByCampaign(period: number = 7, filters: { productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<SalesByCampaign[]> {
+  async getSalesByCampaign(period: number = 7, filters: { productId?: string | number; startDate?: string; endDate?: string; onlyWithCampaigns?: boolean } = {}): Promise<SalesByCampaign[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
 
     return this.request<SalesByCampaign[]>(`/sales/dashboard/campaigns?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getSalesByChannel(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<SalesByChannel[]> {
+  async getSalesByChannel(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string; onlyWithCampaigns?: boolean } = {}): Promise<SalesByChannel[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
 
     return this.request<SalesByChannel[]>(`/sales/dashboard/channels?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getTopProducts(period: number = 7, filters: { campaignId?: string | number; startDate?: string; endDate?: string } = {}): Promise<TopProduct[]> {
+  async getTopProducts(period: number = 7, filters: { campaignId?: string | number; startDate?: string; endDate?: string; onlyWithCampaigns?: boolean } = {}): Promise<TopProduct[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
 
     return this.request<TopProduct[]>(`/sales/dashboard/products?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getPaymentMethods(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<PaymentMethodStats[]> {
+  async getPaymentMethods(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string; onlyWithCampaigns?: boolean } = {}): Promise<PaymentMethodStats[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
 
     return this.get<PaymentMethodStats[]>(`/sales/dashboard/payment-methods?${params.toString()}`);
   }

@@ -122,12 +122,12 @@ export default function Vendas() {
       };
 
       const [stats, campaigns, channels, products, payments, funnel] = await Promise.all([
-        api.getDashboardStats(days, filters),
-        api.getSalesByCampaign(days, filters),
-        api.getSalesByChannel(days, filters),
-        api.getTopProducts(days, filters),
-        api.getPaymentMethods(days, filters),
-        api.getFunnelData(days, filters)
+        api.getDashboardStats(days, { ...filters, onlyWithCampaigns: true }),
+        api.getSalesByCampaign(days, { ...filters, onlyWithCampaigns: true }),
+        api.getSalesByChannel(days, { ...filters, onlyWithCampaigns: true }),
+        api.getTopProducts(days, { ...filters, onlyWithCampaigns: true }),
+        api.getPaymentMethods(days, { ...filters, onlyWithCampaigns: true }),
+        api.getFunnelData(days, filters) // Funnel usually includes leads (all), so keep as is or filter if needed
       ]);
 
       setDashboardStats(stats);
@@ -137,7 +137,7 @@ export default function Vendas() {
       setPaymentMethods(payments);
       setFunnelData(funnel);
 
-      const sales = await api.getAllSales();
+      const sales = await api.getAllSales({ onlyWithCampaigns: true });
       setRecentSales(sales);
 
     } catch (error) {
@@ -174,7 +174,7 @@ export default function Vendas() {
   const stats = [
     {
       title: 'Faturamento Total',
-      value: dashboardStats ? `R$ ${dashboardStats.faturamento.toLocaleString('pt-BR')}` : 'R$ 0,00',
+      value: dashboardStats ? `R$ ${dashboardStats.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00',
       icon: DollarSign,
       trend: { value: dashboardStats?.trends?.faturamento || 0, isPositive: (dashboardStats?.trends?.faturamento || 0) >= 0 },
       description: `Período selecionado`
@@ -188,7 +188,7 @@ export default function Vendas() {
     },
     {
       title: 'Ticket Médio',
-      value: dashboardStats ? `R$ ${dashboardStats.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'R$ 0,00',
+      value: dashboardStats ? `R$ ${dashboardStats.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00',
       icon: TrendingUp,
       trend: { value: dashboardStats?.trends?.ticketMedio || 0, isPositive: (dashboardStats?.trends?.ticketMedio || 0) >= 0 },
       description: 'Valor médio por venda'
@@ -370,7 +370,7 @@ export default function Vendas() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))"
                         style={{ fontSize: '12px' }}
-                        tickFormatter={(value) => `R$ ${value}`} 
+                        tickFormatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                       />
                       <Tooltip
                         contentStyle={{
@@ -379,7 +379,7 @@ export default function Vendas() {
                           borderRadius: '8px',
                           color: 'hsl(var(--popover-foreground))'
                         }}
-                        formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 'Faturamento']}
+                        formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Faturamento']}
                         labelFormatter={(label) => `Data: ${label}`}
                       />
                       <Area
@@ -407,9 +407,9 @@ export default function Vendas() {
                   <div>
                     <h5 className="font-medium mb-2">Insights do Período</h5>
                     <ul className="space-y-1 text-sm text-muted-foreground">
-                      <li>• Faturamento do período selecionado: R$ {(dashboardStats?.faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</li>
-                      <li>• Faturamento do período anterior: R$ {(dashboardStats?.previousFaturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</li>
-                      <li>• Crescimento: {(dashboardStats?.trends?.faturamento || 0).toFixed(1)}% em relação ao período anterior</li>
+                      <li>• Faturamento do período selecionado: R$ {(dashboardStats?.faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</li>
+                      <li>• Faturamento do período anterior: R$ {(dashboardStats?.previousFaturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</li>
+                      <li>• Crescimento: {(dashboardStats?.trends?.faturamento || 0).toFixed(2)}% em relação ao período anterior</li>
                     </ul>
                   </div>
                 </div>
@@ -468,7 +468,7 @@ export default function Vendas() {
                           R$ {campanha.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td className="py-4 px-2 text-right text-muted-foreground">
-                          R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                       </tr>
                     );
@@ -477,12 +477,14 @@ export default function Vendas() {
                 <tfoot className="border-t-2 border-border">
                   <tr className="font-semibold">
                     <td className="py-4 px-2" colSpan={2}>Total</td>
-                    <td className="py-4 px-2 text-right">{dashboardStats?.vendas || 0}</td>
+                    <td className="py-4 px-2 text-right">
+                      {(dashboardStats?.vendas || 0).toLocaleString()}
+                    </td>
                     <td className="py-4 px-2 text-right text-success">
                       R$ {(dashboardStats?.faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="py-4 px-2 text-right text-muted-foreground">
-                      R$ {(dashboardStats?.ticketMedio || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {(dashboardStats?.ticketMedio || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                   </tr>
                 </tfoot>
@@ -517,7 +519,7 @@ export default function Vendas() {
                           R$ {totalFaturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {totalVendas} vendas ({(percentual || 0).toFixed(1)}%)
+                          {totalVendas} vendas ({(percentual || 0).toFixed(2)}%)
                         </p>
                       </div>
                     </div>
@@ -563,7 +565,7 @@ export default function Vendas() {
                           R$ {produto.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /un
+                          R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /un
                         </p>
                       </div>
                     </div>
@@ -693,10 +695,10 @@ export default function Vendas() {
                   cell: (venda) => (
                     <div className="text-right">
                       <div className="text-sm font-bold text-success">
-                        R$ {Number(venda.totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ {Number(venda.totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
                       <div className="text-[9px] text-muted-foreground">
-                        {venda.quantity > 1 && `un. R$ ${Number(venda.unitPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                        {venda.quantity > 1 && `un. R$ ${Number(venda.unitPrice).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       </div>
                     </div>
                   )
@@ -741,7 +743,7 @@ export default function Vendas() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-success">
-                        R$ {Number(venda.totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ {Number(venda.totalValue).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
                   </div>

@@ -2624,7 +2624,7 @@ export default function Contatos() {
 
                 {/* Informação sobre persistência */}
                 <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                  <p className="text-sm text-primary-foreground">
+                  <p className="text-sm text-foreground font-medium">
                     ✅ <strong>Configuração salva no banco de dados!</strong> As configurações são específicas por usuário e são aplicadas automaticamente no cálculo de score dos contatos.
                   </p>
                 </div>
