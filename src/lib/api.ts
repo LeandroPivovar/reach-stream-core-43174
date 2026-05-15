@@ -1,3 +1,5 @@
+import { isShopifyEmbedded, getShopifySessionToken } from './shopify';
+
 const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 const defaultApiUrl = isProd ? window.location.origin : 'http://localhost:3000';
 export const API_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
@@ -789,7 +791,17 @@ class ApiService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = this.getAuthToken();
+    let token = this.getAuthToken();
+
+    // Se estiver em ambiente Shopify Embedded, usa o Session Token do App Bridge
+    // Isso é obrigatório para as verificações de qualidade da Shopify
+    if (isShopifyEmbedded()) {
+      const shopifyToken = await getShopifySessionToken();
+      if (shopifyToken) {
+        token = shopifyToken;
+      }
+    }
+
     const headers: HeadersInit = {
       ...options.headers,
     };
