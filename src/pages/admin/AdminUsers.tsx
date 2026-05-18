@@ -585,17 +585,39 @@ export default function AdminUsers() {
                                 <Card className="bg-muted/10">
                                     <CardHeader className="pb-2 border-b mb-4">
                                         <CardTitle className="text-sm font-bold flex items-center gap-2 text-purple-500">
-                                            <MessageSquare className="h-4 w-4" /> WHATSAPP
+                                            <MessageSquare className="h-4 w-4" /> WHATSAPP (MÊS ATUAL)
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        <div className="flex flex-col items-center justify-center py-4 text-center">
-                                            <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Total de Disparos (Mês)</p>
-                                            <p className="text-4xl font-bold font-mono text-purple-600">{userStats?.usage.whatsapp.used.toLocaleString()}</p>
+                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                            <span className="text-muted-foreground">Contratado:</span>
+                                            <span className="font-mono text-right">
+                                                {userStats?.usage.whatsapp.unlimited ? 'Ilimitado' : userStats?.usage.whatsapp.contracted?.toLocaleString()}
+                                            </span>
 
-                                            <Badge variant="outline" className="mt-4 bg-purple-50 text-purple-700 border-purple-200">
-                                                {userStats?.usage.whatsapp.unlimited ? 'Ilimitado no Plano' : 'Limitado'}
-                                            </Badge>
+                                            <span className="text-muted-foreground">Extra:</span>
+                                            <span className="font-mono text-right text-green-600">
+                                                +{userStats?.usage.whatsapp.extra?.toLocaleString()}
+                                            </span>
+
+                                            <div className="col-span-2 border-t pt-2 mt-2 flex justify-between font-bold">
+                                                <span>Total:</span>
+                                                <span className="font-mono">
+                                                    {userStats?.usage.whatsapp.unlimited ? 'Ilimitado' : userStats?.usage.whatsapp.total?.toLocaleString()}
+                                                </span>
+                                            </div>
+
+                                            <span className="text-muted-foreground">Usado:</span>
+                                            <span className="font-mono text-right text-red-500">
+                                                -{userStats?.usage.whatsapp.used?.toLocaleString()}
+                                            </span>
+                                        </div>
+
+                                        <div className="bg-purple-500/10 p-3 rounded-lg border border-purple-500/20 flex justify-between items-center">
+                                            <span className="text-xs font-bold text-purple-700 uppercase">Saldo Disponível</span>
+                                            <span className="text-xl font-bold font-mono text-purple-700">
+                                                {userStats?.usage.whatsapp.unlimited ? 'Ilimitado' : userStats?.usage.whatsapp.available?.toLocaleString()}
+                                            </span>
                                         </div>
                                     </CardContent>
                                 </Card>

@@ -588,6 +588,10 @@ export interface AdminUserStats {
     whatsapp: {
       used: number;
       unlimited: boolean;
+      contracted?: number;
+      extra?: number;
+      total?: number;
+      available?: number;
     };
   };
   subscription: {
