@@ -33,7 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Package, MoreHorizontal, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Upload, X, History, User, Filter, RefreshCw, Check, ImagePlus, Loader2, Plus, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Package, MoreHorizontal, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, ShoppingCart, Upload, X, History, User, Filter, RefreshCw, Check, ImagePlus, Loader2, Plus, ChevronRight, ChevronLeft, FileSpreadsheet, Download } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import InternalResponsiveTable from '@/components/common/responsive-table';
 const ResponsiveTable = (typeof window !== 'undefined' && (window as any).ResponsiveTable) || InternalResponsiveTable;
@@ -68,6 +68,9 @@ export default function Produtos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -1136,6 +1139,10 @@ export default function Produtos() {
           </div>
         </PopoverContent>
       </Popover>
+      <Button variant="outline" onClick={() => setIsImportModalOpen(true)} className="mr-2">
+        <Upload className="w-4 h-4 mr-2" />
+        Importar
+      </Button>
       <HeaderActions.Export onClick={() => setIsExportModalOpen(true)} />
       <HeaderActions.Add onClick={() => setIsNewProductOpen(true)}>
         Novo Produto
@@ -2118,6 +2125,166 @@ export default function Produtos() {
               disabled={isExporting}
             >
               Cancelar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Modal */}
+      <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Importar Produtos</DialogTitle>
+            <DialogDescription>
+              Selecione uma planilha (XLSX, XLS ou CSV) contendo seus produtos.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg p-6">
+              {!importFile ? (
+                <>
+                  <Upload className="w-10 h-10 text-muted-foreground mb-4" />
+                  <p className="text-sm text-center mb-4">
+                    Arraste sua planilha aqui ou clique para selecionar
+                  </p>
+                  <Button variant="outline" onClick={() => document.getElementById('file-upload-products')?.click()}>
+                    Selecionar Arquivo
+                  </Button>
+                  <input
+                    id="file-upload-products"
+                    type="file"
+                    accept=".xlsx, .xls, .csv"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setImportFile(e.target.files[0]);
+                      }
+                    }}
+                  />
+                </>
+              ) : (
+                <div className="flex flex-col items-center w-full">
+                  <div className="flex items-center gap-3 w-full p-3 bg-muted rounded-md mb-4">
+                    <Package className="w-6 h-6 text-primary" />
+                    <div className="flex-1 truncate">
+                      <p className="text-sm font-medium truncate">{importFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(importFile.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        setImportFile(null);
+                        const input = document.getElementById('file-upload-products') as HTMLInputElement;
+                        if (input) input.value = '';
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Formatos aceitos: XLSX e CSV
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Formato esperado */}
+            <div className="p-4 bg-muted rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-medium text-sm">Formato esperado:</p>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-primary text-xs hover:no-underline"
+                  onClick={() => api.downloadProductsImportTemplate()}
+                >
+                  <Download className="w-3 h-3 mr-1" />
+                  Baixar modelo (.xlsx)
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
+                As seguintes colunas devem estar presentes na primeira linha da sua planilha:
+              </p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+                <p>• <strong>Nome</strong> (Obrigatório)</p>
+                <p>• <strong>Preço</strong></p>
+                <p>• <strong>SKU</strong></p>
+                <p>• <strong>Estoque</strong></p>
+                <p>• <strong>Categoria</strong></p>
+                <p>• <strong>Status</strong></p>
+                <p className="col-span-2">• <strong>Descrição</strong></p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsImportModalOpen(false);
+                setImportFile(null);
+              }}
+              disabled={isImporting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!importFile) {
+                  toast({
+                    title: 'Selecione um arquivo',
+                    description: 'Por favor, selecione uma planilha para importar',
+                    variant: 'destructive',
+                  });
+                  return;
+                }
+
+                setIsImporting(true);
+                try {
+                  const result = await api.importProducts(importFile);
+
+                  toast({
+                    title: 'Importação concluída!',
+                    description: `${result.created} produto(s) importado(s) com sucesso${result.errors.length > 0 ? `. ${result.errors.length} erro(s) encontrado(s).` : '.'}`,
+                  });
+
+                  if (result.errors.length > 0) {
+                    console.warn('Erros na importação:', result.errors);
+                  }
+
+                  await loadProducts();
+
+                  setIsImportModalOpen(false);
+                  setImportFile(null);
+                } catch (error) {
+                  console.error('Erro ao importar produtos:', error);
+                  toast({
+                    title: 'Erro ao importar produtos',
+                    description: error instanceof Error ? error.message : 'Não foi possível importar os produtos',
+                    variant: 'destructive',
+                  });
+                } finally {
+                  setIsImporting(false);
+                }
+              }}
+              disabled={!importFile || isImporting}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Importando...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importar Produtos
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>

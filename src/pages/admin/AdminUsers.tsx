@@ -66,7 +66,10 @@ export default function AdminUsers() {
     const [emailConfirm, setEmailConfirm] = useState('');
 
     // Form State
-    const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', phone: '', role: 'user' });
+    const [editForm, setEditForm] = useState({ 
+        firstName: '', lastName: '', email: '', phone: '', role: 'user', 
+        twilioWhatsappFrom: '', twilioAccountSid: '', twilioAuthToken: '' 
+    });
     const [selectedPlanId, setSelectedPlanId] = useState<string>('');
     const [creditForm, setCreditForm] = useState({ email: 0, sms: 0, whatsapp: 0 });
     const [showCreditInputs, setShowCreditInputs] = useState(false);
@@ -231,7 +234,10 @@ export default function AdminUsers() {
             lastName: user.lastName, 
             email: user.email, 
             phone: user.phone || '',
-            role: user.role || 'user'
+            role: user.role || 'user',
+            twilioWhatsappFrom: user.twilioWhatsappFrom || '',
+            twilioAccountSid: user.twilioAccountSid || '',
+            twilioAuthToken: user.twilioAuthToken || ''
         });
         setIsEditModalOpen(true);
     };
@@ -795,6 +801,41 @@ export default function AdminUsers() {
                                     <SelectItem value="admin">Administrador</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+                        <div className="grid gap-2 border-t pt-4 mt-2">
+                            <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                                <MessageSquare className="h-4 w-4" /> Configuração Twilio WhatsApp (Subconta)
+                            </h4>
+                            <div className="grid gap-2">
+                                <Label htmlFor="twilioWhatsappFrom">Número de WhatsApp (ex: +14155238886)</Label>
+                                <Input
+                                    id="twilioWhatsappFrom"
+                                    value={editForm.twilioWhatsappFrom}
+                                    onChange={(e) => setEditForm(prev => ({ ...prev, twilioWhatsappFrom: e.target.value }))}
+                                    placeholder="Número para envios"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="twilioAccountSid">Account SID</Label>
+                                    <Input
+                                        id="twilioAccountSid"
+                                        value={editForm.twilioAccountSid}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, twilioAccountSid: e.target.value }))}
+                                        placeholder="AC..."
+                                    />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="twilioAuthToken">Auth Token</Label>
+                                    <Input
+                                        id="twilioAuthToken"
+                                        type="password"
+                                        value={editForm.twilioAuthToken}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, twilioAuthToken: e.target.value }))}
+                                        placeholder="Token da subconta"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>

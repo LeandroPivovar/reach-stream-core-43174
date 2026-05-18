@@ -160,8 +160,8 @@ export function ContactDetailsModal({
 
     const trend = lastPurchaseValue >= averagePurchase ? 'up' : 'down';
     const trendPercentage = averagePurchase > 0
-        ? Math.abs(((lastPurchaseValue - averagePurchase) / averagePurchase) * 100).toFixed(1)
-        : "0.0";
+        ? Math.abs(((lastPurchaseValue - averagePurchase) / averagePurchase) * 100).toFixed(2)
+        : "0.00";
 
     // Build history events from purchases
     const historyEvents: HistoryEvent[] = purchaseData.purchases.map((p, idx) => ({
@@ -341,7 +341,7 @@ export function ContactDetailsModal({
                                     <div className="space-y-1">
                                         <p className="text-xs font-medium text-muted-foreground">Ticket Médio</p>
                                         <p className="text-2xl font-bold">
-                                            R$ {averagePurchase.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            R$ {averagePurchase.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </p>
                                         <div className={`flex items-center gap-1 text-[11px] font-medium ${trend === 'up' ? 'text-green-600' : 'text-red-500'}`}>
                                             {trend === 'down' && <TrendingUp className="w-3 h-3 rotate-180" />}

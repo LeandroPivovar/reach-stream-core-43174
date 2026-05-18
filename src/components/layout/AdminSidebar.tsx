@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import logoNucleocrm from '@/assets/logo-nucleocrm.png';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { isShopifyEmbedded } from '@/lib/shopify';
 import { Button } from '@/components/ui/button';
 import {
     LayoutDashboard,
@@ -144,17 +145,19 @@ export function AdminSidebar() {
                     {!isCollapsed && <span>Ir para Plataforma</span>}
                 </button>
 
-                <button
-                    onClick={handleLogout}
-                    className={cn(
-                        "w-full flex items-center text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors",
-                        isCollapsed ? "justify-center px-2 py-2" : "space-x-3 px-3 py-2"
-                    )}
-                    title={isCollapsed ? "Sair" : undefined}
-                >
-                    <LogOut className="w-4 h-4 shrink-0" />
-                    {!isCollapsed && <span>Sair</span>}
-                </button>
+                {!isShopifyEmbedded() && (
+                    <button
+                        onClick={handleLogout}
+                        className={cn(
+                            "w-full flex items-center text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors",
+                            isCollapsed ? "justify-center px-2 py-2" : "space-x-3 px-3 py-2"
+                        )}
+                        title={isCollapsed ? "Sair" : undefined}
+                    >
+                        <LogOut className="w-4 h-4 shrink-0" />
+                        {!isCollapsed && <span>Sair</span>}
+                    </button>
+                )}
             </div>
         </div>
     );

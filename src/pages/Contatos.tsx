@@ -109,7 +109,6 @@ interface ContactFrontend {
   city: string;
   birthDate: string;
   gender: string;
-  segmentations: string[];
   lastInteraction: string;
   sales: import('@/lib/api').Sale[];
   hasActiveCoupon: boolean;
@@ -311,7 +310,6 @@ export default function Contatos() {
       city: apiContact.city || '',
       birthDate: apiContact.birthDate || '',
       gender: apiContact.gender || 'all',
-      segmentations: apiContact.contactSegmentations?.map(cs => cs.segmentationId) || [],
       lastInteraction: apiContact.updatedAt || apiContact.createdAt,
       sales: apiContact.sales || [],
       hasActiveCoupon: !!apiContact.hasActiveCoupon,
@@ -2626,7 +2624,7 @@ export default function Contatos() {
 
                 {/* Informação sobre persistência */}
                 <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                  <p className="text-sm text-primary-foreground">
+                  <p className="text-sm text-foreground font-medium">
                     ✅ <strong>Configuração salva no banco de dados!</strong> As configurações são específicas por usuário e são aplicadas automaticamente no cálculo de score dos contatos.
                   </p>
                 </div>
@@ -2973,8 +2971,7 @@ export default function Contatos() {
                         Empresa: 'Exemplo Corp',
                         Cargo: 'Gerente',
                         Notas: 'Cliente muito importante',
-                        Origem: 'Indicação',
-                        Segmentações: 'by_purchase_count; high_ticket'
+                        Origem: 'Indicação'
                       },
                       {
                         Nome: 'Maria Santos',
@@ -2991,8 +2988,7 @@ export default function Contatos() {
                         Empresa: '',
                         Cargo: '',
                         Notas: '',
-                        Origem: 'Instagram',
-                        Segmentações: 'birthday'
+                        Origem: 'Instagram'
                       },
                       {
                         Nome: 'Pedro Oliveira',
@@ -3009,8 +3005,7 @@ export default function Contatos() {
                         Empresa: '',
                         Cargo: '',
                         Notas: '',
-                        Origem: '',
-                        Segmentações: ''
+                        Origem: ''
                       }
                     ];
 
@@ -3101,7 +3096,6 @@ export default function Contatos() {
                 <p>• <strong>Estado, Cidade</strong>: Localização</p>
                 <p>• <strong>Data de Nascimento</strong>: Formato AAAA-MM-DD</p>
                 <p>• <strong>Gênero</strong>: M ou F</p>
-                <p>• <strong>Segmentações</strong>: IDs separados por ponto e vírgula (;)</p>
               </div>
             </div>
           </div>

@@ -1,3 +1,5 @@
+import { isShopifyEmbedded, getShopifySessionToken } from './shopify';
+
 const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 const defaultApiUrl = isProd ? window.location.origin : 'http://localhost:3000';
 export const API_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
@@ -790,7 +792,17 @@ class ApiService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = this.getAuthToken();
+    let token = this.getAuthToken();
+
+    // Se estiver em ambiente Shopify Embedded, usa o Session Token do App Bridge
+    // Isso é obrigatório para as verificações de qualidade da Shopify
+    if (isShopifyEmbedded()) {
+      const shopifyToken = await getShopifySessionToken();
+      if (shopifyToken) {
+        token = shopifyToken;
+      }
+    }
+
     const headers: HeadersInit = {
       ...options.headers,
     };
@@ -1043,8 +1055,11 @@ class ApiService {
     });
   }
 
-  async getAllSales(): Promise<Sale[]> {
-    return this.request<Sale[]>('/sales', {
+  async getAllSales(filters: { onlyWithCampaigns?: boolean } = {}): Promise<Sale[]> {
+    const params = new URLSearchParams();
+    if (filters.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<Sale[]>(`/sales${query}`, {
       method: 'GET',
     });
   }
@@ -1056,63 +1071,68 @@ class ApiService {
     });
   }
 
-  async getDashboardStats(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<DashboardStats> {
+  async getDashboardStats(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string; onlyWithCampaigns?: boolean } = {}): Promise<DashboardStats> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
 
     return this.request<DashboardStats>(`/sales/dashboard/stats?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getSalesByCampaign(period: number = 7, filters: { productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<SalesByCampaign[]> {
+  async getSalesByCampaign(period: number = 7, filters: { productId?: string | number; startDate?: string; endDate?: string; onlyWithCampaigns?: boolean } = {}): Promise<SalesByCampaign[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
 
     return this.request<SalesByCampaign[]>(`/sales/dashboard/campaigns?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getSalesByChannel(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<SalesByChannel[]> {
+  async getSalesByChannel(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string; onlyWithCampaigns?: boolean } = {}): Promise<SalesByChannel[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
 
     return this.request<SalesByChannel[]>(`/sales/dashboard/channels?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getTopProducts(period: number = 7, filters: { campaignId?: string | number; startDate?: string; endDate?: string } = {}): Promise<TopProduct[]> {
+  async getTopProducts(period: number = 7, filters: { campaignId?: string | number; startDate?: string; endDate?: string; onlyWithCampaigns?: boolean } = {}): Promise<TopProduct[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
 
     return this.request<TopProduct[]>(`/sales/dashboard/products?${params.toString()}`, {
       method: 'GET',
     });
   }
 
-  async getPaymentMethods(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string } = {}): Promise<PaymentMethodStats[]> {
+  async getPaymentMethods(period: number = 7, filters: { campaignId?: string | number; productId?: string | number; startDate?: string; endDate?: string; onlyWithCampaigns?: boolean } = {}): Promise<PaymentMethodStats[]> {
     const params = new URLSearchParams();
     params.append('period', period.toString());
     if (filters?.campaignId) params.append('campaignId', filters.campaignId.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.onlyWithCampaigns) params.append('onlyWithCampaigns', 'true');
 
     return this.get<PaymentMethodStats[]>(`/sales/dashboard/payment-methods?${params.toString()}`);
   }
@@ -1410,6 +1430,52 @@ class ApiService {
     }
 
     return response.json();
+  }
+
+
+  async importProducts(file: File): Promise<{ created: number; errors: string[] }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem('token');
+    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+    const response = await fetch(`${baseUrl}/api/products/import-excel`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Erro ao importar produtos' }));
+      throw new Error(error.message || 'Erro ao importar produtos');
+    }
+
+    return response.json();
+  }
+
+  public async downloadProductsImportTemplate(): Promise<void> {
+    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
+    const token = this.getAuthToken();
+    
+    const response = await fetch(`${baseUrl}/api/products/import/template`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) throw new Error('Erro ao baixar modelo');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'modelo_importacao_produtos.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   }
 
   // Groups
@@ -2389,6 +2455,9 @@ export interface AdminUser {
   extraSmsBalance?: number;
   templateId?: string;
   lastLoginAt?: string;
+  twilioAccountSid?: string;
+  twilioAuthToken?: string;
+  twilioWhatsappFrom?: string;
 }
 
 
