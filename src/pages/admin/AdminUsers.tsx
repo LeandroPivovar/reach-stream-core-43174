@@ -49,8 +49,8 @@ export default function AdminUsers() {
     });
 
     const { data: plans } = useQuery({
-        queryKey: ['plans'],
-        queryFn: () => api.getPlans(),
+        queryKey: ['admin-plans'],
+        queryFn: () => api.getAdminPlans(),
     });
 
     // State
@@ -295,7 +295,7 @@ export default function AdminUsers() {
                             <SelectItem value="all">Todos os Planos</SelectItem>
                             {plans?.map((plan: any) => (
                                 <SelectItem key={plan.id} value={plan.id.toString()}>
-                                    {plan.name}
+                                    {plan.name} {!plan.visible && '(Invisível)'}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -869,7 +869,7 @@ export default function AdminUsers() {
                                     </SelectItem>
                                     {plans?.map((plan: Plan) => (
                                         <SelectItem key={plan.id} value={plan.id.toString()}>
-                                            {plan.name} - R$ {Number(plan.price).toFixed(2)}
+                                            {plan.name} - R$ {Number(plan.price).toFixed(2)} {!plan.visible && '(Invisível)'}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
