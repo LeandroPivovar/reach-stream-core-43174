@@ -1,3 +1,5 @@
+import { isShopifyEmbedded, getShopifySessionToken } from './shopify';
+
 const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 const defaultApiUrl = isProd ? window.location.origin : 'http://localhost:3000';
 export const API_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
@@ -592,6 +594,7 @@ export interface AdminUserStats {
     planName: string;
     status: string;
     createdAt: string;
+    totalPaidPlanAmount?: number;
   };
 }
 
@@ -789,7 +792,17 @@ class ApiService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = this.getAuthToken();
+    let token = this.getAuthToken();
+
+    // Se estiver em ambiente Shopify Embedded, usa o Session Token do App Bridge
+    // Isso é obrigatório para as verificações de qualidade da Shopify
+    if (isShopifyEmbedded()) {
+      const shopifyToken = await getShopifySessionToken();
+      if (shopifyToken) {
+        token = shopifyToken;
+      }
+    }
+
     const headers: HeadersInit = {
       ...options.headers,
     };
@@ -1185,6 +1198,16 @@ class ApiService {
       method: 'PATCH',
       body: JSON.stringify(data)
     });
+  }
+
+  async deleteAdminUser(id: number): Promise<any> {
+    return this.request<any>(`/admin/users/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async getAdminClientsReport(): Promise<any[]> {
+    return this.get<any[]>('/admin/reports/clients');
   }
 
   async impersonateAdminUser(userId: number): Promise<{ token: string; user: any }> {
@@ -2475,6 +2498,7 @@ export interface AdminFinanceStats {
     profit: number;
   }[];
   currentMrr: number;
+  mrrGrowthMoM?: number;
   ytdRevenue: number;
   avgMargin: number;
   growthRate: number;

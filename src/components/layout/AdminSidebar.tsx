@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import logoNucleocrm from '@/assets/logo-nucleocrm.png';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { isShopifyEmbedded } from '@/lib/shopify';
 import { Button } from '@/components/ui/button';
 import {
     LayoutDashboard,
@@ -26,6 +27,7 @@ import {
     Share2,
     BookOpen,
     X,
+    BarChart3,
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -34,6 +36,7 @@ const adminMenuItems = [
     { title: 'Base de Conhecimento', href: '/admin/knowledge-base', icon: BookOpen },
     { title: 'Dashboard Financeiro', href: '/admin/finance', icon: TrendingUp },
     { title: 'Usuários', href: '/admin/users', icon: Users },
+    { title: 'Relatório de Clientes', href: '/admin/reports/clients', icon: BarChart3 },
     { title: 'Indicações', href: '/admin/referrals', icon: Share2 },
     { title: 'Campanhas', href: '/admin/campaigns', icon: Zap },
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
@@ -142,17 +145,19 @@ export function AdminSidebar() {
                     {!isCollapsed && <span>Ir para Plataforma</span>}
                 </button>
 
-                <button
-                    onClick={handleLogout}
-                    className={cn(
-                        "w-full flex items-center text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors",
-                        isCollapsed ? "justify-center px-2 py-2" : "space-x-3 px-3 py-2"
-                    )}
-                    title={isCollapsed ? "Sair" : undefined}
-                >
-                    <LogOut className="w-4 h-4 shrink-0" />
-                    {!isCollapsed && <span>Sair</span>}
-                </button>
+                {!isShopifyEmbedded() && (
+                    <button
+                        onClick={handleLogout}
+                        className={cn(
+                            "w-full flex items-center text-sm font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors",
+                            isCollapsed ? "justify-center px-2 py-2" : "space-x-3 px-3 py-2"
+                        )}
+                        title={isCollapsed ? "Sair" : undefined}
+                    >
+                        <LogOut className="w-4 h-4 shrink-0" />
+                        {!isCollapsed && <span>Sair</span>}
+                    </button>
+                )}
             </div>
         </div>
     );

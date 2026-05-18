@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import logoNucleocrm from '@/assets/logo-nucleocrm.png';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { isShopifyEmbedded } from '@/lib/shopify';
 import {
   BarChart3,
   MessageSquare,
@@ -133,17 +134,19 @@ export function Sidebar() {
           )}
         </div>
 
-        <button
-          onClick={handleLogout}
-          className={cn(
-            "w-full flex items-center mt-2 px-3 py-2 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors",
-            isCollapsed ? "justify-center" : "space-x-3"
-          )}
-          title={isCollapsed ? "Sair" : undefined}
-        >
-          <LogOut className="w-4 h-4 shrink-0" />
-          {!isCollapsed && <span>Sair</span>}
-        </button>
+        {!isShopifyEmbedded() && (
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "w-full flex items-center mt-2 px-3 py-2 text-sm font-medium text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors",
+              isCollapsed ? "justify-center" : "space-x-3"
+            )}
+            title={isCollapsed ? "Sair" : undefined}
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            {!isCollapsed && <span>Sair</span>}
+          </button>
+        )}
       </div>
     </div>
   );
