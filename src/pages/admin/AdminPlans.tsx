@@ -54,7 +54,8 @@ export default function AdminPlans() {
             internalUsers: 1,
             advancedCampaigns: 0
         },
-        active: true
+        active: true,
+        visible: true
     });
 
     const { data: plans, isLoading } = useQuery({
@@ -112,7 +113,8 @@ export default function AdminPlans() {
                     internalUsers: 1,
                     advancedCampaigns: 0
                 },
-                active: true
+                active: true,
+                visible: true
             });
         }
         setIsModalOpen(true);
@@ -283,9 +285,16 @@ export default function AdminPlans() {
                                             Anual: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(plan.priceYearly)}
                                         </p>
                                     </div>
-                                    <Badge variant={plan.active ? "default" : "secondary"}>
-                                        {plan.active ? 'Ativo' : 'Inativo'}
-                                    </Badge>
+                                    <div className="flex gap-1.5">
+                                        <Badge variant={plan.active ? "default" : "secondary"}>
+                                            {plan.active ? 'Ativo' : 'Inativo'}
+                                        </Badge>
+                                        {!plan.visible && (
+                                            <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-950/20">
+                                                Invisível
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="space-y-3 flex-1">
@@ -711,14 +720,22 @@ export default function AdminPlans() {
                                 ))}
                             </div>
 
-                            <div className="pt-4">
+                            <div className="pt-4 space-y-3">
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
                                         id="plan-active"
                                         checked={formData.active}
                                         onCheckedChange={checked => setFormData({ ...formData, active: !!checked })}
                                     />
-                                    <Label htmlFor="plan-active" className="cursor-pointer">Plano Ativo (visível para usuários)</Label>
+                                    <Label htmlFor="plan-active" className="cursor-pointer font-medium">Plano Ativo (Disponível para uso)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="plan-visible"
+                                        checked={formData.visible}
+                                        onCheckedChange={checked => setFormData({ ...formData, visible: !!checked })}
+                                    />
+                                    <Label htmlFor="plan-visible" className="cursor-pointer font-medium">Plano Visível Publicamente (Público)</Label>
                                 </div>
                             </div>
 

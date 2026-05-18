@@ -2479,6 +2479,7 @@ export interface Plan {
     advancedCampaigns?: number;
   };
   active: boolean;
+  visible: boolean;
 }
 
 export interface AdminFinanceStats {
