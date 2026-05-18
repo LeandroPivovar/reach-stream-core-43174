@@ -104,26 +104,35 @@ export default function AdminSettings() {
             subtitle="Gerencie chaves de API, webhooks e tokens de segurança globais."
         >
             <Tabs defaultValue="asaas" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-8">
-                    <TabsTrigger value="asaas" className="flex items-center gap-2">
+                <TabsList className="flex flex-wrap gap-2 w-full max-w-3xl mb-8 bg-transparent h-auto p-0 border-b border-slate-200 dark:border-slate-800 rounded-none">
+                    <TabsTrigger 
+                        value="asaas" 
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none shadow-none"
+                    >
                         <CreditCard className="w-4 h-4" /> Asaas
                     </TabsTrigger>
-                    <TabsTrigger value="email" className="flex items-center gap-2">
+                    <TabsTrigger 
+                        value="email" 
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none shadow-none"
+                    >
                         <Mail className="w-4 h-4" /> E-mail (SMTP)
                     </TabsTrigger>
-                    <TabsTrigger value="zenvia" className="flex items-center gap-2">
+                    <TabsTrigger 
+                        value="zenvia" 
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none shadow-none"
+                    >
                         <Globe className="w-4 h-4" /> Zenvia
                     </TabsTrigger>
-                    <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4" /> WhatsApp
+                    <TabsTrigger 
+                        value="ecommerce" 
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none shadow-none"
+                    >
+                        <Globe className="w-4 h-4" /> E-commerce (Tray)
                     </TabsTrigger>
-                    <TabsTrigger value="ecommerce" className="flex items-center gap-2">
-                        <Globe className="w-4 h-4" /> E-commerce
-                    </TabsTrigger>
-                    <TabsTrigger value="security" className="flex items-center gap-2">
-                        <Shield className="w-4 h-4" /> Segurança
-                    </TabsTrigger>
-                    <TabsTrigger value="platform" className="flex items-center gap-2">
+                    <TabsTrigger 
+                        value="platform" 
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none shadow-none"
+                    >
                         <Cpu className="w-4 h-4" /> Plataforma
                     </TabsTrigger>
                 </TabsList>
@@ -286,53 +295,12 @@ export default function AdminSettings() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="ecommerce" className="space-y-4">
-                    <Card className="border-border/60 shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="text-xl">Integração Tray</CardTitle>
-                            <CardDescription>
-                                Configure as chaves globais do aplicativo Tray (Consumer Key e Consumer Secret).
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="tray_consumer_key" className="text-sm font-semibold">Consumer Key</Label>
-                                <Input
-                                    id="tray_consumer_key"
-                                    type="password"
-                                    className="font-mono"
-                                    value={localSettings['tray_consumer_key'] || ''}
-                                    onChange={(e) => handleInputChange('tray_consumer_key', e.target.value)}
-                                    placeholder="Consumer Key do portal do parceiro"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="tray_consumer_secret" className="text-sm font-semibold">Consumer Secret</Label>
-                                <Input
-                                    id="tray_consumer_secret"
-                                    type="password"
-                                    className="font-mono"
-                                    value={localSettings['tray_consumer_secret'] || ''}
-                                    onChange={(e) => handleInputChange('tray_consumer_secret', e.target.value)}
-                                    placeholder="Consumer Secret do portal do parceiro"
-                                />
-                            </div>
-                        </CardContent>
-                        <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
-                            <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
-                                {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                Salvar Configurações
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                </TabsContent>
-
                 <TabsContent value="platform" className="space-y-4">
                     <Card className="border-border/60 shadow-sm">
                         <CardHeader>
                             <CardTitle className="text-xl">Limites Globais da Plataforma</CardTitle>
                             <CardDescription>
-                                Configure a capacidade total contratada com as provedoras de Email e SMS.
+                                Configure a capacidade total contratada com as provedoras de Email e SMS, bem como métricas de despesas.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -368,6 +336,17 @@ export default function AdminSettings() {
                                     placeholder="50000"
                                 />
                                 <p className="text-[12px] text-muted-foreground">Total de mensagens contratado com a Twilio (WhatsApp) por mês.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="MARKETING_EXPENSES" className="text-sm font-semibold">Despesas de Marketing Mensais (R$)</Label>
+                                <Input
+                                    id="MARKETING_EXPENSES"
+                                    type="number"
+                                    value={localSettings['MARKETING_EXPENSES'] || '500'}
+                                    onChange={(e) => handleInputChange('MARKETING_EXPENSES', e.target.value)}
+                                    placeholder="500"
+                                />
+                                <p className="text-[12px] text-muted-foreground">Valor total investido mensalmente em marketing/anúncios para o cálculo real do CAC.</p>
                             </div>
                         </CardContent>
                         <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">

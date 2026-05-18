@@ -51,6 +51,7 @@ import AdminCampaigns from "./pages/admin/AdminCampaigns";
 import AdminTickets from "./pages/admin/AdminTickets";
 import AdminReferrals from "./pages/admin/AdminReferrals";
 import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
+import AdminClientsReport from "./pages/admin/AdminClientsReport";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
 import LandingPage from "./pages/LandingPage";
@@ -110,6 +111,7 @@ const App = () => (
             <Route path="/admin/overview" element={<ProtectedRoute><AdminSystemOverview /></ProtectedRoute>} />
             <Route path="/admin/categories" element={<ProtectedRoute><AdminCategories /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+            <Route path="/admin/reports/clients" element={<ProtectedRoute><AdminClientsReport /></ProtectedRoute>} />
             <Route path="/admin/webhooks" element={<ProtectedRoute><WebhookLogs /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
             <Route path="/admin/notifications" element={<ProtectedRoute><AdminNotifications /></ProtectedRoute>} />

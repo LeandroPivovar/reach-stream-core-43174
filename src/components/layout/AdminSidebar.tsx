@@ -26,6 +26,7 @@ import {
     Share2,
     BookOpen,
     X,
+    BarChart3,
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -34,6 +35,7 @@ const adminMenuItems = [
     { title: 'Base de Conhecimento', href: '/admin/knowledge-base', icon: BookOpen },
     { title: 'Dashboard Financeiro', href: '/admin/finance', icon: TrendingUp },
     { title: 'Usuários', href: '/admin/users', icon: Users },
+    { title: 'Relatório de Clientes', href: '/admin/reports/clients', icon: BarChart3 },
     { title: 'Indicações', href: '/admin/referrals', icon: Share2 },
     { title: 'Campanhas', href: '/admin/campaigns', icon: Zap },
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },

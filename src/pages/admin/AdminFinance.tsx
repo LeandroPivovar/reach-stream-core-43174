@@ -114,7 +114,9 @@ export default function AdminFinance() {
             value: formatCurrency(stats?.currentMrr || 0),
             icon: TrendingUp,
             color: 'text-blue-500',
-            trend: '+5.2%' // Mock MoM for now
+            trend: stats?.mrrGrowthMoM !== undefined 
+                ? (stats.mrrGrowthMoM >= 0 ? `+${stats.mrrGrowthMoM.toFixed(1)}%` : `${stats.mrrGrowthMoM.toFixed(1)}%`)
+                : '0.0%'
         },
     ];
 

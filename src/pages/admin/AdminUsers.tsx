@@ -61,6 +61,10 @@ export default function AdminUsers() {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [expiryDate, setExpiryDate] = useState('');
 
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+    const [emailConfirm, setEmailConfirm] = useState('');
+
     // Form State
     const [editForm, setEditForm] = useState({ firstName: '', lastName: '', email: '', phone: '', role: 'user' });
     const [selectedPlanId, setSelectedPlanId] = useState<string>('');
@@ -187,6 +191,20 @@ export default function AdminUsers() {
         }
     });
 
+    const deleteUserMutation = useMutation({
+        mutationFn: (userId: number) => api.deleteAdminUser(userId),
+        onSuccess: () => {
+            toast({ title: 'Sucesso', description: 'Usuário excluído permanentemente do banco de dados.' });
+            setIsDeleteModalOpen(false);
+            setUserToDelete(null);
+            setEmailConfirm('');
+            queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+        },
+        onError: (err: any) => {
+            toast({ title: 'Erro', description: err.message || 'Falha ao excluir o usuário.', variant: 'destructive' });
+        }
+    });
+
     // --- Details Query ---
     const { data: userStats, isLoading: isLoadingStats } = useQuery({
         queryKey: ['admin-user-stats', selectedUser?.id],
@@ -195,6 +213,12 @@ export default function AdminUsers() {
     });
 
     // Handlers
+    const handleOpenDelete = (user: AdminUser) => {
+        setUserToDelete(user);
+        setEmailConfirm('');
+        setIsDeleteModalOpen(true);
+    };
+
     const handleOpenDetails = (user: AdminUser) => {
         setSelectedUser(user);
         setIsDetailsModalOpen(true);
@@ -375,6 +399,14 @@ export default function AdminUsers() {
                                                         <><CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Ativar Usuário</>
                                                     )}
                                                 </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem 
+                                                    className="text-rose-600 focus:bg-rose-50 focus:text-rose-600 font-semibold"
+                                                    onClick={() => handleOpenDelete(user)}
+                                                >
+                                                    <XCircle className="mr-2 h-4 w-4 text-rose-600" />
+                                                    Excluir Conta (Definitivo)
+                                                </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
@@ -411,7 +443,7 @@ export default function AdminUsers() {
                     ) : (
                         <div className="grid gap-6 py-4">
                             {/* Stats Grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                                 <Card>
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -431,6 +463,17 @@ export default function AdminUsers() {
                                     <CardContent>
                                         <div className="text-2xl font-bold text-green-700">R$ {userStats?.lifetimeProfit.toFixed(2)}</div>
                                         <p className="text-[10px] text-green-600/70 font-medium italic">Faturamento - Custos Ops.</p>
+                                    </CardContent>
+                                </Card>
+                                <Card className="bg-primary-50/30 border-primary-100">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-sm font-medium text-primary flex items-center gap-2">
+                                            <CreditCard className="h-4 w-4" /> Total em Planos
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold text-primary">R$ {(userStats?.subscription?.totalPaidPlanAmount || 0).toFixed(2)}</div>
+                                        <p className="text-[10px] text-primary/70 font-medium italic">Faturamento Assinaturas</p>
                                     </CardContent>
                                 </Card>
                                 <Card>
@@ -1020,6 +1063,62 @@ export default function AdminUsers() {
                             </DialogFooter>
                         </div>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Modal */}
+            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <div className="flex items-center gap-3 text-rose-600">
+                            <ShieldAlert className="h-6 w-6 text-rose-600 animate-pulse" />
+                            <DialogTitle className="text-xl font-bold">Excluir Conta Permanentemente</DialogTitle>
+                        </div>
+                        <DialogDescription className="pt-2 text-sm text-muted-foreground leading-relaxed">
+                            Esta ação é <strong className="text-rose-600">irreversível</strong> e apagará permanentemente a conta de{' '}
+                            <span className="font-bold text-slate-800">{userToDelete?.firstName} {userToDelete?.lastName}</span> ({userToDelete?.email}), incluindo todas as suas campanhas, contatos, integrações e vendas vinculadas de forma definitiva do banco de dados.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="confirm-email" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                Confirme digitando o e-mail do usuário:
+                            </Label>
+                            <Input
+                                id="confirm-email"
+                                type="email"
+                                placeholder={userToDelete?.email}
+                                value={emailConfirm}
+                                onChange={(e) => setEmailConfirm(e.target.value)}
+                                className="font-mono text-sm border-rose-200 focus-visible:ring-rose-500"
+                            />
+                        </div>
+
+                        {emailConfirm === userToDelete?.email ? (
+                            <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs text-rose-800 leading-relaxed font-semibold">
+                                ⚠️ O e-mail confere. Clique no botão abaixo para excluir permanentemente.
+                            </div>
+                        ) : emailConfirm.length > 0 ? (
+                            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 leading-relaxed font-semibold">
+                                ❌ O e-mail digitado não corresponde ao e-mail do usuário.
+                            </div>
+                        ) : null}
+                    </div>
+
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            disabled={emailConfirm !== userToDelete?.email || deleteUserMutation.isPending}
+                            onClick={() => deleteUserMutation.mutate(userToDelete!.id)}
+                            className="bg-rose-600 hover:bg-rose-700 text-white min-w-[120px]"
+                        >
+                            {deleteUserMutation.isPending ? 'Excluindo...' : 'Confirmar Exclusão'}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

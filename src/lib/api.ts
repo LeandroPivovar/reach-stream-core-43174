@@ -592,6 +592,7 @@ export interface AdminUserStats {
     planName: string;
     status: string;
     createdAt: string;
+    totalPaidPlanAmount?: number;
   };
 }
 
@@ -1177,6 +1178,16 @@ class ApiService {
       method: 'PATCH',
       body: JSON.stringify(data)
     });
+  }
+
+  async deleteAdminUser(id: number): Promise<any> {
+    return this.request<any>(`/admin/users/${id}`, {
+      method: 'DELETE'
+    });
+  }
+
+  async getAdminClientsReport(): Promise<any[]> {
+    return this.get<any[]>('/admin/reports/clients');
   }
 
   async impersonateAdminUser(userId: number): Promise<{ token: string; user: any }> {
@@ -2418,6 +2429,7 @@ export interface AdminFinanceStats {
     profit: number;
   }[];
   currentMrr: number;
+  mrrGrowthMoM?: number;
   ytdRevenue: number;
   avgMargin: number;
   growthRate: number;
