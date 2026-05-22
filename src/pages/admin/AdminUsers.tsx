@@ -1152,28 +1152,23 @@ export default function AdminUsers() {
 
                     <div className="space-y-4 py-4">
                         <div className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-border p-4 space-y-3">
-                            <div className="flex items-center justify-between gap-2 bg-white dark:bg-slate-800 rounded-lg p-2 border">
-                                <div className="overflow-x-auto whitespace-nowrap scrollbar-thin flex-1 pr-2">
-                                    <code className="text-xs font-mono select-all text-slate-800 dark:text-slate-200">
-                                        {impersonateUrl}
-                                    </code>
-                                </div>
+                            <div className="flex items-center gap-2">
+                                <Input 
+                                    value={impersonateUrl} 
+                                    readOnly 
+                                    className="font-mono text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 flex-1 min-w-0" 
+                                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                                />
                                 <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-8 px-2.5 shrink-0 flex items-center gap-1.5" 
+                                    variant="outline" 
+                                    size="icon" 
+                                    className="shrink-0 h-9 w-9 flex items-center justify-center" 
                                     onClick={() => handleCopy(impersonateUrl, 'impersonate')}
                                 >
                                     {copiedField === 'impersonate' ? (
-                                        <>
-                                            <CheckCheck className="h-4 w-4 text-green-500 animate-bounce" />
-                                            <span className="text-xs text-green-500 font-semibold">Copiado</span>
-                                        </>
+                                        <CheckCheck className="h-4 w-4 text-green-500 animate-bounce" />
                                     ) : (
-                                        <>
-                                            <Copy className="h-4 w-4" />
-                                            <span className="text-xs">Copiar</span>
-                                        </>
+                                        <Copy className="h-4 w-4" />
                                     )}
                                 </Button>
                             </div>
