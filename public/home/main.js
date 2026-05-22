@@ -514,8 +514,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     leadForm.innerHTML = `
                         <div class="form-success-message" style="text-align: center; padding: 2rem; background: rgba(139, 92, 246, 0.1); border-radius: 12px; border: 1px solid var(--primary);">
-                            <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
-                            <h3 style="color: white; margin-bottom: 0.5rem;">Solicitação enviada com sucesso!</h3>
+                            <h3 style="color: white; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <i class="fas fa-check-circle" style="color: #22c55e;"></i>
+                                Solicitação enviada com sucesso!
+                            </h3>
                             <p style="color: var(--text-main);">Em breve um de nossos especialistas entrará em contato com você.</p>
                         </div>
                     `;
