@@ -84,6 +84,9 @@ export default function AdminUsers() {
         summary: { contacts: number; campaigns: number; products: number; sales: number; estimatedRevenue: number; };
     }>(null);
     const [copiedField, setCopiedField] = useState<string | null>(null);
+    const [isImpersonateModalOpen, setIsImpersonateModalOpen] = useState(false);
+    const [impersonateUrl, setImpersonateUrl] = useState('');
+    const [impersonateUser, setImpersonateUser] = useState<AdminUser | null>(null);
 
     // --- New Mutations ---
     const resetPasswordMutation = useMutation({
@@ -171,20 +174,23 @@ export default function AdminUsers() {
     });
 
     const impersonateMutation = useMutation({
-        mutationFn: (userId: number) => api.impersonateAdminUser(userId),
-        onSuccess: (data) => {
+        mutationFn: ({ userId }: { userId: number, user: AdminUser }) => api.impersonateAdminUser(userId),
+        onSuccess: (data, variables) => {
             const url = `${window.location.origin}/impersonate?t=${data.token}&u=${btoa(JSON.stringify(data.user))}`;
+            setImpersonateUrl(url);
+            setImpersonateUser(variables.user);
+            setIsImpersonateModalOpen(true);
 
             // Tenta copiar para a área de transferência
             navigator.clipboard.writeText(url).then(() => {
                 toast({
                     title: 'Link Gerado!',
-                    description: 'O link de acesso remoto foi copiado para sua área de transferência. Cole em uma guia anônima ou envie para o usuário.'
+                    description: 'O link de acesso remoto foi copiado para sua área de transferência.'
                 });
             }).catch(() => {
                 toast({
                     title: 'Link Gerado!',
-                    description: 'Não foi possível copiar automaticamente. Acesse os detalhes do usuário para ver o link.',
+                    description: 'Não foi possível copiar automaticamente. Use o modal para copiar manualmente.',
                     variant: 'default'
                 });
             });
@@ -393,7 +399,7 @@ export default function AdminUsers() {
                                                     Alterar Vencimento
                                                 </DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem onClick={() => impersonateMutation.mutate(user.id)}>
+                                                <DropdownMenuItem onClick={() => impersonateMutation.mutate({ userId: user.id, user })}>
                                                     <LinkIcon className="mr-2 h-4 w-4" />
                                                     Gerar Link de Acesso
                                                 </DropdownMenuItem>
@@ -1126,6 +1132,84 @@ export default function AdminUsers() {
                             </DialogFooter>
                         </div>
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Impersonate Access Link Modal */}
+            <Dialog open={isImpersonateModalOpen} onOpenChange={setIsImpersonateModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                                <LinkIcon className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-xl">Link de Acesso Gerado</DialogTitle>
+                                <DialogDescription>Use o link abaixo para fazer login na conta de <strong>{impersonateUser?.firstName} {impersonateUser?.lastName}</strong>.</DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        <div className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-border p-4 space-y-3">
+                            <div className="flex items-center justify-between gap-2 bg-white dark:bg-slate-800 rounded-lg p-2 border">
+                                <div className="overflow-x-auto whitespace-nowrap scrollbar-thin flex-1 pr-2">
+                                    <code className="text-xs font-mono select-all text-slate-800 dark:text-slate-200">
+                                        {impersonateUrl}
+                                    </code>
+                                </div>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-8 px-2.5 shrink-0 flex items-center gap-1.5" 
+                                    onClick={() => handleCopy(impersonateUrl, 'impersonate')}
+                                >
+                                    {copiedField === 'impersonate' ? (
+                                        <>
+                                            <CheckCheck className="h-4 w-4 text-green-500 animate-bounce" />
+                                            <span className="text-xs text-green-500 font-semibold">Copiado</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="h-4 w-4" />
+                                            <span className="text-xs">Copiar</span>
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                            
+                            <div className="flex gap-2">
+                                <Button 
+                                    variant="outline" 
+                                    type="button"
+                                    className="flex-1 text-xs py-2 h-auto flex items-center justify-center gap-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                    onClick={() => handleCopy(impersonateUrl, 'impersonate')}
+                                >
+                                    <Copy className="h-3.5 w-3.5" />
+                                    Copiar Link manual
+                                </Button>
+                                <Button 
+                                    asChild
+                                    className="flex-1 text-xs py-2 h-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20 active:scale-[0.98] transition-all"
+                                >
+                                    <a href={impersonateUrl} target="_blank" rel="noopener noreferrer">
+                                        <ExternalLink className="h-3.5 w-3.5" />
+                                        Acessar Conta
+                                    </a>
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-300">
+                            💡 <strong>Dica:</strong> Para maior segurança, utilize uma janela anônima para acessar o link de forma isolada sem perder a sua sessão administrativa atual.
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={() => setIsImpersonateModalOpen(false)}>
+                            Fechar
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
