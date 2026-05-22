@@ -12,6 +12,14 @@ export default function ShopifyCallback() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Processando conexão...');
 
+  const redirectOut = () => {
+    if (window.top !== window.self) {
+      window.top.location.href = window.location.origin + '/integracoes';
+    } else {
+      navigate('/integracoes');
+    }
+  };
+
   useEffect(() => {
     const handleCallback = async () => {
       const code = searchParams.get('code');
@@ -28,7 +36,7 @@ export default function ShopifyCallback() {
           description: 'Não foi possível conectar com a Shopify.',
           variant: 'destructive',
         });
-        setTimeout(() => navigate('/integracoes'), 3000);
+        setTimeout(redirectOut, 3000);
         return;
       }
 
@@ -41,7 +49,7 @@ export default function ShopifyCallback() {
           description: 'Parâmetros de autorização inválidos.',
           variant: 'destructive',
         });
-        setTimeout(() => navigate('/integracoes'), 3000);
+        setTimeout(redirectOut, 3000);
         return;
       }
 
@@ -55,7 +63,7 @@ export default function ShopifyCallback() {
           description: 'Token de segurança inválido.',
           variant: 'destructive',
         });
-        setTimeout(() => navigate('/integracoes'), 3000);
+        setTimeout(redirectOut, 3000);
         return;
       }
 
@@ -109,7 +117,7 @@ export default function ShopifyCallback() {
         });
 
         // Redirecionar após 2 segundos
-        setTimeout(() => navigate('/integracoes'), 2000);
+        setTimeout(redirectOut, 2000);
       } catch (error) {
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Erro ao processar conexão.');
@@ -118,7 +126,7 @@ export default function ShopifyCallback() {
           description: 'Não foi possível completar a conexão.',
           variant: 'destructive',
         });
-        setTimeout(() => navigate('/integracoes'), 3000);
+        setTimeout(redirectOut, 3000);
       }
     };
 
