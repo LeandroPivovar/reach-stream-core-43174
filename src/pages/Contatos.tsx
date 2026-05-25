@@ -109,6 +109,7 @@ interface ContactFrontend {
   city: string;
   birthDate: string;
   gender: string;
+  cpfCnpj?: string;
   lastInteraction: string;
   sales: import('@/lib/api').Sale[];
   hasActiveCoupon: boolean;
@@ -225,11 +226,11 @@ export default function Contatos() {
     city: '',
     birthDate: '',
     gender: 'all',
-    lastName: '',
     company: '',
     position: '',
     notes: '',
     source: '',
+    cpfCnpj: '',
   });
 
 
@@ -310,6 +311,7 @@ export default function Contatos() {
       city: apiContact.city || '',
       birthDate: apiContact.birthDate || '',
       gender: apiContact.gender || 'all',
+      cpfCnpj: apiContact.cpfCnpj || '',
       lastInteraction: apiContact.updatedAt || apiContact.createdAt,
       sales: apiContact.sales || [],
       hasActiveCoupon: !!apiContact.hasActiveCoupon,
@@ -841,6 +843,7 @@ export default function Contatos() {
       Nome: c.name,
       Telefone: c.phone,
       Email: c.email,
+      'CPF/CNPJ': c.cpfCnpj || '',
       Grupo: c.group,
       Status: c.status,
       Etiquetas: c.tags.join('; '),
@@ -917,7 +920,6 @@ export default function Contatos() {
         // Editar contato existente
         const apiContact = await api.updateContact(editingContactId, {
           name: newContact.name,
-          lastName: newContact.lastName || (newContact.name.split(' ').slice(1).join(' ')) || undefined,
           email: newContact.email || undefined,
           phone: newContact.phone || undefined,
           status: newContact.status || undefined,
@@ -931,6 +933,7 @@ export default function Contatos() {
           position: newContact.position || undefined,
           notes: newContact.notes || undefined,
           source: newContact.source || undefined,
+          cpfCnpj: newContact.cpfCnpj || undefined,
         });
         const updatedContact = convertApiContactToFrontend(apiContact);
         setContacts(contacts.map(c => c.id === editingContactId ? updatedContact : c));
@@ -943,7 +946,6 @@ export default function Contatos() {
       } else {
         const apiContact = await api.createContact({
           name: newContact.name,
-          lastName: newContact.lastName || (newContact.name.split(' ').slice(1).join(' ')) || undefined,
           email: newContact.email || undefined,
           phone: newContact.phone || undefined,
           status: newContact.status || undefined,
@@ -957,6 +959,7 @@ export default function Contatos() {
           position: newContact.position || undefined,
           notes: newContact.notes || undefined,
           source: newContact.source || undefined,
+          cpfCnpj: newContact.cpfCnpj || undefined,
         });
         const newContactFrontend = convertApiContactToFrontend(apiContact);
         setContacts([...contacts, newContactFrontend]);
@@ -981,6 +984,11 @@ export default function Contatos() {
         city: '',
         birthDate: '',
         gender: 'all',
+        company: '',
+        position: '',
+        notes: '',
+        source: '',
+        cpfCnpj: '',
       });
 
     } catch (error) {
@@ -1042,11 +1050,11 @@ export default function Contatos() {
       city: contact.city,
       birthDate: contact.birthDate,
       gender: contact.gender,
-      lastName: contact.lastName || '',
       company: (contact as any).company || '',
       position: (contact as any).position || '',
       notes: (contact as any).notes || '',
       source: (contact as any).source || '',
+      cpfCnpj: contact.cpfCnpj || '',
     });
 
     setIsNewContactOpen(true);
@@ -1246,6 +1254,7 @@ export default function Contatos() {
       Nome: c.name,
       Telefone: c.phone,
       Email: c.email,
+      'CPF/CNPJ': c.cpfCnpj || '',
       Grupo: c.group,
       Status: c.status,
       Etiquetas: c.tags.join('; '),
@@ -1374,6 +1383,12 @@ export default function Contatos() {
           <div className="font-medium">{contact.phone}</div>
           <div className="text-muted-foreground">{contact.email}</div>
         </div>
+      )
+    },
+    {
+      header: "CPF/CNPJ",
+      cell: (contact: ContactFrontend) => (
+        <span className="text-xs font-mono">{contact.cpfCnpj || '-'}</span>
       )
     },
     {
@@ -2652,6 +2667,11 @@ export default function Contatos() {
             city: '',
             birthDate: '',
             gender: 'all',
+            company: '',
+            position: '',
+            notes: '',
+            source: '',
+            cpfCnpj: '',
           });
 
         }
@@ -2662,22 +2682,13 @@ export default function Contatos() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Nome *</Label>
+              <div className="grid gap-2 col-span-2">
+                <Label htmlFor="name">Nome completo *</Label>
                 <Input
                   id="name"
                   value={newContact.name}
                   onChange={(e) => setNewContact({ ...newContact, name: e.target.value })}
-                  placeholder="Nome"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="lastName">Sobrenome</Label>
-                <Input
-                  id="lastName"
-                  value={newContact.lastName}
-                  onChange={(e) => setNewContact({ ...newContact, lastName: e.target.value })}
-                  placeholder="Sobrenome"
+                  placeholder="Nome completo"
                 />
               </div>
             </div>
@@ -2853,14 +2864,25 @@ export default function Contatos() {
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="source">Origem</Label>
-              <Input
-                id="source"
-                value={newContact.source}
-                onChange={(e) => setNewContact({ ...newContact, source: e.target.value })}
-                placeholder="Ex: Instagram, Indicação, Evento..."
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="cpfCnpj">CPF/CNPJ</Label>
+                <Input
+                  id="cpfCnpj"
+                  value={newContact.cpfCnpj}
+                  onChange={(e) => setNewContact({ ...newContact, cpfCnpj: e.target.value })}
+                  placeholder="Ex: 000.000.000-00 ou 00.000.000/0000-00"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="source">Origem</Label>
+                <Input
+                  id="source"
+                  value={newContact.source}
+                  onChange={(e) => setNewContact({ ...newContact, source: e.target.value })}
+                  placeholder="Ex: Instagram, Indicação, Evento..."
+                />
+              </div>
             </div>
 
             <div className="grid gap-2">
@@ -2960,6 +2982,7 @@ export default function Contatos() {
                         Nome: 'João Silva',
                         Telefone: '(11) 98765-4321',
                         Email: 'joao@exemplo.com',
+                        'CPF/CNPJ': '123.456.789-00',
                         Grupo: 'VIP',
                         Status: 'Ativo',
                         Etiquetas: 'Cliente Premium; Fidelidade',
@@ -2977,6 +3000,7 @@ export default function Contatos() {
                         Nome: 'Maria Santos',
                         Telefone: '(21) 91234-5678',
                         Email: 'maria@exemplo.com',
+                        'CPF/CNPJ': '98.765.432/0001-98',
                         Grupo: 'Regular',
                         Status: 'Ativo',
                         Etiquetas: 'Newsletter',
@@ -2994,6 +3018,7 @@ export default function Contatos() {
                         Nome: 'Pedro Oliveira',
                         Telefone: '(31) 99876-5432',
                         Email: 'pedro@exemplo.com',
+                        'CPF/CNPJ': '',
                         Grupo: '',
                         Status: 'Ativo',
                         Etiquetas: '',
@@ -3096,6 +3121,7 @@ export default function Contatos() {
                 <p>• <strong>Estado, Cidade</strong>: Localização</p>
                 <p>• <strong>Data de Nascimento</strong>: Formato AAAA-MM-DD</p>
                 <p>• <strong>Gênero</strong>: M ou F</p>
+                <p>• <strong>CPF/CNPJ</strong> (ou CPF, CNPJ, Documento): Documento opcional</p>
               </div>
             </div>
           </div>
