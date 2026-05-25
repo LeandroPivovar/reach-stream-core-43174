@@ -176,6 +176,7 @@ export interface Contact {
   city?: string;
   birthDate?: string;
   gender?: string;
+  cpfCnpj?: string;
   groupId?: number;
   group?: {
     id: number;
@@ -220,6 +221,7 @@ export interface CreateContactData {
   city?: string;
   birthDate?: string;
   gender?: string;
+  cpfCnpj?: string;
   groupId?: number;
   tagIds?: number[];
 }
@@ -239,6 +241,7 @@ export interface UpdateContactData {
   city?: string;
   birthDate?: string;
   gender?: string;
+  cpfCnpj?: string;
   groupId?: number | null;
   tagIds?: number[];
 }
