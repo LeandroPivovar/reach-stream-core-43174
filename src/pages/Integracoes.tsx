@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -35,6 +36,7 @@ const ResponsiveTable = (typeof window !== 'undefined' && (window as any).Respon
 import { cn } from '@/lib/utils';
 
 export default function Integracoes() {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isNewIntegrationOpen, setIsNewIntegrationOpen] = useState(false);
   const [integrationType, setIntegrationType] = useState<'ecommerce' | 'webhook' | null>(null);
@@ -631,13 +633,24 @@ export default function Integracoes() {
                     ))}
                   </div>
 
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col space-y-2">
                       {isConnectedPlatform ? (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="flex-1"
+                        <>
+                          {integration.name === 'Shopify' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full mb-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                              onClick={() => navigate('/assinaturas')}
+                            >
+                              <Store className="w-4 h-4 mr-2" />
+                              Assinar via Shopify
+                            </Button>
+                          )}
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="w-full"
                           onClick={() => {
                             if (integration.name === 'Nuvemshop' && connection) {
                               handleDisconnect('nuvemshop', connection.storeId);
@@ -673,8 +686,10 @@ export default function Integracoes() {
                               <X className="w-4 h-4 mr-2" />
                               Desconectar
                             </>
+                            </>
                           )}
-                        </Button>
+                          </Button>
+                        </>
                       ) : integration.status === 'Em desenvolvimento' ? (
                         <Button
                           size="sm"

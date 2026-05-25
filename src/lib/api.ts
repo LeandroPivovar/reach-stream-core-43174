@@ -1311,6 +1311,17 @@ class ApiService {
     });
   }
 
+  async createShopifyBillingSubscription(data: {
+    planId: number;
+    shop?: string;
+    trialDays?: number;
+  }): Promise<{ confirmationUrl: string; appSubscriptionId: string }> {
+    return this.request<{ confirmationUrl: string; appSubscriptionId: string }>('/shopify/billing/create-subscription', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async cancelSubscription(): Promise<any> {
     return this.request<any>('/subscriptions/cancel', { method: 'POST' });
   }
