@@ -686,7 +686,6 @@ export default function Integracoes() {
                               <X className="w-4 h-4 mr-2" />
                               Desconectar
                             </>
-                            </>
                           )}
                           </Button>
                         </>
@@ -720,7 +719,6 @@ export default function Integracoes() {
                         </Button>
                       )}
                     </div>
-                  </div>
                 </Card>
               );
             })}
