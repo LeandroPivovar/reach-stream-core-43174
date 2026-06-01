@@ -24,6 +24,7 @@ import { MessageNode } from '@/components/bot-builder/nodes/MessageNode';
 import { ConditionNode } from '@/components/bot-builder/nodes/ConditionNode';
 import { ImageNode } from '@/components/bot-builder/nodes/ImageNode';
 import { DelayNode } from '@/components/bot-builder/nodes/DelayNode';
+import { ContextNode } from '@/components/bot-builder/nodes/ContextNode';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 const nodeTypes = {
+  contextNode: ContextNode,
   messageNode: MessageNode,
   conditionNode: ConditionNode,
   imageNode: ImageNode,
@@ -53,7 +55,7 @@ const BotBuilderFlow = () => {
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [flowName, setFlowName] = useState('');
   const [flowChannel, setFlowChannel] = useState('');
-  const [flowActive, setFlowActive] = useState(false);
+  const [flowActive, setFlowActive] = useState(true);
   const [loadingFlow, setLoadingFlow] = useState(true);
   const navigate = useNavigate();
 
