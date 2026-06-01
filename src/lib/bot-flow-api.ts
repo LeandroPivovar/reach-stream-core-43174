@@ -113,3 +113,53 @@ export async function deleteBotFlow(id: number): Promise<boolean> {
   });
   return res.ok;
 }
+
+export interface TelegramConnectionStatus {
+  connected: boolean;
+  status: string | null;
+  botUsername: string | null;
+  connectedAt: string | null;
+}
+
+export async function fetchTelegramConnectionStatus(
+  flowId: number,
+): Promise<TelegramConnectionStatus | null> {
+  const res = await fetch(`${API_URL}/api/bot-flows/${flowId}/telegram/status`, {
+    headers: { Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '' },
+  });
+  return parseResponse<TelegramConnectionStatus>(res);
+}
+
+export async function connectTelegramBot(
+  flowId: number,
+  botToken: string,
+): Promise<{ success: boolean; botUsername?: string | null; message?: string }> {
+  const res = await fetch(`${API_URL}/api/bot-flows/${flowId}/telegram/connect`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ botToken }),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const err = JSON.parse(text) as { message?: string | string[] };
+      const msg = Array.isArray(err.message) ? err.message[0] : err.message;
+      return { success: false, message: msg || 'Erro ao conectar' };
+    } catch {
+      return { success: false, message: 'Erro ao conectar' };
+    }
+  }
+  try {
+    return JSON.parse(text) as { success: boolean; botUsername?: string | null };
+  } catch {
+    return { success: true };
+  }
+}
+
+export async function disconnectTelegramBot(flowId: number): Promise<boolean> {
+  const res = await fetch(`${API_URL}/api/bot-flows/${flowId}/telegram/disconnect`, {
+    method: 'POST',
+    headers: authHeaders(),
+  });
+  return res.ok;
+}
