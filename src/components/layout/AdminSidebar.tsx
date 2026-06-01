@@ -118,7 +118,7 @@ export function AdminSidebar() {
                             key={item.href}
                             to={item.href}
                             className={cn(
-                                "flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+                                "flex items-center rounded-lg text-sm font-medium transition-all duration-200 relative",
                                 isCollapsed ? "justify-center px-2 py-2.5" : "space-x-3 px-3 py-2.5",
                                 isActive
                                     ? "bg-primary text-white shadow-lg shadow-primary/20"
@@ -128,6 +128,11 @@ export function AdminSidebar() {
                         >
                             <Icon className="w-4 h-4 shrink-0" />
                             {!isCollapsed && <span className="truncate">{item.title}</span>}
+                            {item.title === 'Construtor de Bot' && (
+                                <span className="absolute right-2 px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-500/10 text-red-500 border border-red-500/20 uppercase">
+                                    Beta
+                                </span>
+                            )}
                         </NavLink>
                     );
                 })}

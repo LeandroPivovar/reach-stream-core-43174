@@ -1,4 +1,5 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -16,7 +17,7 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { BotBuilderSidebar } from '@/components/bot-builder/BotBuilderSidebar';
+import { BotBuilderSidebar, AutoConnectOptions } from '@/components/bot-builder/BotBuilderSidebar';
 import { MessageNode } from '@/components/bot-builder/nodes/MessageNode';
 import { ConditionNode } from '@/components/bot-builder/nodes/ConditionNode';
 import { ImageNode } from '@/components/bot-builder/nodes/ImageNode';
@@ -43,6 +44,30 @@ const BotBuilderFlow = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchFlow = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:3001/bot-flows', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const flow = await res.json();
+          if (flow && flow.nodes) {
+            setNodes(flow.nodes);
+            setEdges(flow.edges || []);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching flow:', err);
+      }
+    };
+    fetchFlow();
+  }, [setNodes, setEdges]);
 
   const onConnect = useCallback(
     (params: Connection | Edge) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)),
@@ -61,10 +86,14 @@ const BotBuilderFlow = () => {
       if (!reactFlowInstance || !reactFlowWrapper.current) return;
 
       const type = event.dataTransfer.getData('application/reactflow');
-
+      
       if (typeof type === 'undefined' || !type) {
         return;
       }
+      
+      const autoConnectStr = event.dataTransfer.getData('application/reactflow-autoconnect');
+      const conditionHandle = event.dataTransfer.getData('application/reactflow-conditionhandle');
+      const autoConnect = autoConnectStr === 'true';
 
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = reactFlowInstance.screenToFlowPosition({
@@ -72,26 +101,123 @@ const BotBuilderFlow = () => {
         y: event.clientY,
       });
 
+      const newNodeId = getId();
       const newNode: Node = {
-        id: getId(),
+        id: newNodeId,
         type,
         position,
         data: {}, // Initialize with empty data
       };
 
-      setNodes((nds) => nds.concat(newNode));
+      let sourceNode: Node | undefined;
+      if (autoConnect) {
+        sourceNode = reactFlowInstance.getNodes().find((n) => n.selected);
+      }
+
+      setNodes((nds) => {
+        const newNodes = nds.map(n => ({...n, selected: false}));
+        return newNodes.concat({...newNode, selected: true});
+      });
+
+      if (sourceNode && autoConnect) {
+        const newEdge: Edge = {
+          id: `e-${sourceNode.id}-${newNodeId}`,
+          source: sourceNode.id,
+          target: newNodeId,
+          animated: true,
+        };
+
+        if (sourceNode.type === 'conditionNode') {
+          newEdge.sourceHandle = conditionHandle;
+        }
+
+        setEdges((eds) => addEdge(newEdge, eds));
+      }
     },
-    [reactFlowInstance, setNodes],
+    [reactFlowInstance, setNodes, setEdges],
   );
 
-  const onSave = useCallback(() => {
+  const handleAddNode = useCallback((type: string, options: AutoConnectOptions) => {
+    if (!reactFlowInstance) return;
+    
+    let sourceNode: Node | undefined;
+    const allNodes = reactFlowInstance.getNodes();
+    
+    if (options.enabled) {
+      sourceNode = allNodes.find((n) => n.selected);
+    }
+
+    const newNodeId = getId();
+    let position = { x: 250, y: 100 };
+    
+    if (sourceNode) {
+      position = {
+        x: sourceNode.position.x,
+        y: sourceNode.position.y + 150,
+      };
+    } else {
+      const { x, y, zoom } = reactFlowInstance.getViewport();
+      position = { x: -x / zoom + 250, y: -y / zoom + 100 };
+    }
+
+    const newNode: Node = {
+      id: newNodeId,
+      type,
+      position,
+      data: {},
+    };
+
+    setNodes((nds) => {
+       const newNodes = nds.map(n => ({...n, selected: false}));
+       return newNodes.concat({...newNode, selected: true});
+    });
+
+    if (sourceNode && options.enabled) {
+      const newEdge: Edge = {
+        id: `e-${sourceNode.id}-${newNodeId}`,
+        source: sourceNode.id,
+        target: newNodeId,
+        animated: true,
+      };
+
+      if (sourceNode.type === 'conditionNode') {
+        newEdge.sourceHandle = options.conditionHandle;
+      }
+
+      setEdges((eds) => addEdge(newEdge, eds));
+    }
+  }, [reactFlowInstance, setNodes, setEdges]);
+
+  const onSave = useCallback(async () => {
     if (reactFlowInstance) {
       const flow = reactFlowInstance.toObject();
-      console.log('Flow saved:', flow);
-      toast.success('Fluxo salvo com sucesso! (Console log)');
-      // Aqui entraria a chamada para a API no futuro
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:3001/bot-flows', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            nodes: flow.nodes,
+            edges: flow.edges,
+            isActive: false,
+          })
+        });
+        
+        if (res.ok) {
+          toast.success('Fluxo salvo com sucesso!');
+          navigate('/admin/bot-builder');
+        } else {
+          toast.error('Erro ao salvar fluxo.');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Erro de conexão.');
+      }
     }
-  }, [reactFlowInstance]);
+  }, [reactFlowInstance, navigate]);
 
   return (
     <div className="flex h-full flex-col">
@@ -107,7 +233,7 @@ const BotBuilderFlow = () => {
       </div>
       
       <div className="flex-1 flex flex-row overflow-hidden" ref={reactFlowWrapper}>
-        <BotBuilderSidebar />
+        <BotBuilderSidebar onAddNode={handleAddNode} />
         <div className="flex-grow h-full bg-slate-50 dark:bg-slate-900/50">
           <ReactFlow
             nodes={nodes}
