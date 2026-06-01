@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
+import { API_URL } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
 import {
   ReactFlow,
@@ -50,7 +51,7 @@ const BotBuilderFlow = () => {
     const fetchFlow = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:3001/bot-flows', {
+        const res = await fetch(`${API_URL}/api/bot-flows`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -193,7 +194,7 @@ const BotBuilderFlow = () => {
       const flow = reactFlowInstance.toObject();
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('http://localhost:3001/bot-flows', {
+        const res = await fetch(`${API_URL}/api/bot-flows`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
