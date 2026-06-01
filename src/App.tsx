@@ -54,6 +54,8 @@ import AdminReferrals from "./pages/admin/AdminReferrals";
 import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
 import AdminBotBuilder from "./pages/admin/AdminBotBuilder";
 import AdminBotDashboard from "./pages/admin/AdminBotDashboard";
+import AdminBotCreateFlow from "./pages/admin/AdminBotCreateFlow";
+import AdminBotFlowDetail from "./pages/admin/AdminBotFlowDetail";
 import AdminClientsReport from "./pages/admin/AdminClientsReport";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
@@ -132,7 +134,9 @@ const App = () => (
             <Route path="/admin/referrals" element={<ProtectedRoute><AdminReferrals /></ProtectedRoute>} />
             <Route path="/admin/knowledge-base" element={<ProtectedRoute><AdminKnowledgeBase /></ProtectedRoute>} />
             <Route path="/admin/bot-builder" element={<ProtectedRoute><AdminBotDashboard /></ProtectedRoute>} />
-            <Route path="/admin/bot-builder/edit" element={<ProtectedRoute><AdminBotBuilder /></ProtectedRoute>} />
+            <Route path="/admin/bot-builder/new" element={<ProtectedRoute><AdminBotCreateFlow /></ProtectedRoute>} />
+            <Route path="/admin/bot-builder/:id/edit" element={<ProtectedRoute><AdminBotBuilder /></ProtectedRoute>} />
+            <Route path="/admin/bot-builder/:id" element={<ProtectedRoute><AdminBotFlowDetail /></ProtectedRoute>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

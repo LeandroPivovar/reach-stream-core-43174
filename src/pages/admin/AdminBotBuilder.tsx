@@ -1,6 +1,7 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { API_URL } from '@/lib/api';
-import { useNavigate } from 'react-router-dom';
+import { fetchBotFlowById, saveBotFlow } from '@/lib/bot-flow-api';
+import { getBotFlowChannel } from '@/lib/bot-flow-channels';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -24,7 +25,8 @@ import { ConditionNode } from '@/components/bot-builder/nodes/ConditionNode';
 import { ImageNode } from '@/components/bot-builder/nodes/ImageNode';
 import { DelayNode } from '@/components/bot-builder/nodes/DelayNode';
 import { Button } from '@/components/ui/button';
-import { Save } from 'lucide-react';
+import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 const nodeTypes = {
@@ -41,34 +43,45 @@ const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
 
 const BotBuilderFlow = () => {
+  const { id } = useParams<{ id: string }>();
+  const flowId = Number(id);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [flowName, setFlowName] = useState('');
+  const [flowChannel, setFlowChannel] = useState('');
+  const [loadingFlow, setLoadingFlow] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchFlow = async () => {
+    if (!flowId || Number.isNaN(flowId)) {
+      navigate('/admin/bot-builder');
+      return;
+    }
+
+    const loadFlow = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/api/bot-flows`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (res.ok) {
-          const flow = await res.json();
-          if (flow && flow.nodes) {
-            setNodes(flow.nodes);
-            setEdges(flow.edges || []);
-          }
+        const flow = await fetchBotFlowById(flowId);
+        if (!flow) {
+          toast.error('Fluxo não encontrado');
+          navigate('/admin/bot-builder');
+          return;
+        }
+        setFlowName(flow.name);
+        setFlowChannel(flow.channel);
+        if (flow.nodes.length > 0) {
+          setNodes(flow.nodes);
+          setEdges(flow.edges);
         }
       } catch (err) {
         console.error('Error fetching flow:', err);
+      } finally {
+        setLoadingFlow(false);
       }
     };
-    fetchFlow();
-  }, [setNodes, setEdges]);
+    loadFlow();
+  }, [flowId, navigate, setNodes, setEdges]);
 
   const onConnect = useCallback(
     (params: Connection | Edge) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)),
@@ -193,23 +206,15 @@ const BotBuilderFlow = () => {
     if (reactFlowInstance) {
       const flow = reactFlowInstance.toObject();
       try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/api/bot-flows`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            nodes: flow.nodes,
-            edges: flow.edges,
-            isActive: false,
-          })
+        const ok = await saveBotFlow(flowId, {
+          nodes: flow.nodes,
+          edges: flow.edges,
+          isActive: false,
         });
-        
-        if (res.ok) {
+
+        if (ok) {
           toast.success('Fluxo salvo com sucesso!');
-          navigate('/admin/bot-builder');
+          navigate(`/admin/bot-builder/${flowId}`);
         } else {
           toast.error('Erro ao salvar fluxo.');
         }
@@ -218,14 +223,34 @@ const BotBuilderFlow = () => {
         toast.error('Erro de conexão.');
       }
     }
-  }, [reactFlowInstance, navigate]);
+  }, [reactFlowInstance, navigate, flowId]);
+
+  const channelMeta = getBotFlowChannel(flowChannel);
+
+  if (loadingFlow) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between p-4 border-b bg-background">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Construtor de Fluxo</h1>
-          <p className="text-muted-foreground">Arraste os nós para criar o fluxo do bot do WhatsApp.</p>
+          <div className="flex items-center gap-2 mb-1">
+            <Button variant="ghost" size="icon" className="h-8 w-8 -ml-2" onClick={() => navigate(`/admin/bot-builder/${flowId}`)}>
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+            <h1 className="text-2xl font-bold tracking-tight">{flowName || 'Construtor de Fluxo'}</h1>
+            {channelMeta && (
+              <Badge variant="outline" className="text-xs font-normal">
+                {channelMeta.label}
+              </Badge>
+            )}
+          </div>
+          <p className="text-muted-foreground pl-8">Arraste os nós para montar o fluxo automático deste canal.</p>
         </div>
         <Button onClick={onSave} className="gap-2">
           <Save className="w-4 h-4" />

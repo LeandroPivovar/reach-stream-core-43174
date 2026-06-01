@@ -1,71 +1,52 @@
-import React, { useEffect, useState } from 'react';
-import { API_URL } from '@/lib/api';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, QrCode, Smartphone, Settings } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { fetchBotFlows, deleteBotFlow, type BotFlowListItem } from '@/lib/bot-flow-api';
+import { getBotFlowChannel } from '@/lib/bot-flow-channels';
+import { GitBranch, Loader2, Plus, Trash2, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export default function AdminBotDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [hasFlow, setHasFlow] = useState(false);
+  const [flows, setFlows] = useState<BotFlowListItem[]>([]);
+
+  const loadFlows = useCallback(async () => {
+    try {
+      const list = await fetchBotFlows();
+      setFlows(list);
+    } catch (err) {
+      console.error('Error fetching flows:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchFlow = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/api/bot-flows`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (res.ok) {
-          const flow = await res.json();
-          // if flow has nodes, we consider it configured
-          if (flow && flow.nodes && flow.nodes.length > 0) {
-            setHasFlow(true);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching flow:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    loadFlows();
+  }, [loadFlows]);
 
-    fetchFlow();
-  }, []);
+  const handleDelete = async (e: React.MouseEvent, flow: BotFlowListItem) => {
+    e.stopPropagation();
+    if (!window.confirm(`Excluir o fluxo "${flow.name}"?`)) return;
+    const ok = await deleteBotFlow(flow.id);
+    if (ok) {
+      toast.success('Fluxo excluído');
+      setFlows((prev) => prev.filter((f) => f.id !== flow.id));
+    } else {
+      toast.error('Não foi possível excluir o fluxo');
+    }
+  };
 
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex h-full items-center justify-center">
+        <div className="flex h-full items-center justify-center min-h-[300px]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  if (!hasFlow) {
-    return (
-      <AdminLayout>
-        <div className="flex flex-col h-[calc(100vh-10rem)] items-center justify-center space-y-6">
-          <div className="p-6 bg-primary/10 rounded-full">
-            <Smartphone className="w-12 h-12 text-primary" />
-          </div>
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight">Construtor de Bot</h2>
-            <p className="text-muted-foreground max-w-md">
-              Você ainda não possui um fluxo configurado. Crie mensagens automáticas, imagens e condicionais para seu WhatsApp.
-            </p>
-          </div>
-          <Button size="lg" onClick={() => navigate('/admin/bot-builder/edit')} className="gap-2">
-            <Plus className="w-5 h-5" />
-            Criar meu fluxo
-          </Button>
         </div>
       </AdminLayout>
     );
@@ -75,73 +56,87 @@ export default function AdminBotDashboard() {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Testar Bot</h1>
-          <p className="text-muted-foreground">Conecte seu WhatsApp para testar o fluxo configurado.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Construtor de Bot</h1>
+          <p className="text-muted-foreground">
+            Gerencie fluxos por canal: WhatsApp, Instagram Direct ou Telegram.
+          </p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/admin/bot-builder/edit')} className="gap-2">
-          <Settings className="w-4 h-4" />
-          Editar Fluxo
+        <Button onClick={() => navigate('/admin/bot-builder/new')} className="gap-2">
+          <Plus className="w-4 h-4" />
+          Novo fluxo
         </Button>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* QR Code Section */}
-        <Card className="flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
-          <div className="space-y-4 w-full max-w-sm">
-            <h3 className="text-xl font-semibold">Conecte-se para iniciar o bot agora mesmo</h3>
-            <p className="text-sm text-muted-foreground">
-              Abra o WhatsApp no seu celular, vá em Aparelhos conectados e escaneie o código abaixo.
+      {flows.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="p-4 bg-primary/10 rounded-full mb-4">
+              <GitBranch className="w-10 h-10 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold mb-2">Nenhum fluxo criado</h2>
+            <p className="text-muted-foreground max-w-sm mb-6">
+              Escolha o canal (WhatsApp QR, API oficial, Instagram ou Telegram) e monte seu fluxo de mensagens.
             </p>
-            
-            <div className="bg-white p-4 rounded-xl inline-block mx-auto border-2 border-slate-200">
-              <QrCode className="w-48 h-48 text-slate-800" strokeWidth={1} />
-            </div>
-
-            <Button 
-              className="w-full mt-4" 
-              variant="secondary"
-              onClick={() => toast.success('Novo QR Code gerado! (Simulação)')}
-            >
-              Gerar novo QR Code
+            <Button size="lg" onClick={() => navigate('/admin/bot-builder/new')} className="gap-2">
+              <Plus className="w-5 h-5" />
+              Criar primeiro fluxo
             </Button>
-          </div>
-        </Card>
-
-        {/* Visual Tester Section */}
-        <Card className="flex flex-col overflow-hidden">
-          <CardHeader className="bg-slate-50 border-b">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Smartphone className="w-4 h-4" />
-              Simulador do Bot
-            </CardTitle>
-            <CardDescription>Esta é apenas uma prévia visual do chat.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 bg-slate-100 p-4 min-h-[400px] flex flex-col justify-end gap-3">
-            <div className="flex justify-start">
-              <div className="bg-white rounded-lg rounded-tl-none p-3 max-w-[80%] shadow-sm text-sm">
-                Olá! Como posso ajudar você hoje?
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <div className="bg-primary text-primary-foreground rounded-lg rounded-tr-none p-3 max-w-[80%] shadow-sm text-sm">
-                Gostaria de saber mais sobre o sistema.
-              </div>
-            </div>
-            <div className="flex justify-start">
-              <div className="bg-white rounded-lg rounded-tl-none p-3 max-w-[80%] shadow-sm text-sm">
-                Claro! O Núcleo CRM é perfeito para gerenciar seus contatos.
-              </div>
-            </div>
-            
-            {/* Input area mock */}
-            <div className="mt-4 pt-4 border-t border-slate-200 flex gap-2">
-              <div className="flex-1 bg-white h-10 rounded-full border px-4 flex items-center text-sm text-muted-foreground">
-                Digite uma mensagem...
-              </div>
-            </div>
           </CardContent>
         </Card>
-      </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {flows.map((flow) => {
+            const channelMeta = getBotFlowChannel(flow.channel);
+            const Icon = channelMeta?.icon ?? GitBranch;
+            return (
+              <Card
+                key={flow.id}
+                className="cursor-pointer hover:border-primary/50 transition-colors group"
+                onClick={() => navigate(`/admin/bot-builder/${flow.id}`)}
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div
+                      className={cn(
+                        'p-2 rounded-lg border',
+                        channelMeta?.colorClass ?? 'bg-muted',
+                      )}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 text-destructive"
+                      onClick={(e) => handleDelete(e, flow)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <CardTitle className="text-base line-clamp-1">{flow.name}</CardTitle>
+                  <CardDescription className="text-xs">
+                    {channelMeta?.label ?? flow.channel}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex items-center justify-between text-sm">
+                    <Badge variant={flow.isActive ? 'default' : 'secondary'}>
+                      {flow.isActive ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                    <span className="text-muted-foreground text-xs">
+                      {flow.nodeCount} {flow.nodeCount === 1 ? 'nó' : 'nós'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-end mt-3 text-primary text-sm font-medium">
+                    Conectar / testar
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </AdminLayout>
   );
 }
