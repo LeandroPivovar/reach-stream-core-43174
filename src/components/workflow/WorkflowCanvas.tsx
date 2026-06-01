@@ -18,7 +18,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { hasWhatsappCreditsAvailable } from '@/lib/whatsapp-credits';
+import { hasWhatsappCreditsAvailable } from '@/lib/subscription-credits';
 import { Mail, MessageSquare, Phone, Clock, GitBranch, Send, Calendar, Tag, Gift, Eraser, Truck } from 'lucide-react';
 import { EmailNode } from './nodes/EmailNode';
 import { SmsNode } from './nodes/SmsNode';

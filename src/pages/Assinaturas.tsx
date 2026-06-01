@@ -1,4 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import {
+  getSmsCredits,
+  getEmailCredits,
+  getWhatsappCredits,
+  getChannelBreakdown,
+} from '@/lib/subscription-credits';
 import { Layout } from '@/components/layout/Layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -270,11 +275,8 @@ export default function Assinaturas() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* SMS Card */}
             {(() => {
-              const used = (stats as any)?.smsSent ?? 0;
-              const extra = (stats as any)?.extraSmsBalance ?? 0;
-              const baseLimit = (stats as any)?.smsLimit;
-              const limit = baseLimit === -1 ? -1 : (baseLimit != null ? baseLimit + extra : null);
-              const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+              const credits = getSmsCredits(stats as any);
+              const breakdown = getChannelBreakdown(credits);
               return (
                 <Card className="p-6 border-slate-100 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
@@ -286,21 +288,21 @@ export default function Assinaturas() {
                   <p className="text-sm font-medium text-slate-400">SMS Enviados</p>
                   <div className="flex flex-col">
                     <p className="text-2xl font-black text-slate-900 mt-1">
-                      {used.toLocaleString()}
-                      {limit != null && limit !== -1 && (
-                        <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
+                      {credits.sent.toLocaleString()}
+                      {!credits.isUnlimited && (
+                        <span className="text-sm font-medium text-slate-400 ml-1"> / {credits.total.toLocaleString()}</span>
                       )}
-                      {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / ∞</span>}
+                      {credits.isUnlimited && <span className="text-sm font-medium text-slate-400 ml-1"> / ∞</span>}
                     </p>
-                    {extra > 0 && limit !== -1 && (
+                    {breakdown.showBreakdown && (
                       <span className="text-[10px] text-blue-600 font-bold">
-                        (Plano: {baseLimit?.toLocaleString()} + Adicional: {extra.toLocaleString()})
+                        (Plano: {credits.planTotal.toLocaleString()} + Adicional: {credits.extraTotal.toLocaleString()})
                       </span>
                     )}
                   </div>
-                  {limit != null && limit !== -1 && (
+                  {!credits.isUnlimited && credits.total > 0 && (
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4">
-                      <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${breakdown.progress}%` }} />
                     </div>
                   )}
                 </Card>
@@ -309,11 +311,8 @@ export default function Assinaturas() {
 
             {/* Emails Card */}
             {(() => {
-              const used = (stats as any)?.emailsSent ?? 0;
-              const extra = (stats as any)?.extraEmailsBalance ?? 0;
-              const baseLimit = (stats as any)?.emailsLimit;
-              const limit = baseLimit === -1 ? -1 : (baseLimit != null ? baseLimit + extra : null);
-              const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+              const credits = getEmailCredits(stats as any);
+              const breakdown = getChannelBreakdown(credits);
               return (
                 <Card className="p-6 border-slate-100 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
@@ -325,21 +324,21 @@ export default function Assinaturas() {
                   <p className="text-sm font-medium text-slate-400">Emails Enviados</p>
                   <div className="flex flex-col">
                     <p className="text-2xl font-black text-slate-900 mt-1">
-                      {used.toLocaleString()}
-                      {limit != null && limit !== -1 && (
-                        <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
+                      {credits.sent.toLocaleString()}
+                      {!credits.isUnlimited && (
+                        <span className="text-sm font-medium text-slate-400 ml-1"> / {credits.total.toLocaleString()}</span>
                       )}
-                      {limit === -1 && <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>}
+                      {credits.isUnlimited && <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>}
                     </p>
-                    {extra > 0 && limit !== -1 && (
+                    {breakdown.showBreakdown && (
                       <span className="text-[10px] text-indigo-600 font-bold">
-                        (Plano: {baseLimit?.toLocaleString()} + Adicional: {extra.toLocaleString()})
+                        (Plano: {credits.planTotal.toLocaleString()} + Adicional: {credits.extraTotal.toLocaleString()})
                       </span>
                     )}
                   </div>
-                  {limit != null && limit !== -1 && (
+                  {!credits.isUnlimited && credits.total > 0 && (
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4">
-                      <div className="bg-indigo-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div className="bg-indigo-500 h-1.5 rounded-full transition-all" style={{ width: `${breakdown.progress}%` }} />
                     </div>
                   )}
                 </Card>
@@ -348,12 +347,8 @@ export default function Assinaturas() {
 
             {/* WhatsApp Card */}
             {(() => {
-              const used = (stats as any)?.whatsappSent ?? 0;
-              const extra = (stats as any)?.extraWhatsappBalance ?? 0;
-              const total = (stats as any)?.whatsappLimit;
-              const limit = total === -1 || total === true ? -1 : (total != null ? Number(total) : null);
-              const planOnly = limit !== -1 && limit != null ? Math.max(0, limit - extra) : null;
-              const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+              const credits = getWhatsappCredits(stats as any);
+              const breakdown = getChannelBreakdown(credits);
               return (
                 <Card className="p-6 border-slate-100 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
@@ -365,30 +360,30 @@ export default function Assinaturas() {
                   <p className="text-sm font-medium text-slate-400">WhatsApp Enviados</p>
                   <div className="flex flex-col">
                     <p className="text-2xl font-black text-slate-900 mt-1">
-                      {used.toLocaleString()}
-                      {limit != null && limit !== -1 && (
-                        <span className="text-sm font-medium text-slate-400 ml-1"> / {Number(limit).toLocaleString()}</span>
+                      {credits.sent.toLocaleString()}
+                      {!credits.isUnlimited && (
+                        <span className="text-sm font-medium text-slate-400 ml-1"> / {credits.total.toLocaleString()}</span>
                       )}
-                      {limit === -1 && (
+                      {credits.isUnlimited && (
                         <>
                           <span className="text-sm font-medium text-slate-400 ml-1"> / Ilimitado</span>
-                          {extra > 0 && (
+                          {credits.extraTotal > 0 && (
                             <span className="block text-[10px] text-emerald-600 font-bold mt-1">
-                              + {extra.toLocaleString()} créditos extras
+                              + {credits.extraTotal.toLocaleString()} créditos extras
                             </span>
                           )}
                         </>
                       )}
                     </p>
-                    {extra > 0 && limit !== -1 && (
+                    {breakdown.showBreakdown && (
                       <span className="text-[10px] text-emerald-600 font-bold">
-                        (Plano: {planOnly?.toLocaleString()} + Adicional: {extra.toLocaleString()})
+                        (Plano: {credits.planTotal.toLocaleString()} + Adicional: {credits.extraTotal.toLocaleString()})
                       </span>
                     )}
                   </div>
-                  {limit != null && limit !== -1 && (
+                  {!credits.isUnlimited && credits.total > 0 && (
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-4">
-                      <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div className="bg-emerald-500 h-1.5 rounded-full transition-all" style={{ width: `${breakdown.progress}%` }} />
                     </div>
                   )}
                 </Card>

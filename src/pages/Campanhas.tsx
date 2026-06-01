@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
-import { getWhatsappCredits, formatWhatsappAvailable } from '@/lib/whatsapp-credits';
+import {
+  getEmailCredits,
+  getSmsCredits,
+  getWhatsappCredits,
+  getChannelBreakdown,
+} from '@/lib/subscription-credits';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -588,15 +593,32 @@ export default function Campanhas() {
       setIsSaving(true);
 
       const simpleWhatsapp = newCampaign.campaignComplexity === 'simple' && newCampaign.channel === 'whatsapp';
+      const simpleEmail = newCampaign.campaignComplexity === 'simple' && newCampaign.channel === 'email';
+      const simpleSms = newCampaign.campaignComplexity === 'simple' && newCampaign.channel === 'sms';
       const advancedWhatsapp = newCampaign.campaignComplexity === 'advanced' &&
         (newCampaign.workflow?.nodes || []).some((n: any) => n.type === 'whatsapp');
+      const advancedEmail = newCampaign.campaignComplexity === 'advanced' &&
+        (newCampaign.workflow?.nodes || []).some((n: any) => n.type === 'email');
+      const advancedSms = newCampaign.campaignComplexity === 'advanced' &&
+        (newCampaign.workflow?.nodes || []).some((n: any) => n.type === 'sms');
 
-      // Check for WhatsApp credits before creating
-      const hasWhatsapp = simpleWhatsapp || advancedWhatsapp;
+      const emailCredits = getEmailCredits(subscriptionStats);
+      const smsCredits = getSmsCredits(subscriptionStats);
       const whatsappCredits = getWhatsappCredits(subscriptionStats);
-      const noCredits = hasWhatsapp && subscriptionStats && !whatsappCredits.isUnlimited && whatsappCredits.available <= 0;
 
-      if (noCredits) {
+      if (subscriptionStats && (simpleEmail || advancedEmail) && emailCredits.available <= 0) {
+        setBuyCreditsInitialType('email');
+        setIsBuyCreditsModalOpen(true);
+        setIsSaving(false);
+        return;
+      }
+      if (subscriptionStats && (simpleSms || advancedSms) && smsCredits.available <= 0) {
+        setBuyCreditsInitialType('sms');
+        setIsBuyCreditsModalOpen(true);
+        setIsSaving(false);
+        return;
+      }
+      if (subscriptionStats && (simpleWhatsapp || advancedWhatsapp) && !whatsappCredits.isUnlimited && whatsappCredits.available <= 0) {
         setBuyCreditsInitialType('whatsapp');
         setIsBuyCreditsModalOpen(true);
         setIsSaving(false);
@@ -2626,19 +2648,25 @@ export default function Campanhas() {
                           </p>
                           {subscriptionStats ? (
                             <div className="space-y-2">
+                              {(() => {
+                                const email = getEmailCredits(subscriptionStats);
+                                const breakdown = getChannelBreakdown(email);
+                                return (
                               <div className="space-y-0.5">
                                 <p className="text-xs text-blue-600/80 font-medium">
-                                  DISPONÍVEL: {(subscriptionStats.emailsLimit - subscriptionStats.emailsSent).toLocaleString('pt-BR')}
+                                  DISPONÍVEL: {breakdown.available}
                                 </p>
-                                {subscriptionStats.extraEmailsBalance && subscriptionStats.extraEmailsBalance > 0 ? (
+                                {breakdown.showBreakdown ? (
                                   <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
-                                    <span>Plano: {Math.max(0, (subscriptionStats.emailsLimit - subscriptionStats.extraEmailsBalance) - subscriptionStats.emailsSent).toLocaleString('pt-BR')}</span>
-                                    <span>Adicional: {Math.min(subscriptionStats.extraEmailsBalance, Math.max(0, subscriptionStats.emailsLimit - subscriptionStats.emailsSent)).toLocaleString('pt-BR')}</span>
+                                    <span>Plano: {breakdown.planAvailable.toLocaleString('pt-BR')}</span>
+                                    <span>Adicional: {breakdown.extraRemaining.toLocaleString('pt-BR')}</span>
                                   </div>
                                 ) : null}
                               </div>
+                                );
+                              })()}
                               <Progress 
-                                value={(subscriptionStats.emailsSent / subscriptionStats.emailsLimit) * 100} 
+                                value={getChannelBreakdown(getEmailCredits(subscriptionStats)).progress} 
                                 className="h-1 bg-blue-500/20"
                                 indicatorClassName="bg-blue-500"
                               />
@@ -2660,19 +2688,25 @@ export default function Campanhas() {
                           </p>
                           {subscriptionStats ? (
                             <div className="space-y-2">
+                              {(() => {
+                                const sms = getSmsCredits(subscriptionStats);
+                                const breakdown = getChannelBreakdown(sms);
+                                return (
                               <div className="space-y-0.5">
                                 <p className="text-xs text-green-600/80 font-medium">
-                                  DISPONÍVEL: {(subscriptionStats.smsLimit - subscriptionStats.smsSent).toLocaleString('pt-BR')}
+                                  DISPONÍVEL: {breakdown.available}
                                 </p>
-                                {subscriptionStats.extraSmsBalance && subscriptionStats.extraSmsBalance > 0 ? (
+                                {breakdown.showBreakdown ? (
                                   <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
-                                    <span>Plano: {Math.max(0, (subscriptionStats.smsLimit - subscriptionStats.extraSmsBalance) - subscriptionStats.smsSent).toLocaleString('pt-BR')}</span>
-                                    <span>Adicional: {Math.min(subscriptionStats.extraSmsBalance, Math.max(0, subscriptionStats.smsLimit - subscriptionStats.smsSent)).toLocaleString('pt-BR')}</span>
+                                    <span>Plano: {breakdown.planAvailable.toLocaleString('pt-BR')}</span>
+                                    <span>Adicional: {breakdown.extraRemaining.toLocaleString('pt-BR')}</span>
                                   </div>
                                 ) : null}
                               </div>
+                                );
+                              })()}
                               <Progress 
-                                value={(subscriptionStats.smsSent / subscriptionStats.smsLimit) * 100} 
+                                value={getChannelBreakdown(getSmsCredits(subscriptionStats)).progress} 
                                 className="h-1 bg-green-500/20"
                                 indicatorClassName="bg-green-500"
                               />
@@ -2696,15 +2730,16 @@ export default function Campanhas() {
                             <div className="space-y-2">
                               {(() => {
                                 const wa = getWhatsappCredits(subscriptionStats);
+                                const breakdown = getChannelBreakdown(wa);
                                 return (
                               <div className="space-y-0.5">
                                 <p className="text-xs text-indigo-600/80 font-medium">
-                                  DISPONÍVEL: {formatWhatsappAvailable(subscriptionStats)}
+                                  DISPONÍVEL: {breakdown.available}
                                 </p>
-                                {!wa.isUnlimited && wa.extraTotal > 0 ? (
+                                {breakdown.showBreakdown ? (
                                   <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
-                                    <span>Plano: {wa.planAvailable.toLocaleString('pt-BR')}</span>
-                                    <span>Adicional: {wa.extraRemaining.toLocaleString('pt-BR')}</span>
+                                    <span>Plano: {breakdown.planAvailable.toLocaleString('pt-BR')}</span>
+                                    <span>Adicional: {breakdown.extraRemaining.toLocaleString('pt-BR')}</span>
                                   </div>
                                 ) : null}
                               </div>
@@ -2712,7 +2747,7 @@ export default function Campanhas() {
                               })()}
                               {subscriptionStats.whatsappLimit !== -1 && subscriptionStats.whatsappLimit !== true && (
                                 <Progress 
-                                  value={((subscriptionStats.whatsappSent || 0) / Number(subscriptionStats.whatsappLimit)) * 100} 
+                                  value={getChannelBreakdown(getWhatsappCredits(subscriptionStats)).progress} 
                                   className="h-1 bg-indigo-500/20"
                                   indicatorClassName="bg-indigo-500"
                                 />
@@ -3248,18 +3283,19 @@ export default function Campanhas() {
 
                 {(() => {
                   const channel = newCampaign.channel;
+                  const emailCredits = channel === 'email' ? getEmailCredits(subscriptionStats) : null;
+                  const smsCredits = channel === 'sms' ? getSmsCredits(subscriptionStats) : null;
                   const wa = channel === 'whatsapp' ? getWhatsappCredits(subscriptionStats) : null;
                   let remaining = 0;
                   let isWhatsapp = channel === 'whatsapp';
 
                   if (subscriptionStats) {
-                    if (channel === 'email') remaining = Math.max(0, subscriptionStats.emailsLimit - subscriptionStats.emailsSent);
-                    else if (channel === 'sms') remaining = Math.max(0, subscriptionStats.smsLimit - subscriptionStats.smsSent);
-                    else if (channel === 'whatsapp' && wa) {
-                      remaining = wa.isUnlimited ? -1 : wa.available;
-                    }
+                    if (emailCredits) remaining = emailCredits.available;
+                    else if (smsCredits) remaining = smsCredits.available;
+                    else if (wa) remaining = wa.isUnlimited ? -1 : wa.available;
                   }
 
+                  const channelCredits = emailCredits || smsCredits || wa;
                   const willExceed = subscriptionStats && remaining !== -1 && filteredContacts.length > remaining;
 
                   return (
@@ -3284,32 +3320,21 @@ export default function Campanhas() {
                           <div className="space-y-3">
                             <div className="space-y-1">
                               {(() => {
-                                let extra = 0;
-                                let total = 0;
-                                let used = 0;
-                                if (channel === 'email') { extra = subscriptionStats.extraEmailsBalance || 0; total = subscriptionStats.emailsLimit; used = subscriptionStats.emailsSent; }
-                                else if (channel === 'sms') { extra = subscriptionStats.extraSmsBalance || 0; total = subscriptionStats.smsLimit; used = subscriptionStats.smsSent; }
-                                else if (channel === 'whatsapp' && wa) {
-                                  extra = wa.extraTotal;
-                                  total = wa.total;
-                                  used = wa.sent;
-                                }
-
+                                if (!channelCredits || channelCredits.isUnlimited) return null;
+                                const breakdown = getChannelBreakdown(channelCredits);
                                 return (
                                   <>
-                                    {extra > 0 && total !== -1 && (
+                                    {breakdown.showBreakdown && (
                                       <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
-                                        <span>Plano: {Math.max(0, (total - extra) - used).toLocaleString('pt-BR')}</span>
-                                        <span>Adicional: {Math.min(extra, Math.max(0, total - used)).toLocaleString('pt-BR')}</span>
+                                        <span>Plano: {breakdown.planAvailable.toLocaleString('pt-BR')}</span>
+                                        <span>Adicional: {breakdown.extraRemaining.toLocaleString('pt-BR')}</span>
                                       </div>
                                     )}
-                                    {total !== -1 && (
-                                      <Progress 
-                                        value={(used / total) * 100} 
-                                        className={`h-1 ${isWhatsapp && willExceed ? 'bg-destructive/20' : 'bg-green-500/20'}`}
-                                        indicatorClassName={isWhatsapp && willExceed ? 'bg-destructive' : 'bg-green-500'}
-                                      />
-                                    )}
+                                    <Progress 
+                                      value={breakdown.progress} 
+                                      className={`h-1 ${isWhatsapp && willExceed ? 'bg-destructive/20' : 'bg-green-500/20'}`}
+                                      indicatorClassName={isWhatsapp && willExceed ? 'bg-destructive' : 'bg-green-500'}
+                                    />
                                   </>
                                 );
                               })()}
