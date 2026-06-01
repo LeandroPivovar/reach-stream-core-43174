@@ -52,6 +52,7 @@ import AdminCampaigns from "./pages/admin/AdminCampaigns";
 import AdminTickets from "./pages/admin/AdminTickets";
 import AdminReferrals from "./pages/admin/AdminReferrals";
 import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
+import AdminBotBuilder from "./pages/admin/AdminBotBuilder";
 import AdminClientsReport from "./pages/admin/AdminClientsReport";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
@@ -129,6 +130,7 @@ const App = () => (
             <Route path="/admin/tickets" element={<ProtectedRoute><AdminTickets /></ProtectedRoute>} />
             <Route path="/admin/referrals" element={<ProtectedRoute><AdminReferrals /></ProtectedRoute>} />
             <Route path="/admin/knowledge-base" element={<ProtectedRoute><AdminKnowledgeBase /></ProtectedRoute>} />
+            <Route path="/admin/bot-builder" element={<ProtectedRoute><AdminBotBuilder /></ProtectedRoute>} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

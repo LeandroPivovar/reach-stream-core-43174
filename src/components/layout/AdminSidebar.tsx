@@ -28,6 +28,7 @@ import {
     BookOpen,
     X,
     BarChart3,
+    GitBranch,
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -39,6 +40,7 @@ const adminMenuItems = [
     { title: 'Relatório de Clientes', href: '/admin/reports/clients', icon: BarChart3 },
     { title: 'Indicações', href: '/admin/referrals', icon: Share2 },
     { title: 'Campanhas', href: '/admin/campaigns', icon: Zap },
+    { title: 'Construtor de Bot', href: '/admin/bot-builder', icon: GitBranch },
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
     { title: 'Segmentações', href: '/admin/segmentations', icon: Filter },
     { title: 'Planos e Pacotes', href: '/admin/plans', icon: ShieldCheck },
