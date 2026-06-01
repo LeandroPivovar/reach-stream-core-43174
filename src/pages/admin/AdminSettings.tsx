@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Settings, Shield, Globe, CreditCard, Save, RefreshCw, Mail, Cpu, MessageSquare, Eye, EyeOff } from 'lucide-react';
+import { Settings, Shield, Globe, CreditCard, Save, RefreshCw, Mail, Cpu, MessageSquare, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ export default function AdminSettings() {
     const [isTestingEmail, setIsTestingEmail] = useState(false);
     const [showAsaasApiKey, setShowAsaasApiKey] = useState(false);
     const [showAsaasWebhookToken, setShowAsaasWebhookToken] = useState(false);
+    const [showGeminiApiKey, setShowGeminiApiKey] = useState(false);
 
     useEffect(() => {
         if (settings) {
@@ -136,6 +137,12 @@ export default function AdminSettings() {
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none shadow-none"
                     >
                         <Cpu className="w-4 h-4" /> Plataforma
+                    </TabsTrigger>
+                    <TabsTrigger 
+                        value="gemini" 
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none shadow-none"
+                    >
+                        <Sparkles className="w-4 h-4" /> Gemini (IA)
                     </TabsTrigger>
                 </TabsList>
 
@@ -367,6 +374,65 @@ export default function AdminSettings() {
                                     placeholder="500"
                                 />
                                 <p className="text-[12px] text-muted-foreground">Valor total investido mensalmente em marketing/anúncios para o cálculo real do CAC.</p>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
+                            <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
+                                {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Salvar Configurações
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="gemini" className="space-y-4">
+                    <Card className="border-border/60 shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-xl">Google Gemini — Bots com IA</CardTitle>
+                            <CardDescription>
+                                Chave global usada pelos fluxos de bot para gerar respostas inteligentes e avaliar condições em linguagem natural.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="GEMINI_API_KEY" className="text-sm font-semibold">API Key</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="GEMINI_API_KEY"
+                                        type={showGeminiApiKey ? 'text' : 'password'}
+                                        className="font-mono pr-10"
+                                        value={localSettings['GEMINI_API_KEY'] || ''}
+                                        onChange={(e) => handleInputChange('GEMINI_API_KEY', e.target.value)}
+                                        placeholder="AIza..."
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowGeminiApiKey(!showGeminiApiKey)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showGeminiApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                <p className="text-[12px] text-muted-foreground">
+                                    Obtenha em{' '}
+                                    <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="underline">
+                                        Google AI Studio
+                                    </a>
+                                    . Nos nós de mensagem, marque &quot;Gerar com IA&quot; para usar o Gemini.
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="GEMINI_MODEL" className="text-sm font-semibold">Modelo</Label>
+                                <Input
+                                    id="GEMINI_MODEL"
+                                    className="font-mono max-w-md"
+                                    value={localSettings['GEMINI_MODEL'] || 'gemini-2.0-flash'}
+                                    onChange={(e) => handleInputChange('GEMINI_MODEL', e.target.value)}
+                                    placeholder="gemini-2.0-flash"
+                                />
+                                <p className="text-[12px] text-muted-foreground">
+                                    Exemplos: gemini-2.0-flash, gemini-1.5-flash, gemini-1.5-pro
+                                </p>
                             </div>
                         </CardContent>
                         <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
