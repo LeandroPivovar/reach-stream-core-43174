@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Image as ImageIcon, Clock, GitBranch } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, Clock, GitBranch, Brain } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -50,6 +50,19 @@ export const BotBuilderSidebar = ({ onAddNode }: BotBuilderSidebarProps) => {
             Clique para adicionar ou arraste para a área de edição.
           </div>
           
+          <div
+            className="flex items-center gap-3 p-3 border rounded-md cursor-pointer hover:bg-accent transition-colors border-violet-200 dark:border-violet-900"
+            onDragStart={(event) => onDragStart(event, 'contextNode')}
+            onClick={() => handleNodeClick('contextNode')}
+            draggable
+          >
+            <Brain className="w-5 h-5 text-violet-500" />
+            <div>
+              <span className="font-medium block">Contextualização</span>
+              <span className="text-[10px] text-muted-foreground">Instruções gerais da IA</span>
+            </div>
+          </div>
+
           <div
             className="flex items-center gap-3 p-3 border rounded-md cursor-pointer hover:bg-accent transition-colors"
             onDragStart={(event) => onDragStart(event, 'messageNode')}

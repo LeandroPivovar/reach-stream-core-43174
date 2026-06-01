@@ -4,6 +4,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -11,6 +12,7 @@ import {
   fetchTelegramConnectionStatus,
   connectTelegramBot,
   disconnectTelegramBot,
+  updateBotFlowMeta,
   type BotFlowDetail,
   type TelegramConnectionStatus,
 } from '@/lib/bot-flow-api';
@@ -73,6 +75,16 @@ export default function AdminBotFlowDetail() {
 
   const channelMeta = getBotFlowChannel(flow.channel);
 
+  const handleToggleActive = async (active: boolean) => {
+    const ok = await updateBotFlowMeta(flow.id, { isActive: active });
+    if (!ok) {
+      toast.error('Erro ao atualizar status do fluxo');
+      return;
+    }
+    setFlow({ ...flow, isActive: active });
+    toast.success(active ? 'Fluxo ativado' : 'Fluxo desativado');
+  };
+
   return (
     <AdminLayout>
       <Button variant="ghost" className="mb-4 gap-2 -ml-2" onClick={() => navigate('/admin/bot-builder')}>
@@ -89,6 +101,16 @@ export default function AdminBotFlowDetail() {
             </Badge>
           </div>
           <p className="text-muted-foreground">{channelMeta?.label ?? flow.channel}</p>
+          <div className="flex items-center gap-2 mt-3">
+            <Switch
+              id="flow-active-detail"
+              checked={flow.isActive}
+              onCheckedChange={handleToggleActive}
+            />
+            <Label htmlFor="flow-active-detail" className="text-sm cursor-pointer">
+              Fluxo ativo (bot responde no Telegram)
+            </Label>
+          </div>
         </div>
         <Button variant="outline" onClick={() => navigate(`/admin/bot-builder/${flow.id}/edit`)} className="gap-2">
           <Settings className="w-4 h-4" />
@@ -97,7 +119,12 @@ export default function AdminBotFlowDetail() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        <ConnectPanel channel={flow.channel} flowId={flow.id} flowName={flow.name} />
+        <ConnectPanel
+          channel={flow.channel}
+          flowId={flow.id}
+          flowName={flow.name}
+          onConnected={() => setFlow({ ...flow, isActive: true })}
+        />
         <SimulatorPanel channel={flow.channel} />
       </div>
     </AdminLayout>
@@ -108,10 +135,12 @@ function ConnectPanel({
   channel,
   flowId,
   flowName,
+  onConnected,
 }: {
   channel: string;
   flowId: number;
   flowName: string;
+  onConnected?: () => void;
 }) {
   switch (channel) {
     case 'whatsapp_qr':
@@ -173,7 +202,7 @@ function ConnectPanel({
         </Card>
       );
     case 'telegram':
-      return <TelegramConnectPanel flowId={flowId} />;
+      return <TelegramConnectPanel flowId={flowId} onConnected={onConnected} />;
     default:
       return (
         <Card className="p-8">
@@ -183,7 +212,13 @@ function ConnectPanel({
   }
 }
 
-function TelegramConnectPanel({ flowId }: { flowId: number }) {
+function TelegramConnectPanel({
+  flowId,
+  onConnected,
+}: {
+  flowId: number;
+  onConnected?: () => void;
+}) {
   const [status, setStatus] = useState<TelegramConnectionStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [botToken, setBotToken] = useState('');
@@ -225,6 +260,7 @@ function TelegramConnectPanel({ flowId }: { flowId: number }) {
           : 'Bot conectado! Envie uma mensagem no Telegram para testar.',
       );
       setBotToken('');
+      onConnected?.();
       await loadStatus();
     } catch {
       toast.error('Erro de conexão com o servidor');
@@ -349,8 +385,9 @@ function SimulatorPanel({ channel }: { channel: string }) {
           <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside mb-auto pt-2">
             <li>Crie o bot no @BotFather e copie o token</li>
             <li>Cole o token e clique em Conectar</li>
+            <li>Adicione um nó de Contextualização no início do fluxo</li>
             <li>Configure Gemini em Admin → Configurações</li>
-            <li>Ative o fluxo no editor e envie /start no bot</li>
+            <li>Ative o fluxo e envie /start no bot</li>
           </ol>
         ) : (
           <>

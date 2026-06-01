@@ -52,7 +52,7 @@ function mapFlowDetail(raw: Record<string, unknown>): BotFlowDetail {
     channel: raw.channel as BotFlowChannel,
     nodes: Array.isArray(nodes) ? nodes : [],
     edges: Array.isArray(edges) ? edges : [],
-    isActive: Boolean(raw.isActive),
+    isActive: raw.isActive === true || raw.isActive === 1 || raw.isActive === '1',
     createdAt: String(raw.createdAt ?? ''),
     updatedAt: String(raw.updatedAt ?? ''),
   };
@@ -100,6 +100,18 @@ export async function saveBotFlow(
 ): Promise<boolean> {
   const res = await fetch(`${API_URL}/api/bot-flows/${id}/save`, {
     method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return res.ok;
+}
+
+export async function updateBotFlowMeta(
+  id: number,
+  payload: { name?: string; isActive?: boolean },
+): Promise<boolean> {
+  const res = await fetch(`${API_URL}/api/bot-flows/${id}`, {
+    method: 'PATCH',
     headers: authHeaders(),
     body: JSON.stringify(payload),
   });
