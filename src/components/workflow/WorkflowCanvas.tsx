@@ -18,6 +18,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { hasWhatsappCreditsAvailable } from '@/lib/whatsapp-credits';
 import { Mail, MessageSquare, Phone, Clock, GitBranch, Send, Calendar, Tag, Gift, Eraser, Truck } from 'lucide-react';
 import { EmailNode } from './nodes/EmailNode';
 import { SmsNode } from './nodes/SmsNode';
@@ -139,10 +140,9 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
   const addNode = (type: WorkflowStep['type']) => {
     if (type === 'whatsapp') {
-      // Solução Definitiva: Enquanto carrega (undefined/null), permitimos o clique. 
-      // Só bloqueia se tiver certeza absoluta que o saldo é 0 ou menor.
       const isLoading = whatsappLimit === undefined || whatsappLimit === null;
-      const hasCredits = isLoading || whatsappLimit === true || whatsappLimit === -1 || (Number(whatsappLimit) - (whatsappSent || 0)) > 0;
+      const stats = { whatsappLimit, whatsappSent, extraWhatsappBalance: undefined };
+      const hasCredits = isLoading || hasWhatsappCreditsAvailable(stats);
       
       if (!hasCredits) {
         if (onBuyCredits) onBuyCredits();
@@ -274,12 +274,12 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
               onClick={() => addNode('whatsapp')}
               className={cn(
                 "gap-2",
-                whatsappLimit !== undefined && whatsappLimit !== null && !(whatsappLimit === true || whatsappLimit === -1 || (Number(whatsappLimit) - (whatsappSent || 0)) > 0) && "opacity-50 border-dashed"
+                whatsappLimit !== undefined && whatsappLimit !== null && !hasWhatsappCreditsAvailable({ whatsappLimit, whatsappSent }) && "opacity-50 border-dashed"
               )}
             >
               <Phone className="w-4 h-4 text-green-500" />
               WhatsApp
-              {whatsappLimit !== undefined && whatsappLimit !== null && !(whatsappLimit === true || whatsappLimit === -1 || (Number(whatsappLimit || 0) - (whatsappSent || 0)) > 0) && (
+              {whatsappLimit !== undefined && whatsappLimit !== null && !hasWhatsappCreditsAvailable({ whatsappLimit, whatsappSent }) && (
                 <Badge variant="destructive" className="ml-1 text-[8px] h-3 px-1">Sem crédito</Badge>
               )}
             </Button>

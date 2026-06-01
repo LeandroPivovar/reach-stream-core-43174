@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { useInternalAnalytics } from '@/hooks/use-internal-analytics';
+import { getWhatsappCredits, formatWhatsappAvailable } from '@/lib/whatsapp-credits';
 import { Layout } from '@/components/layout/Layout';
 import { HeaderActions } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
@@ -593,12 +593,8 @@ export default function Campanhas() {
 
       // Check for WhatsApp credits before creating
       const hasWhatsapp = simpleWhatsapp || advancedWhatsapp;
-      const whatsappLimit = subscriptionStats?.whatsappLimit === -1 ? -1 : (subscriptionStats?.whatsappLimit + (subscriptionStats?.extraWhatsappBalance || 0));
-      const noCredits = hasWhatsapp && subscriptionStats && (
-        subscriptionStats.whatsappLimit !== true && 
-        whatsappLimit !== -1 && 
-        (Number(whatsappLimit) - (subscriptionStats.whatsappSent || 0)) <= 0
-      );
+      const whatsappCredits = getWhatsappCredits(subscriptionStats);
+      const noCredits = hasWhatsapp && subscriptionStats && !whatsappCredits.isUnlimited && whatsappCredits.available <= 0;
 
       if (noCredits) {
         setBuyCreditsInitialType('whatsapp');
@@ -1787,13 +1783,8 @@ export default function Campanhas() {
 
                   {(() => {
                     const isLoading = !subscriptionStats;
-                    const whatsappLimit = subscriptionStats?.whatsappLimit === -1 ? -1 : (subscriptionStats?.whatsappLimit + (subscriptionStats?.extraWhatsappBalance || 0));
-                    const hasWhatsappCredits = !isLoading && (
-                      subscriptionStats.whatsappLimit === true || 
-                      whatsappLimit === -1 || 
-                      (Number(whatsappLimit) === -1) ||
-                      (Number(whatsappLimit) - (subscriptionStats.whatsappSent || 0)) > 0
-                    );
+                    const whatsappCredits = getWhatsappCredits(subscriptionStats);
+                    const hasWhatsappCredits = !isLoading && (whatsappCredits.isUnlimited || whatsappCredits.available > 0);
 
                     // Permite selecionar se tiver créditos, mesmo sem configurar (conforme solicitado pelo usuário)
                     const hasWhatsapp = hasWhatsappCredits;
@@ -1877,21 +1868,6 @@ export default function Campanhas() {
                         <p className="text-sm text-muted-foreground">
                           Mensagens via WhatsApp Business com suporte a mídia e botões interativos.
                         </p>
-                        {subscriptionStats && (subscriptionStats.whatsappLimit !== -1 || subscriptionStats.extraWhatsappBalance > 0) && (
-                          <p className="text-xs mt-2 font-medium text-green-700">
-                            {(() => {
-                              const extra = subscriptionStats.extraWhatsappBalance || 0;
-                              const baseLimit = subscriptionStats.whatsappLimit;
-                              const totalLimit = baseLimit === -1 ? -1 : (baseLimit + extra);
-                              const available = totalLimit === -1 ? -1 : (totalLimit - (subscriptionStats.whatsappSent || 0));
-                              
-                              if (totalLimit === -1) return '✅ WhatsApp Ilimitado';
-                              return available > 0
-                                ? `✅ ${available.toLocaleString('pt-BR')} créditos disponíveis`
-                                : '❌ Nenhum crédito disponível';
-                            })()}
-                          </p>
-                        )}
                       </div>
                     </div>
                       </Card>
@@ -2473,7 +2449,7 @@ export default function Campanhas() {
                           maxLength={160}
                         />
                         <p className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10 mt-2">
-                          💡 <strong>Variáveis:</strong> <code>{"{{cupom_nome}}"}</code>, <code>{"{{cupom_valor}}"}</code> e <code>{"{{cupom_validade}}"}</code>. <br />
+                          💡 <strong>Variáveis:</strong> <code>{"{{nome}}"}</code>, <code>{"{{cupom_nome}}"}</code>, <code>{"{{cupom_valor}}"}</code> e <code>{"{{cupom_validade}}"}</code>. <br />
                           Caso não utilize as variáveis, os dados do cupom serão adicionados automaticamente ao final do SMS.
                         </p>
                       </div>
@@ -2718,20 +2694,25 @@ export default function Campanhas() {
                           </p>
                           {subscriptionStats ? (
                             <div className="space-y-2">
+                              {(() => {
+                                const wa = getWhatsappCredits(subscriptionStats);
+                                return (
                               <div className="space-y-0.5">
                                 <p className="text-xs text-indigo-600/80 font-medium">
-                                  DISPONÍVEL: {subscriptionStats.whatsappLimit === -1 ? 'Ilimitado' : (subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')}
+                                  DISPONÍVEL: {formatWhatsappAvailable(subscriptionStats)}
                                 </p>
-                                {subscriptionStats.whatsappLimit !== -1 && subscriptionStats.extraWhatsappBalance && subscriptionStats.extraWhatsappBalance > 0 ? (
+                                {!wa.isUnlimited && wa.extraTotal > 0 ? (
                                   <div className="flex flex-col gap-0 text-[10px] text-muted-foreground leading-tight uppercase tracking-wider font-semibold opacity-70">
-                                    <span>Plano: {Math.max(0, (subscriptionStats.whatsappLimit - subscriptionStats.extraWhatsappBalance) - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')}</span>
-                                    <span>Adicional: {Math.min(subscriptionStats.extraWhatsappBalance, Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0))).toLocaleString('pt-BR')}</span>
+                                    <span>Plano: {wa.planAvailable.toLocaleString('pt-BR')}</span>
+                                    <span>Adicional: {wa.extraRemaining.toLocaleString('pt-BR')}</span>
                                   </div>
                                 ) : null}
                               </div>
-                              {subscriptionStats.whatsappLimit !== -1 && (
+                                );
+                              })()}
+                              {subscriptionStats.whatsappLimit !== -1 && subscriptionStats.whatsappLimit !== true && (
                                 <Progress 
-                                  value={((subscriptionStats.whatsappSent || 0) / subscriptionStats.whatsappLimit) * 100} 
+                                  value={((subscriptionStats.whatsappSent || 0) / Number(subscriptionStats.whatsappLimit)) * 100} 
                                   className="h-1 bg-indigo-500/20"
                                   indicatorClassName="bg-indigo-500"
                                 />
@@ -3267,20 +3248,19 @@ export default function Campanhas() {
 
                 {(() => {
                   const channel = newCampaign.channel;
+                  const wa = channel === 'whatsapp' ? getWhatsappCredits(subscriptionStats) : null;
                   let remaining = 0;
                   let isWhatsapp = channel === 'whatsapp';
 
                   if (subscriptionStats) {
                     if (channel === 'email') remaining = Math.max(0, subscriptionStats.emailsLimit - subscriptionStats.emailsSent);
                     else if (channel === 'sms') remaining = Math.max(0, subscriptionStats.smsLimit - subscriptionStats.smsSent);
-                    else if (channel === 'whatsapp') {
-                      remaining = subscriptionStats.whatsappLimit === -1 
-                        ? -1 
-                        : Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0));
+                    else if (channel === 'whatsapp' && wa) {
+                      remaining = wa.isUnlimited ? -1 : wa.available;
                     }
                   }
 
-                  const willExceed = subscriptionStats && filteredContacts.length > remaining;
+                  const willExceed = subscriptionStats && remaining !== -1 && filteredContacts.length > remaining;
 
                   return (
                     <Card className={`p-4 ${
@@ -3309,7 +3289,11 @@ export default function Campanhas() {
                                 let used = 0;
                                 if (channel === 'email') { extra = subscriptionStats.extraEmailsBalance || 0; total = subscriptionStats.emailsLimit; used = subscriptionStats.emailsSent; }
                                 else if (channel === 'sms') { extra = subscriptionStats.extraSmsBalance || 0; total = subscriptionStats.smsLimit; used = subscriptionStats.smsSent; }
-                                else if (channel === 'whatsapp') { extra = subscriptionStats.extraWhatsappBalance || 0; total = subscriptionStats.whatsappLimit; used = subscriptionStats.whatsappSent || 0; }
+                                else if (channel === 'whatsapp' && wa) {
+                                  extra = wa.extraTotal;
+                                  total = wa.total;
+                                  used = wa.sent;
+                                }
 
                                 return (
                                   <>
@@ -3344,27 +3328,35 @@ export default function Campanhas() {
               </div>
 
               {/* Warning: insufficient WhatsApp credits */}
-              {newCampaign.channel === 'whatsapp' && subscriptionStats && (
-                subscriptionStats.whatsappLimit === 0 ? (
-                  <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/30 rounded-lg p-4 mt-4">
-                    <MessageSquare className="w-5 h-5 text-destructive flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-destructive">Sem créditos WhatsApp</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Você não possui créditos WhatsApp disponíveis. Compre um pacote adicional antes de criar a campanha.</p>
+              {newCampaign.channel === 'whatsapp' && subscriptionStats && (() => {
+                const wa = getWhatsappCredits(subscriptionStats);
+                if (wa.isUnlimited) return null;
+                if (wa.total <= 0) {
+                  return (
+                    <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/30 rounded-lg p-4 mt-4">
+                      <MessageSquare className="w-5 h-5 text-destructive flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-bold text-destructive">Sem créditos WhatsApp</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Você não possui créditos WhatsApp disponíveis. Compre um pacote adicional antes de criar a campanha.</p>
+                      </div>
                     </div>
-                  </div>
-                ) : filteredContacts.length > (subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)) ? (
-                  <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mt-4">
-                    <Zap className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-bold text-amber-700">⚠️ Créditos insuficientes</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Você tem {Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')} créditos, mas a campanha precisa de {filteredContacts.length.toLocaleString('pt-BR')}. Apenas os primeiros {Math.max(0, subscriptionStats.whatsappLimit - (subscriptionStats.whatsappSent || 0)).toLocaleString('pt-BR')} serão enviados.
-                      </p>
+                  );
+                }
+                if (filteredContacts.length > wa.available) {
+                  return (
+                    <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mt-4">
+                      <Zap className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-bold text-amber-700">⚠️ Créditos insuficientes</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Você tem {wa.available.toLocaleString('pt-BR')} créditos, mas a campanha precisa de {filteredContacts.length.toLocaleString('pt-BR')}. Apenas os primeiros {wa.available.toLocaleString('pt-BR')} serão enviados.
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ) : null
-              )}
+                  );
+                }
+                return null;
+              })()}
 
               <div className="grid gap-4 mt-6">
                 <Label>Quando enviar a campanha?</Label>

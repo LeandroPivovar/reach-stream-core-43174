@@ -350,8 +350,9 @@ export default function Assinaturas() {
             {(() => {
               const used = (stats as any)?.whatsappSent ?? 0;
               const extra = (stats as any)?.extraWhatsappBalance ?? 0;
-              const baseLimit = (stats as any)?.whatsappLimit;
-              const limit = baseLimit === -1 ? -1 : (baseLimit != null ? baseLimit + extra : null);
+              const total = (stats as any)?.whatsappLimit;
+              const limit = total === -1 || total === true ? -1 : (total != null ? Number(total) : null);
+              const planOnly = limit !== -1 && limit != null ? Math.max(0, limit - extra) : null;
               const pct = limit && limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
               return (
                 <Card className="p-6 border-slate-100 shadow-sm">
@@ -381,7 +382,7 @@ export default function Assinaturas() {
                     </p>
                     {extra > 0 && limit !== -1 && (
                       <span className="text-[10px] text-emerald-600 font-bold">
-                        (Plano: {baseLimit?.toLocaleString()} + Adicional: {extra.toLocaleString()})
+                        (Plano: {planOnly?.toLocaleString()} + Adicional: {extra.toLocaleString()})
                       </span>
                     )}
                   </div>

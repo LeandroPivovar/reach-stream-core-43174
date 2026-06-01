@@ -90,7 +90,7 @@ export const SmsNode: React.FC<NodeProps> = ({ data, id }) => {
                 {content.length}/160 caracteres
               </p>
               <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
-                💡 Variáveis: <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong> e <strong>{"{{link_rastreio}}"}</strong>
+                💡 Variáveis: <strong>{"{{nome}}"}</strong>, <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong> e <strong>{"{{link_rastreio}}"}</strong>
               </p>
             </div>
 
