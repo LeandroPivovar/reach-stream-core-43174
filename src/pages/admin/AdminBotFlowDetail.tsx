@@ -260,8 +260,7 @@ function TelegramConnectPanel({ flowId }: { flowId: number }) {
           Telegram
         </CardTitle>
         <CardDescription>
-          Crie um bot no @BotFather, copie o token HTTP API e cole abaixo. O bot repetirá as mensagens de texto
-          recebidas (modo teste até configurarmos a IA no fluxo).
+          Cole o token do @BotFather para ativar este fluxo. Com a chave Gemini em Admin → Configurações, o bot usa IA nos nós marcados como &quot;Gerar com IA&quot;.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0 space-y-4">
@@ -281,7 +280,7 @@ function TelegramConnectPanel({ flowId }: { flowId: number }) {
                   </p>
                 )}
                 <p className="text-muted-foreground mt-1 text-xs">
-                  Abra o chat com seu bot no Telegram e envie qualquer texto — ele deve repetir a mesma mensagem.
+                  Envie /start no Telegram para reiniciar o fluxo. Ative o fluxo no editor e marque nós com IA conforme necessário.
                 </p>
               </div>
             </div>
@@ -341,7 +340,7 @@ function SimulatorPanel({ channel }: { channel: string }) {
         </CardTitle>
         <CardDescription>
           {isTelegram
-            ? 'Use o app Telegram após conectar o token — o eco de mensagens confirma que o webhook está ativo.'
+            ? 'Após conectar, teste no Telegram. Fluxos vazios usam Gemini como chat livre (se configurado).'
             : 'Prévia visual do chat para testar o fluxo.'}
         </CardDescription>
       </CardHeader>
@@ -350,8 +349,8 @@ function SimulatorPanel({ channel }: { channel: string }) {
           <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside mb-auto pt-2">
             <li>Crie o bot no @BotFather e copie o token</li>
             <li>Cole o token e clique em Conectar</li>
-            <li>No Telegram, abra o bot e envie &quot;Olá&quot;</li>
-            <li>O bot deve responder &quot;Olá&quot; (mesmo texto)</li>
+            <li>Configure Gemini em Admin → Configurações</li>
+            <li>Ative o fluxo no editor e envie /start no bot</li>
           </ol>
         ) : (
           <>

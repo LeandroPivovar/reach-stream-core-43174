@@ -27,6 +27,8 @@ import { DelayNode } from '@/components/bot-builder/nodes/DelayNode';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 const nodeTypes = {
@@ -51,6 +53,7 @@ const BotBuilderFlow = () => {
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [flowName, setFlowName] = useState('');
   const [flowChannel, setFlowChannel] = useState('');
+  const [flowActive, setFlowActive] = useState(false);
   const [loadingFlow, setLoadingFlow] = useState(true);
   const navigate = useNavigate();
 
@@ -70,6 +73,7 @@ const BotBuilderFlow = () => {
         }
         setFlowName(flow.name);
         setFlowChannel(flow.channel);
+        setFlowActive(flow.isActive);
         if (flow.nodes.length > 0) {
           setNodes(flow.nodes);
           setEdges(flow.edges);
@@ -209,7 +213,7 @@ const BotBuilderFlow = () => {
         const ok = await saveBotFlow(flowId, {
           nodes: flow.nodes,
           edges: flow.edges,
-          isActive: false,
+          isActive: flowActive,
         });
 
         if (ok) {
@@ -223,7 +227,7 @@ const BotBuilderFlow = () => {
         toast.error('Erro de conexão.');
       }
     }
-  }, [reactFlowInstance, navigate, flowId]);
+  }, [reactFlowInstance, navigate, flowId, flowActive]);
 
   const channelMeta = getBotFlowChannel(flowChannel);
 
@@ -252,10 +256,18 @@ const BotBuilderFlow = () => {
           </div>
           <p className="text-muted-foreground pl-8">Arraste os nós para montar o fluxo automático deste canal.</p>
         </div>
-        <Button onClick={onSave} className="gap-2">
-          <Save className="w-4 h-4" />
-          Salvar Fluxo
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Switch id="flow-active" checked={flowActive} onCheckedChange={setFlowActive} />
+            <Label htmlFor="flow-active" className="text-sm text-muted-foreground cursor-pointer">
+              Fluxo ativo
+            </Label>
+          </div>
+          <Button onClick={onSave} className="gap-2">
+            <Save className="w-4 h-4" />
+            Salvar Fluxo
+          </Button>
+        </div>
       </div>
       
       <div className="flex-1 flex flex-row overflow-hidden" ref={reactFlowWrapper}>
