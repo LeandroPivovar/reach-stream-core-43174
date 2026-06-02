@@ -46,6 +46,7 @@ import { api, API_URL, Campaign, Contact, Group, SegmentationParam } from '@/lib
 import { useToast } from '@/hooks/use-toast';
 import { useScoreConfig } from '@/hooks/use-score-config';
 import { useSegmentationStats, evaluateSegmentation } from '@/hooks/use-segmentation-stats';
+import { useInternalAnalytics } from '@/hooks/use-internal-analytics';
 import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
 import { TemplateRequestModal } from '@/components/campaigns/TemplateRequestModal';
 import { BuyCreditsModal } from '@/components/subscriptions/BuyCreditsModal';
