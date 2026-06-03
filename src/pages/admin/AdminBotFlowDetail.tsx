@@ -12,9 +12,13 @@ import {
   fetchTelegramConnectionStatus,
   connectTelegramBot,
   disconnectTelegramBot,
+  fetchWhatsappConnectionStatus,
+  connectWhatsappBot,
+  disconnectWhatsappBot,
   updateBotFlowMeta,
   type BotFlowDetail,
   type TelegramConnectionStatus,
+  type WhatsappConnectionStatus,
 } from '@/lib/bot-flow-api';
 import { getBotFlowChannel } from '@/lib/bot-flow-channels';
 import {
@@ -144,22 +148,7 @@ function ConnectPanel({
 }) {
   switch (channel) {
     case 'whatsapp_qr':
-      return (
-        <Card className="flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
-          <div className="space-y-4 w-full max-w-sm">
-            <h3 className="text-xl font-semibold">WhatsApp — QR dinâmico</h3>
-            <p className="text-sm text-muted-foreground">
-              Abra o WhatsApp no celular, vá em Aparelhos conectados e escaneie o código para o fluxo &quot;{flowName}&quot;.
-            </p>
-            <div className="bg-white p-4 rounded-xl inline-block mx-auto border-2 border-slate-200">
-              <QrCode className="w-48 h-48 text-slate-800" strokeWidth={1} />
-            </div>
-            <Button className="w-full" variant="secondary" onClick={() => toast.success('Novo QR Code gerado! (Simulação)')}>
-              Gerar novo QR Code
-            </Button>
-          </div>
-        </Card>
-      );
+      return <WhatsappConnectPanel flowId={flowId} flowName={flowName} onConnected={onConnected} />;
     case 'whatsapp_api':
       return (
         <Card className="p-8 min-h-[400px]">
@@ -360,6 +349,159 @@ function TelegramConnectPanel({
           </div>
         )}
       </CardContent>
+    </Card>
+  );
+}
+
+function WhatsappConnectPanel({
+  flowId,
+  flowName,
+  onConnected,
+}: {
+  flowId: number;
+  flowName: string;
+  onConnected?: () => void;
+}) {
+  const [status, setStatus] = useState<WhatsappConnectionStatus | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const data = await fetchWhatsappConnectionStatus(flowId);
+      setStatus(data);
+    } catch {
+      setStatus(null);
+    } finally {
+      setLoadingStatus(false);
+    }
+  }, [flowId]);
+
+  useEffect(() => {
+    loadStatus();
+    const interval = setInterval(() => {
+      loadStatus();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [loadStatus]);
+
+  const handleConnect = async () => {
+    setConnecting(true);
+    try {
+      const result = await connectWhatsappBot(flowId);
+      if (!result.success) {
+        toast.error(result.message || 'Erro ao iniciar conexão');
+        return;
+      }
+      toast.success('Iniciando WhatsApp, aguarde o QR Code...');
+      await loadStatus();
+    } catch {
+      toast.error('Erro de conexão com o servidor');
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setDisconnecting(true);
+    try {
+      const ok = await disconnectWhatsappBot(flowId);
+      if (!ok) {
+        toast.error('Erro ao desconectar');
+        return;
+      }
+      toast.success('WhatsApp desconectado');
+      await loadStatus();
+    } catch {
+      toast.error('Erro de conexão');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  const isConnected = status?.connected === true;
+  const isQrReady = status?.status === 'qr_ready';
+  const isConnecting = status?.status === 'connecting';
+
+  if (loadingStatus && !status) {
+    return (
+      <Card className="flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </Card>
+    );
+  }
+
+  if (isConnected) {
+    return (
+      <Card className="p-8 min-h-[400px] flex flex-col justify-center">
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-900 p-4">
+            <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium text-green-800 dark:text-green-200">WhatsApp Conectado</p>
+              {status?.botPhoneNumber && (
+                <p className="text-muted-foreground mt-1">
+                  Número: +{status.botPhoneNumber}
+                </p>
+              )}
+              <p className="text-muted-foreground mt-1 text-xs">
+                O bot está ativo e respondendo às mensagens recebidas neste número.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={handleDisconnect}
+            disabled={disconnecting}
+          >
+            {disconnecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Unplug className="w-4 h-4" />}
+            Desconectar WhatsApp
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
+      <div className="space-y-4 w-full max-w-sm">
+        <h3 className="text-xl font-semibold">WhatsApp — QR dinâmico</h3>
+        <p className="text-sm text-muted-foreground">
+          Abra o WhatsApp no celular, vá em Aparelhos conectados e escaneie o código para o fluxo &quot;{flowName}&quot;.
+        </p>
+        <p className="text-xs text-muted-foreground bg-slate-100 dark:bg-slate-800 p-2 rounded">
+          💡 Assim como no Telegram, este fluxo tem integração nativa com o Gemini. Se configurado, o bot usará IA nos nós selecionados.
+        </p>
+
+        {isConnecting ? (
+          <div className="bg-slate-50 dark:bg-slate-900 h-48 rounded-xl flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-800">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+            <p className="text-sm text-muted-foreground">Gerando QR Code...</p>
+          </div>
+        ) : isQrReady && status.qrCode ? (
+          <div className="bg-white p-4 rounded-xl inline-block mx-auto border-2 border-slate-200">
+            <img src={status.qrCode} alt="WhatsApp QR Code" className="w-48 h-48" />
+          </div>
+        ) : (
+          <div className="bg-slate-50 dark:bg-slate-900 h-48 rounded-xl flex flex-col items-center justify-center border-2 border-slate-200 dark:border-slate-800">
+            <QrCode className="w-16 h-16 text-slate-400 mb-2" strokeWidth={1} />
+            <p className="text-sm text-muted-foreground">Clique abaixo para conectar</p>
+          </div>
+        )}
+
+        {isQrReady || isConnecting ? (
+          <Button variant="outline" className="w-full" onClick={handleDisconnect} disabled={disconnecting}>
+            Cancelar
+          </Button>
+        ) : (
+          <Button className="w-full" onClick={handleConnect} disabled={connecting}>
+            {connecting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Gerar QR Code
+          </Button>
+        )}
+      </div>
     </Card>
   );
 }
