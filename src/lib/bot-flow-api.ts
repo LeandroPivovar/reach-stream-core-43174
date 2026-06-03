@@ -175,3 +175,52 @@ export async function disconnectTelegramBot(flowId: number): Promise<boolean> {
   });
   return res.ok;
 }
+
+export interface WhatsappConnectionStatus {
+  connected: boolean;
+  status: string | null;
+  botPhoneNumber: string | null;
+  connectedAt: string | null;
+  qrCode: string | null;
+}
+
+export async function fetchWhatsappConnectionStatus(
+  flowId: number,
+): Promise<WhatsappConnectionStatus | null> {
+  const res = await fetch(`${API_URL}/api/bot-flows/${flowId}/whatsapp/status`, {
+    headers: { Authorization: localStorage.getItem('token') ? `Bearer ${localStorage.getItem('token')}` : '' },
+  });
+  return parseResponse<WhatsappConnectionStatus>(res);
+}
+
+export async function connectWhatsappBot(
+  flowId: number,
+): Promise<{ success: boolean; status?: string; message?: string }> {
+  const res = await fetch(`${API_URL}/api/bot-flows/${flowId}/whatsapp/connect`, {
+    method: 'POST',
+    headers: authHeaders(),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const err = JSON.parse(text) as { message?: string | string[] };
+      const msg = Array.isArray(err.message) ? err.message[0] : err.message;
+      return { success: false, message: msg || 'Erro ao conectar' };
+    } catch {
+      return { success: false, message: 'Erro ao conectar' };
+    }
+  }
+  try {
+    return JSON.parse(text) as { success: boolean; status?: string };
+  } catch {
+    return { success: true };
+  }
+}
+
+export async function disconnectWhatsappBot(flowId: number): Promise<boolean> {
+  const res = await fetch(`${API_URL}/api/bot-flows/${flowId}/whatsapp/disconnect`, {
+    method: 'POST',
+    headers: authHeaders(),
+  });
+  return res.ok;
+}
