@@ -341,6 +341,7 @@ export default function AdminFinance() {
                             <Calendar className="w-3 h-3" /> Baseado na taxa de crescimento média de {stats?.growthRate.toFixed(1)}% dos últimos meses.
                         </p>
                     </div>
+                </Card>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 mt-8">
