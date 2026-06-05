@@ -25,7 +25,9 @@ import {
     Save,
     Settings as SettingsIcon,
     ShieldAlert,
-    XCircle
+    XCircle,
+    CheckCircle,
+    Clock
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -338,6 +340,61 @@ export default function AdminFinance() {
                         <p className="text-xs text-slate-500 flex items-center gap-2">
                             <Calendar className="w-3 h-3" /> Baseado na taxa de crescimento média de {stats?.growthRate.toFixed(1)}% dos últimos meses.
                         </p>
+                    </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 mt-8">
+                {/* Recent Payments Table */}
+                <Card className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-emerald-500" /> Pagamentos Efetuados
+                        </h3>
+                    </div>
+                    <div className="space-y-4">
+                        {stats?.recentPayments?.map((inv: any) => (
+                            <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
+                                <div>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{inv.userName}</p>
+                                    <p className="text-xs text-slate-500">{new Date(inv.date).toLocaleDateString('pt-BR')} - {inv.planName}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-bold text-emerald-500">{formatCurrency(inv.amount)}</p>
+                                    <Badge variant="outline" className="text-[10px] uppercase text-emerald-500 border-emerald-500/20">Pago</Badge>
+                                </div>
+                            </div>
+                        ))}
+                        {(!stats?.recentPayments || stats?.recentPayments.length === 0) && (
+                            <p className="text-center text-sm text-slate-500 py-8">Nenhum pagamento recente encontrado.</p>
+                        )}
+                    </div>
+                </Card>
+
+                {/* Upcoming Payments Table */}
+                <Card className="p-6 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <Clock className="w-5 h-5 text-blue-500" /> Próximos Pagamentos
+                        </h3>
+                    </div>
+                    <div className="space-y-4">
+                        {stats?.upcomingPayments?.map((sub: any) => (
+                            <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800">
+                                <div>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{sub.userName}</p>
+                                    <p className="text-xs text-slate-500">{sub.planName}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{formatCurrency(sub.amount)}</p>
+                                    <Badge variant="outline" className="text-[10px] uppercase text-blue-500 border-blue-500/20">
+                                        Vence: {new Date(sub.dueDate).toLocaleDateString('pt-BR')}
+                                    </Badge>
+                                </div>
+                            </div>
+                        ))}
+                        {(!stats?.upcomingPayments || stats?.upcomingPayments.length === 0) && (
+                            <p className="text-center text-sm text-slate-500 py-8">Nenhuma assinatura ativa encontrada.</p>
+                        )}
                     </div>
                 </Card>
             </div>

@@ -2297,10 +2297,51 @@ export default function Campanhas() {
 
                   {/* WhatsApp Preview */}
                   <div className="flex-1 space-y-4">
-                    <WhatsappPreview
-                      content={newCampaign.email.content}
-                      media={newCampaign.email.media}
-                    />
+                    {(() => {
+                      const selectedTpl = twilioTemplates.find(t => t.sid === (newCampaign.email as any).contentSid);
+                      const typeKey = Object.keys(selectedTpl?.types || {})[0] || '';
+                      const shortType = typeKey.split('/').pop() || '';
+                      const typeData = selectedTpl?.types?.[typeKey];
+
+                      // Extract buttons (call-to-action)
+                      const buttons: { type: 'url' | 'phone' | 'quick_reply'; text: string; url?: string; phone?: string }[] = [];
+                      if (shortType === 'call-to-action' && typeData?.actions) {
+                        (typeData.actions as any[]).forEach((action: any) => {
+                          buttons.push({
+                            type: action.type === 'URL' ? 'url' : action.type === 'PHONE_NUMBER' ? 'phone' : 'quick_reply',
+                            text: action.title || action.text || '',
+                            url: action.url,
+                            phone: action.phone,
+                          });
+                        });
+                      }
+                      if (shortType === 'quick-reply' && typeData?.actions) {
+                        (typeData.actions as any[]).forEach((action: any) => {
+                          buttons.push({ type: 'quick_reply', text: action.title || action.text || '' });
+                        });
+                      }
+
+                      // Extract list items
+                      const listItems: { item: string; description?: string }[] = [];
+                      let listButton = '';
+                      if (shortType === 'list-picker') {
+                        listButton = typeData?.button || 'Ver opções';
+                        (typeData?.items as any[] || []).forEach((item: any) => {
+                          listItems.push({ item: item.item, description: item.description });
+                        });
+                      }
+
+                      return (
+                        <WhatsappPreview
+                          content={newCampaign.email.content}
+                          media={newCampaign.email.media}
+                          templateType={shortType || undefined}
+                          buttons={buttons}
+                          listItems={listItems}
+                          listButton={listButton}
+                        />
+                      );
+                    })()}
                     <p className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10">
                       💡 <strong>Dica:</strong> Você pode usar as variáveis <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong> e <strong>{"{{cupom_validade}}"}</strong> no texto. Elas serão substituídas automaticamente pelos dados do cupom/giftback selecionado no passo seguinte.
                     </p>
