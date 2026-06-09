@@ -51,8 +51,10 @@ export default function AdminEmailBuilder() {
   const loadTemplates = async () => {
     try {
       const res = await api.getEmailTemplates();
-      setTemplates(res.templates || []);
+      console.log('[EmailBuilder] Templates carregados:', res?.length ?? 0, res);
+      setTemplates(Array.isArray(res) ? res : []);
     } catch (err: any) {
+      console.error('[EmailBuilder] Erro ao carregar templates:', err);
       toast({ title: 'Erro', description: err.message || 'Falha ao carregar templates', variant: 'destructive' });
     }
   };
@@ -61,7 +63,9 @@ export default function AdminEmailBuilder() {
     setIsLoadingConnectInfo(true);
     try {
       const res = await api.getEmailConnections();
-      const verified = (res.connections || []).filter(c => c.status === 'verified');
+      console.log('[EmailBuilder] Conexões de e-mail:', res);
+      const connections = Array.isArray(res) ? res : [];
+      const verified = connections.filter((c: any) => c.status === 'verified');
       setConnectInfo({
         success: true,
         hasConnection: verified.length > 0,
@@ -69,7 +73,8 @@ export default function AdminEmailBuilder() {
           ? `${verified.length} conexão(ões) verificada(s)`
           : 'Nenhuma conexão de e-mail verificada',
       });
-    } catch {
+    } catch (err) {
+      console.error('[EmailBuilder] Erro ao verificar conexões:', err);
       setConnectInfo({ success: false, message: 'Falha ao verificar conexões', hasConnection: false });
     } finally {
       setIsLoadingConnectInfo(false);
@@ -91,22 +96,24 @@ export default function AdminEmailBuilder() {
     try {
       const fullHtml = buildFullHtml(html);
       if (editingTemplateId) {
-        await api.updateEmailTemplate(editingTemplateId, {
+        const updated = await api.updateEmailTemplate(editingTemplateId, {
           name: templateName,
           subject: templateSubject,
           html: fullHtml,
           category: templateCategory,
           description: templateDescription,
         });
+        console.log('[EmailBuilder] Template atualizado:', updated);
         toast({ title: 'Sucesso', description: 'Template atualizado com sucesso' });
       } else {
-        await api.createEmailTemplate({
+        const created = await api.createEmailTemplate({
           name: templateName,
           subject: templateSubject,
           html: fullHtml,
           category: templateCategory,
           description: templateDescription,
         });
+        console.log('[EmailBuilder] Template criado:', created);
         toast({ title: 'Sucesso', description: 'Template salvo com sucesso' });
       }
       setIsSaveModalOpen(false);
@@ -121,14 +128,15 @@ export default function AdminEmailBuilder() {
     setIsLoadingCanvas(true);
     try {
       const template = await api.getEmailTemplateById(templateId);
+      console.log('[EmailBuilder] Template carregado:', template);
       const canvas = document.getElementById('email-canvas');
-      if (canvas && template.template.html) {
-        const content = extractCanvasContent(template.template.html);
+      if (canvas && template.html) {
+        const content = extractCanvasContent(template.html);
         canvas.innerHTML = content;
         if (typeof (window as any).saveState === 'function') {
           (window as any).saveState();
         }
-        toast({ title: 'Sucesso', description: `Template "${template.template.name}" carregado` });
+        toast({ title: 'Sucesso', description: `Template "${template.name}" carregado` });
       }
       setIsLoadModalOpen(false);
     } catch (err: any) {
@@ -160,12 +168,14 @@ export default function AdminEmailBuilder() {
         }
       }
 
-      await api.sendEmailTemplate({
+      console.log('[EmailBuilder] Enviando e-mail para:', sendTo, 'templateId:', selectedTemplateId);
+      const result = await api.sendEmailTemplate({
         templateId: selectedTemplateId,
         to: sendTo,
         subject: sendSubject || undefined,
         variables: Object.keys(variables).length > 0 ? variables : undefined,
       });
+      console.log('[EmailBuilder] E-mail enviado:', result);
       toast({ title: 'Sucesso', description: 'E-mail enviado com sucesso!' });
       setIsSendModalOpen(false);
       resetSendForm();
