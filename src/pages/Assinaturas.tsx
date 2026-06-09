@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { BuyCreditsModal } from '@/components/subscriptions/BuyCreditsModal';
 import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
 
 export default function Assinaturas() {
   const navigate = useNavigate();
