@@ -1575,8 +1575,14 @@ class ApiService {
     });
   }
 
-  async getEmailTemplateById(id: number): Promise<{ template: EmailTemplateDto }> {
-    return this.request<{ template: EmailTemplateDto }>(`/email-templates/${id}`, {
+  async getEmailTemplates(): Promise<EmailTemplateDto[]> {
+    return this.request<EmailTemplateDto[]>('/email-templates', {
+      method: 'GET',
+    });
+  }
+
+  async getEmailTemplateById(id: number): Promise<EmailTemplateDto> {
+    return this.request<EmailTemplateDto>(`/email-templates/${id}`, {
       method: 'GET',
     });
   }
@@ -1587,8 +1593,8 @@ class ApiService {
     html: string;
     category?: string;
     description?: string;
-  }): Promise<{ template: EmailTemplateDto }> {
-    return this.request<{ template: EmailTemplateDto }>('/email-templates', {
+  }): Promise<EmailTemplateDto> {
+    return this.request<EmailTemplateDto>('/email-templates', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -1601,8 +1607,8 @@ class ApiService {
     category?: string;
     active?: boolean;
     description?: string;
-  }): Promise<{ template: EmailTemplateDto }> {
-    return this.request<{ template: EmailTemplateDto }>(`/email-templates/${id}`, {
+  }): Promise<EmailTemplateDto> {
+    return this.request<EmailTemplateDto>(`/email-templates/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
