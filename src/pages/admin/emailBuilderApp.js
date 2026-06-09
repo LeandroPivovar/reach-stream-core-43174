@@ -1052,7 +1052,8 @@ function deselectAll() {
   document.querySelectorAll('.email-row, .email-element').forEach(el => {
     el.classList.remove('selected');
   });
-  document.getElementById('properties-panel').classList.remove('active');
+  const panel = document.getElementById('properties-panel');
+  if (panel) panel.classList.remove('active');
 }
 
 document.addEventListener('click', (e) => {
