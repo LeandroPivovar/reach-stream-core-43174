@@ -1168,7 +1168,7 @@ export default function Campanhas() {
 
         {/* Campaigns Table */}
         <Card className="p-0 overflow-hidden border-none shadow-none md:border md:shadow-sm md:p-6">
-          <ResponsiveTable<Campaign>
+          <ResponsiveTable
             columns={[
               {
                 header: "Campanha",

@@ -486,7 +486,7 @@ export default function Dashboard() {
                         </Button>
                     </div>
 
-                    <ResponsiveTable<any>
+                    <ResponsiveTable
                         columns={[
                             {
                                 header: "Nome",
