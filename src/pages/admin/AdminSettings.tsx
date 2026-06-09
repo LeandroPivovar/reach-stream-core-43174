@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Settings, Shield, Globe, CreditCard, Save, RefreshCw, Mail, Cpu, MessageSquare, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Settings, Shield, Globe, CreditCard, Save, RefreshCw, Mail, Cpu, MessageSquare, Eye, EyeOff, Sparkles, Store } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -109,6 +109,12 @@ export default function AdminSettings() {
             <Tabs defaultValue="asaas" className="w-full">
                 <TabsList className="flex flex-wrap gap-2 w-full max-w-3xl mb-8 bg-transparent h-auto p-0 border-b border-slate-200 dark:border-slate-800 rounded-none">
                     <TabsTrigger 
+                        value="gateway" 
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none shadow-none"
+                    >
+                        <Store className="w-4 h-4" /> Gateways
+                    </TabsTrigger>
+                    <TabsTrigger 
                         value="asaas" 
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none shadow-none"
                     >
@@ -145,6 +151,58 @@ export default function AdminSettings() {
                         <Sparkles className="w-4 h-4" /> Gemini (IA)
                     </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="gateway" className="space-y-4">
+                    <Card className="border-border/60 shadow-sm">
+                        <CardHeader>
+                            <CardTitle className="text-xl">Gateways de Pagamento</CardTitle>
+                            <CardDescription>
+                                Selecione o gateway principal de cobrança para a plataforma. A configuração abaixo determina qual método será usado no checkout.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="PAYMENT_GATEWAY" className="text-sm font-semibold">Gateway Ativo</Label>
+                                <Select
+                                    value={localSettings['PAYMENT_GATEWAY'] || 'asaas'}
+                                    onValueChange={(v) => handleInputChange('PAYMENT_GATEWAY', v)}
+                                >
+                                    <SelectTrigger id="PAYMENT_GATEWAY" className="w-full md:w-[320px]">
+                                        <SelectValue placeholder="Selecione o gateway ativo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="asaas">Asaas</SelectItem>
+                                        <SelectItem value="shopify">Shopify Billing (App Subscriptions)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-[12px] text-muted-foreground">
+                                    Quando Shopify estiver ativo, o checkout redirecionará o usuário para a Shopify para aprovar a assinatura.
+                                    Quando Asaas, o checkout tradicional com Boleto/PIX/Cartão é mantido.
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="SHOPIFY_DEFAULT_SHOP" className="text-sm font-semibold">Loja Shopify Padrão (opcional)</Label>
+                                <Input
+                                    id="SHOPIFY_DEFAULT_SHOP"
+                                    className="font-mono"
+                                    value={localSettings['SHOPIFY_DEFAULT_SHOP'] || ''}
+                                    onChange={(e) => handleInputChange('SHOPIFY_DEFAULT_SHOP', e.target.value)}
+                                    placeholder="exemplo.myshopify.com"
+                                />
+                                <p className="text-[12px] text-muted-foreground">
+                                    Usado como fallback quando o gateway for Shopify e não houver conexão Shopify vinculada ao usuário.
+                                </p>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="bg-muted/30 border-t mt-6 flex justify-end py-4">
+                            <Button onClick={handleSave} disabled={updateMutation.isPending} className="flex items-center gap-2 px-6">
+                                {updateMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                Salvar Configurações
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </TabsContent>
 
                 <TabsContent value="asaas" className="space-y-4">
                     <Card className="border-border/60 shadow-sm">

@@ -1322,6 +1322,12 @@ class ApiService {
     });
   }
 
+  async getPaymentGateway(): Promise<{ gateway: 'asaas' | 'shopify'; gatewayName: string; hasShopifyConnection: boolean }> {
+    return this.request<{ gateway: 'asaas' | 'shopify'; gatewayName: string; hasShopifyConnection: boolean }>('/subscriptions/payment-gateway', {
+      method: 'GET',
+    });
+  }
+
   async cancelSubscription(): Promise<any> {
     return this.request<any>('/subscriptions/cancel', { method: 'POST' });
   }
