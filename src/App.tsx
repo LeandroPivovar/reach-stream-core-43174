@@ -49,9 +49,11 @@ import AdminLeadRequests from "./pages/admin/AdminLeadRequests";
 import AdminTwilioRequests from "./pages/admin/AdminTwilioRequests";
 import AdminTemplateRequests from "./pages/admin/AdminTemplateRequests";
 import AdminCampaigns from "./pages/admin/AdminCampaigns";
+import AdminKanban from "./pages/admin/AdminKanban";
 import AdminTickets from "./pages/admin/AdminTickets";
 import AdminReferrals from "./pages/admin/AdminReferrals";
 import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
+import AdminEmailBuilder from "./pages/admin/AdminEmailBuilder";
 import AdminBotBuilder from "./pages/admin/AdminBotBuilder";
 import AdminBotDashboard from "./pages/admin/AdminBotDashboard";
 import AdminBotCreateFlow from "./pages/admin/AdminBotCreateFlow";
@@ -130,9 +132,11 @@ const App = () => (
             <Route path="/admin/lead-requests" element={<ProtectedRoute><AdminLeadRequests /></ProtectedRoute>} />
             <Route path="/admin/template-requests" element={<ProtectedRoute><AdminTemplateRequests /></ProtectedRoute>} />
             <Route path="/admin/campaigns" element={<ProtectedRoute><AdminCampaigns /></ProtectedRoute>} />
+            <Route path="/admin/kanban" element={<ProtectedRoute><AdminKanban /></ProtectedRoute>} />
             <Route path="/admin/tickets" element={<ProtectedRoute><AdminTickets /></ProtectedRoute>} />
             <Route path="/admin/referrals" element={<ProtectedRoute><AdminReferrals /></ProtectedRoute>} />
             <Route path="/admin/knowledge-base" element={<ProtectedRoute><AdminKnowledgeBase /></ProtectedRoute>} />
+            <Route path="/admin/email-builder" element={<ProtectedRoute><AdminEmailBuilder /></ProtectedRoute>} />
             <Route path="/admin/bot-builder" element={<ProtectedRoute><AdminBotDashboard /></ProtectedRoute>} />
             <Route path="/admin/bot-builder/new" element={<ProtectedRoute><AdminBotCreateFlow /></ProtectedRoute>} />
             <Route path="/admin/bot-builder/:id/edit" element={<ProtectedRoute><AdminBotBuilder /></ProtectedRoute>} />

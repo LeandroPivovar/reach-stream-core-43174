@@ -742,7 +742,7 @@ export default function Integracoes() {
             </Button>
           </div>
 
-          <ResponsiveTable<any>
+          <ResponsiveTable
             columns={[
               {
                 header: "Nome",

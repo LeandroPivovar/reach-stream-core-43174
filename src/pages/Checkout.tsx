@@ -40,6 +40,8 @@ export default function Checkout() {
     const [qrCode, setQrCode] = useState<{ payload: string, encodedImage: string, expirationDate: string } | null>(null);
     const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
     const [statusPollingInterval, setStatusPollingInterval] = useState<NodeJS.Timeout | null>(null);
+    const [paymentGateway, setPaymentGateway] = useState<'asaas' | 'shopify'>('asaas');
+    const [loadingGateway, setLoadingGateway] = useState(true);
 
     // Limpar polling ao desmontar
     useEffect(() => {
@@ -65,25 +67,75 @@ export default function Checkout() {
     };
 
     useEffect(() => {
-        const fetchPlan = async () => {
-            if (!planId) return navigate('/assinaturas');
-            try {
-                const plans = await api.getPlans();
-                const selected = plans.find(p => p.id === parseInt(planId));
-                if (selected) {
-                    setPlan(selected);
-                } else {
-                    navigate('/assinaturas');
-                }
-            } catch (err) {
-                toast({ title: 'Erro', description: 'Plano não encontrado', variant: 'destructive' });
-                navigate('/assinaturas');
-            } finally {
-                setLoadingPlan(false);
-            }
-        };
         fetchPlan();
+        checkPaymentGateway();
     }, [planId, navigate, toast]);
+
+    const checkPaymentGateway = async () => {
+        try {
+            const gw = await api.getPaymentGateway();
+            setPaymentGateway(gw.gateway);
+
+            if (gw.gateway === 'shopify' && !gw.hasShopifyConnection) {
+                toast({
+                    title: 'Aviso',
+                    description: 'Gateway Shopify selecionado, mas você não possui uma loja Shopify conectada. O checkout será feito pelo Asaas.',
+                    variant: 'destructive',
+                });
+                setPaymentGateway('asaas');
+            }
+        } catch (error) {
+            console.error('Error checking payment gateway:', error);
+            setPaymentGateway('asaas');
+        } finally {
+            setLoadingGateway(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!loadingGateway && paymentGateway === 'shopify' && planId) {
+            initiateShopifyCheckout();
+        }
+    }, [loadingGateway, paymentGateway, planId]);
+
+    const initiateShopifyCheckout = async () => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+        try {
+            const result = await api.createShopifyBillingSubscription({
+                planId: parseInt(planId as string),
+                shop: undefined,
+            });
+            if (result.confirmationUrl) {
+                window.top.location.href = result.confirmationUrl;
+            } else {
+                throw new Error('URL de confirmação não recebida da Shopify.');
+            }
+        } catch (error: any) {
+            toast({ title: 'Erro', description: error.message || 'Erro ao iniciar checkout Shopify', variant: 'destructive' });
+            setPaymentGateway('asaas');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const fetchPlan = async () => {
+        if (!planId) return navigate('/assinaturas');
+        try {
+            const plans = await api.getPlans();
+            const selected = plans.find(p => p.id === parseInt(planId));
+            if (selected) {
+                setPlan(selected);
+            } else {
+                navigate('/assinaturas');
+            }
+        } catch (err) {
+            toast({ title: 'Erro', description: 'Plano não encontrado', variant: 'destructive' });
+            navigate('/assinaturas');
+        } finally {
+            setLoadingPlan(false);
+        }
+    };
 
     const handleNextStep = () => {
         if (step === 1) {
@@ -140,9 +192,9 @@ export default function Checkout() {
         }
     };
 
-    if (loadingPlan) {
+    if (loadingPlan || loadingGateway) {
         return (
-            <Layout title="Checkout" subtitle="Identificando Pagamento...">
+            <Layout title="Checkout" subtitle={paymentGateway === 'shopify' ? 'Conectando com Shopify...' : 'Identificando Pagamento...'}>
                 <div className="flex items-center justify-center p-20">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
@@ -151,6 +203,16 @@ export default function Checkout() {
     }
 
     if (!plan) return null;
+
+    if (paymentGateway === 'shopify') {
+        return (
+            <Layout title="Redirecionando" subtitle="Aguarde o redirecionamento para a Shopify">
+                <div className="flex items-center justify-center p-20">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+            </Layout>
+        );
+    }
 
     const stepClass = (n: number) =>
         step >= n ? 'text-primary' : 'text-muted-foreground';

@@ -1232,7 +1232,7 @@ export default function Produtos() {
 
         {/* Products Table */}
         <Card className="p-0 overflow-hidden border-none shadow-none md:border md:shadow-sm md:p-6">
-          <ResponsiveTable<Product>
+          <ResponsiveTable
             columns={[
               {
                 header: "Produto",
