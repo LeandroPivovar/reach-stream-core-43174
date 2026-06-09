@@ -646,7 +646,7 @@ export default function Vendas() {
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveTable<Sale>
+            <ResponsiveTable
               columns={[
                 {
                   header: "Data",
@@ -944,3 +944,4 @@ export default function Vendas() {
     </Layout>
   );
 }
+
