@@ -1,18 +1,275 @@
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import './AdminEmailBuilder.css';
 import { initEmailBuilder } from './emailBuilderApp';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { api } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { Save, FolderOpen, Send, Plus, Loader2 } from 'lucide-react';
+
+export interface EmailTemplateDto {
+  id: number;
+  userId: number;
+  name: string;
+  category: string;
+  html: string;
+  subject?: string;
+  description?: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function AdminEmailBuilder() {
+  const [templates, setTemplates] = useState<EmailTemplateDto[]>([]);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [templateSubject, setTemplateSubject] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
+  const [templateCategory, setTemplateCategory] = useState('custom');
+  const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
+  const [sendTo, setSendTo] = useState('');
+  const [sendSubject, setSendSubject] = useState('');
+  const [sendVariables, setSendVariables] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const [isLoadingCanvas, setIsLoadingCanvas] = useState(false);
+  const { toast } = useToast();
+
+  const [connectInfo, setConnectInfo] = useState<{ success: boolean; message?: string; hasConnection?: boolean } | null>(null);
+  const [isLoadingConnectInfo, setIsLoadingConnectInfo] = useState(false);
+
+  const templatesInitialized = useRef(false);
+
+  const loadTemplates = async () => {
+    try {
+      const res = await api.getEmailTemplates();
+      setTemplates(res.templates || []);
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Falha ao carregar templates', variant: 'destructive' });
+    }
+  };
+
+  const checkConnection = async () => {
+    setIsLoadingConnectInfo(true);
+    try {
+      const res = await api.getEmailConnections();
+      const verified = (res.connections || []).filter(c => c.status === 'verified');
+      setConnectInfo({
+        success: true,
+        hasConnection: verified.length > 0,
+        message: verified.length > 0
+          ? `${verified.length} conexão(ões) verificada(s)`
+          : 'Nenhuma conexão de e-mail verificada',
+      });
+    } catch {
+      setConnectInfo({ success: false, message: 'Falha ao verificar conexões', hasConnection: false });
+    } finally {
+      setIsLoadingConnectInfo(false);
+    }
+  };
+
+  const handleSave = async () => {
+    const canvas = document.getElementById('email-canvas');
+    const html = canvas?.innerHTML || '';
+    if (!html || html.includes('canvas-empty-state')) {
+      toast({ title: 'Aviso', description: 'O canvas está vazio. Crie um e-mail antes de salvar.', variant: 'destructive' });
+      return;
+    }
+    if (!templateName.trim()) {
+      toast({ title: 'Aviso', description: 'Informe um nome para o template.', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const fullHtml = buildFullHtml(html);
+      if (editingTemplateId) {
+        await api.updateEmailTemplate(editingTemplateId, {
+          name: templateName,
+          subject: templateSubject,
+          html: fullHtml,
+          category: templateCategory,
+          description: templateDescription,
+        });
+        toast({ title: 'Sucesso', description: 'Template atualizado com sucesso' });
+      } else {
+        await api.createEmailTemplate({
+          name: templateName,
+          subject: templateSubject,
+          html: fullHtml,
+          category: templateCategory,
+          description: templateDescription,
+        });
+        toast({ title: 'Sucesso', description: 'Template salvo com sucesso' });
+      }
+      setIsSaveModalOpen(false);
+      resetSaveForm();
+      await loadTemplates();
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Falha ao salvar template', variant: 'destructive' });
+    }
+  };
+
+  const handleLoad = async (templateId: number) => {
+    setIsLoadingCanvas(true);
+    try {
+      const template = await api.getEmailTemplateById(templateId);
+      const canvas = document.getElementById('email-canvas');
+      if (canvas && template.template.html) {
+        const content = extractCanvasContent(template.template.html);
+        canvas.innerHTML = content;
+        if (typeof (window as any).saveState === 'function') {
+          (window as any).saveState();
+        }
+        toast({ title: 'Sucesso', description: `Template "${template.template.name}" carregado` });
+      }
+      setIsLoadModalOpen(false);
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Falha ao carregar template', variant: 'destructive' });
+    } finally {
+      setIsLoadingCanvas(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!selectedTemplateId) {
+      toast({ title: 'Aviso', description: 'Selecione um template para enviar.', variant: 'destructive' });
+      return;
+    }
+    if (!sendTo.trim()) {
+      toast({ title: 'Aviso', description: 'Informe o e-mail do destinatário.', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      const variables: Record<string, string> = {};
+      if (sendVariables.trim()) {
+        try {
+          const parsed = JSON.parse(sendVariables);
+          Object.assign(variables, parsed);
+        } catch {
+          toast({ title: 'Erro', description: 'Variáveis devem estar em formato JSON válido.', variant: 'destructive' });
+          return;
+        }
+      }
+
+      await api.sendEmailTemplate({
+        templateId: selectedTemplateId,
+        to: sendTo,
+        subject: sendSubject || undefined,
+        variables: Object.keys(variables).length > 0 ? variables : undefined,
+      });
+      toast({ title: 'Sucesso', description: 'E-mail enviado com sucesso!' });
+      setIsSendModalOpen(false);
+      resetSendForm();
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Falha ao enviar e-mail', variant: 'destructive' });
+    }
+  };
+
+  const resetSaveForm = () => {
+    setTemplateName('');
+    setTemplateSubject('');
+    setTemplateDescription('');
+    setTemplateCategory('custom');
+    setEditingTemplateId(null);
+  };
+
+  const resetSendForm = () => {
+    setSendTo('');
+    setSendSubject('');
+    setSendVariables('');
+    setSelectedTemplateId(null);
+  };
+
+  const openSaveModal = () => {
+    resetSaveForm();
+    setIsSaveModalOpen(true);
+  };
+
+  const openLoadModal = async () => {
+    await loadTemplates();
+    setIsLoadModalOpen(true);
+  };
+
+  const openSendModal = async () => {
+    await loadTemplates();
+    await checkConnection();
+    resetSendForm();
+    setIsSendModalOpen(true);
+  };
+
   const canvasRef = (node: HTMLDivElement | null) => {
-    if (node) {
+    if (node && !templatesInitialized.current) {
+      templatesInitialized.current = true;
       initEmailBuilder();
     }
   };
 
+  function buildFullHtml(canvasContent: string): string {
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-mail</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    table { border-collapse: collapse; }
+    img { max-width: 100%; height: auto; }
+    .email-wrapper { width: 100%; background-color: #f4f4f7; padding: 20px 0; }
+    .email-container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+      <tr>
+        <td align="center">
+          <div class="email-container">
+            ${canvasContent}
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>`;
+  }
+
+  function extractCanvasContent(html: string): string {
+    const match = html.match(/<div class="email-container">([\s\S]*?)<\/div>\s*<\/td>\s*<\/tr>/);
+    if (match) return match[1];
+    const bodyMatch = html.match(/<body>([\s\S]*?)<\/body>/);
+    if (bodyMatch) return bodyMatch[1];
+    return html;
+  }
+
   return (
-    <AdminLayout title="E-mail Builder" subtitle="Crie templates responsivos de e-mail arrastando e soltando.">
+    <AdminLayout
+      title="E-mail Builder"
+      subtitle="Crie templates responsivos de e-mail arrastando e soltando."
+      actions={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={openLoadModal} className="flex items-center gap-2">
+            <FolderOpen className="w-4 h-4" /> Carregar
+          </Button>
+          <Button variant="outline" onClick={openSaveModal} className="flex items-center gap-2">
+            <Save className="w-4 h-4" /> Salvar Template
+          </Button>
+          <Button onClick={openSendModal} className="flex items-center gap-2">
+            <Send className="w-4 h-4" /> Enviar E-mail
+          </Button>
+        </div>
+      }
+    >
       <div className="email-builder-wrapper" style={{ height: 'calc(100vh - 100px)', width: '100%', position: 'relative' }}>
         <main className="app-body">
 

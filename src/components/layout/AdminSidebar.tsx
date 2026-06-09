@@ -29,6 +29,7 @@ import {
     X,
     BarChart3,
     GitBranch,
+    LayoutGrid,
 } from 'lucide-react';
 
 const adminMenuItems = [
@@ -41,6 +42,7 @@ const adminMenuItems = [
     { title: 'Indicações', href: '/admin/referrals', icon: Share2 },
     { title: 'Campanhas', href: '/admin/campaigns', icon: Zap },
     { title: 'Construtor de Bot', href: '/admin/bot-builder', icon: GitBranch },
+    { title: 'Kanban (Beta)', href: '/admin/kanban', icon: LayoutGrid },
     { title: 'E-mail Builder', href: '/admin/email-builder', icon: MailSearch },
     { title: 'Webhook Logs', href: '/admin/webhooks', icon: Terminal },
     { title: 'Segmentações', href: '/admin/segmentations', icon: Filter },

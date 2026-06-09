@@ -1575,6 +1575,58 @@ class ApiService {
     });
   }
 
+  async getEmailTemplateById(id: number): Promise<{ template: EmailTemplateDto }> {
+    return this.request<{ template: EmailTemplateDto }>(`/email-templates/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async createEmailTemplate(data: {
+    name: string;
+    subject?: string;
+    html: string;
+    category?: string;
+    description?: string;
+  }): Promise<{ template: EmailTemplateDto }> {
+    return this.request<{ template: EmailTemplateDto }>('/email-templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateEmailTemplate(id: number, data: {
+    name?: string;
+    subject?: string;
+    html?: string;
+    category?: string;
+    active?: boolean;
+    description?: string;
+  }): Promise<{ template: EmailTemplateDto }> {
+    return this.request<{ template: EmailTemplateDto }>(`/email-templates/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteEmailTemplate(id: number): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/email-templates/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async sendEmailTemplate(data: {
+    templateId: number;
+    to: string | string[];
+    subject?: string;
+    connectionId?: number;
+    variables?: Record<string, string>;
+  }): Promise<{ success: boolean; messageId?: string }> {
+    return this.request<{ success: boolean; messageId?: string }>('/email-templates/send', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async getEmailConnection(id: number): Promise<EmailConnection> {
     return this.request<EmailConnection>(`/email-connections/${id}`, {
       method: 'GET',
@@ -1834,6 +1886,99 @@ class ApiService {
     return this.request<{ success: boolean; message: string }>('/nuvemshop/disconnect', {
       method: 'POST',
       body: JSON.stringify({ storeId }),
+    });
+  }
+
+  // Kanban API (tag: em beta)
+  async getKanbanColumns(): Promise<{ columns: KanbanColumnDto[] }> {
+    return this.request<{ columns: KanbanColumnDto[] }>('/kanban/columns', { method: 'GET' });
+  }
+
+  async createKanbanColumn(data: { name: string; description?: string }): Promise<{ column: KanbanColumnDto }> {
+    return this.request<{ column: KanbanColumnDto }>('/kanban/columns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateKanbanColumn(
+    columnId: number,
+    data: { name?: string; description?: string; order?: number; active?: boolean },
+  ): Promise<{ column: KanbanColumnDto }> {
+    return this.request<{ column: KanbanColumnDto }>(`/kanban/columns/${columnId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteKanbanColumn(columnId: number): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/kanban/columns/${columnId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getKanbanCards(columnId?: number): Promise<{ cards: KanbanCardDto[] }> {
+    const url = columnId ? `/kanban/cards?columnId=${columnId}` : '/kanban/cards';
+    return this.request<{ cards: KanbanCardDto[] }>(url, { method: 'GET' });
+  }
+
+  async createKanbanCard(data: {
+    columnId: number;
+    title: string;
+    description?: string;
+    metadata?: Record<string, any>;
+  }): Promise<{ card: KanbanCardDto }> {
+    return this.request<{ card: KanbanCardDto }>('/kanban/cards', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateKanbanCard(
+    cardId: number,
+    data: {
+      title?: string;
+      description?: string;
+      columnId?: number;
+      order?: number;
+      active?: boolean;
+      metadata?: Record<string, any>;
+    },
+  ): Promise<{ card: KanbanCardDto }> {
+    return this.request<{ card: KanbanCardDto }>(`/kanban/cards/${cardId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteKanbanCard(cardId: number): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/kanban/cards/${cardId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async moveKanbanCard(cardId: number, toColumnId: number, order?: number): Promise<{ card: KanbanCardDto }> {
+    return this.request<{ card: KanbanCardDto }>(`/kanban/cards/${cardId}/move`, {
+      method: 'PATCH',
+      body: JSON.stringify({ toColumnId, order }),
+    });
+  }
+
+  async reorderKanbanColumns(
+    updates: { columnId: number; order: number }[],
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>('/kanban/columns/reorder', {
+      method: 'PATCH',
+      body: JSON.stringify({ updates }),
+    });
+  }
+
+  async reorderKanbanCards(
+    updates: { cardId: number; columnId: number; order: number }[],
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>('/kanban/cards/reorder', {
+      method: 'PATCH',
+      body: JSON.stringify({ updates }),
     });
   }
 
@@ -2623,6 +2768,43 @@ export interface LeadRequest {
   siteUrl?: string;
   faturamentoMedio?: string;
   comoAjudar?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KanbanColumnDto {
+  id: number;
+  userId: number;
+  name: string;
+  description?: string;
+  order: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KanbanCardDto {
+  id: number;
+  userId: number;
+  columnId: number;
+  title: string;
+  description?: string;
+  order: number;
+  active: boolean;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmailTemplateDto {
+  id: number;
+  userId: number;
+  name: string;
+  category: string;
+  html: string;
+  subject?: string;
+  description?: string;
+  active: boolean;
   createdAt: string;
   updatedAt: string;
 }
