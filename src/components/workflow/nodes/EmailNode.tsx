@@ -10,7 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Mail, Settings, Trash2, Upload, X, Link2, Plus } from 'lucide-react';
+import { Mail, Settings, Trash2, Upload, X, Link2, Plus, Wand2 } from 'lucide-react';
+import { EmailBuilderModal } from '@/components/EmailBuilderModal';
 
 interface EmailNodeData {
   subject?: string;
@@ -23,6 +24,7 @@ interface EmailNodeData {
 
 export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isEmailBuilderOpen, setIsEmailBuilderOpen] = useState(false);
   const [subject, setSubject] = useState((data as any)?.subject || '');
   const [content, setContent] = useState((data as any)?.content || '');
   const [media, setMedia] = useState<{ url: string; type: 'image' | 'video'; name: string }[]>((data as any)?.media || []);
@@ -32,12 +34,12 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
     const files = e.target.files;
     if (files) {
       const newMedia: { url: string; type: 'image' | 'video'; name: string }[] = [];
-      
+
       for (const file of Array.from(files)) {
         try {
           const formData = new FormData();
           formData.append('file', file);
-          
+
           const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/campaign-assets/upload`, {
             method: 'POST',
             headers: {
@@ -45,7 +47,7 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
             },
             body: formData,
           });
-          
+
           if (response.ok) {
             const data = await response.json();
             newMedia.push({
@@ -58,7 +60,7 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
           console.error('Erro ao fazer upload:', error);
         }
       }
-      
+
       setMedia([...media, ...newMedia]);
     }
   };
@@ -113,7 +115,7 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
       </Card>
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Configurar E-mail</DialogTitle>
           </DialogHeader>
@@ -128,15 +130,32 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email-content">Conteúdo</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="email-content">Conteúdo</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1.5 text-xs h-7"
+                  onClick={() => setIsEmailBuilderOpen(true)}
+                >
+                  <Wand2 className="w-3 h-3" />
+                  Editor Visual
+                </Button>
+              </div>
               <textarea
                 id="email-content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Digite o conteúdo..."
+                placeholder="Digite o conteúdo ou use o Editor Visual..."
                 rows={6}
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
+              {content && content.startsWith('<!DOCTYPE') && (
+                <p className="text-xs text-green-600 bg-green-50 dark:bg-green-950/20 p-2 rounded border border-green-200 dark:border-green-800">
+                  ✓ E-mail HTML criado com o editor visual
+                </p>
+              )}
               <p className="text-xs text-muted-foreground bg-primary/5 p-2 rounded">
                 💡 Variáveis disponíveis: <br />
                 <strong>{"{{cupom_nome}}"}</strong>, <strong>{"{{cupom_valor}}"}</strong>, <strong>{"{{cupom_validade}}"}</strong> e <strong>{"{{link_rastreio}}"}</strong>
@@ -225,7 +244,14 @@ export const EmailNode: React.FC<NodeProps> = ({ data, id }) => {
             </div>
           </div>
         </DialogContent>
-      </Dialog >
+      </Dialog>
+
+      <EmailBuilderModal
+        open={isEmailBuilderOpen}
+        onClose={() => setIsEmailBuilderOpen(false)}
+        onApply={(html) => setContent(html)}
+        initialHtml={content.startsWith('<!DOCTYPE') ? content : undefined}
+      />
     </>
   );
 };
