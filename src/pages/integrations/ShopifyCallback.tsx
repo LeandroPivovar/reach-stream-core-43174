@@ -40,7 +40,31 @@ export default function ShopifyCallback() {
         return;
       }
 
-      // Verificar parâmetros obrigatórios
+      // Verificar se já temos o token na URL (redirecionamento direto do backend — sem code)
+      let jwtToken = searchParams.get('token');
+
+      if (jwtToken) {
+        // Fluxo de breakout: backend já fez o exchange e retornou o JWT diretamente
+        if (!shop) {
+          setStatus('error');
+          setMessage('Parâmetros de autorização inválidos.');
+          setTimeout(redirectOut, 3000);
+          return;
+        }
+        localStorage.setItem('token', jwtToken);
+        localStorage.removeItem('shopify_oauth_state');
+        localStorage.removeItem('shopify_shop');
+        setStatus('success');
+        setMessage('Conexão estabelecida com sucesso!');
+        toast({
+          title: 'Shopify conectada!',
+          description: `Sua loja ${shop} foi conectada com sucesso.`,
+        });
+        setTimeout(redirectOut, 2000);
+        return;
+      }
+
+      // Fluxo normal: code + shop + state obrigatórios
       if (!code || !shop || !state) {
         setStatus('error');
         setMessage('Parâmetros de autorização inválidos.');
@@ -53,9 +77,10 @@ export default function ShopifyCallback() {
         return;
       }
 
-      // Verificar state (CSRF protection)
+      // Verificar state (CSRF) — apenas quando o fluxo foi iniciado pelo CRM
+      // (install direto da Shopify não salva state em localStorage)
       const savedState = localStorage.getItem('shopify_oauth_state');
-      if (state !== savedState) {
+      if (savedState && state !== savedState) {
         setStatus('error');
         setMessage('Token de segurança inválido.');
         toast({
@@ -68,40 +93,29 @@ export default function ShopifyCallback() {
       }
 
       try {
-        // Fazer requisição para o backend processar o callback
-        // O backend vai trocar o código por token e salvar a conexão
         const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
         const defaultApiUrl = isProd ? window.location.origin : 'http://localhost:3000';
         const API_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
-        // Remover /api do final se existir, pois vamos adicionar depois
         const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
         const endpoint = `/api/shopify/auth/callback?code=${code}&shop=${encodeURIComponent(shop)}&state=${encodeURIComponent(state)}`;
 
-        // Verificar se já temos o token na URL (redirecionamento direto do backend)
-        let jwtToken = searchParams.get('token');
-        let connectionData = null;
+        const response = await fetch(`${baseUrl}${endpoint}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
 
-        if (!jwtToken) {
-          const response = await fetch(`${baseUrl}${endpoint}`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Falha ao processar callback');
-          }
-
-          const data = await response.json();
-          jwtToken = data.token;
-          connectionData = data.connection;
+        if (!response.ok) {
+          throw new Error('Falha ao processar callback');
         }
+
+        const data = await response.json();
+        jwtToken = data.token;
 
         // Se o backend retornou um token (auto-login/registro), salva no localStorage
         if (jwtToken) {
           localStorage.setItem('token', jwtToken);
-          // Opcional: recarregar o contexto de autenticação se necessário
         }
 
         // Limpar dados temporários

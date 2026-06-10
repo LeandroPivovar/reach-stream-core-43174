@@ -129,12 +129,14 @@ export default function AdminEmailBuilder() {
     try {
       const template = await api.getEmailTemplateById(templateId);
       console.log('[EmailBuilder] Template carregado:', template);
-      const canvas = document.getElementById('email-canvas');
-      if (canvas && template.html) {
+      if (template.html) {
         const content = extractCanvasContent(template.html);
-        canvas.innerHTML = content;
-        if (typeof (window as any).saveState === 'function') {
-          (window as any).saveState();
+        if (typeof (window as any).loadCanvasHTML === 'function') {
+          (window as any).loadCanvasHTML(content);
+        } else {
+          // Fallback: set innerHTML directly (event listeners won't be reattached)
+          const canvas = document.getElementById('email-canvas');
+          if (canvas) canvas.innerHTML = content;
         }
         toast({ title: 'Sucesso', description: `Template "${template.name}" carregado` });
       }
