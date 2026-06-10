@@ -102,9 +102,11 @@ import {
   ChevronDown,
   ChevronUp,
   Settings,
-  Truck
+  Truck,
+  Wand2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { EmailBuilderModal } from '@/components/EmailBuilderModal';
 
 interface ContactFrontend {
   id: number;
@@ -206,6 +208,7 @@ export default function Campanhas() {
     maxRevenue: ''
   });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isEmailBuilderOpen, setIsEmailBuilderOpen] = useState(false);
   const [lastFocusedField, setLastFocusedField] = useState<{ id: string; varKey?: string; selectionStart: number } | null>(null);
 
   const handleFieldBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -2372,7 +2375,19 @@ export default function Campanhas() {
                       </div>
 
                       <div className="grid gap-2">
-                        <Label htmlFor="email-content">Conteúdo do E-mail *</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="email-content">Conteúdo do E-mail *</Label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1.5 text-xs h-7"
+                            onClick={() => setIsEmailBuilderOpen(true)}
+                          >
+                            <Wand2 className="w-3 h-3" />
+                            Editor Visual
+                          </Button>
+                        </div>
                         <Textarea
                           id="email-content"
                           value={newCampaign.email.content}
@@ -2381,13 +2396,25 @@ export default function Campanhas() {
                             ...newCampaign,
                             email: { ...newCampaign.email, content: e.target.value }
                           })}
-                          placeholder="Digite o conteúdo do e-mail..."
+                          placeholder="Digite o conteúdo do e-mail ou use o Editor Visual..."
                           rows={12}
                         />
+                        {newCampaign.email.content && newCampaign.email.content.startsWith('<!DOCTYPE') && (
+                          <p className="text-xs text-green-600 bg-green-50 dark:bg-green-950/20 p-2 rounded border border-green-200 dark:border-green-800">
+                            ✓ E-mail HTML criado com o editor visual
+                          </p>
+                        )}
                         <p className="text-xs text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/10">
                           💡 <strong>Variáveis disponíveis:</strong> <code>{"{{cupom_nome}}"}</code>, <code>{"{{cupom_valor}}"}</code> e <code>{"{{cupom_validade}}"}</code>. Use-as para personalizar sua mensagem com os dados do benefício que será configurado adiante.
                         </p>
                       </div>
+
+                      <EmailBuilderModal
+                        open={isEmailBuilderOpen}
+                        onClose={() => setIsEmailBuilderOpen(false)}
+                        onApply={(html) => setNewCampaign(prev => ({ ...prev, email: { ...prev.email, content: html } }))}
+                        initialHtml={newCampaign.email.content.startsWith('<!DOCTYPE') ? newCampaign.email.content : undefined}
+                      />
 
                       <div className="bg-primary/5 p-4 rounded-lg border border-primary/10 space-y-4">
                         <div className="flex items-center gap-2">
