@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { LayoutGrid, Plus, GripVertical, Pencil, Trash2 } from 'lucide-react';
-import { api, KanbanColumnDto, KanbanCardDto } from '@/lib/api';
+import { LayoutGrid, Plus, GripVertical, Pencil, Trash2, Zap, User as UserIcon, Mail, Phone } from 'lucide-react';
+import { api, Campaign, KanbanColumnDto, KanbanCardDto, KanbanCondition, KanbanEntryType } from '@/lib/api';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,47 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+
+const ENTRY_TYPE_LABELS: Record<KanbanEntryType, string> = {
+    capture_page: 'Página de captura',
+    form: 'Formulário',
+    product_purchase: 'Compra de produto',
+    ecommerce_event: 'Evento e-commerce',
+    manual: 'Manual',
+};
+
+const CONDITION_TYPE_LABELS: Record<KanbanCondition['type'], string> = {
+    has_purchased_product: 'Comprou produto (ID)',
+    has_tag: 'Possui tag (ID)',
+    has_segmentation: 'Possui segmentação',
+    min_order_count: 'Nº mínimo de pedidos',
+    min_ltv: 'LTV mínimo (R$)',
+};
+
+// Status de campanha que aceitam adição de contatos via gatilho do Kanban
+const TRIGGERABLE_STATUSES = ['ativa', 'finalizada', 'agendada'];
+
+interface ColumnFormState {
+    name: string;
+    description: string;
+    isOrigin: boolean;
+    entryType: KanbanEntryType | '';
+    campaignId: string;
+    conditions: KanbanCondition[];
+}
+
+const defaultColumnForm = (): ColumnFormState => ({
+    name: '',
+    description: '',
+    isOrigin: false,
+    entryType: '',
+    campaignId: '',
+    conditions: [],
+});
 
 export default function AdminKanban() {
     const queryClient = useQueryClient();
@@ -20,7 +59,11 @@ export default function AdminKanban() {
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
     const [editingColumn, setEditingColumn] = useState<KanbanColumnDto | null>(null);
-    const [columnName, setColumnName] = useState('');
+    const [columnForm, setColumnForm] = useState<ColumnFormState>(defaultColumnForm());
+    const [newCondition, setNewCondition] = useState<{ type: KanbanCondition['type']; value: string }>({
+        type: 'has_purchased_product',
+        value: '',
+    });
 
     const [isCardModalOpen, setIsCardModalOpen] = useState(false);
     const [editingCard, setEditingCard] = useState<KanbanCardDto | null>(null);
@@ -37,9 +80,7 @@ export default function AdminKanban() {
     const { data: columnsData, isLoading: isLoadingColumns, isError, error } = useQuery({
         queryKey: ['kanban-columns'],
         queryFn: async () => {
-            console.log('[Kanban] Buscando colunas...');
             const response = await api.getKanbanColumns();
-            console.log('[Kanban] Colunas recebidas:', response?.columns?.length ?? 0, response?.columns);
             return response?.columns ?? [];
         },
     });
@@ -47,13 +88,18 @@ export default function AdminKanban() {
     const { data: cardsData, isLoading: isLoadingCards } = useQuery({
         queryKey: ['kanban-cards'],
         queryFn: async () => {
-            console.log('[Kanban] Buscando cards...');
             const response = await api.getKanbanCards();
-            console.log('[Kanban] Cards recebidos:', response?.cards?.length ?? 0, response?.cards);
             return response?.cards ?? [];
         },
     });
 
+    const { data: campaignsData } = useQuery({
+        queryKey: ['campaigns-for-kanban'],
+        queryFn: () => api.getCampaigns({}),
+        staleTime: 60_000,
+    });
+
+    const campaigns: Campaign[] = campaignsData ?? [];
     const columns: KanbanColumnDto[] = columnsData ?? [];
 
     const cardsByColumn: Record<number, KanbanCardDto[]> = {};
@@ -65,8 +111,6 @@ export default function AdminKanban() {
         cardsByColumn[Number(key)].sort((a, b) => a.order - b.order);
     });
 
-    console.log('[Kanban] Render — colunas:', columns.length, '| cards agrupados por coluna:', Object.keys(cardsByColumn).length);
-
     // --- Mutations ---
 
     const invalidate = () => {
@@ -74,154 +118,134 @@ export default function AdminKanban() {
         queryClient.invalidateQueries({ queryKey: ['kanban-cards'] });
     };
 
+    const buildColumnPayload = (form: ColumnFormState) => ({
+        name: form.name.trim(),
+        description: form.description.trim() || undefined,
+        isOrigin: form.isOrigin,
+        entryType: (form.entryType || undefined) as KanbanEntryType | undefined,
+        campaignId: form.campaignId ? parseInt(form.campaignId) : undefined,
+        conditions: form.conditions.length > 0 ? form.conditions : undefined,
+    });
+
     const createColumnMutation = useMutation({
-        mutationFn: (name: string) => {
-            console.log('[Kanban] Criando coluna:', name);
-            return api.createKanbanColumn({ name });
-        },
-        onSuccess: (data) => {
-            console.log('[Kanban] Coluna criada com sucesso:', data);
+        mutationFn: (form: ColumnFormState) => api.createKanbanColumn(buildColumnPayload(form)),
+        onSuccess: () => {
             invalidate();
             setIsColumnModalOpen(false);
-            setColumnName('');
+            setColumnForm(defaultColumnForm());
             toast({ title: 'Coluna criada' });
         },
-        onError: (err: any) => {
-            console.error('[Kanban] Erro ao criar coluna:', err);
-            toast({ title: 'Erro ao criar coluna', description: err.message, variant: 'destructive' });
-        },
+        onError: (err: any) => toast({ title: 'Erro ao criar coluna', description: err.message, variant: 'destructive' }),
     });
 
     const updateColumnMutation = useMutation({
-        mutationFn: ({ columnId, name }: { columnId: number; name: string }) => {
-            console.log('[Kanban] Atualizando coluna', columnId, '→', name);
-            return api.updateKanbanColumn(columnId, { name });
-        },
-        onSuccess: (data) => {
-            console.log('[Kanban] Coluna atualizada:', data);
+        mutationFn: ({ columnId, form }: { columnId: number; form: ColumnFormState }) =>
+            api.updateKanbanColumn(columnId, buildColumnPayload(form)),
+        onSuccess: () => {
             invalidate();
             setIsColumnModalOpen(false);
             setEditingColumn(null);
-            setColumnName('');
+            setColumnForm(defaultColumnForm());
             toast({ title: 'Coluna atualizada' });
         },
-        onError: (err: any) => {
-            console.error('[Kanban] Erro ao atualizar coluna:', err);
-            toast({ title: 'Erro', description: err.message, variant: 'destructive' });
-        },
+        onError: (err: any) => toast({ title: 'Erro', description: err.message, variant: 'destructive' }),
     });
 
     const deleteColumnMutation = useMutation({
-        mutationFn: (columnId: number) => {
-            console.log('[Kanban] Removendo coluna', columnId);
-            return api.deleteKanbanColumn(columnId);
-        },
+        mutationFn: (columnId: number) => api.deleteKanbanColumn(columnId),
         onSuccess: () => {
-            console.log('[Kanban] Coluna removida');
             invalidate();
             setColumnToDelete(null);
             toast({ title: 'Coluna removida' });
         },
-        onError: (err: any) => {
-            console.error('[Kanban] Erro ao remover coluna:', err);
-            toast({ title: 'Erro', description: err.message, variant: 'destructive' });
-        },
+        onError: (err: any) => toast({ title: 'Erro', description: err.message, variant: 'destructive' }),
     });
 
     const createCardMutation = useMutation({
-        mutationFn: (data: { columnId: number; title: string; description?: string }) => {
-            console.log('[Kanban] Criando card:', data);
-            return api.createKanbanCard(data);
-        },
-        onSuccess: (data) => {
-            console.log('[Kanban] Card criado:', data);
+        mutationFn: (data: { columnId: number; title: string; description?: string }) => api.createKanbanCard(data),
+        onSuccess: () => {
             invalidate();
             setIsCardModalOpen(false);
             setCardForm({ columnId: 0, title: '', description: '' });
             toast({ title: 'Card criado' });
         },
-        onError: (err: any) => {
-            console.error('[Kanban] Erro ao criar card:', err);
-            toast({ title: 'Erro', description: err.message, variant: 'destructive' });
-        },
+        onError: (err: any) => toast({ title: 'Erro', description: err.message, variant: 'destructive' }),
     });
 
     const updateCardMutation = useMutation({
-        mutationFn: ({ cardId, data }: { cardId: number; data: any }) => {
-            console.log('[Kanban] Atualizando card', cardId, data);
-            return api.updateKanbanCard(cardId, data);
-        },
-        onSuccess: (data) => {
-            console.log('[Kanban] Card atualizado:', data);
+        mutationFn: ({ cardId, data }: { cardId: number; data: any }) => api.updateKanbanCard(cardId, data),
+        onSuccess: () => {
             invalidate();
             setIsCardModalOpen(false);
             setEditingCard(null);
             toast({ title: 'Card atualizado' });
         },
-        onError: (err: any) => {
-            console.error('[Kanban] Erro ao atualizar card:', err);
-            toast({ title: 'Erro', description: err.message, variant: 'destructive' });
-        },
+        onError: (err: any) => toast({ title: 'Erro', description: err.message, variant: 'destructive' }),
     });
 
     const deleteCardMutation = useMutation({
-        mutationFn: (cardId: number) => {
-            console.log('[Kanban] Removendo card', cardId);
-            return api.deleteKanbanCard(cardId);
-        },
+        mutationFn: (cardId: number) => api.deleteKanbanCard(cardId),
         onSuccess: () => {
-            console.log('[Kanban] Card removido');
             invalidate();
             setCardToDelete(null);
             setEditingCard(null);
             toast({ title: 'Card removido' });
         },
-        onError: (err: any) => {
-            console.error('[Kanban] Erro ao remover card:', err);
-            toast({ title: 'Erro', description: err.message, variant: 'destructive' });
-        },
+        onError: (err: any) => toast({ title: 'Erro', description: err.message, variant: 'destructive' }),
     });
 
     const moveCardMutation = useMutation({
-        mutationFn: ({ cardId, toColumnId, order }: { cardId: number; toColumnId: number; order?: number }) => {
-            console.log('[Kanban] Movendo card', cardId, '→ coluna', toColumnId, 'order', order);
-            return api.moveKanbanCard(cardId, toColumnId, order);
-        },
-        onSuccess: () => {
-            console.log('[Kanban] Card movido');
-            invalidate();
-        },
-        onError: (err: any) => {
-            console.error('[Kanban] Erro ao mover card:', err);
-            toast({ title: 'Erro', description: err.message, variant: 'destructive' });
-        },
+        mutationFn: ({ cardId, toColumnId, order }: { cardId: number; toColumnId: number; order?: number }) =>
+            api.moveKanbanCard(cardId, toColumnId, order),
+        onSuccess: () => invalidate(),
+        onError: (err: any) => toast({ title: 'Erro ao mover card', description: err.message, variant: 'destructive' }),
     });
 
     // --- Handlers ---
 
     const handleOpenCreateColumn = () => {
         setEditingColumn(null);
-        setColumnName('');
+        setColumnForm(defaultColumnForm());
         setIsColumnModalOpen(true);
     };
 
     const handleOpenEditColumn = (column: KanbanColumnDto) => {
         setEditingColumn(column);
-        setColumnName(column.name);
+        setColumnForm({
+            name: column.name,
+            description: column.description ?? '',
+            isOrigin: column.isOrigin,
+            entryType: column.entryType ?? '',
+            campaignId: column.campaignId ? String(column.campaignId) : '',
+            conditions: column.conditions ?? [],
+        });
         setIsColumnModalOpen(true);
     };
 
     const handleSubmitColumn = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!columnName.trim()) {
+        if (!columnForm.name.trim()) {
             toast({ title: 'Nome obrigatório', variant: 'destructive' });
             return;
         }
         if (editingColumn) {
-            updateColumnMutation.mutate({ columnId: editingColumn.id, name: columnName.trim() });
+            updateColumnMutation.mutate({ columnId: editingColumn.id, form: columnForm });
         } else {
-            createColumnMutation.mutate(columnName.trim());
+            createColumnMutation.mutate(columnForm);
         }
+    };
+
+    const handleAddCondition = () => {
+        if (!newCondition.value.trim()) return;
+        setColumnForm((f) => ({
+            ...f,
+            conditions: [...f.conditions, { type: newCondition.type, value: newCondition.value }],
+        }));
+        setNewCondition({ type: 'has_purchased_product', value: '' });
+    };
+
+    const handleRemoveCondition = (index: number) => {
+        setColumnForm((f) => ({ ...f, conditions: f.conditions.filter((_, i) => i !== index) }));
     };
 
     const handleOpenCreateCard = (columnId: number) => {
@@ -287,13 +311,12 @@ export default function AdminKanban() {
     }
 
     if (isError) {
-        console.error('[Kanban] Erro na query:', error);
         return (
             <AdminLayout title="Kanban" subtitle="Erro ao carregar">
                 <div className="flex items-center justify-center min-h-[400px]">
                     <div className="text-center">
                         <h3 className="text-lg font-semibold text-red-500 mb-2">Erro ao carregar dados</h3>
-                        <p className="text-sm text-slate-400">{(error as any)?.message || 'Verifique o console para detalhes'}</p>
+                        <p className="text-sm text-slate-400">{(error as any)?.message}</p>
                         <Button className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['kanban-columns'] })}>Tentar novamente</Button>
                     </div>
                 </div>
@@ -316,7 +339,7 @@ export default function AdminKanban() {
                     <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
                         <LayoutGrid className="w-16 h-16 text-slate-300 mb-4" />
                         <h3 className="text-lg font-semibold text-slate-600">Nenhuma coluna criada</h3>
-                        <p className="text-sm text-slate-400 mt-2 mb-6 max-w-sm">Crie colunas para organizar seu quadro Kanban.</p>
+                        <p className="text-sm text-slate-400 mt-2 mb-6 max-w-sm">Crie colunas para organizar seu pipeline.</p>
                         <Button onClick={handleOpenCreateColumn} className="flex items-center gap-2">
                             <Plus className="w-4 h-4" /> Criar Primeira Coluna
                         </Button>
@@ -342,9 +365,17 @@ export default function AdminKanban() {
                             <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2 min-w-0">
                                     <GripVertical className="w-4 h-4 text-slate-400 shrink-0 cursor-grab" />
-                                    <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">{column.name}</h3>
+                                    <div className="min-w-0">
+                                        <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">{column.name}</h3>
+                                        {column.entryType && (
+                                            <p className="text-[10px] text-slate-400 truncate">{ENTRY_TYPE_LABELS[column.entryType]}</p>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
+                                    {column.campaignId && (
+                                        <Zap className="w-3.5 h-3.5 text-amber-500" title={`Campanha: ${column.campaign?.name ?? column.campaignId}`} />
+                                    )}
                                     <Badge variant="secondary" className="text-[10px] h-5 px-1.5">{columnCards.length}</Badge>
                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenEditColumn(column)}>
                                         <Pencil className="w-3.5 h-3.5 text-slate-500" />
@@ -371,7 +402,30 @@ export default function AdminKanban() {
                                             )}
                                         >
                                             <div className="flex items-start justify-between gap-2">
-                                                <h4 className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-tight">{card.title}</h4>
+                                                <div className="flex items-start gap-2 min-w-0">
+                                                    {card.contact ? (
+                                                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                                                            <UserIcon className="w-3 h-3 text-primary" />
+                                                        </div>
+                                                    ) : null}
+                                                    <div className="min-w-0">
+                                                        <h4 className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-tight truncate">
+                                                            {card.contact?.name ?? card.title}
+                                                        </h4>
+                                                        {card.contact?.email && (
+                                                            <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                                                                <Mail className="w-2.5 h-2.5 shrink-0" />
+                                                                {card.contact.email}
+                                                            </p>
+                                                        )}
+                                                        {card.contact?.phone && (
+                                                            <p className="text-[10px] text-slate-400 flex items-center gap-1 truncate">
+                                                                <Phone className="w-2.5 h-2.5 shrink-0" />
+                                                                {card.contact.phone}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
                                                 <Button
                                                     variant="ghost" size="icon"
                                                     className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
@@ -380,7 +434,7 @@ export default function AdminKanban() {
                                                     <Trash2 className="w-3 h-3 text-red-400" />
                                                 </Button>
                                             </div>
-                                            {card.description && (
+                                            {!card.contact && card.description && (
                                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">{card.description}</p>
                                             )}
                                             <p className="text-[10px] text-slate-400 mt-2">{new Date(card.createdAt).toLocaleDateString('pt-BR')}</p>
@@ -411,26 +465,146 @@ export default function AdminKanban() {
                 })}
             </div>
 
-            {/* Modal — Coluna (só nome) */}
+            {/* Modal — Coluna */}
             <Dialog open={isColumnModalOpen} onOpenChange={setIsColumnModalOpen}>
-                <DialogContent className="max-w-sm">
+                <DialogContent className="max-w-lg">
                     <DialogHeader>
                         <DialogTitle>{editingColumn ? 'Editar Coluna' : 'Nova Coluna'}</DialogTitle>
-                        <DialogDescription>
-                            {editingColumn ? 'Altere o nome da coluna.' : 'Digite o nome da nova coluna.'}
-                        </DialogDescription>
+                        <DialogDescription>Configure o comportamento desta etapa do pipeline.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmitColumn} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="column-name">Nome</Label>
+                        {/* Nome */}
+                        <div className="space-y-1.5">
+                            <Label htmlFor="col-name">Nome</Label>
                             <Input
-                                id="column-name"
+                                id="col-name"
                                 autoFocus
-                                value={columnName}
-                                onChange={(e) => setColumnName(e.target.value)}
-                                placeholder="Ex: A Fazer, Em Progresso, Concluído"
+                                value={columnForm.name}
+                                onChange={(e) => setColumnForm((f) => ({ ...f, name: e.target.value }))}
+                                placeholder="Ex: Recuperação de carrinho"
                             />
                         </div>
+
+                        {/* Coluna de origem */}
+                        <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+                            <div>
+                                <p className="text-sm font-medium">Coluna de origem</p>
+                                <p className="text-xs text-slate-500">Leads entram automaticamente nesta coluna</p>
+                            </div>
+                            <Switch
+                                checked={columnForm.isOrigin}
+                                onCheckedChange={(v) => setColumnForm((f) => ({ ...f, isOrigin: v }))}
+                            />
+                        </div>
+
+                        {/* Tipo de entrada (só se for origem) */}
+                        {columnForm.isOrigin && (
+                            <div className="space-y-1.5">
+                                <Label>Tipo de entrada</Label>
+                                <Select
+                                    value={columnForm.entryType}
+                                    onValueChange={(v) => setColumnForm((f) => ({ ...f, entryType: v as KanbanEntryType }))}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione a origem" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(ENTRY_TYPE_LABELS).map(([value, label]) => (
+                                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {/* Campanha vinculada */}
+                        <div className="space-y-1.5">
+                            <Label>Campanha disparada ao entrar nesta coluna</Label>
+                            <Select
+                                value={columnForm.campaignId}
+                                onValueChange={(v) => setColumnForm((f) => ({ ...f, campaignId: v === '__none__' ? '' : v }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Nenhuma campanha" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__none__">Nenhuma campanha</SelectItem>
+                                    {campaigns.map((c) => (
+                                        <SelectItem key={c.id} value={String(c.id)}>
+                                            {c.name} ({c.channel}) · {c.status}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {columnForm.campaignId && (() => {
+                                const selected = campaigns.find((c) => String(c.id) === columnForm.campaignId);
+                                const triggerable = selected ? TRIGGERABLE_STATUSES.includes(selected.status) : true;
+                                return triggerable ? (
+                                    <p className="text-xs text-amber-600 flex items-center gap-1">
+                                        <Zap className="w-3 h-3" /> O lead será inserido nesta campanha ao chegar nesta etapa
+                                    </p>
+                                ) : (
+                                    <p className="text-xs text-red-500 flex items-center gap-1">
+                                        <Zap className="w-3 h-3" /> Campanha "{selected?.status}" não aceita novos leads — ative ou agende a campanha para o gatilho funcionar
+                                    </p>
+                                );
+                            })()}
+                        </div>
+
+                        {/* Condições */}
+                        {columnForm.campaignId && (
+                            <div className="space-y-2">
+                                <Label>Condições para disparar a campanha</Label>
+                                {columnForm.conditions.length > 0 && (
+                                    <div className="space-y-1.5">
+                                        {columnForm.conditions.map((cond, i) => (
+                                            <div key={i} className="flex items-center justify-between gap-2 rounded-md bg-slate-50 dark:bg-slate-800 px-3 py-2 text-xs">
+                                                <span className="text-slate-600 dark:text-slate-300">
+                                                    <strong>{CONDITION_TYPE_LABELS[cond.type]}:</strong> {cond.value}
+                                                </span>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-5 w-5"
+                                                    onClick={() => handleRemoveCondition(i)}
+                                                >
+                                                    <Trash2 className="w-3 h-3 text-red-400" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <div className="flex gap-2">
+                                    <Select
+                                        value={newCondition.type}
+                                        onValueChange={(v) => setNewCondition((c) => ({ ...c, type: v as KanbanCondition['type'] }))}
+                                    >
+                                        <SelectTrigger className="w-48 text-xs">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Object.entries(CONDITION_TYPE_LABELS).map(([value, label]) => (
+                                                <SelectItem key={value} value={value}>{label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Input
+                                        className="text-xs"
+                                        placeholder="Valor"
+                                        value={newCondition.value}
+                                        onChange={(e) => setNewCondition((c) => ({ ...c, value: e.target.value }))}
+                                    />
+                                    <Button type="button" variant="outline" size="sm" onClick={handleAddCondition}>
+                                        <Plus className="w-3.5 h-3.5" />
+                                    </Button>
+                                </div>
+                                {columnForm.conditions.length === 0 && (
+                                    <p className="text-xs text-slate-400">Sem condições = campanha sempre dispara</p>
+                                )}
+                            </div>
+                        )}
+
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setIsColumnModalOpen(false)}>Cancelar</Button>
                             <Button type="submit" disabled={createColumnMutation.isPending || updateColumnMutation.isPending}>
@@ -448,7 +622,18 @@ export default function AdminKanban() {
                         <DialogTitle>{editingCard ? 'Editar Card' : 'Novo Card'}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleSubmitCard} className="space-y-4">
-                        <div className="space-y-2">
+                        {editingCard?.contact && (
+                            <div className="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-800 p-3">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <UserIcon className="w-4 h-4 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium">{editingCard.contact.name}</p>
+                                    {editingCard.contact.email && <p className="text-xs text-slate-400">{editingCard.contact.email}</p>}
+                                </div>
+                            </div>
+                        )}
+                        <div className="space-y-1.5">
                             <Label htmlFor="card-title">Título</Label>
                             <Input
                                 id="card-title"
@@ -458,7 +643,7 @@ export default function AdminKanban() {
                                 placeholder="Título do card"
                             />
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                             <Label htmlFor="card-description">Descrição</Label>
                             <Textarea
                                 id="card-description"

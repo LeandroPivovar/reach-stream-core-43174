@@ -1900,7 +1900,15 @@ class ApiService {
     return this.request<{ columns: KanbanColumnDto[] }>('/kanban/columns', { method: 'GET' });
   }
 
-  async createKanbanColumn(data: { name: string; description?: string }): Promise<{ column: KanbanColumnDto }> {
+  async createKanbanColumn(data: {
+    name: string;
+    description?: string;
+    isOrigin?: boolean;
+    entryType?: KanbanEntryType;
+    entryConfig?: Record<string, any>;
+    campaignId?: number;
+    conditions?: KanbanCondition[];
+  }): Promise<{ column: KanbanColumnDto }> {
     return this.request<{ column: KanbanColumnDto }>('/kanban/columns', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -1909,7 +1917,17 @@ class ApiService {
 
   async updateKanbanColumn(
     columnId: number,
-    data: { name?: string; description?: string; order?: number; active?: boolean },
+    data: {
+      name?: string;
+      description?: string;
+      order?: number;
+      active?: boolean;
+      isOrigin?: boolean;
+      entryType?: KanbanEntryType;
+      entryConfig?: Record<string, any>;
+      campaignId?: number | null;
+      conditions?: KanbanCondition[] | null;
+    },
   ): Promise<{ column: KanbanColumnDto }> {
     return this.request<{ column: KanbanColumnDto }>(`/kanban/columns/${columnId}`, {
       method: 'PATCH',
@@ -2778,6 +2796,13 @@ export interface LeadRequest {
   updatedAt: string;
 }
 
+export type KanbanEntryType = 'capture_page' | 'form' | 'product_purchase' | 'ecommerce_event' | 'manual';
+
+export interface KanbanCondition {
+  type: 'has_purchased_product' | 'has_tag' | 'has_segmentation' | 'min_order_count' | 'min_ltv';
+  value: string | number;
+}
+
 export interface KanbanColumnDto {
   id: number;
   userId: number;
@@ -2785,6 +2810,12 @@ export interface KanbanColumnDto {
   description?: string;
   order: number;
   active: boolean;
+  isOrigin: boolean;
+  entryType?: KanbanEntryType;
+  entryConfig?: Record<string, any>;
+  campaignId?: number | null;
+  campaign?: { id: number; name: string; channel: string } | null;
+  conditions?: KanbanCondition[] | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -2797,6 +2828,8 @@ export interface KanbanCardDto {
   description?: string;
   order: number;
   active: boolean;
+  contactId?: number | null;
+  contact?: { id: number; name: string; email?: string; phone?: string } | null;
   metadata?: Record<string, any>;
   createdAt: string;
   updatedAt: string;
