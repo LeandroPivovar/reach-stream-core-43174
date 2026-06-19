@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { LayoutGrid, Plus, GripVertical, Pencil, Trash2, Zap, User as UserIcon, Mail, Phone } from 'lucide-react';
-import { api, Campaign, KanbanColumnDto, KanbanCardDto, KanbanCondition, KanbanEntryType } from '@/lib/api';
+import { LayoutGrid, Plus, GripVertical, Pencil, Trash2, Zap, User as UserIcon, Mail, Phone, Users, Send } from 'lucide-react';
+import { api, Campaign, Contact, Group, KanbanColumnDto, KanbanCardDto, KanbanCondition, KanbanEntryType } from '@/lib/api';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,6 +75,13 @@ export default function AdminKanban() {
     const [draggedCardId, setDraggedCardId] = useState<number | null>(null);
     const [dragOverColumnId, setDragOverColumnId] = useState<number | null>(null);
 
+    // Adicionar contatos/grupos a uma campanha manualmente
+    const [isAddCampaignOpen, setIsAddCampaignOpen] = useState(false);
+    const [addCampaignId, setAddCampaignId] = useState('');
+    const [addTab, setAddTab] = useState<'contacts' | 'groups'>('contacts');
+    const [selectedContactIds, setSelectedContactIds] = useState<Set<number>>(new Set());
+    const [selectedGroupIds, setSelectedGroupIds] = useState<Set<number>>(new Set());
+
     // --- Queries ---
 
     const { data: columnsData, isLoading: isLoadingColumns, isError, error } = useQuery({
@@ -99,7 +106,21 @@ export default function AdminKanban() {
         staleTime: 60_000,
     });
 
+    const { data: contactsData } = useQuery({
+        queryKey: ['contacts-for-kanban'],
+        queryFn: () => api.getContacts(),
+        staleTime: 60_000,
+    });
+
+    const { data: groupsData } = useQuery({
+        queryKey: ['groups-for-kanban'],
+        queryFn: () => api.getGroups(),
+        staleTime: 60_000,
+    });
+
     const campaigns: Campaign[] = campaignsData ?? [];
+    const contactsList: Contact[] = contactsData ?? [];
+    const groupsList: Group[] = groupsData ?? [];
     const columns: KanbanColumnDto[] = columnsData ?? [];
 
     const cardsByColumn: Record<number, KanbanCardDto[]> = {};
@@ -200,6 +221,37 @@ export default function AdminKanban() {
         onSuccess: () => invalidate(),
         onError: (err: any) => toast({ title: 'Erro ao mover card', description: err.message, variant: 'destructive' }),
     });
+
+    const addToCampaignMutation = useMutation({
+        mutationFn: async () => {
+            const id = parseInt(addCampaignId);
+            if (addTab === 'contacts') {
+                return api.addContactsToCampaign(id, Array.from(selectedContactIds));
+            }
+            return api.addGroupsToCampaign(id, Array.from(selectedGroupIds));
+        },
+        onSuccess: (res: any) => {
+            setIsAddCampaignOpen(false);
+            setSelectedContactIds(new Set());
+            setSelectedGroupIds(new Set());
+            setAddCampaignId('');
+            toast({ title: 'Adicionado à campanha', description: res?.message });
+        },
+        onError: (err: any) => toast({ title: 'Erro', description: err.message, variant: 'destructive' }),
+    });
+
+    const toggleId = (set: Set<number>, setter: (s: Set<number>) => void, id: number) => {
+        const next = new Set(set);
+        next.has(id) ? next.delete(id) : next.add(id);
+        setter(next);
+    };
+
+    const handleSubmitAddCampaign = () => {
+        if (!addCampaignId) { toast({ title: 'Selecione a campanha', variant: 'destructive' }); return; }
+        const count = addTab === 'contacts' ? selectedContactIds.size : selectedGroupIds.size;
+        if (count === 0) { toast({ title: 'Selecione ao menos um item', variant: 'destructive' }); return; }
+        addToCampaignMutation.mutate();
+    };
 
     // --- Handlers ---
 
@@ -329,9 +381,14 @@ export default function AdminKanban() {
             title="Quadro Kanban"
             subtitle={`${columns.length} coluna${columns.length !== 1 ? 's' : ''}`}
             actions={
-                <Button onClick={handleOpenCreateColumn} className="flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> Nova Coluna
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setIsAddCampaignOpen(true)} className="flex items-center gap-2">
+                        <Send className="w-4 h-4" /> Adicionar à campanha
+                    </Button>
+                    <Button onClick={handleOpenCreateColumn} className="flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Nova Coluna
+                    </Button>
+                </div>
             }
         >
             <div className="flex gap-4 overflow-x-auto pb-6 min-h-[calc(100vh-200px)] items-start">
@@ -710,6 +767,97 @@ export default function AdminKanban() {
                             onClick={() => cardToDelete && deleteCardMutation.mutate(cardToDelete.id)}
                         >
                             {deleteCardMutation.isPending ? 'Removendo...' : 'Remover'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Modal — Adicionar contatos/grupos a campanha */}
+            <Dialog open={isAddCampaignOpen} onOpenChange={setIsAddCampaignOpen}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Adicionar à campanha</DialogTitle>
+                        <DialogDescription>Insira contatos ou grupos inteiros numa campanha. A campanha precisa estar ativa, agendada ou finalizada.</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        {/* Campanha */}
+                        <div className="space-y-1.5">
+                            <Label>Campanha</Label>
+                            <Select value={addCampaignId} onValueChange={setAddCampaignId}>
+                                <SelectTrigger><SelectValue placeholder="Selecione a campanha" /></SelectTrigger>
+                                <SelectContent>
+                                    {campaigns.map((c) => (
+                                        <SelectItem key={c.id} value={String(c.id)}>{c.name} ({c.channel}) · {c.status}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Abas contatos / grupos */}
+                        <div className="flex gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
+                            <button
+                                type="button"
+                                onClick={() => setAddTab('contacts')}
+                                className={cn('flex-1 flex items-center justify-center gap-2 rounded-md py-1.5 text-xs font-medium transition-colors',
+                                    addTab === 'contacts' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'text-slate-500')}
+                            >
+                                <UserIcon className="w-3.5 h-3.5" /> Contatos ({selectedContactIds.size})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setAddTab('groups')}
+                                className={cn('flex-1 flex items-center justify-center gap-2 rounded-md py-1.5 text-xs font-medium transition-colors',
+                                    addTab === 'groups' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'text-slate-500')}
+                            >
+                                <Users className="w-3.5 h-3.5" /> Grupos ({selectedGroupIds.size})
+                            </button>
+                        </div>
+
+                        {/* Lista selecionável */}
+                        <ScrollArea className="h-56 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <div className="p-1.5 space-y-0.5">
+                                {addTab === 'contacts' && contactsList.map((c) => (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        onClick={() => toggleId(selectedContactIds, setSelectedContactIds, c.id)}
+                                        className={cn('w-full flex items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors',
+                                            selectedContactIds.has(c.id) ? 'bg-primary/10 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-800')}
+                                    >
+                                        <span className="min-w-0 truncate">{c.name}{c.email ? ` · ${c.email}` : ''}</span>
+                                        {selectedContactIds.has(c.id) && <span className="text-xs shrink-0">✓</span>}
+                                    </button>
+                                ))}
+                                {addTab === 'contacts' && contactsList.length === 0 && (
+                                    <p className="text-xs text-slate-400 text-center py-6">Nenhum contato</p>
+                                )}
+                                {addTab === 'groups' && groupsList.map((g) => (
+                                    <button
+                                        key={g.id}
+                                        type="button"
+                                        onClick={() => toggleId(selectedGroupIds, setSelectedGroupIds, g.id)}
+                                        className={cn('w-full flex items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors',
+                                            selectedGroupIds.has(g.id) ? 'bg-primary/10 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-800')}
+                                    >
+                                        <span className="flex items-center gap-2 min-w-0 truncate">
+                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: g.color || '#94a3b8' }} />
+                                            {g.name}
+                                        </span>
+                                        {selectedGroupIds.has(g.id) && <span className="text-xs shrink-0">✓</span>}
+                                    </button>
+                                ))}
+                                {addTab === 'groups' && groupsList.length === 0 && (
+                                    <p className="text-xs text-slate-400 text-center py-6">Nenhum grupo</p>
+                                )}
+                            </div>
+                        </ScrollArea>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsAddCampaignOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleSubmitAddCampaign} disabled={addToCampaignMutation.isPending}>
+                            {addToCampaignMutation.isPending ? 'Enviando...' : 'Adicionar e disparar'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
