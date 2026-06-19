@@ -2126,6 +2126,13 @@ class ApiService {
     });
   }
 
+  async addGroupsToCampaign(campaignId: number, groupIds: number[]): Promise<any> {
+    return this.request<any>(`/campaigns/${campaignId}/groups`, {
+      method: 'POST',
+      body: JSON.stringify({ groupIds }),
+    });
+  }
+
   // Subscriptions
   async getPlans(): Promise<Plan[]> {
     return this.request<Plan[]>('/subscriptions/plans', {
