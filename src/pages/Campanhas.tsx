@@ -1462,15 +1462,18 @@ export default function Campanhas() {
           });
         }
       }}>
-        <DialogContent className={cn(
-          "overflow-y-auto",
-          // Expandir apenas no passo do workflow
-          newCampaign.campaignComplexity === 'advanced' && currentStep === 4
-            ? "!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] p-8"
-            : newCampaign.campaignComplexity === 'simple' && currentStep === 5 && newCampaign.channel === 'whatsapp'
-              ? "max-w-6xl max-h-[90vh]"
-              : "max-w-3xl max-h-[90vh]"
-        )}>
+        <DialogContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          className={cn(
+            "overflow-y-auto",
+            // Expandir apenas no passo do workflow
+            newCampaign.campaignComplexity === 'advanced' && currentStep === 4
+              ? "!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] p-8"
+              : newCampaign.campaignComplexity === 'simple' && currentStep === 5 && newCampaign.channel === 'whatsapp'
+                ? "max-w-6xl max-h-[90vh]"
+                : "max-w-3xl max-h-[90vh]"
+          )}>
           <DialogHeader>
             <DialogTitle>Nova Campanha - Etapa {currentStep} de {getTotalSteps()}</DialogTitle>
             <DialogDescription className="sr-only">
