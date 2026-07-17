@@ -79,14 +79,14 @@ export function AdminSidebar() {
             {/* Logo */}
             <div className={cn(
                 "p-4 md:p-6 border-b border-slate-800 flex items-center min-h-[73px] relative",
-                isCollapsed ? "justify-center" : "justify-between"
+                isCollapsed ? "justify-center" : "justify-start"
             )}>
                 {!isCollapsed && (
-                    <div className="flex flex-col items-center justify-center gap-2 overflow-hidden transition-all duration-300">
+                    <div className="flex flex-col items-start gap-2 overflow-hidden transition-all duration-300">
                         <img
                             src={logoNucleocrm}
                             alt="Núcleo CRM"
-                            className="h-5 w-auto brightness-0 invert"
+                            className="h-7 w-auto"
                         />
                         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30">
                             <ShieldCheck className="w-3 h-3 text-primary" />

@@ -61,13 +61,16 @@ export function Sidebar() {
       style={{ backgroundColor: 'hsl(247 90% 65%)' }}
     >
       {/* Logo & Mobile Close */}
-      <div className="p-4 md:p-6 border-b border-white/20 flex items-center justify-center min-h-[73px] relative">
+      <div className={cn(
+        "p-4 md:p-6 border-b border-white/20 flex items-center min-h-[73px] relative",
+        isCollapsed ? "justify-center" : "justify-start"
+      )}>
         {!isCollapsed && (
           <div className="flex items-center overflow-hidden transition-all duration-300">
             <img
               src={logoNucleocrm}
               alt="Núcleo CRM"
-              className="h-5 w-auto"
+              className="h-7 w-auto"
             />
           </div>
         )}

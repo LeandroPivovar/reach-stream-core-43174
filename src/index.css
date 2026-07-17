@@ -181,7 +181,7 @@ All colors MUST be HSL. Semantic tokens for consistent theming.
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', 'Montserrat', system-ui, -apple-system, sans-serif;
   }
 
   /* Custom scrollbar */
@@ -243,6 +243,7 @@ All colors MUST be HSL. Semantic tokens for consistent theming.
 
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
