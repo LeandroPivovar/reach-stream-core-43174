@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { Tag, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useShopifyMerchant } from '@/hooks/use-shopify-merchant';
 
 export default function Cupons() {
+    const { isShopifyMerchant } = useShopifyMerchant();
     const [platform, setPlatform] = useState<'shopify' | 'nuvemshop'>('shopify');
     const [title, setTitle] = useState('');
     const [code, setCode] = useState('');
@@ -81,6 +83,8 @@ export default function Cupons() {
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleCreateCoupon} className="space-y-6 max-w-2xl">
+                        {/* Lojista Shopify só cria cupons na própria loja (platform já inicia em 'shopify'). */}
+                        {!isShopifyMerchant && (
                         <div className="space-y-2">
                             <Label className="text-gray-300">Plataforma de Destino</Label>
                             <Select value={platform} onValueChange={(val: 'shopify' | 'nuvemshop') => setPlatform(val)}>
@@ -93,6 +97,7 @@ export default function Cupons() {
                                 </SelectContent>
                             </Select>
                         </div>
+                        )}
 
                         {platform === 'shopify' && (
                             <div className="space-y-2">

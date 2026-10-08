@@ -203,7 +203,14 @@ export default function Assinaturas() {
           <h2 className="text-2xl font-bold text-slate-900">Planos Disponíveis</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan) => {
+            {plans
+              // Lojista Shopify só assina pela Billing API (em USD): plano pago sem
+              // priceUsd não pode ser cobrado e fica fora da lista, salvo se for o atual.
+              .filter((plan) =>
+                !(isShopifyMerchant && Number(plan.price) > 0 && !plan.priceUsd) ||
+                subscription?.planId === plan.id
+              )
+              .map((plan) => {
               const isCurrent = subscription?.planId === plan.id;
               const isUnavailableForShopify = isShopifyMerchant && Number(plan.price) > 0 && !plan.priceUsd;
               const isPro = plan.name.toLowerCase().includes('pro');

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Card } from '@/components/ui/card';
+import { useShopifyMerchant } from '@/hooks/use-shopify-merchant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +25,7 @@ interface GiftbackNodeData {
 }
 
 export const GiftbackNode: React.FC<{ data: GiftbackNodeData }> = ({ data }) => {
+  const { isShopifyMerchant } = useShopifyMerchant();
   const [isOpen, setIsOpen] = useState(false);
   const [giftbackValue, setGiftbackValue] = useState(data.giftbackValue || '');
   const [couponName, setCouponName] = useState(data.couponName || '');
@@ -54,7 +56,7 @@ export const GiftbackNode: React.FC<{ data: GiftbackNodeData }> = ({ data }) => 
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-sm">Giftback</h3>
-            <p className="text-xs text-muted-foreground">Shopify / Nuvemshop</p>
+            <p className="text-xs text-muted-foreground">{isShopifyMerchant ? 'Shopify' : 'Shopify / Nuvemshop'}</p>
           </div>
           <div className="flex gap-1">
             <Dialog open={isOpen} onOpenChange={setIsOpen}>

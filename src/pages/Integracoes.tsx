@@ -36,11 +36,13 @@ import { isShopifyEmbedded } from '@/lib/shopify';
 import InternalResponsiveTable from '@/components/common/responsive-table';
 const ResponsiveTable = (typeof window !== 'undefined' && (window as any).ResponsiveTable) || InternalResponsiveTable;
 import { cn } from '@/lib/utils';
+import { useShopifyMerchant } from '@/hooks/use-shopify-merchant';
 
 export default function Integracoes() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isEmbeddedShopifyApp = isShopifyEmbedded();
+  const { isShopifyMerchant } = useShopifyMerchant();
   const [isNewIntegrationOpen, setIsNewIntegrationOpen] = useState(false);
   const [integrationType, setIntegrationType] = useState<'ecommerce' | 'webhook' | null>(null);
   const [selectedEcommerce, setSelectedEcommerce] = useState<string | null>(null);
@@ -548,7 +550,15 @@ export default function Integracoes() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-6">Integrações E-commerce</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {integrations.map((integration: any) => {
+            {integrations
+              // Lojista Shopify não vê outras plataformas de e-commerce (termos da
+              // Shopify App Store); uma conexão já ativa continua visível para desconectar.
+              .filter((integration: any) =>
+                !isShopifyMerchant ||
+                integration.name === 'Shopify' ||
+                isConnected(integration.name).connected
+              )
+              .map((integration: any) => {
               const Icon = integration.icon;
               const connectionStatus = isConnected(integration.name);
               const isConnectedPlatform = connectionStatus.connected;
@@ -881,6 +891,9 @@ export default function Integracoes() {
               </p>
 
               <div className="grid gap-4">
+                {/* Lojista Shopify já conecta a loja na instalação; a escolha de
+                    e-commerce só listaria outras plataformas. */}
+                {!isShopifyMerchant && (
                 <Card
                   className="p-6 cursor-pointer hover:border-primary transition-colors"
                   onClick={() => handleSelectIntegrationType('ecommerce')}
@@ -897,6 +910,7 @@ export default function Integracoes() {
                     </div>
                   </div>
                 </Card>
+                )}
 
                 <Card
                   className="p-6 cursor-pointer hover:border-primary transition-colors"
