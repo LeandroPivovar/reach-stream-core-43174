@@ -26,6 +26,7 @@ import Indicacoes from "./pages/Indicacoes";
 import MinhaConta from "./pages/MinhaConta";
 import Produtos from "./pages/Produtos";
 import Categorias from "./pages/Categorias";
+import Kanban from "./pages/Kanban";
 import Suporte from "./pages/Suporte";
 import NotFound from "./pages/NotFound";
 import ShopifyCallback from "./pages/integrations/ShopifyCallback";
@@ -62,6 +63,8 @@ import AdminClientsReport from "./pages/admin/AdminClientsReport";
 import Checkout from "./pages/Checkout";
 import CancelarAssinatura from "./pages/CancelarAssinatura";
 import LandingPage from "./pages/LandingPage";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import { AnalyticsTracker } from "./components/analytics/AnalyticsTracker";
 
 const queryClient = new QueryClient();
@@ -82,12 +85,15 @@ const App = () => (
           <AnalyticsTracker />
           <Routes>
             <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             
             {/* Rotas públicas (apenas para não autenticados) */}
             <Route path="/auth/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/impersonate" element={<PublicRoute><Impersonate /></PublicRoute>} />
             <Route path="/auth/register" element={<PublicRoute><Register /></PublicRoute>} />
             <Route path="/auth/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+            <Route path="/auth/reset-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
             <Route path="/auth/verify-email" element={<PublicRoute><VerifyEmail /></PublicRoute>} />
             <Route path="/auth/resend-verification" element={<PublicRoute><ResendVerification /></PublicRoute>} />
 
@@ -96,6 +102,7 @@ const App = () => (
             <Route path="/campanhas" element={<ProtectedRoute><Campanhas /></ProtectedRoute>} />
             <Route path="/vendas" element={<ProtectedRoute><Vendas /></ProtectedRoute>} />
             <Route path="/contatos" element={<ProtectedRoute><Contatos /></ProtectedRoute>} />
+            <Route path="/kanban" element={<ProtectedRoute><Kanban /></ProtectedRoute>} />
             <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
             <Route path="/categorias" element={<ProtectedRoute><Categorias /></ProtectedRoute>} />
             <Route path="/conexoes" element={<ProtectedRoute><Conexoes /></ProtectedRoute>} />

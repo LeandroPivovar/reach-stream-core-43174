@@ -42,11 +42,12 @@ import { cn, translateTemplateName } from '@/lib/utils';
 import { WorkflowCanvas, WorkflowStep } from '@/components/workflow/WorkflowCanvas';
 import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
 import { WhatsappPreview } from '@/components/campaigns/WhatsappPreview';
-import { api, API_URL, Campaign, Contact, Group, SegmentationParam } from '@/lib/api';
+import { api, API_URL, Campaign, Contact, EmailConnection, Group, SegmentationParam } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useScoreConfig } from '@/hooks/use-score-config';
 import { useSegmentationStats, evaluateSegmentation } from '@/hooks/use-segmentation-stats';
 import { useInternalAnalytics } from '@/hooks/use-internal-analytics';
+import { useShopifyMerchant } from '@/hooks/use-shopify-merchant';
 import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
 import { TemplateRequestModal } from '@/components/campaigns/TemplateRequestModal';
 import { BuyCreditsModal } from '@/components/subscriptions/BuyCreditsModal';
@@ -132,6 +133,7 @@ export default function Campanhas() {
   const navigate = useNavigate();
   const { trackAction } = useInternalAnalytics();
   const { toast } = useToast();
+  const { isShopifyMerchant } = useShopifyMerchant();
   const [isNewCampaignOpen, setIsNewCampaignOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -183,7 +185,8 @@ export default function Campanhas() {
       subject: '',
       content: '',
       mode: 'text' as 'text' | 'html',
-      media: [] as { url: string; type: 'image' | 'video'; name: string }[]
+      media: [] as { url: string; type: 'image' | 'video'; name: string }[],
+      connectionId: null as number | null,
     },
     workflow: { nodes: [], edges: [] } as any,
     tracking: {
@@ -351,6 +354,7 @@ export default function Campanhas() {
   const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
   const [subscriptionStats, setSubscriptionStats] = useState<any>(null);
   const [twilioConfigured, setTwilioConfigured] = useState(false);
+  const [emailConnections, setEmailConnections] = useState<EmailConnection[]>([]);
   const { config: scoreConfig } = useScoreConfig();
 
   // Estado para armazenar compras e LTV dos contatos (necessário para o modal)
@@ -449,17 +453,21 @@ export default function Campanhas() {
 
   const loadExternalData = async () => {
     try {
-      const [contactsData, groupsData, statsData, subStats, twilioData] = await Promise.all([
+      const [contactsData, groupsData, statsData, subStats, twilioData, emailConnectionsData] = await Promise.all([
         api.getContacts(),
         api.getGroups(),
         api.getContactSegmentationStats(),
         api.getSubscriptionStats(),
         api.getTwilioConfig().catch(() => ({ configured: false })),
+        api.getEmailConnections().catch(() => []),
       ]);
       setContacts(contactsData.map(convertApiContactToFrontend));
       setAvailableGroups(groupsData);
       setSubscriptionStats(subStats);
       setTwilioConfigured(!!twilioData?.configured);
+      setEmailConnections(emailConnectionsData.filter((connection) =>
+        connection.status === 'verified' && !!connection.email,
+      ));
     } catch (error) {
       console.error('Erro ao carregar dados externos:', error);
     }
@@ -611,20 +619,32 @@ export default function Campanhas() {
       const whatsappCredits = getWhatsappCredits(subscriptionStats);
 
       if (subscriptionStats && (simpleEmail || advancedEmail) && emailCredits.available <= 0) {
-        setBuyCreditsInitialType('email');
-        setIsBuyCreditsModalOpen(true);
+        if (!isShopifyMerchant) {
+          setBuyCreditsInitialType('email');
+          setIsBuyCreditsModalOpen(true);
+        } else {
+          toast({ title: 'Limite do plano atingido', description: 'Pacotes adicionais ainda não estão disponíveis para contas Shopify.', variant: 'destructive' });
+        }
         setIsSaving(false);
         return;
       }
       if (subscriptionStats && (simpleSms || advancedSms) && smsCredits.available <= 0) {
-        setBuyCreditsInitialType('sms');
-        setIsBuyCreditsModalOpen(true);
+        if (!isShopifyMerchant) {
+          setBuyCreditsInitialType('sms');
+          setIsBuyCreditsModalOpen(true);
+        } else {
+          toast({ title: 'Limite do plano atingido', description: 'Pacotes adicionais ainda não estão disponíveis para contas Shopify.', variant: 'destructive' });
+        }
         setIsSaving(false);
         return;
       }
       if (subscriptionStats && (simpleWhatsapp || advancedWhatsapp) && !whatsappCredits.isUnlimited && whatsappCredits.available <= 0) {
-        setBuyCreditsInitialType('whatsapp');
-        setIsBuyCreditsModalOpen(true);
+        if (!isShopifyMerchant) {
+          setBuyCreditsInitialType('whatsapp');
+          setIsBuyCreditsModalOpen(true);
+        } else {
+          toast({ title: 'Limite do plano atingido', description: 'Pacotes adicionais ainda não estão disponíveis para contas Shopify.', variant: 'destructive' });
+        }
         setIsSaving(false);
         return;
       }
@@ -726,7 +746,8 @@ export default function Campanhas() {
           subject: '',
           content: '',
           mode: 'text',
-          media: []
+          media: [],
+          connectionId: null,
         },
         workflow: { nodes: [], edges: [] },
         tracking: {
@@ -821,7 +842,13 @@ export default function Campanhas() {
         giftback: { giftValue: '', maxRedemptions: '', validityDate: undefined },
         shippingCoupon: { code: '', minPurchaseValue: '', expirationDays: '30' }
       },
-      email: campaign.config?.email || { subject: '', content: '', mode: 'text', media: [] },
+      email: {
+        subject: campaign.config?.email?.subject || '',
+        content: campaign.config?.email?.content || '',
+        mode: campaign.config?.email?.mode || 'text',
+        media: campaign.config?.email?.media || [],
+        connectionId: campaign.config?.email?.connectionId || null,
+      },
       workflow: campaign.config?.workflow?.nodes ? campaign.config.workflow : { nodes: [], edges: [] },
       tracking: campaign.config?.tracking || { type: '', utmSource: '', utmMedium: '', utmCampaign: '', destinationUrl: '' },
       scheduleType: campaign.scheduledAt ? 'schedule' : 'now',
@@ -1075,6 +1102,37 @@ export default function Campanhas() {
         Nova Campanha
       </HeaderActions.Add>
     </>
+  );
+
+  const renderEmailSenderSelector = () => (
+    <div className="grid gap-2 rounded-lg border bg-muted/30 p-4">
+      <Label htmlFor="email-sender">Remetente do e-mail</Label>
+      <Select
+        value={newCampaign.email.connectionId ? String(newCampaign.email.connectionId) : 'default'}
+        onValueChange={(value) => setNewCampaign({
+          ...newCampaign,
+          email: {
+            ...newCampaign.email,
+            connectionId: value === 'default' ? null : Number(value),
+          },
+        })}
+      >
+        <SelectTrigger id="email-sender">
+          <SelectValue placeholder="Selecione o remetente" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="default">Núcleo CRM — remetente padrão</SelectItem>
+          {emailConnections.map((connection) => (
+            <SelectItem key={connection.id} value={String(connection.id)}>
+              {connection.senderName ? `${connection.senderName} — ` : ''}{connection.email}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className="text-xs text-muted-foreground">
+        Apenas remetentes que passaram pela validação técnica da Zenvia aparecem aqui.
+      </p>
+    </div>
   );
 
   return (
@@ -1462,18 +1520,15 @@ export default function Campanhas() {
           });
         }
       }}>
-        <DialogContent
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
-          className={cn(
-            "overflow-y-auto",
-            // Expandir apenas no passo do workflow
-            newCampaign.campaignComplexity === 'advanced' && currentStep === 4
-              ? "!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] p-8"
-              : newCampaign.campaignComplexity === 'simple' && currentStep === 5 && newCampaign.channel === 'whatsapp'
-                ? "max-w-6xl max-h-[90vh]"
-                : "max-w-3xl max-h-[90vh]"
-          )}>
+        <DialogContent className={cn(
+          "overflow-y-auto",
+          // Expandir apenas no passo do workflow
+          newCampaign.campaignComplexity === 'advanced' && currentStep === 4
+            ? "!max-w-[98vw] !w-[98vw] !max-h-[98vh] !h-[98vh] p-8"
+            : newCampaign.campaignComplexity === 'simple' && currentStep === 5 && newCampaign.channel === 'whatsapp'
+              ? "max-w-6xl max-h-[90vh]"
+              : "max-w-3xl max-h-[90vh]"
+        )}>
           <DialogHeader>
             <DialogTitle>Nova Campanha - Etapa {currentStep} de {getTotalSteps()}</DialogTitle>
             <DialogDescription className="sr-only">
@@ -1840,18 +1895,20 @@ export default function Campanhas() {
                                 <ShieldCheck className="w-3.5 h-3.5" /> Sem Créditos de WhatsApp
                               </p>
                               <p className="text-[10px] text-muted-foreground mb-3 font-medium">Você atingiu o limite do seu plano.</p>
-                              <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                className="h-7 text-[10px] font-bold px-4"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setBuyCreditsInitialType('whatsapp');
-                                  setIsBuyCreditsModalOpen(true);
-                                }}
-                              >
-                                <Zap className="w-3 h-3 mr-1" /> Comprar Créditos
-                              </Button>
+                              {!isShopifyMerchant && (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="h-7 text-[10px] font-bold px-4"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setBuyCreditsInitialType('whatsapp');
+                                    setIsBuyCreditsModalOpen(true);
+                                  }}
+                                >
+                                  <Zap className="w-3 h-3 mr-1" /> Comprar Créditos
+                                </Button>
+                              )}
                             </div>
                           </div>
                         )}
@@ -2017,15 +2074,17 @@ export default function Campanhas() {
                             <p className="text-[12px] text-muted-foreground mr-4">
                               Selecione um modelo previamente aprovado na Meta para iniciar as conversas.
                             </p>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-xs h-8 text-primary border-primary/30 hover:bg-primary/5 flex items-center justify-center white-space-nowrap"
-                              onClick={() => setIsTemplateModalOpen(true)}
-                            >
-                              <Plus className="w-3 h-3 mr-1" />
-                              Solicitar Novo Template
-                            </Button>
+                            {!isShopifyMerchant && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs h-8 text-primary border-primary/30 hover:bg-primary/5 flex items-center justify-center white-space-nowrap"
+                                onClick={() => setIsTemplateModalOpen(true)}
+                              >
+                                <Plus className="w-3 h-3 mr-1" />
+                                Solicitar Novo Template
+                              </Button>
+                            )}
                           </div>
                         </div>
 
@@ -2364,6 +2423,8 @@ export default function Campanhas() {
                         </div>
                       </div>
 
+                      {renderEmailSenderSelector()}
+
                       <div className="grid gap-2">
                         <Label htmlFor="email-subject">Assunto do E-mail *</Label>
                         <Input
@@ -2661,17 +2722,19 @@ export default function Campanhas() {
                 </p>
               </div>
 
+              {renderEmailSenderSelector()}
+
               <WorkflowCanvas
                 workflow={newCampaign.workflow}
                 onChange={(workflow) => setNewCampaign({ ...newCampaign, workflow })}
                 twilioConfigured={twilioConfigured}
                 whatsappLimit={subscriptionStats?.whatsappLimit}
                 whatsappSent={subscriptionStats?.whatsappSent}
-                onBuyCredits={() => {
+                onBuyCredits={isShopifyMerchant ? undefined : () => {
                   setBuyCreditsInitialType('whatsapp');
                   setIsBuyCreditsModalOpen(true);
                 }}
-                onOpenTemplateModal={() => setIsTemplateModalOpen(true)}
+                onOpenTemplateModal={isShopifyMerchant ? undefined : () => setIsTemplateModalOpen(true)}
               />
 
               {/* Resumo da Campanha - Só mostra se houver pelo menos um nó de disparo */}
@@ -3774,22 +3837,26 @@ export default function Campanhas() {
         scoreConfig={scoreConfig}
       />
 
-      <TemplateRequestModal
-        isOpen={isTemplateModalOpen}
-        onClose={() => setIsTemplateModalOpen(false)}
-        onSuccess={() => {
-          loadExternalData();
-        }}
-      />
+      {!isShopifyMerchant && (
+        <>
+          <TemplateRequestModal
+            isOpen={isTemplateModalOpen}
+            onClose={() => setIsTemplateModalOpen(false)}
+            onSuccess={() => {
+              loadExternalData();
+            }}
+          />
 
-      <BuyCreditsModal
-        isOpen={isBuyCreditsModalOpen}
-        onClose={() => setIsBuyCreditsModalOpen(false)}
-        initialType={buyCreditsInitialType}
-        onSuccess={() => {
-          loadExternalData();
-        }}
-      />
+          <BuyCreditsModal
+            isOpen={isBuyCreditsModalOpen}
+            onClose={() => setIsBuyCreditsModalOpen(false)}
+            initialType={buyCreditsInitialType}
+            onSuccess={() => {
+              loadExternalData();
+            }}
+          />
+        </>
+      )}
 
     </Layout >
   );

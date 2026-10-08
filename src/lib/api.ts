@@ -1,4 +1,4 @@
-import { isShopifyEmbedded, getShopifySessionToken } from './shopify';
+import { isShopifyEmbedded, getShopifySessionToken, getEmbeddedToken } from './shopify';
 
 const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 const defaultApiUrl = isProd ? window.location.origin : 'http://localhost:3000';
@@ -292,6 +292,8 @@ export interface EmailConnection {
   id: number;
   type: 'smtp' | 'domain';
   email?: string;
+  senderName?: string;
+  verifiedAt?: string;
   smtpHost?: string;
   smtpPort?: number;
   username?: string;
@@ -337,6 +339,8 @@ export interface CreateTwilioConnectionData {
 export interface CreateEmailConnectionData {
   type: 'domain';
   domain: string;
+  email: string;
+  senderName?: string;
 }
 
 export interface ScoreConfig {
@@ -651,7 +655,15 @@ export interface UpdateCategoryData {
 
 class ApiService {
   private getAuthToken(): string | null {
-    return localStorage.getItem('token');
+    // localStorage pode estar bloqueado em iframe embedded (Shopify admin);
+    // nesse caso a sessão vive em memória no módulo lib/shopify.
+    try {
+      const stored = localStorage.getItem('token');
+      if (stored) return stored;
+    } catch {
+      // storage indisponível — cai no fallback em memória
+    }
+    return getEmbeddedToken();
   }
 
   // Loja Integrada Integration
@@ -1316,7 +1328,9 @@ class ApiService {
     shop?: string;
     trialDays?: number;
   }): Promise<{ confirmationUrl: string; appSubscriptionId: string }> {
-    return this.request<{ confirmationUrl: string; appSubscriptionId: string }>('/shopify/billing/create-subscription', {
+    // Fluxo oficial: cria a assinatura local pendente e retorna a confirmationUrl.
+    // A ativação acontece via webhook app_subscriptions/update + callback do backend.
+    return this.request<{ confirmationUrl: string; appSubscriptionId: string }>('/subscriptions/shopify/checkout', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -1438,7 +1452,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    const token = localStorage.getItem('token');
+    const token = this.getAuthToken();
     const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
     const response = await fetch(`${baseUrl}/api/contacts/import`, {
       method: 'POST',
@@ -1461,7 +1475,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    const token = localStorage.getItem('token');
+    const token = this.getAuthToken();
     const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
     const response = await fetch(`${baseUrl}/api/products/import-excel`, {
       method: 'POST',
@@ -1646,6 +1660,13 @@ class ApiService {
     });
   }
 
+  async updateEmailConnection(id: number, data: { email: string; senderName?: string }): Promise<EmailConnection> {
+    return this.request<EmailConnection>(`/email-connections/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
   async deleteEmailConnection(id: number): Promise<void> {
     return this.request<void>(`/email-connections/${id}`, {
       method: 'DELETE',
@@ -1726,6 +1747,21 @@ class ApiService {
     return this.request<any[]>('/shopify/connections', {
       method: 'GET',
     });
+  }
+
+  // Solicitações de dados de clientes (webhook customers/data_request da Shopify).
+  // O merchant tem 30 dias para responder ao cliente final.
+  async getShopifyDataRequests(): Promise<ShopifyDataRequestSummary[]> {
+    return this.request<ShopifyDataRequestSummary[]>('/shopify/compliance/data-requests', {
+      method: 'GET',
+    });
+  }
+
+  async getShopifyDataRequest(id: number): Promise<{ id: number; shop: string; payload: any; createdAt: string }> {
+    return this.request<{ id: number; shop: string; payload: any; createdAt: string }>(
+      `/shopify/compliance/data-requests/${id}`,
+      { method: 'GET' },
+    );
   }
 
   async syncShopifyProduct(shop: string, product: any): Promise<any> {
@@ -1950,6 +1986,7 @@ class ApiService {
     columnId: number;
     title: string;
     description?: string;
+    contactId?: number;
     metadata?: Record<string, any>;
   }): Promise<{ card: KanbanCardDto }> {
     return this.request<{ card: KanbanCardDto }>('/kanban/cards', {
@@ -1966,6 +2003,7 @@ class ApiService {
       columnId?: number;
       order?: number;
       active?: boolean;
+      contactId?: number | null;
       metadata?: Record<string, any>;
     },
   ): Promise<{ card: KanbanCardDto }> {
@@ -2414,7 +2452,7 @@ class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    const token = localStorage.getItem('token');
+    const token = this.getAuthToken();
     const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
     const response = await fetch(`${baseUrl}/api/sales/import`, {
       method: 'POST',
@@ -2651,6 +2689,15 @@ export interface AdminUser {
   role: string;
   createdAt: string;
   currentPlan?: Plan;
+  currentSubscription?: {
+    id: number;
+    status: string;
+    planId: number;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
   extraEmailsBalance?: number;
   extraSmsBalance?: number;
   templateId?: string;
@@ -2662,11 +2709,24 @@ export interface AdminUser {
 
 
 
+export interface ShopifyDataRequestSummary {
+  id: number;
+  shop: string;
+  shopifyCustomerId: string | null;
+  customerEmail: string | null;
+  status: string;
+  contactsCount: number;
+  salesCount: number;
+  createdAt: string;
+}
+
 export interface Plan {
   id: number;
   name: string;
   price: number;
   priceYearly: number;
+  // Preço da cobrança via Shopify Billing (USD). Nulo = plano indisponível no checkout Shopify.
+  priceUsd?: number | null;
   interval: string;
   features: string[];
   limits: {

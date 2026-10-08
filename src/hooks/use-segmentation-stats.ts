@@ -1,6 +1,25 @@
 import { useMemo } from 'react';
 import { SegmentationParam } from '@/lib/api';
 
+const COMPLETED_SALE_STATUSES = new Set([
+    'completed',
+    'completo',
+    'pago',
+    'aprovado',
+    'approved',
+    'paid',
+    'success',
+    'sucesso',
+    'delivered',
+    'entregue',
+    'shipped',
+    'fulfilled',
+]);
+
+function isCompletedSaleStatus(status?: string) {
+    return COMPLETED_SALE_STATUSES.has((status || '').toLowerCase().trim());
+}
+
 export function evaluateSegmentation(
     contact: any,
     purchaseData: { purchases: any[]; ltv: number } | undefined,
@@ -94,7 +113,7 @@ export function evaluateSegmentation(
             const productIds = params?.productIds || [];
             if (productIds.length === 0) return true; // If no products selected, don't filter out? Or return all? Backend returns all if empty array.
             if (!purchaseData || !purchaseData.purchases) return false;
-            return purchaseData.purchases.some(p => productIds.includes(p.productId) && (p.status === 'completed' || p.status === 'pago'));
+            return purchaseData.purchases.some(p => productIds.includes(p.productId) && isCompletedSaleStatus(p.status));
         }
 
         default:

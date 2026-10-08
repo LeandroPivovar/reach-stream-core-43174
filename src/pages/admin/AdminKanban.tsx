@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { LayoutGrid, Plus, GripVertical, Pencil, Trash2, Zap, User as UserIcon, Mail, Phone, Users, Send } from 'lucide-react';
-import { api, Campaign, Contact, Group, KanbanColumnDto, KanbanCardDto, KanbanCondition, KanbanEntryType } from '@/lib/api';
+import { api, Campaign, Contact, Group, KanbanColumnDto, KanbanCardDto, KanbanCondition, KanbanEntryType, SegmentationParam } from '@/lib/api';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { ContactDetailsModal } from '@/components/contacts/ContactDetailsModal';
+import { useScoreConfig } from '@/hooks/use-score-config';
+import { useSegmentationStats } from '@/hooks/use-segmentation-stats';
+import { SegmentationPicker } from '@/components/campaigns/SegmentationPicker';
 
 const ENTRY_TYPE_LABELS: Record<KanbanEntryType, string> = {
     capture_page: 'Página de captura',
@@ -44,6 +49,16 @@ interface ColumnFormState {
     conditions: KanbanCondition[];
 }
 
+interface CardFormState {
+    columnId: number;
+    title: string;
+    description: string;
+    contactIds: Set<number>;
+    groupIds: Set<number>;
+    segmentations: (string | SegmentationParam)[];
+    campaignId: string;
+}
+
 const defaultColumnForm = (): ColumnFormState => ({
     name: '',
     description: '',
@@ -53,10 +68,25 @@ const defaultColumnForm = (): ColumnFormState => ({
     conditions: [],
 });
 
+const defaultCardForm = (columnId = 0): CardFormState => ({
+    columnId,
+    title: '',
+    description: '',
+    contactIds: new Set(),
+    groupIds: new Set(),
+    segmentations: [],
+    campaignId: '',
+});
 
-export default function AdminKanban() {
+interface AdminKanbanProps {
+    layout?: 'admin' | 'app';
+}
+
+export default function AdminKanban({ layout = 'admin' }: AdminKanbanProps = {}) {
+    const PageLayout = layout === 'admin' ? AdminLayout : Layout;
     const queryClient = useQueryClient();
     const { toast } = useToast();
+    const { config: scoreConfig } = useScoreConfig();
 
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
     const [editingColumn, setEditingColumn] = useState<KanbanColumnDto | null>(null);
@@ -68,19 +98,17 @@ export default function AdminKanban() {
 
     const [isCardModalOpen, setIsCardModalOpen] = useState(false);
     const [editingCard, setEditingCard] = useState<KanbanCardDto | null>(null);
-    const [cardForm, setCardForm] = useState<{ columnId: number; title: string; description: string }>({
-        columnId: 0,
-        title: '',
-        description: '',
-    });
+    const [cardForm, setCardForm] = useState<CardFormState>(defaultCardForm());
+    const [selectedProfileContactId, setSelectedProfileContactId] = useState<number | null>(null);
 
     const [columnToDelete, setColumnToDelete] = useState<KanbanColumnDto | null>(null);
     const [cardToDelete, setCardToDelete] = useState<KanbanCardDto | null>(null);
-    const [isAddCampaignOpen, setIsAddCampaignOpen] = useState(false);
 
     const [draggedCardId, setDraggedCardId] = useState<number | null>(null);
     const [dragOverColumnId, setDragOverColumnId] = useState<number | null>(null);
 
+    // Adicionar contatos/grupos a uma campanha manualmente
+    const [isAddCampaignOpen, setIsAddCampaignOpen] = useState(false);
     const [addCampaignId, setAddCampaignId] = useState('');
     const [addTab, setAddTab] = useState<'contacts' | 'groups'>('contacts');
     const [selectedContactIds, setSelectedContactIds] = useState<Set<number>>(new Set());
@@ -88,7 +116,7 @@ export default function AdminKanban() {
 
     // --- Queries ---
 
-    const { data: columnsData, isLoading: isLoadingColumns } = useQuery({
+    const { data: columnsData, isLoading: isLoadingColumns, isError, error } = useQuery({
         queryKey: ['kanban-columns'],
         queryFn: async () => {
             const response = await api.getKanbanColumns();
@@ -106,37 +134,25 @@ export default function AdminKanban() {
 
     const { data: campaignsData } = useQuery({
         queryKey: ['campaigns-for-kanban'],
-        queryFn: async () => {
-            try {
-                return await api.getCampaigns({});
-            } catch {
-                return [];
-            }
-        },
+        queryFn: () => api.getCampaigns({}),
         staleTime: 60_000,
     });
 
     const { data: contactsData } = useQuery({
         queryKey: ['contacts-for-kanban'],
-        queryFn: async () => {
-            try {
-                return await api.getContacts();
-            } catch {
-                return [];
-            }
-        },
+        queryFn: () => api.getContacts(),
         staleTime: 60_000,
     });
 
     const { data: groupsData } = useQuery({
         queryKey: ['groups-for-kanban'],
-        queryFn: async () => {
-            try {
-                return await api.getGroups();
-            } catch {
-                return [];
-            }
-        },
+        queryFn: () => api.getGroups(),
+        staleTime: 60_000,
+    });
+
+    const { data: contactPurchasesData } = useQuery({
+        queryKey: ['contact-purchases-for-kanban'],
+        queryFn: () => api.getContactPurchases(),
         staleTime: 60_000,
     });
 
@@ -144,6 +160,37 @@ export default function AdminKanban() {
     const contactsList: Contact[] = contactsData ?? [];
     const groupsList: Group[] = groupsData ?? [];
     const columns: KanbanColumnDto[] = columnsData ?? [];
+    const contactPurchases = (contactPurchasesData ?? []).reduce<Record<number, { purchases: any[]; ltv: number }>>((acc, purchase: any) => {
+        if (!purchase.contactId) return acc;
+        if (!acc[purchase.contactId]) acc[purchase.contactId] = { purchases: [], ltv: 0 };
+        const value = Number(purchase.value ?? purchase.totalValue ?? 0);
+        acc[purchase.contactId].purchases.push({
+            id: purchase.id,
+            date: purchase.purchaseDate ?? purchase.createdAt,
+            value,
+            product: purchase.productName ?? purchase.product?.name ?? 'Compra',
+        });
+        acc[purchase.contactId].ltv += value;
+        return acc;
+    }, {});
+
+    const contactsForDetails = contactsList.map((contact) => ({
+        id: contact.id,
+        name: contact.name,
+        phone: contact.phone ?? '',
+        email: contact.email ?? '',
+        group: contact.group?.name ?? groupsList.find((g) => g.id === contact.groupId)?.name ?? '',
+        status: contact.status ?? '',
+        tags: contact.contactTags?.map((ct) => ct.tag?.name).filter(Boolean) ?? [],
+        state: contact.state ?? '',
+        city: contact.city ?? '',
+        birthDate: contact.birthDate ?? '',
+        gender: contact.gender ?? '',
+        segmentations: contact.contactSegmentations?.map((cs) => cs.segmentationId).filter(Boolean) ?? [],
+        lastInteraction: contact.updatedAt ?? contact.createdAt,
+        sales: contact.sales ?? [],
+    }));
+    const segmentationStats = useSegmentationStats(contactsList, contactPurchases, cardForm.segmentations);
 
     const cardsByColumn: Record<number, KanbanCardDto[]> = {};
     (cardsData ?? []).forEach((card) => {
@@ -171,9 +218,7 @@ export default function AdminKanban() {
     });
 
     const createColumnMutation = useMutation({
-        mutationFn: async (form: ColumnFormState) => {
-            return await api.createKanbanColumn(buildColumnPayload(form));
-        },
+        mutationFn: (form: ColumnFormState) => api.createKanbanColumn(buildColumnPayload(form)),
         onSuccess: () => {
             invalidate();
             setIsColumnModalOpen(false);
@@ -184,9 +229,8 @@ export default function AdminKanban() {
     });
 
     const updateColumnMutation = useMutation({
-        mutationFn: async ({ columnId, form }: { columnId: number; form: ColumnFormState }) => {
-            return await api.updateKanbanColumn(columnId, buildColumnPayload(form));
-        },
+        mutationFn: ({ columnId, form }: { columnId: number; form: ColumnFormState }) =>
+            api.updateKanbanColumn(columnId, buildColumnPayload(form)),
         onSuccess: () => {
             invalidate();
             setIsColumnModalOpen(false);
@@ -198,9 +242,7 @@ export default function AdminKanban() {
     });
 
     const deleteColumnMutation = useMutation({
-        mutationFn: async (columnId: number) => {
-            return await api.deleteKanbanColumn(columnId);
-        },
+        mutationFn: (columnId: number) => api.deleteKanbanColumn(columnId),
         onSuccess: () => {
             invalidate();
             setColumnToDelete(null);
@@ -209,36 +251,113 @@ export default function AdminKanban() {
         onError: (err: any) => toast({ title: 'Erro', description: err.message, variant: 'destructive' }),
     });
 
-    const createCardMutation = useMutation({
-        mutationFn: async (data: { columnId: number; title: string; description?: string }) => {
-            return await api.createKanbanCard(data);
-        },
-        onSuccess: () => {
-            invalidate();
-            setIsCardModalOpen(false);
-            setCardForm({ columnId: 0, title: '', description: '' });
-            toast({ title: 'Card criado' });
-        },
-        onError: (err: any) => toast({ title: 'Erro ao criar card', description: err.message, variant: 'destructive' }),
-    });
+    const hasAudienceSelection = (form = cardForm) =>
+        form.contactIds.size > 0 || form.groupIds.size > 0 || form.segmentations.length > 0;
 
-    const updateCardMutation = useMutation({
-        mutationFn: async ({ cardId, data }: { cardId: number; data: any }) => {
-            return await api.updateKanbanCard(cardId, data);
+    const getCardSelectedContacts = async (form = cardForm) => {
+        const uniqueById = new Map<number, Contact>();
+
+        if (form.segmentations.length > 0 || form.groupIds.size > 0) {
+            const segmentContacts = await api.getContactsBySegments(form.segmentations, Array.from(form.groupIds));
+            segmentContacts.forEach((contact) => uniqueById.set(contact.id, contact));
+        }
+
+        contactsList
+            .filter((contact) => form.contactIds.has(contact.id))
+            .forEach((contact) => uniqueById.set(contact.id, contact));
+
+        return Array.from(uniqueById.values());
+    };
+
+    const createCardMutation = useMutation({
+        mutationFn: async ({ form, card }: { form: CardFormState; card?: KanbanCardDto | null }) => {
+            const selectedContacts = await getCardSelectedContacts(form);
+            const campaign = campaigns.find((c) => String(c.id) === form.campaignId);
+            const description = form.description.trim() || undefined;
+            const customTitle = form.title.trim();
+            const firstContact = selectedContacts[0];
+
+            if (!card && selectedContacts.length === 0) {
+                throw new Error('Selecione ao menos um contato, grupo ou segmentação.');
+            }
+
+            if (card) {
+                const updatedCard = await api.updateKanbanCard(card.id, {
+                    columnId: form.columnId,
+                    title: customTitle || firstContact?.name || card.title,
+                    description,
+                    contactId: firstContact?.id ?? card.contactId ?? null,
+                    metadata: {
+                        ...(card.metadata ?? {}),
+                        campaignId: campaign?.id,
+                        campaignName: campaign?.name,
+                        selectedSegmentations: form.segmentations,
+                        selectedGroups: Array.from(form.groupIds),
+                        selectedContacts: Array.from(form.contactIds),
+                    },
+                });
+
+                const additionalContacts = selectedContacts.slice(1);
+                const additionalCards = await Promise.all(additionalContacts.map((contact) => api.createKanbanCard({
+                    columnId: form.columnId,
+                    title: customTitle || contact.name,
+                    description,
+                    contactId: contact.id,
+                    metadata: {
+                        campaignId: campaign?.id,
+                        campaignName: campaign?.name,
+                        selectedSegmentations: form.segmentations,
+                        selectedGroups: Array.from(form.groupIds),
+                        selectedContacts: Array.from(form.contactIds),
+                        createdFrom: 'kanban_card_edit',
+                    },
+                })));
+
+                if (campaign && selectedContacts.length > 0) {
+                    await api.addContactsToCampaign(campaign.id, selectedContacts.map((contact) => contact.id));
+                }
+
+                return [updatedCard, ...additionalCards];
+            }
+
+            const createdCards = await Promise.all(selectedContacts.map((contact) => api.createKanbanCard({
+                columnId: form.columnId,
+                title: customTitle || contact.name,
+                description,
+                contactId: contact.id,
+                metadata: {
+                    campaignId: campaign?.id,
+                    campaignName: campaign?.name,
+                    selectedSegmentations: form.segmentations,
+                    selectedGroups: Array.from(form.groupIds),
+                    selectedContacts: Array.from(form.contactIds),
+                    createdFrom: 'kanban_audience_selection',
+                },
+            })));
+
+            if (campaign) {
+                await api.addContactsToCampaign(campaign.id, selectedContacts.map((contact) => contact.id));
+            }
+
+            return createdCards;
         },
-        onSuccess: () => {
+        onSuccess: (_res, variables) => {
             invalidate();
             setIsCardModalOpen(false);
             setEditingCard(null);
-            toast({ title: 'Card atualizado' });
+            setCardForm(defaultCardForm());
+            toast({
+                title: variables.card ? 'Card atualizado' : 'Card criado',
+                description: variables.form.campaignId
+                    ? 'Contatos adicionados ao Kanban e encaminhados para a campanha.'
+                    : 'Card atualizado no Kanban.',
+            });
         },
         onError: (err: any) => toast({ title: 'Erro', description: err.message, variant: 'destructive' }),
     });
 
     const deleteCardMutation = useMutation({
-        mutationFn: async (cardId: number) => {
-            return await api.deleteKanbanCard(cardId);
-        },
+        mutationFn: (cardId: number) => api.deleteKanbanCard(cardId),
         onSuccess: () => {
             invalidate();
             setCardToDelete(null);
@@ -249,25 +368,19 @@ export default function AdminKanban() {
     });
 
     const moveCardMutation = useMutation({
-        mutationFn: async ({ cardId, toColumnId, order }: { cardId: number; toColumnId: number; order?: number }) => {
-            return await api.moveKanbanCard(cardId, toColumnId, order);
-        },
+        mutationFn: ({ cardId, toColumnId, order }: { cardId: number; toColumnId: number; order?: number }) =>
+            api.moveKanbanCard(cardId, toColumnId, order),
         onSuccess: () => invalidate(),
         onError: (err: any) => toast({ title: 'Erro ao mover card', description: err.message, variant: 'destructive' }),
     });
 
     const addToCampaignMutation = useMutation({
         mutationFn: async () => {
-            try {
-                const id = parseInt(addCampaignId);
-                if (addTab === 'contacts') {
-                    return await api.addContactsToCampaign(id, Array.from(selectedContactIds));
-                }
-                return await api.addGroupsToCampaign(id, Array.from(selectedGroupIds));
-            } catch (err) {
-                console.warn("Mocking add to campaign", err);
-                return { success: true };
+            const id = parseInt(addCampaignId);
+            if (addTab === 'contacts') {
+                return api.addContactsToCampaign(id, Array.from(selectedContactIds));
             }
+            return api.addGroupsToCampaign(id, Array.from(selectedGroupIds));
         },
         onSuccess: (res: any) => {
             setIsAddCampaignOpen(false);
@@ -341,28 +454,53 @@ export default function AdminKanban() {
 
     const handleOpenCreateCard = (columnId: number) => {
         setEditingCard(null);
-        setCardForm({ columnId, title: '', description: '' });
+        setCardForm(defaultCardForm(columnId));
         setIsCardModalOpen(true);
     };
 
     const handleOpenEditCard = (card: KanbanCardDto) => {
         setEditingCard(card);
-        setCardForm({ columnId: card.columnId, title: card.title, description: card.description || '' });
+        setCardForm({
+            ...defaultCardForm(card.columnId),
+            title: card.title,
+            description: card.description || '',
+            contactIds: new Set([
+                ...(card.contactId ? [card.contactId] : []),
+                ...((card.metadata?.selectedContacts as number[] | undefined) ?? []),
+            ]),
+            groupIds: new Set((card.metadata?.selectedGroups as number[] | undefined) ?? []),
+            segmentations: (card.metadata?.selectedSegmentations as (string | SegmentationParam)[] | undefined) ?? [],
+            campaignId: card.metadata?.campaignId ? String(card.metadata.campaignId) : '',
+        });
         setIsCardModalOpen(true);
     };
 
     const handleSubmitCard = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!cardForm.title.trim()) {
-            toast({ title: 'Título obrigatório', variant: 'destructive' });
+
+        if (!cardForm.columnId) {
+            toast({ title: 'Selecione a coluna', variant: 'destructive' });
             return;
         }
-        const payload = { columnId: cardForm.columnId, title: cardForm.title.trim(), description: cardForm.description.trim() || undefined };
-        if (editingCard) {
-            updateCardMutation.mutate({ cardId: editingCard.id, data: payload });
-        } else {
-            createCardMutation.mutate(payload);
+
+        if (!editingCard) {
+            if (!cardForm.campaignId) {
+                toast({ title: 'Selecione a campanha', variant: 'destructive' });
+                return;
+            }
+
+            if (!hasAudienceSelection()) {
+                toast({ title: 'Selecione ao menos um contato, grupo ou segmentação', variant: 'destructive' });
+                return;
+            }
         }
+
+        createCardMutation.mutate({ form: cardForm, card: editingCard });
+    };
+
+    const handleOpenContactProfile = (contactId?: number | null) => {
+        if (!contactId) return;
+        setSelectedProfileContactId(contactId);
     };
 
     const handleDragStart = (e: React.DragEvent, card: KanbanCardDto) => {
@@ -393,23 +531,35 @@ export default function AdminKanban() {
 
     if (isLoadingColumns || isLoadingCards) {
         return (
-            <AdminLayout title="Kanban" subtitle="Carregando quadro...">
+            <PageLayout title="Kanban" subtitle="Carregando quadro...">
                 <div className="flex items-center justify-center min-h-[400px]">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
                 </div>
-            </AdminLayout>
+            </PageLayout>
         );
     }
 
-
+    if (isError) {
+        return (
+            <PageLayout title="Kanban" subtitle="Erro ao carregar">
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <h3 className="text-lg font-semibold text-red-500 mb-2">Erro ao carregar dados</h3>
+                        <p className="text-sm text-slate-400">{(error as any)?.message}</p>
+                        <Button className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['kanban-columns'] })}>Tentar novamente</Button>
+                    </div>
+                </div>
+            </PageLayout>
+        );
+    }
 
     return (
-        <AdminLayout
+        <PageLayout
             title="Quadro Kanban"
             subtitle={`${columns.length} coluna${columns.length !== 1 ? 's' : ''}`}
             actions={
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={() => setIsAddCampaignOpen(true)} className="flex items-center gap-2 text-slate-700 border-slate-300 hover:border-primary hover:text-primary hover:bg-primary/5 font-medium">
+                    <Button variant="outline" onClick={() => setIsAddCampaignOpen(true)} className="flex items-center gap-2">
                         <Send className="w-4 h-4" /> Adicionar à campanha
                     </Button>
                     <Button onClick={handleOpenCreateColumn} className="flex items-center gap-2">
@@ -418,7 +568,7 @@ export default function AdminKanban() {
                 </div>
             }
         >
-            <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-6 h-[calc(100vh-175px)] items-start" style={{scrollbarWidth:'thin'}}>
+            <div className="flex gap-4 overflow-x-auto pb-6 min-h-[calc(100vh-200px)] items-start">
                 {columns.length === 0 && (
                     <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
                         <LayoutGrid className="w-16 h-16 text-slate-300 mb-4" />
@@ -438,126 +588,122 @@ export default function AdminKanban() {
                         <div
                             key={column.id}
                             className={cn(
-                                'flex-shrink-0 w-72 bg-white/70 dark:bg-slate-900/80 backdrop-blur-sm shadow-sm rounded-2xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col max-h-full transition-all duration-200',
-                                isDragOver && 'ring-2 ring-primary/40 bg-primary/[0.03] border-primary/30 shadow-md'
+                                'flex-shrink-0 w-72 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-200',
+                                isDragOver && 'ring-2 ring-primary/50 bg-primary/5'
                             )}
                             onDragOver={(e) => handleDragOver(e, column.id)}
                             onDragLeave={() => setDragOverColumnId(null)}
                             onDrop={(e) => handleDrop(e, column.id)}
                         >
                             {/* Cabeçalho da coluna */}
-                            <div className="px-3 pt-3 pb-2.5 flex items-start justify-between gap-2">
-                                <div className="flex items-start gap-2 min-w-0 flex-1">
-                                    <GripVertical className="w-4 h-4 text-slate-400 shrink-0 cursor-grab mt-0.5" />
-                                    <div className="min-w-0 flex-1">
-                                        <h3 className="font-semibold text-[13px] text-slate-800 dark:text-slate-100 leading-snug break-words">
-                                            {column.name}
-                                        </h3>
+                            <div className="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <GripVertical className="w-4 h-4 text-slate-400 shrink-0 cursor-grab" />
+                                    <div className="min-w-0">
+                                        <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">{column.name}</h3>
                                         {column.entryType && (
-                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">{ENTRY_TYPE_LABELS[column.entryType]}</p>
+                                            <p className="text-[10px] text-slate-400 truncate">{ENTRY_TYPE_LABELS[column.entryType]}</p>
                                         )}
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-0.5 shrink-0 mt-0.5">
+                                <div className="flex items-center gap-1 shrink-0">
                                     {column.campaignId && (
-                                        <span title={`Campanha: ${column.campaign?.name ?? column.campaignId}`}>
-                                            <Zap className="w-3.5 h-3.5 text-amber-500 mr-1" />
-                                        </span>
+                                        <Zap className="w-3.5 h-3.5 text-amber-500" title={`Campanha: ${column.campaign?.name ?? column.campaignId}`} />
                                     )}
-                                    <span className="text-[11px] font-semibold text-primary bg-primary/10 rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center mr-0.5">
-                                        {columnCards.length}
-                                    </span>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-primary/70 hover:text-primary hover:bg-primary/10 rounded-lg" onClick={() => handleOpenEditColumn(column)}>
-                                        <Pencil className="w-3 h-3" />
+                                    <Badge variant="secondary" className="text-[10px] h-5 px-1.5">{columnCards.length}</Badge>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenEditColumn(column)}>
+                                        <Pencil className="w-3.5 h-3.5 text-slate-500" />
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-red-400/70 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg" onClick={() => setColumnToDelete(column)}>
-                                        <Trash2 className="w-3 h-3" />
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setColumnToDelete(column)}>
+                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
                                     </Button>
                                 </div>
                             </div>
 
-                            {/* Divisor */}
-                            <div className="h-px bg-slate-100 dark:bg-slate-800 mx-3 mb-2" />
-
                             {/* Cards */}
-                            <div className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-1 space-y-2 min-h-0">
-                                {columnCards.map((card) => {
-                                    const displayName = card.contact?.name ?? card.title;
-                                    return (
-                                        <div
+                            <ScrollArea className="flex-1 p-2 min-h-[100px] max-h-[60vh]">
+                                <div className="space-y-2">
+                                    {columnCards.map((card) => (
+                                        <Card
                                             key={card.id}
                                             draggable
                                             onDragStart={(e) => handleDragStart(e, card)}
                                             onDragEnd={() => { setDraggedCardId(null); setDragOverColumnId(null); }}
                                             onClick={() => handleOpenEditCard(card)}
                                             className={cn(
-                                                'p-3 cursor-pointer rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group relative overflow-hidden',
+                                                'p-3 cursor-pointer hover:shadow-md transition-all duration-150 group border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800',
                                                 draggedCardId === card.id && 'opacity-40 scale-95'
                                             )}
                                         >
-                                            {/* Barra lateral roxa */}
-                                            <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary/30 group-hover:bg-primary transition-colors duration-200 rounded-l-xl" />
-
-                                            <div className="min-w-0 flex-1 pl-1">
-                                                    <div className="flex items-start justify-between gap-1">
-                                                        <h4 className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 leading-snug break-words flex-1">
-                                                            {displayName}
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div
+                                                    className={cn(
+                                                        'flex items-start gap-2 min-w-0',
+                                                        card.contact && 'cursor-pointer rounded-md hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                                                    )}
+                                                    onClick={(e) => {
+                                                        if (!card.contactId) return;
+                                                        e.stopPropagation();
+                                                        handleOpenContactProfile(card.contactId);
+                                                    }}
+                                                    title={card.contact ? 'Ver perfil do contato' : undefined}
+                                                >
+                                                    {card.contact ? (
+                                                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+                                                            <UserIcon className="w-3 h-3 text-primary" />
+                                                        </div>
+                                                    ) : null}
+                                                    <div className="min-w-0">
+                                                        <h4 className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-tight truncate">
+                                                            {card.contact?.name ?? card.title}
                                                         </h4>
-                                                        <Button
-                                                            variant="ghost" size="icon"
-                                                            className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 -mt-0.5 -mr-0.5 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md"
-                                                            onClick={(e) => { e.stopPropagation(); setCardToDelete(card); }}
-                                                        >
-                                                            <Trash2 className="w-3 h-3 text-red-400" />
-                                                        </Button>
+                                                        {card.contact?.email && (
+                                                            <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 truncate">
+                                                                <Mail className="w-2.5 h-2.5 shrink-0" />
+                                                                {card.contact.email}
+                                                            </p>
+                                                        )}
+                                                        {card.contact?.phone && (
+                                                            <p className="text-[10px] text-slate-400 flex items-center gap-1 truncate">
+                                                                <Phone className="w-2.5 h-2.5 shrink-0" />
+                                                                {card.contact.phone}
+                                                            </p>
+                                                        )}
                                                     </div>
-
-                                                    {card.contact?.email && (
-                                                        <p className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 mt-1 truncate">
-                                                            <Mail className="w-2.5 h-2.5 shrink-0 text-slate-500" />
-                                                            {card.contact.email}
-                                                        </p>
-                                                    )}
-                                                    {card.contact?.phone && (
-                                                        <p className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1 mt-0.5 truncate">
-                                                            <Phone className="w-2.5 h-2.5 shrink-0 text-slate-500" />
-                                                            {card.contact.phone}
-                                                        </p>
-                                                    )}
-                                                    {!card.contact && card.description && (
-                                                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2 leading-relaxed">{card.description}</p>
-                                                    )}
+                                                </div>
+                                                <Button
+                                                    variant="ghost" size="icon"
+                                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                                    onClick={(e) => { e.stopPropagation(); setCardToDelete(card); }}
+                                                >
+                                                    <Trash2 className="w-3 h-3 text-red-400" />
+                                                </Button>
                                             </div>
+                                            {!card.contact && card.description && (
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">{card.description}</p>
+                                            )}
+                                            <p className="text-[10px] text-slate-400 mt-2">{new Date(card.createdAt).toLocaleDateString('pt-BR')}</p>
+                                        </Card>
+                                    ))}
 
-                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 pl-1">{new Date(card.createdAt).toLocaleDateString('pt-BR')}</p>
+                                    {columnCards.length === 0 && (
+                                        <div className="text-center py-6 text-xs text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
+                                            Arraste cards para cá
                                         </div>
-                                    );
-                                })}
-
-                                {columnCards.length === 0 && (
-                                    <div className={cn(
-                                        "flex flex-col items-center justify-center py-8 rounded-xl border-2 border-dashed transition-colors duration-200",
-                                        isDragOver
-                                            ? "border-primary/50 bg-primary/5 text-primary"
-                                            : "border-slate-200 dark:border-slate-800 text-slate-400"
-                                    )}>
-                                        <LayoutGrid className="w-6 h-6 mb-1.5 opacity-40" />
-                                        <span className="text-[11px] font-medium">Arraste cards para cá</span>
-                                    </div>
-                                )}
-                            </div>
+                                    )}
+                                </div>
+                            </ScrollArea>
 
                             {/* Botão adicionar card */}
-                            <div className="p-2 pt-2">
-                                <button
+                            <div className="p-2 border-t border-slate-200 dark:border-slate-800">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start gap-2 text-xs text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
                                     onClick={() => handleOpenCreateCard(column.id)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-medium text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-primary/8 dark:hover:bg-primary/10 transition-colors duration-150 group/add"
                                 >
-                                    <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-100 dark:bg-slate-800 group-hover/add:bg-primary/15 transition-colors duration-150">
-                                        <Plus className="w-3 h-3" />
-                                    </span>
-                                    Adicionar card
-                                </button>
+                                    <Plus className="w-3.5 h-3.5" /> Adicionar card
+                                </Button>
                             </div>
                         </div>
                     );
@@ -577,7 +723,6 @@ export default function AdminKanban() {
                             <Label htmlFor="col-name">Nome</Label>
                             <Input
                                 id="col-name"
-                                autoFocus
                                 value={columnForm.name}
                                 onChange={(e) => setColumnForm((f) => ({ ...f, name: e.target.value }))}
                                 placeholder="Ex: Recuperação de carrinho"
@@ -716,13 +861,20 @@ export default function AdminKanban() {
 
             {/* Modal — Card */}
             <Dialog open={isCardModalOpen} onOpenChange={setIsCardModalOpen}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="w-[96vw] max-w-6xl max-h-[92vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{editingCard ? 'Editar Card' : 'Novo Card'}</DialogTitle>
+                        {!editingCard && (
+                            <DialogDescription>Crie cards para contatos individuais ou grupos e encaminhe os leads para uma campanha.</DialogDescription>
+                        )}
                     </DialogHeader>
                     <form onSubmit={handleSubmitCard} className="space-y-4">
                         {editingCard?.contact && (
-                            <div className="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-800 p-3">
+                            <div
+                                className="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-800 p-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                                onClick={() => handleOpenContactProfile(editingCard.contactId)}
+                                title="Ver perfil do contato"
+                            >
                                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                                     <UserIcon className="w-4 h-4 text-primary" />
                                 </div>
@@ -732,11 +884,72 @@ export default function AdminKanban() {
                                 </div>
                             </div>
                         )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label>Coluna</Label>
+                                <Select
+                                    value={cardForm.columnId ? String(cardForm.columnId) : ''}
+                                    onValueChange={(value) => setCardForm((form) => ({ ...form, columnId: Number(value) }))}
+                                    disabled={!!editingCard}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione a coluna" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {columns.map((column) => (
+                                            <SelectItem key={column.id} value={String(column.id)}>{column.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                    <Label>Campanha de destino</Label>
+                                    <Select
+                                        value={cardForm.campaignId}
+                                        onValueChange={(value) => setCardForm((form) => ({ ...form, campaignId: value }))}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione a campanha" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {campaigns.map((campaign) => (
+                                                <SelectItem key={campaign.id} value={String(campaign.id)}>
+                                                    {campaign.name} ({campaign.channel}) Â· {campaign.status}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                            </div>
+                        </div>
+
+                        <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4">
+                            <SegmentationPicker
+                                selectedSegments={cardForm.segmentations}
+                                onSegmentsChange={(segmentations) => setCardForm((form) => ({ ...form, segmentations }))}
+                                availableGroups={groupsList}
+                                selectedGroups={Array.from(cardForm.groupIds).map(String)}
+                                onGroupsChange={(groups) => setCardForm((form) => ({
+                                    ...form,
+                                    groupIds: new Set(groups.map(Number).filter((id) => !Number.isNaN(id))),
+                                }))}
+                                selectedContactIds={Array.from(cardForm.contactIds)}
+                                onSpecificContactsChange={(contactIds) => setCardForm((form) => ({
+                                    ...form,
+                                    contactIds: new Set(contactIds),
+                                }))}
+                                allContacts={contactsList}
+                                onViewContact={handleOpenContactProfile}
+                                stats={segmentationStats}
+                            />
+                            <p className="mt-3 text-xs text-slate-500">
+                                Ao salvar, os contatos encontrados nas segmentações, grupos ou seleção unitária serão colocados no Kanban. Se houver campanha selecionada, eles também serão encaminhados para ela.
+                            </p>
+                        </div>
                         <div className="space-y-1.5">
                             <Label htmlFor="card-title">Título</Label>
                             <Input
                                 id="card-title"
-                                autoFocus
                                 value={cardForm.title}
                                 onChange={(e) => setCardForm({ ...cardForm, title: e.target.value })}
                                 placeholder="Título do card"
@@ -764,8 +977,8 @@ export default function AdminKanban() {
                                 </Button>
                             )}
                             <Button type="button" variant="outline" onClick={() => setIsCardModalOpen(false)}>Cancelar</Button>
-                            <Button type="submit" disabled={createCardMutation.isPending || updateCardMutation.isPending}>
-                                {(createCardMutation.isPending || updateCardMutation.isPending) ? 'Salvando...' : editingCard ? 'Salvar' : 'Criar'}
+                            <Button type="submit" disabled={createCardMutation.isPending}>
+                                {createCardMutation.isPending ? 'Salvando...' : editingCard ? 'Salvar' : 'Criar'}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -904,6 +1117,15 @@ export default function AdminKanban() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </AdminLayout>
+
+            <ContactDetailsModal
+                isOpen={selectedProfileContactId !== null}
+                onClose={() => setSelectedProfileContactId(null)}
+                contactId={selectedProfileContactId}
+                contacts={contactsForDetails}
+                contactPurchases={contactPurchases}
+                scoreConfig={scoreConfig}
+            />
+        </PageLayout>
     );
 }

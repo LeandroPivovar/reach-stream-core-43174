@@ -45,6 +45,19 @@ import InternalResponsiveTable from '@/components/common/responsive-table';
 const ResponsiveTable = (typeof window !== 'undefined' && (window as any).ResponsiveTable) || InternalResponsiveTable;
 import { cn } from '@/lib/utils';
 
+const LEGACY_INVALID_DNS_VALUES = [
+  'include:_spf.nucleocrm.com.br',
+  'mxa.nucleocrm.com.br',
+  'nucleo._domainkey',
+];
+
+const hasLegacyInvalidDns = (connection?: EmailConnection | null) => {
+  if (!connection) return false;
+  return [connection.dnsTxt, connection.dnsCname, connection.dnsMx].some((value) =>
+    LEGACY_INVALID_DNS_VALUES.some((legacyValue) => value?.includes(legacyValue))
+  );
+};
+
 export default function Conexoes() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -54,7 +67,9 @@ export default function Conexoes() {
   const [selectedConnection, setSelectedConnection] = useState<EmailConnection | null>(null);
 
   const [emailForm, setEmailForm] = useState({
-    domain: ''
+    domain: '',
+    email: '',
+    senderName: '',
   });
 
   const [twilioForm, setTwilioForm] = useState({
@@ -99,6 +114,26 @@ export default function Conexoes() {
     }
   });
 
+  const updateEmailMutation = useMutation({
+    mutationFn: ({ id, email, senderName }: { id: number; email: string; senderName?: string }) =>
+      api.updateEmailConnection(id, { email, senderName }),
+    onSuccess: (connection) => {
+      queryClient.invalidateQueries({ queryKey: ['email-connections'] });
+      setSelectedConnection(connection);
+      toast({
+        title: 'Remetente atualizado',
+        description: 'A conexão voltou para pendente e precisa ser validada novamente.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Erro ao atualizar remetente',
+        description: error.message || 'Não foi possível atualizar o remetente.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const createTwilioMutation = useMutation({
     mutationFn: (data: any) => api.twilioConnectionsApi.request(data),
     onSuccess: () => {
@@ -126,7 +161,9 @@ export default function Conexoes() {
 
   const resetEmailForm = () => {
     setEmailForm({
-      domain: ''
+      domain: '',
+      email: '',
+      senderName: '',
     });
   };
 
@@ -466,13 +503,35 @@ export default function Conexoes() {
                 Após adicionar, você precisará configurar registros DNS em seu provedor.
               </p>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="sender-email">Endereço remetente *</Label>
+              <Input
+                id="sender-email"
+                type="email"
+                placeholder="contato@empresa.com"
+                value={emailForm.email}
+                onChange={(e) => setEmailForm({ ...emailForm, email: e.target.value })}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Este endereço precisa estar cadastrado no canal de e-mail da Zenvia e pertencer ao domínio acima.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sender-name">Nome do remetente</Label>
+              <Input
+                id="sender-name"
+                placeholder="Ex: Minha Empresa"
+                value={emailForm.senderName}
+                onChange={(e) => setEmailForm({ ...emailForm, senderName: e.target.value })}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setIsEmailModalOpen(false)}>Cancelar</Button>
             <Button
               onClick={() => createEmailMutation.mutate({ ...emailForm, type: 'domain' })}
-              disabled={createEmailMutation.isPending || !emailForm.domain}
+              disabled={createEmailMutation.isPending || !emailForm.domain || !emailForm.email}
             >
               {createEmailMutation.isPending ? 'Salvando...' : 'Confirmar Configuração'}
             </Button>
@@ -534,6 +593,73 @@ export default function Conexoes() {
 
           <div className="space-y-6 py-4">
             <div className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-lg">
+              <p className="text-sm text-amber-600 font-medium mb-1">
+                {selectedConnection?.status === 'verified' ? 'Status: Aprovado' : 'Status: Pendente de Aprovação'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                A autenticação de domínio de e-mail deve ser feita com os registros gerados pela Zenvia para este domínio.
+              </p>
+            </div>
+
+            <div className="grid gap-4 rounded-lg border p-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="connection-sender-email">Endereço remetente</Label>
+                <Input
+                  id="connection-sender-email"
+                  type="email"
+                  placeholder={`contato@${selectedConnection?.domain || 'empresa.com'}`}
+                  value={selectedConnection?.email || ''}
+                  onChange={(e) => setSelectedConnection((current) => current ? { ...current, email: e.target.value } : current)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="connection-sender-name">Nome do remetente</Label>
+                <Input
+                  id="connection-sender-name"
+                  placeholder="Ex: Minha Empresa"
+                  value={selectedConnection?.senderName || ''}
+                  onChange={(e) => setSelectedConnection((current) => current ? { ...current, senderName: e.target.value } : current)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={!selectedConnection?.id || !selectedConnection?.email || updateEmailMutation.isPending}
+                  onClick={() => selectedConnection && updateEmailMutation.mutate({
+                    id: selectedConnection.id,
+                    email: selectedConnection.email || '',
+                    senderName: selectedConnection.senderName,
+                  })}
+                >
+                  {updateEmailMutation.isPending ? 'Salvando...' : 'Salvar remetente e solicitar revalidação'}
+                </Button>
+              </div>
+            </div>
+
+            {hasLegacyInvalidDns(selectedConnection) && (
+              <div className="bg-red-500/5 border border-red-500/10 p-4 rounded-lg">
+                <p className="text-sm text-red-600 font-medium mb-1">Registros antigos inválidos detectados</p>
+                <p className="text-xs text-muted-foreground">
+                  Esta conexão foi criada com instruções antigas que apontavam para DNS inexistentes do Núcleo CRM.
+                  Refaça a autenticação no painel da Zenvia antes de usar este domínio para envio.
+                </p>
+              </div>
+            )}
+
+            <div className="p-4 bg-muted rounded-lg space-y-3 text-sm">
+              <p className="font-medium">Como configurar corretamente</p>
+              <ol className="list-decimal pl-5 space-y-2 text-muted-foreground">
+                <li>Acesse Zenvia &gt; Canais &gt; E-mail &gt; Configurações do canal.</li>
+                <li>Cadastre o domínio <span className="font-mono text-foreground">{selectedConnection?.domain}</span>.</li>
+                <li>Copie exatamente os 5 registros CNAME e o TXT/DMARC gerados pela Zenvia.</li>
+                <li>Cadastre esses registros no provedor DNS do domínio e depois valide na Zenvia.</li>
+              </ol>
+            </div>
+
+            {false && (
+              <>
+            <div className="bg-amber-500/5 border border-amber-500/10 p-4 rounded-lg">
               <p className="text-sm text-amber-600 font-medium mb-1">Status: Pendente de Aprovação</p>
               <p className="text-xs text-muted-foreground">
                 Insira os registros abaixo no seu editor de DNS (Cloudflare, GoDaddy, etc) e aguarde a aprovação do administrador.
@@ -569,6 +695,24 @@ export default function Conexoes() {
                     </Button>
                   </div>
                 </div>
+              </div>
+            </div>
+
+              </>
+            )}
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase mb-1">Observação TXT/DMARC</p>
+                <code className="block bg-background p-2 rounded border whitespace-pre-wrap">{selectedConnection?.dnsTxt}</code>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase mb-1">Observação CNAME</p>
+                <code className="block bg-background p-2 rounded border whitespace-pre-wrap">{selectedConnection?.dnsCname}</code>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase mb-1">Observação MX</p>
+                <code className="block bg-background p-2 rounded border whitespace-pre-wrap">{selectedConnection?.dnsMx}</code>
               </div>
             </div>
 

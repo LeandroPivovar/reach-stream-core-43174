@@ -36,6 +36,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 
+function formatDateForInput(value: string | Date) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 export default function AdminUsers() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
@@ -176,7 +186,8 @@ export default function AdminUsers() {
     const impersonateMutation = useMutation({
         mutationFn: ({ userId }: { userId: number, user: AdminUser }) => api.impersonateAdminUser(userId),
         onSuccess: (data, variables) => {
-            const url = `${window.location.origin}/impersonate?t=${data.token}&u=${btoa(JSON.stringify(data.user))}`;
+            const params = new URLSearchParams({ t: data.token });
+            const url = `${window.location.origin}/impersonate?${params.toString()}`;
             setImpersonateUrl(url);
             setImpersonateUser(variables.user);
             setIsImpersonateModalOpen(true);
@@ -271,9 +282,9 @@ export default function AdminUsers() {
     const handleOpenExpiry = (user: AdminUser) => {
         setSelectedUser(user);
         // Pre-fill with current expiry if available
-        const sub = (user as any).currentSubscription;
+        const sub = user.currentSubscription;
         if (sub?.currentPeriodEnd) {
-            setExpiryDate(new Date(sub.currentPeriodEnd).toISOString().split('T')[0]);
+            setExpiryDate(formatDateForInput(sub.currentPeriodEnd));
         } else {
             setExpiryDate('');
         }
@@ -325,6 +336,7 @@ export default function AdminUsers() {
                             <TableHead>Template ID</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Plano Atual</TableHead>
+                            <TableHead>Vencimento</TableHead>
                             <TableHead>Último Login</TableHead>
                             <TableHead>Data Cadastro</TableHead>
                             <TableHead className="text-right">Ações</TableHead>
@@ -352,6 +364,13 @@ export default function AdminUsers() {
                                         </Badge>
                                     ) : (
                                         <span className="text-muted-foreground text-sm">Sem plano</span>
+                                    )}
+                                </TableCell>
+                                <TableCell>
+                                    {user.currentSubscription?.currentPeriodEnd ? (
+                                        new Date(user.currentSubscription.currentPeriodEnd).toLocaleDateString('pt-BR')
+                                    ) : (
+                                        <span className="text-muted-foreground text-sm">---</span>
                                     )}
                                 </TableCell>
                                 <TableCell>

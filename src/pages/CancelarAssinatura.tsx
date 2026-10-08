@@ -12,11 +12,13 @@ export default function CancelarAssinatura() {
     const { toast } = useToast();
     const [confirmed, setConfirmed] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [accessUntil, setAccessUntil] = useState<string | null>(null);
 
     const handleCancel = async () => {
         setIsLoading(true);
         try {
-            await api.cancelSubscription();
+            const result = await api.cancelSubscription();
+            setAccessUntil(result?.accessUntil || null);
             setConfirmed(true);
         } catch (err) {
             toast({ title: 'Erro', description: 'Não foi possível cancelar a assinatura. Tente novamente.', variant: 'destructive' });
@@ -55,7 +57,8 @@ export default function CancelarAssinatura() {
                             <div className="flex items-start space-x-3">
                                 <div className="w-2 h-2 mt-2 rounded-full bg-primary flex-shrink-0" />
                                 <p className="text-sm">
-                                    <span className="font-semibold">Acesso garantido por 30 dias:</span> todos os benefícios do seu plano continuarão disponíveis por 30 dias a partir da data do último pagamento.
+                                    <span className="font-semibold">Acesso garantido por 30 dias:</span> todos os benefícios do seu plano continuarão disponíveis
+                                    {accessUntil ? ` até ${new Date(accessUntil).toLocaleDateString('pt-BR')}` : ' por 30 dias a partir do cancelamento'}.
                                 </p>
                             </div>
                         </div>
@@ -100,7 +103,7 @@ export default function CancelarAssinatura() {
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                                <p className="text-sm">Seus benefícios <strong>continuarão disponíveis por 30 dias</strong> a partir da data do seu último pagamento.</p>
+                                <p className="text-sm">Seus benefícios <strong>continuarão disponíveis por 30 dias</strong> a partir da confirmação do cancelamento.</p>
                             </div>
                         </div>
                     </div>

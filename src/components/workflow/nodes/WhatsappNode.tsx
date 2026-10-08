@@ -326,19 +326,17 @@ export const WhatsappNode: React.FC<NodeProps> = ({ data, id }) => {
                                 })}
                               </SelectContent>
                       </Select>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-11 px-4 text-xs border-primary/30 hover:bg-primary/10 flex items-center gap-1.5 whitespace-nowrap rounded-lg transition-all"
-                        onClick={() => {
-                          if ((data as any).onOpenTemplateModal) {
-                            (data as any).onOpenTemplateModal();
-                          }
-                        }}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Novo Template
-                      </Button>
+                      {(data as any).onOpenTemplateModal && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-11 px-4 text-xs border-primary/30 hover:bg-primary/10 flex items-center gap-1.5 whitespace-nowrap rounded-lg transition-all"
+                          onClick={() => (data as any).onOpenTemplateModal()}
+                        >
+                          <Plus className="w-4 h-4" />
+                          Novo Template
+                        </Button>
+                      )}
                     </div>
                   </div>
 

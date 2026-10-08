@@ -43,6 +43,7 @@ export default function AdminPlans() {
         name: '',
         price: 0,
         priceYearly: 0,
+        priceUsd: null,
         interval: 'monthly',
         features: [],
         limits: {
@@ -102,6 +103,7 @@ export default function AdminPlans() {
                 name: '',
                 price: 0,
                 priceYearly: 0,
+                priceUsd: null,
                 interval: 'monthly',
                 features: [],
                 limits: {
@@ -610,6 +612,20 @@ export default function AdminPlans() {
                                         onChange={e => setFormData({ ...formData, priceYearly: parseFloat(e.target.value) })}
                                     />
                                 </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="priceUsd">Valor Shopify (US$)</Label>
+                                <Input
+                                    id="priceUsd"
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.priceUsd ?? ''}
+                                    placeholder="Vazio = plano indisponível no checkout Shopify"
+                                    onChange={e => setFormData({ ...formData, priceUsd: e.target.value === '' ? null : parseFloat(e.target.value) })}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    Cobrança via Shopify Billing é feita em dólar. Este valor NÃO é convertido do preço em reais.
+                                </p>
                             </div>
                             <div className="space-y-2">
                                 <Label>Intervalo</Label>

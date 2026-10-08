@@ -11,8 +11,6 @@ export default defineConfig(({ mode }) => ({
     allowedHosts: [
       'nucleocrm.com.br',
       'www.nucleocrm.com.br',
-	'www.nucleocrm.shop',
-	'nucleocrm.shop',
       'localhost',
       '.localhost',
     ],

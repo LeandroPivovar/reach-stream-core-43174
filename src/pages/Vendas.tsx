@@ -82,6 +82,25 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn, translatePaymentMethod } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 
+const COMPLETED_SALE_STATUSES = new Set([
+  'completed',
+  'Completo',
+  'pago',
+  'Pago',
+  'aprovado',
+  'Aprovado',
+  'approved',
+  'paid',
+  'success',
+  'Sucesso',
+  'delivered',
+  'entregue',
+  'shipped',
+  'fulfilled',
+]);
+
+const isCompletedSaleStatus = (status?: string) => COMPLETED_SALE_STATUSES.has(status || '');
+
 export default function Vendas() {
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -713,8 +732,8 @@ export default function Vendas() {
                   header: "Status",
                   className: "text-right w-[100px]",
                   cell: (venda) => (
-                    <Badge variant={venda.status === 'completed' ? 'default' : 'secondary'} className="text-[9px] uppercase font-bold">
-                      {venda.status === 'completed' ? 'Pago' : 'Pendente'}
+                    <Badge variant={isCompletedSaleStatus(venda.status) ? 'default' : 'secondary'} className="text-[9px] uppercase font-bold">
+                      {isCompletedSaleStatus(venda.status) ? 'Pago' : 'Pendente'}
                     </Badge>
                   )
                 }
@@ -734,8 +753,8 @@ export default function Vendas() {
                       <h4 className="font-bold text-sm mt-0.5">{venda.customerName || 'Sem nome'}</h4>
                       <p className="text-[11px] text-muted-foreground">{venda.customerEmail}</p>
                     </div>
-                    <Badge variant={venda.status === 'completed' ? 'default' : 'secondary'} className="text-[9px] uppercase">
-                      {venda.status === 'completed' ? 'Pago' : 'Pendente'}
+                    <Badge variant={isCompletedSaleStatus(venda.status) ? 'default' : 'secondary'} className="text-[9px] uppercase">
+                      {isCompletedSaleStatus(venda.status) ? 'Pago' : 'Pendente'}
                     </Badge>
                   </div>
                   

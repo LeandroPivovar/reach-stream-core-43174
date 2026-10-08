@@ -8,7 +8,6 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  return <>{children}</>;
   const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
@@ -55,13 +54,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     '/cancelar-assinatura',
     '/conta',
     '/admin',
-    '/integrations/shopify/callback',
-    '/integrations/nuvemshop/callback'
+    '/integracoes',
+    '/integrations/'
   ];
 
   const hasActivePlan = subscription?.status === 'active' && !(subscription as any)?.isExpired;
   const isAllowedPath = allowedPathsWithoutPlan.some(path => {
-    // Para rotas de integração, aceitamos sub-rotas. Para as demais, exigimos match exato ou com barra no final
+    // Callbacks de integrações precisam continuar acessíveis antes da assinatura,
+    // pois conectar a loja é o passo que define o gateway de cobrança do usuário.
     if (path.startsWith('/integrations/')) {
       return location.pathname.startsWith(path);
     }

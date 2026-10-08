@@ -20,9 +20,11 @@ export function PublicRoute({ children }: PublicRouteProps) {
     );
   }
 
-  // Se já estiver autenticado, redirecionar para o dashboard
+  // Se já estiver autenticado, redirecionar para o dashboard.
+  // Preserva a query string: no modo embedded da Shopify os params host/shop
+  // precisam sobreviver à navegação para o App Bridge funcionar em reloads.
   if (isAuthenticated) {
-    return <Navigate to="/visao-geral" replace />;
+    return <Navigate to={{ pathname: '/visao-geral', search: window.location.search }} replace />;
   }
 
   return <>{children}</>;

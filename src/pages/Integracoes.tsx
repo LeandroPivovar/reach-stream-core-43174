@@ -31,6 +31,8 @@ import {
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
+import { ShopifyDataRequests } from '@/components/integrations/ShopifyDataRequests';
+import { isShopifyEmbedded } from '@/lib/shopify';
 import InternalResponsiveTable from '@/components/common/responsive-table';
 const ResponsiveTable = (typeof window !== 'undefined' && (window as any).ResponsiveTable) || InternalResponsiveTable;
 import { cn } from '@/lib/utils';
@@ -38,12 +40,10 @@ import { cn } from '@/lib/utils';
 export default function Integracoes() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isEmbeddedShopifyApp = isShopifyEmbedded();
   const [isNewIntegrationOpen, setIsNewIntegrationOpen] = useState(false);
   const [integrationType, setIntegrationType] = useState<'ecommerce' | 'webhook' | null>(null);
   const [selectedEcommerce, setSelectedEcommerce] = useState<string | null>(null);
-  const [isShopifyInfoOpen, setIsShopifyInfoOpen] = useState(false);
-  const [isConnectingShopify, setIsConnectingShopify] = useState(false);
-  const [shopifyShop, setShopifyShop] = useState('');
   const [isNuvemshopInfoOpen, setIsNuvemshopInfoOpen] = useState(false);
   const [isConnectingNuvemshop, setIsConnectingNuvemshop] = useState(false);
   const [ecommerceData, setEcommerceData] = useState({
@@ -73,9 +73,11 @@ export default function Integracoes() {
   // Estados para conexões e webhooks
   const [nuvemshopConnections, setNuvemshopConnections] = useState<any[]>([]);
   const [shopifyConnections, setShopifyConnections] = useState<any[]>([]);
+  const [shopifyConnectionError, setShopifyConnectionError] = useState<string | null>(null);
   const [vtexConnections, setVtexConnections] = useState<any[]>([]);
   const [webhooks, setWebhooks] = useState<any[]>([]);
-  const [loadingConnections, setLoadingConnections] = useState(false);
+  // Começa carregando para não exibir "Disponível" antes da primeira consulta.
+  const [loadingConnections, setLoadingConnections] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
   const [isConnectingVtex, setIsConnectingVtex] = useState(false);
   const [liConnections, setLiConnections] = useState<any[]>([]);
@@ -131,7 +133,7 @@ export default function Integracoes() {
       name: 'Tray',
       description: 'Integração com a plataforma Tray para gestão de vendas',
       imageUrl: '/icons/tray.png',
-      status: 'Disponível',
+      status: 'Indisponível',
       color: 'bg-orange-500',
       features: ['API de produtos', 'Sincronização de pedidos', 'Webhooks em tempo real']
     },
@@ -140,7 +142,7 @@ export default function Integracoes() {
       name: 'VTEX',
       description: 'Conecte sua loja VTEX para automação completa',
       imageUrl: '/icons/vtex.png',
-      status: 'Disponível',
+      status: 'Indisponível',
       color: 'bg-[#F71963]', // VTEX Official Pink
       features: ['Catálogo unificado', 'OMS integrado', 'Sincronização de Clientes']
     }
@@ -154,20 +156,33 @@ export default function Integracoes() {
   const loadConnections = async () => {
     try {
       setLoadingConnections(true);
+      setShopifyConnectionError(null);
       const [nuvemshop, shopify, vtex, li, tray] = await Promise.all([
         api.getNuvemshopConnections().catch(() => []),
-        api.getShopifyConnections().catch(() => []),
+        api.getShopifyConnections().catch((error) => {
+          console.error('Erro ao buscar conexão Shopify:', error);
+          setShopifyConnectionError(
+            error instanceof Error ? error.message : 'Não foi possível verificar a conexão Shopify',
+          );
+          return null;
+        }),
         api.getVtexConnections().catch(() => []),
         api.lojaIntegradaApi.getConnection().catch(() => null),
         api.trayApi.getConnection().catch(() => null),
       ]);
 
       const activeNuvemshop = nuvemshop.filter((c: any) => c.isActive);
-      const activeShopify = shopify.filter((c: any) => c.isActive);
+      const activeShopify = Array.isArray(shopify)
+        ? shopify.filter((c: any) => c.isActive)
+        : [];
       const activeVtex = vtex.filter((c: any) => c.isActive);
 
       setNuvemshopConnections(activeNuvemshop);
-      setShopifyConnections(activeShopify);
+      // Em uma falha transitória, preserva uma conexão já conhecida em vez de
+      // trocar o card incorretamente para "Disponível / Conectar".
+      if (Array.isArray(shopify)) {
+        setShopifyConnections(activeShopify);
+      }
       setVtexConnections(activeVtex);
       setLiConnections(li && li.isActive ? [li] : []);
       setTrayConnections(tray && tray.isActive ? [tray] : []);
@@ -285,59 +300,6 @@ export default function Integracoes() {
 
   const handleSelectEcommerce = (platform: string) => {
     setSelectedEcommerce(platform);
-  };
-
-  const handleTestConnection = async (platform: 'tray' | 'vtex') => {
-    setTestingConnection(true);
-
-    // Simulate API test
-    setTimeout(() => {
-      const success = Math.random() > 0.3; // 70% success rate for demo
-
-      if (success) {
-        toast({
-          title: "Conexão bem-sucedida!",
-          description: `A conexão com ${platform === 'tray' ? 'Tray' : 'VTEX'} foi testada com sucesso.`,
-        });
-      } else {
-        toast({
-          title: "Erro na conexão",
-          description: "Verifique suas credenciais e tente novamente.",
-          variant: "destructive",
-        });
-      }
-      setTestingConnection(false);
-    }, 2000);
-  };
-
-  const handleConnectShopify = async () => {
-    if (!shopifyShop) {
-      toast({
-        title: "Erro",
-        description: "Por favor, insira o domínio da sua loja Shopify",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsConnectingShopify(true);
-    try {
-      const response = await api.initShopifyAuth(shopifyShop);
-
-      // Salvar state no localStorage para verificação depois
-      localStorage.setItem('shopify_oauth_state', response.state);
-      localStorage.setItem('shopify_shop', response.shop);
-
-      // Redirecionar para a URL de autorização
-      window.location.href = response.authUrl;
-    } catch (error) {
-      toast({
-        title: "Erro ao iniciar conexão",
-        description: error instanceof Error ? error.message : "Não foi possível conectar com a Shopify",
-        variant: "destructive",
-      });
-      setIsConnectingShopify(false);
-    }
   };
 
   const handleConnectNuvemshop = async () => {
@@ -475,19 +437,12 @@ export default function Integracoes() {
 
   const handleConnect = async () => {
     if (integrationType === 'ecommerce') {
-      if (selectedEcommerce === 'Shopify') {
-        // Shopify usa OAuth, não precisa fazer nada aqui
-        return;
-      } else if (selectedEcommerce === 'Tray') {
-        console.log('Connecting Tray:', trayData);
-        // Here you would save to database with encrypted credentials
+      if (selectedEcommerce === 'Tray' || selectedEcommerce === 'VTEX') {
         toast({
-          title: "Tray conectado!",
-          description: "Credenciais salvas com segurança.",
+          title: 'Integração indisponível',
+          description: `${selectedEcommerce} ainda não está disponível para conexão.`,
+          variant: 'destructive',
         });
-      } else if (selectedEcommerce === 'VTEX') {
-        // VTEX usa conexão direta, não OAuth
-        await handleConnectVtex();
         return;
       } else if (selectedEcommerce === 'Loja Integrada') {
         await handleConnectLI();
@@ -598,6 +553,10 @@ export default function Integracoes() {
               const connectionStatus = isConnected(integration.name);
               const isConnectedPlatform = connectionStatus.connected;
               const connection = connectionStatus.connection;
+              const isCheckingConnection =
+                integration.name === 'Shopify' && loadingConnections && !isConnectedPlatform;
+              const hasConnectionError =
+                integration.name === 'Shopify' && !!shopifyConnectionError && !isConnectedPlatform;
 
               return (
                 <Card key={integration.id} className="p-6 border-2 border-border hover:border-primary/20 transition-colors">
@@ -612,8 +571,14 @@ export default function Integracoes() {
                       </div>
                       <div>
                         <h4 className="font-semibold">{integration.name}</h4>
-                        <Badge variant={isConnectedPlatform ? 'default' : integration.status === 'Em desenvolvimento' ? 'secondary' : 'secondary'}>
-                          {isConnectedPlatform ? 'Conectado' : integration.status}
+                        <Badge variant={isConnectedPlatform ? 'default' : 'secondary'}>
+                          {isConnectedPlatform
+                            ? 'Conectado'
+                            : isCheckingConnection
+                              ? 'Verificando...'
+                              : hasConnectionError
+                                ? 'Erro ao verificar'
+                                : integration.status}
                         </Badge>
                       </div>
                     </div>
@@ -634,7 +599,21 @@ export default function Integracoes() {
                   </div>
 
                     <div className="flex flex-col space-y-2">
-                      {isConnectedPlatform ? (
+                      {isCheckingConnection ? (
+                        <Button size="sm" className="w-full" disabled>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Verificando conexão...
+                        </Button>
+                      ) : hasConnectionError ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          onClick={loadConnections}
+                        >
+                          Tentar novamente
+                        </Button>
+                      ) : isConnectedPlatform ? (
                         <>
                           {integration.name === 'Shopify' && (
                             <Button
@@ -647,64 +626,68 @@ export default function Integracoes() {
                               Assinar via Shopify
                             </Button>
                           )}
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="w-full"
-                          onClick={() => {
-                            if (integration.name === 'Nuvemshop' && connection) {
-                              handleDisconnect('nuvemshop', connection.storeId);
-                            } else if (integration.name === 'Shopify' && connection) {
-                              handleDisconnect('shopify', connection.shop);
-                            } else if (integration.name === 'VTEX' && connection) {
-                              handleDisconnect('vtex', connection.accountName);
-                            } else if (integration.name === 'Tray' && connection) {
-                              handleDisconnect('tray', connection.shopUrl);
-                            } else if (integration.name === 'Loja Integrada' && connection) {
-                              handleDisconnect('loja_integrada', connection.storeName);
-                            }
-                          }}
-                          disabled={
-                            (integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
-                            (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
-                            (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`) ||
-                            (integration.name === 'Loja Integrada' && disconnecting === `loja_integrada-${connection?.storeName}`) ||
-                            (integration.name === 'Tray' && disconnecting === `tray-${connection?.shopUrl}`)
-                          }
-                        >
-                          {((integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
-                            (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
-                            (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`) ||
-                            (integration.name === 'Loja Integrada' && disconnecting === `loja_integrada-${connection?.storeName}`) ||
-                            (integration.name === 'Tray' && disconnecting === `tray-${connection?.shopUrl}`)) ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Desconectando...
-                            </>
-                          ) : (
-                            <>
-                              <X className="w-4 h-4 mr-2" />
-                              Desconectar
-                            </>
+                          {!(integration.name === 'Shopify' && isEmbeddedShopifyApp) && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => {
+                                if (integration.name === 'Nuvemshop' && connection) {
+                                  handleDisconnect('nuvemshop', connection.storeId);
+                                } else if (integration.name === 'Shopify' && connection) {
+                                  handleDisconnect('shopify', connection.shop);
+                                } else if (integration.name === 'VTEX' && connection) {
+                                  handleDisconnect('vtex', connection.accountName);
+                                } else if (integration.name === 'Tray' && connection) {
+                                  handleDisconnect('tray', connection.shopUrl);
+                                } else if (integration.name === 'Loja Integrada' && connection) {
+                                  handleDisconnect('loja_integrada', connection.storeName);
+                                }
+                              }}
+                              disabled={
+                                (integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
+                                (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
+                                (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`) ||
+                                (integration.name === 'Loja Integrada' && disconnecting === `loja_integrada-${connection?.storeName}`) ||
+                                (integration.name === 'Tray' && disconnecting === `tray-${connection?.shopUrl}`)
+                              }
+                            >
+                              {((integration.name === 'Nuvemshop' && disconnecting === `nuvemshop-${connection?.storeId}`) ||
+                                (integration.name === 'Shopify' && disconnecting === `shopify-${connection?.shop}`) ||
+                                (integration.name === 'VTEX' && disconnecting === `vtex-${connection?.accountName}`) ||
+                                (integration.name === 'Loja Integrada' && disconnecting === `loja_integrada-${connection?.storeName}`) ||
+                                (integration.name === 'Tray' && disconnecting === `tray-${connection?.shopUrl}`)) ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Desconectando...
+                                </>
+                              ) : (
+                                <>
+                                  <X className="w-4 h-4 mr-2" />
+                                  Desconectar
+                                </>
+                              )}
+                            </Button>
                           )}
-                          </Button>
                         </>
-                      ) : integration.status === 'Em desenvolvimento' ? (
+                      ) : integration.status === 'Em desenvolvimento' || integration.status === 'Indisponível' ? (
                         <Button
                           size="sm"
                           className="flex-1"
                           disabled
                         >
-                          Em desenvolvimento
+                          {integration.status}
+                        </Button>
+                      ) : integration.name === 'Shopify' ? (
+                        <Button size="sm" className="flex-1" disabled>
+                          Instale pelo admin da Shopify
                         </Button>
                       ) : (
                         <Button
                           size="sm"
                           className="flex-1"
                           onClick={() => {
-                            if (integration.name === 'Shopify') {
-                              setIsShopifyInfoOpen(true);
-                            } else if (integration.name === 'Nuvemshop') {
+                            if (integration.name === 'Nuvemshop') {
                               setIsNuvemshopInfoOpen(true);
                             } else if (['Loja Integrada', 'Tray', 'VTEX'].includes(integration.name)) {
                               setIntegrationType('ecommerce');
@@ -724,6 +707,9 @@ export default function Integracoes() {
             })}
           </div>
         </Card>
+
+        {/* Solicitações de dados de clientes (Shopify) — só aparece se houver alguma */}
+        <ShopifyDataRequests />
 
         {/* Webhook Integrations */}
         <Card className="p-0 overflow-hidden border-none shadow-none md:border md:shadow-sm md:p-6">
@@ -949,17 +935,19 @@ export default function Integracoes() {
 
               <div className="grid gap-3">
                 <Card
-                  className="p-4 cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => handleSelectEcommerce('Shopify')}
+                  className="p-4 opacity-60 cursor-not-allowed"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
                       <img src="/icons/shopify.png" alt="Shopify" className="w-full h-full object-cover" />
                     </div>
-                    <div>
-                      <p className="font-medium">Shopify</p>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">Shopify</p>
+                        <Badge variant="secondary">Instale pelo admin Shopify</Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        Sincronize produtos e pedidos
+                        A conexão é criada automaticamente durante a instalação do app
                       </p>
                     </div>
                   </div>
@@ -1020,15 +1008,17 @@ export default function Integracoes() {
                 </Card>
 
                 <Card
-                  className="p-4 cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => handleSelectEcommerce('Tray')}
+                  className="p-4 opacity-60 cursor-not-allowed"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
                       <img src="/icons/tray.png" alt="Tray" className="w-full h-full object-cover" />
                     </div>
-                    <div>
-                      <p className="font-medium">Tray</p>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">Tray</p>
+                        <Badge variant="secondary">Indisponível</Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         Gestão de vendas e pedidos
                       </p>
@@ -1037,15 +1027,17 @@ export default function Integracoes() {
                 </Card>
 
                 <Card
-                  className="p-4 cursor-pointer hover:border-primary transition-colors"
-                  onClick={() => handleSelectEcommerce('VTEX')}
+                  className="p-4 opacity-60 cursor-not-allowed"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
                       <img src="/icons/vtex.png" alt="VTEX" className="w-full h-full object-cover" />
                     </div>
-                    <div>
-                      <p className="font-medium">VTEX</p>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">VTEX</p>
+                        <Badge variant="secondary">Indisponível</Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         Plataforma e-commerce enterprise
                       </p>
@@ -1058,87 +1050,6 @@ export default function Integracoes() {
                 <Button variant="outline" onClick={() => setIntegrationType(null)}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Voltar
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Configuração Shopify - OAuth */}
-          {selectedEcommerce === 'Shopify' && (
-            <div className="space-y-6 py-4">
-              <div className="bg-green-500/10 p-4 rounded-lg">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white border">
-                    <img src="/icons/shopify.png" alt="Shopify" className="w-full h-full object-cover" />
-                  </div>
-                  <span className="font-medium">Conectar com Shopify</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Conecte sua loja Shopify usando OAuth 2.0. Você será redirecionado para autorizar a conexão.
-                </p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  💡 Cada usuário faz sua própria conexão com sua loja. Você não precisa configurar credenciais - apenas autorizar o acesso.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="shopify-shop">Domínio da Loja Shopify *</Label>
-                  <Input
-                    id="shopify-shop"
-                    value={shopifyShop}
-                    onChange={(e) => setShopifyShop(e.target.value)}
-                    placeholder="sualoja.myshopify.com ou seudominio.com"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Digite o domínio da sua loja (ex: sualoja.myshopify.com ou sualoja.com)
-                  </p>
-                </div>
-
-                <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20">
-                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                    <Check className="w-4 h-4 text-blue-500" />
-                    O que acontece ao conectar?
-                  </h4>
-                  <ol className="text-xs text-muted-foreground space-y-2 list-decimal list-inside">
-                    <li>Você será redirecionado para a página de autorização da Shopify</li>
-                    <li>Faça login na sua conta Shopify e autorize o acesso</li>
-                    <li>Você será redirecionado de volta para o sistema</li>
-                    <li>A conexão será configurada automaticamente</li>
-                  </ol>
-                </div>
-
-                <div className="bg-muted p-4 rounded-lg">
-                  <p className="text-sm font-medium mb-2">Recursos incluídos:</p>
-                  <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                    <li>Sincronização de produtos via GraphQL</li>
-                    <li>Busca de carrinhos abandonados</li>
-                    <li>Webhooks para pedidos em tempo real</li>
-                    <li>Segmentação de clientes por compras</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setSelectedEcommerce(null)}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-                <Button
-                  onClick={handleConnectShopify}
-                  disabled={!shopifyShop || isConnectingShopify}
-                >
-                  {isConnectingShopify ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Conectando...
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Conectar Shopify
-                    </>
-                  )}
                 </Button>
               </div>
             </div>
@@ -1699,77 +1610,6 @@ export default function Integracoes() {
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de Informações Shopify */}
-      <Dialog open={isShopifyInfoOpen} onOpenChange={setIsShopifyInfoOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center border bg-white">
-                <img src="/icons/shopify.png" alt="Shopify" className="w-full h-full object-cover" />
-              </div>
-              Conectar Shopify
-            </DialogTitle>
-            <DialogDescription>
-              Sincronize sua loja Shopify para importar produtos, pedidos e clientes.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="bg-primary/10 p-4 rounded-lg space-y-3">
-              <p className="text-sm font-medium">Como funciona:</p>
-              <ul className="text-sm text-muted-foreground space-y-2">
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Crie uma loja sandbox para desenvolvimento <strong>grátis</strong></span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Desenvolva e teste sua loja quanto quiser</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Receba <strong>30 dias grátis</strong> ao reivindicar sua loja</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span>Assinatura paga necessária após o período de trial para começar a vender</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-muted p-4 rounded-lg">
-              <p className="text-sm font-medium mb-2">Recursos incluídos:</p>
-              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                <li>Catálogo completo de produtos</li>
-                <li>Sistema de carrinho e checkout</li>
-                <li>Gestão de pedidos e inventário</li>
-                <li>Sincronização automática</li>
-              </ul>
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-              Ao conectar, você poderá reivindicar sua loja mais tarde digitando "Claim Store" no chat.
-            </p>
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsShopifyInfoOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => {
-                setIsShopifyInfoOpen(false);
-                setIntegrationType('ecommerce');
-                setSelectedEcommerce('Shopify');
-                setIsNewIntegrationOpen(true);
-              }}
-            >
-              Continuar
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
 

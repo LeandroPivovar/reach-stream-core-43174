@@ -28,6 +28,25 @@ interface SaleDetailsDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
+const COMPLETED_SALE_STATUSES = new Set([
+    'completed',
+    'Completo',
+    'pago',
+    'Pago',
+    'aprovado',
+    'Aprovado',
+    'approved',
+    'paid',
+    'success',
+    'Sucesso',
+    'delivered',
+    'entregue',
+    'shipped',
+    'fulfilled',
+]);
+
+const isCompletedSaleStatus = (status?: string) => COMPLETED_SALE_STATUSES.has(status || '');
+
 export function SaleDetailsDialog({ sale, open, onOpenChange }: SaleDetailsDialogProps) {
     if (!sale) return null;
 
@@ -78,8 +97,8 @@ export function SaleDetailsDialog({ sale, open, onOpenChange }: SaleDetailsDialo
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Status:</span>
-                                <Badge variant={sale.status === 'completed' ? 'default' : 'secondary'} className="text-[10px] uppercase">
-                                    {sale.status === 'completed' ? 'Pago' : 'Pendente'}
+                                <Badge variant={isCompletedSaleStatus(sale.status) ? 'default' : 'secondary'} className="text-[10px] uppercase">
+                                    {isCompletedSaleStatus(sale.status) ? 'Pago' : 'Pendente'}
                                 </Badge>
                             </div>
                             {sale.externalId && (

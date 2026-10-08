@@ -235,15 +235,16 @@ export default function Register() {
                 }
                 required
               />
-              <Label htmlFor="acceptTerms" className="text-sm">
-                Aceito os{' '}
+              <Label htmlFor="acceptTerms" className="text-xs leading-5 text-muted-foreground">
+                Li e aceito os{' '}
                 <Link to="/terms" className="text-primary hover:underline">
-                  termos de uso
+                  Termos de Uso
                 </Link>
-                {' '}e{' '}
+                {' '}e a{' '}
                 <Link to="/privacy" className="text-primary hover:underline">
-                  política de privacidade
+                  Política de Privacidade
                 </Link>
+                {' '}da A Núcleo CRM. Declaro que possuo poderes para contratar em nome da empresa cadastrada e que sou responsável pela licitude das bases de contatos, conteúdos e campanhas enviados pela Plataforma.
               </Label>
             </div>
 

@@ -29,11 +29,13 @@ import {
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { BuyCreditsModal } from '@/components/subscriptions/BuyCreditsModal';
+import { useShopifyMerchant } from '@/hooks/use-shopify-merchant';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
 export default function Assinaturas() {
   const navigate = useNavigate();
+  const { isShopifyMerchant, isLoadingShopifyMerchant } = useShopifyMerchant();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -69,14 +71,27 @@ export default function Assinaturas() {
 
   const currentPlan = subscription?.plan;
   const currentPlanName = currentPlan?.name || 'Gratuito';
-  const currentPriceFormatted = currentPlan?.price
-    ? `R$ ${currentPlan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-    : 'R$ 0,00';
+  const formatPlanPrice = (plan?: Plan | null) => {
+    if (isShopifyMerchant) {
+      const value = Number(plan?.priceUsd || 0);
+      return `US$ ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    const value = Number(plan?.price || 0);
+    return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+  const currentPriceFormatted = formatPlanPrice(currentPlan);
 
   const isExpired = (subscription as any)?.isExpired === true;
-  const statusLabel = subscription?.status === 'active' && !isExpired ? 'Ativa' : isExpired ? 'Vencida' : 'Inativa';
+  const statusLabel = subscription?.cancelAtPeriodEnd && !isExpired
+    ? 'Cancelada — acesso ativo'
+    : subscription?.status === 'active' && !isExpired
+      ? 'Ativa'
+      : isExpired
+        ? 'Vencida'
+        : 'Inativa';
 
-  if (loading) {
+  if (loading || isLoadingShopifyMerchant) {
     return (
       <Layout title="Assinaturas" subtitle="Gerencie seu plano e recursos">
         <div className="flex items-center justify-center h-64">
@@ -149,7 +164,9 @@ export default function Assinaturas() {
                   <Calendar className="w-5 h-5 text-slate-400" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Próxima cobrança</p>
+                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                    {subscription?.cancelAtPeriodEnd ? 'Acesso disponível até' : 'Próxima cobrança'}
+                  </p>
                   <p className="text-sm font-bold text-slate-700">
                     {subscription?.currentPeriodEnd
                       ? new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')
@@ -168,7 +185,7 @@ export default function Assinaturas() {
                 >
                   Alterar Plano
                 </Button>
-                {subscription && (
+                {subscription && !subscription.cancelAtPeriodEnd && (
                   <button
                     onClick={() => navigate('/cancelar-assinatura')}
                     className="text-sm font-bold text-red-500 hover:text-red-600 transition-colors px-2"
@@ -188,6 +205,7 @@ export default function Assinaturas() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {plans.map((plan) => {
               const isCurrent = subscription?.planId === plan.id;
+              const isUnavailableForShopify = isShopifyMerchant && Number(plan.price) > 0 && !plan.priceUsd;
               const isPro = plan.name.toLowerCase().includes('pro');
               const features = Array.isArray(plan.features) ? plan.features : [];
               const limits = plan.limits || { contacts: 0, emails: 0, sms: 0 };
@@ -210,7 +228,9 @@ export default function Assinaturas() {
                   <div className="text-center mb-8">
                     <h4 className="text-xl font-bold text-slate-800 mb-4">{plan.name}</h4>
                     <div className="flex items-center justify-center">
-                      <span className="text-4xl font-black text-slate-900 leading-none">R$ {plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      <span className="text-4xl font-black text-slate-900 leading-none">
+                        {isUnavailableForShopify ? 'Indisponível' : formatPlanPrice(plan)}
+                      </span>
                     </div>
                     <p className="text-sm text-slate-400 mt-2 font-medium">por {plan.interval === 'monthly' ? 'mês' : 'ano'}</p>
                   </div>
@@ -248,10 +268,10 @@ export default function Assinaturas() {
                       !isCurrent && isPro && "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200",
                       !isCurrent && !isPro && "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200"
                     )}
-                    disabled={isCurrent}
+                    disabled={isCurrent || isUnavailableForShopify}
                     onClick={() => navigate(`/checkout/${plan.id}`)}
                   >
-                    {isCurrent ? 'Plano Atual' : 'Selecionar Plano'}
+                    {isCurrent ? 'Plano Atual' : isUnavailableForShopify ? 'Preço não configurado' : 'Selecionar Plano'}
                   </Button>
                 </Card>
               );
@@ -263,14 +283,16 @@ export default function Assinaturas() {
         <div className="space-y-6 pt-6">
           <div className="flex items-center justify-between">
             <h3 className="text-2xl font-bold text-slate-900">Consumo do Mês</h3>
-            <Button
-              variant="outline"
-              className="bg-white hover:bg-slate-50 border-slate-200 text-slate-600 font-bold"
-              onClick={() => setIsBuyCreditsModalOpen(true)}
-            >
-              <DollarSign className="w-4 h-4 mr-2" />
-              Comprar Pacotes Adicionais
-            </Button>
+            {!isShopifyMerchant && (
+              <Button
+                variant="outline"
+                className="bg-white hover:bg-slate-50 border-slate-200 text-slate-600 font-bold"
+                onClick={() => setIsBuyCreditsModalOpen(true)}
+              >
+                <DollarSign className="w-4 h-4 mr-2" />
+                Comprar Pacotes Adicionais
+              </Button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -491,11 +513,13 @@ export default function Assinaturas() {
         </Card>
       </div>
 
-      <BuyCreditsModal
-        isOpen={isBuyCreditsModalOpen}
-        onClose={() => setIsBuyCreditsModalOpen(false)}
-        onSuccess={fetchData}
-      />
+      {!isShopifyMerchant && (
+        <BuyCreditsModal
+          isOpen={isBuyCreditsModalOpen}
+          onClose={() => setIsBuyCreditsModalOpen(false)}
+          onSuccess={fetchData}
+        />
+      )}
     </Layout>
   );
 }

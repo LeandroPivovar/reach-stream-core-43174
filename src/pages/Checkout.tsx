@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { CheckCircle2, ShieldCheck, ChevronRight, CreditCard, Box, User as UserIcon, Loader2, QrCode, Copy } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, Plan } from '@/lib/api';
+import { isShopifyEmbedded } from '@/lib/shopify';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function Checkout() {
@@ -40,8 +41,9 @@ export default function Checkout() {
     const [qrCode, setQrCode] = useState<{ payload: string, encodedImage: string, expirationDate: string } | null>(null);
     const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
     const [statusPollingInterval, setStatusPollingInterval] = useState<NodeJS.Timeout | null>(null);
-    const [paymentGateway, setPaymentGateway] = useState<'asaas' | 'shopify'>('asaas');
+    const [paymentGateway, setPaymentGateway] = useState<'asaas' | 'shopify' | null>(null);
     const [loadingGateway, setLoadingGateway] = useState(true);
+    const [shopifyCheckoutError, setShopifyCheckoutError] = useState<string | null>(null);
 
     // Limpar polling ao desmontar
     useEffect(() => {
@@ -74,32 +76,38 @@ export default function Checkout() {
     const checkPaymentGateway = async () => {
         try {
             const gw = await api.getPaymentGateway();
-            setPaymentGateway(gw.gateway);
+            const gateway = isShopifyEmbedded() ? 'shopify' : gw.gateway;
+            setPaymentGateway(gateway);
 
-            if (gw.gateway === 'shopify' && !gw.hasShopifyConnection) {
-                toast({
-                    title: 'Aviso',
-                    description: 'Gateway Shopify selecionado, mas você não possui uma loja Shopify conectada. O checkout será feito pelo Asaas.',
-                    variant: 'destructive',
-                });
-                setPaymentGateway('asaas');
+            if (gateway === 'shopify' && !gw.hasShopifyConnection) {
+                setShopifyCheckoutError(
+                    'Não foi possível confirmar a conexão com esta loja Shopify. Reabra o app pelo admin da Shopify e tente novamente.',
+                );
             }
         } catch (error) {
             console.error('Error checking payment gateway:', error);
-            setPaymentGateway('asaas');
+            if (isShopifyEmbedded()) {
+                setPaymentGateway('shopify');
+                setShopifyCheckoutError(
+                    'Não foi possível validar a cobrança pela Shopify. Tente novamente sem sair do admin da loja.',
+                );
+            } else {
+                setPaymentGateway('asaas');
+            }
         } finally {
             setLoadingGateway(false);
         }
     };
 
     useEffect(() => {
-        if (!loadingGateway && paymentGateway === 'shopify' && planId) {
+        if (!loadingGateway && paymentGateway === 'shopify' && !shopifyCheckoutError && planId) {
             initiateShopifyCheckout();
         }
-    }, [loadingGateway, paymentGateway, planId]);
+    }, [loadingGateway, paymentGateway, shopifyCheckoutError, planId]);
 
     const initiateShopifyCheckout = async () => {
         if (isSubmitting) return;
+        setShopifyCheckoutError(null);
         setIsSubmitting(true);
         try {
             const result = await api.createShopifyBillingSubscription({
@@ -112,8 +120,9 @@ export default function Checkout() {
                 throw new Error('URL de confirmação não recebida da Shopify.');
             }
         } catch (error: any) {
-            toast({ title: 'Erro', description: error.message || 'Erro ao iniciar checkout Shopify', variant: 'destructive' });
-            setPaymentGateway('asaas');
+            const message = error.message || 'Erro ao iniciar checkout Shopify';
+            setShopifyCheckoutError(message);
+            toast({ title: 'Erro', description: message, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
@@ -205,6 +214,28 @@ export default function Checkout() {
     if (!plan) return null;
 
     if (paymentGateway === 'shopify') {
+        if (shopifyCheckoutError) {
+            return (
+                <Layout title="Pagamento pela Shopify" subtitle="Não foi possível abrir a confirmação da assinatura">
+                    <Card className="max-w-xl mx-auto mt-10 p-8 text-center space-y-5">
+                        <div>
+                            <h2 className="text-xl font-semibold mb-2">Checkout Shopify indisponível</h2>
+                            <p className="text-sm text-muted-foreground">{shopifyCheckoutError}</p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row justify-center gap-3">
+                            <Button onClick={initiateShopifyCheckout} disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                Tentar novamente
+                            </Button>
+                            <Button variant="outline" onClick={() => navigate('/assinaturas')}>
+                                Voltar aos planos
+                            </Button>
+                        </div>
+                    </Card>
+                </Layout>
+            );
+        }
+
         return (
             <Layout title="Redirecionando" subtitle="Aguarde o redirecionamento para a Shopify">
                 <div className="flex items-center justify-center p-20">

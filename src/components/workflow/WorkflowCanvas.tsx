@@ -214,7 +214,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
         onOpenTemplateModal,
       },
     }));
-  }, [nodes, updateNodeData, deleteNode]);
+  }, [nodes, updateNodeData, deleteNode, onOpenTemplateModal]);
 
   const activeNode = nodes.find(n => n.selected) || (nodes.length > 0 ? nodes[nodes.length - 1] : null);
   const isSendNowDisabled = activeNode?.type === 'schedule';

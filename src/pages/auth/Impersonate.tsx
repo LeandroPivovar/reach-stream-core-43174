@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { api } from '@/lib/api';
 
 export default function Impersonate() {
     const [searchParams] = useSearchParams();
@@ -11,27 +12,54 @@ export default function Impersonate() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        try {
-            const t = searchParams.get('t');
-            const u = searchParams.get('u');
+        let cancelled = false;
 
-            if (!t || !u) {
-                throw new Error('Link inválido ou incompleto.');
+        const authenticate = async () => {
+            try {
+                const t = searchParams.get('t');
+                const u = searchParams.get('u');
+
+                if (!t) {
+                    throw new Error('Link inválido ou incompleto.');
+                }
+
+                localStorage.setItem('token', t);
+
+                let userData;
+                if (u) {
+                    try {
+                        userData = JSON.parse(decodeURIComponent(escape(atob(u))));
+                    } catch {
+                        userData = JSON.parse(atob(u));
+                    }
+                } else {
+                    userData = await api.getCurrentUser();
+                }
+
+                if (cancelled) return;
+
+                // Realizar login forçado
+                login(t, userData);
+
+                // Redirecionar para dashboard em breve
+                setTimeout(() => {
+                    if (cancelled) return;
+                    navigate('/dashboard', { replace: true });
+                }, 1000);
+            } catch (err) {
+                console.error('Falha no impersonate:', err);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                if (cancelled) return;
+                setError('Falha ao autenticar com o link fornecido. Verifique se o link está correto.');
             }
+        };
 
-            const userData = JSON.parse(atob(u));
+        authenticate();
 
-            // Realizar login forçado
-            login(t, userData);
-
-            // Redirecionar para dashboard em breve
-            setTimeout(() => {
-                navigate('/dashboard', { replace: true });
-            }, 1000);
-        } catch (err) {
-            console.error('Falha no impersonate:', err);
-            setError('Falha ao autenticar com o link fornecido. Verifique se o link está correto.');
-        }
+        return () => {
+            cancelled = true;
+        };
     }, [searchParams, login, navigate]);
 
     return (

@@ -58,8 +58,12 @@ export default function AdminEmailRequests() {
             toast({ title: 'Sucesso', description: 'Conexão de e-mail aprovada com sucesso.' });
             setIsApproveModalOpen(false);
         },
-        onError: () => {
-            toast({ title: 'Erro', description: 'Falha ao aprovar conexão.', variant: 'destructive' });
+        onError: (error: any) => {
+            toast({
+                title: 'Remetente não validado',
+                description: error?.message || 'A Zenvia não aceitou este remetente.',
+                variant: 'destructive',
+            });
         }
     });
 
@@ -118,6 +122,7 @@ export default function AdminEmailRequests() {
                         <TableRow>
                             <TableHead>Usuário</TableHead>
                             <TableHead>Domínio</TableHead>
+                            <TableHead>Remetente</TableHead>
                             <TableHead>Data Solicitação</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Ações</TableHead>
@@ -126,7 +131,7 @@ export default function AdminEmailRequests() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                                     Carregando...
                                 </TableCell>
                             </TableRow>
@@ -149,6 +154,7 @@ export default function AdminEmailRequests() {
                                             {request.domain}
                                         </div>
                                     </TableCell>
+                                    <TableCell>{request.email || 'Não informado'}</TableCell>
                                     <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">
@@ -180,7 +186,7 @@ export default function AdminEmailRequests() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                            <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                                     Nenhuma solicitação pendente encontrada.
                                 </TableCell>
                             </TableRow>
@@ -205,6 +211,11 @@ export default function AdminEmailRequests() {
                                 <Label className="text-xs text-muted-foreground">Usuário</Label>
                                 <p className="text-sm font-medium">{selectedRequest?.user?.firstName} {selectedRequest?.user?.lastName}</p>
                                 <p className="text-xs text-muted-foreground">{selectedRequest?.user?.email}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">Remetente</Label>
+                                <p className="text-sm font-medium">{selectedRequest?.email || 'Não informado'}</p>
+                                <p className="text-xs text-muted-foreground">{selectedRequest?.senderName || 'Nome padrão'}</p>
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-xs text-muted-foreground">Domínio</Label>
@@ -261,7 +272,9 @@ export default function AdminEmailRequests() {
                     </DialogHeader>
                     <div className="py-4 space-y-4">
                         <div className="p-4 rounded-lg bg-slate-50 border border-slate-100 dark:bg-slate-900/50 dark:border-slate-800">
-                            <p className="text-sm text-slate-500 mb-2">Certifique-se de que o usuário configurou corretamente os registros DNS.</p>
+                            <p className="text-sm text-slate-500 mb-2">
+                                Ao confirmar, o sistema enviará uma mensagem de validação usando <b>{selectedRequest?.email || 'o remetente não informado'}</b>. A aprovação só será concluída se a Zenvia aceitar o envio.
+                            </p>
                             <div className="grid grid-cols-1 gap-2 text-xs font-mono">
                                 <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded">TXT: {selectedRequest?.dnsTxt}</div>
                                 <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded">CNAME: {selectedRequest?.dnsCname}</div>

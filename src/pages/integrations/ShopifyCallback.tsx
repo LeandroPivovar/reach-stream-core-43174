@@ -40,29 +40,8 @@ export default function ShopifyCallback() {
         return;
       }
 
-      // Verificar se já temos o token na URL (redirecionamento direto do backend — sem code)
-      let jwtToken = searchParams.get('token');
-
-      if (jwtToken) {
-        // Fluxo de breakout: backend já fez o exchange e retornou o JWT diretamente
-        if (!shop) {
-          setStatus('error');
-          setMessage('Parâmetros de autorização inválidos.');
-          setTimeout(redirectOut, 3000);
-          return;
-        }
-        localStorage.setItem('token', jwtToken);
-        localStorage.removeItem('shopify_oauth_state');
-        localStorage.removeItem('shopify_shop');
-        setStatus('success');
-        setMessage('Conexão estabelecida com sucesso!');
-        toast({
-          title: 'Shopify conectada!',
-          description: `Sua loja ${shop} foi conectada com sucesso.`,
-        });
-        setTimeout(redirectOut, 2000);
-        return;
-      }
+      // Segurança: token NUNCA vem pela URL (o backend não envia mais; aceitar
+      // token de query string permitiria session fixation por link forjado).
 
       // Fluxo normal: code + shop + state obrigatórios
       if (!code || !shop || !state) {
@@ -97,7 +76,11 @@ export default function ShopifyCallback() {
         const defaultApiUrl = isProd ? window.location.origin : 'http://localhost:3000';
         const API_URL = import.meta.env.VITE_API_URL || defaultApiUrl;
         const baseUrl = API_URL.endsWith('/api') ? API_URL.replace(/\/api$/, '') : API_URL;
-        const endpoint = `/api/shopify/auth/callback?code=${code}&shop=${encodeURIComponent(shop)}&state=${encodeURIComponent(state)}`;
+
+        // Encaminhar TODOS os parâmetros que a Shopify anexou (hmac, host, timestamp)
+        // para o backend validar a autenticidade da request (HMAC).
+        const callbackParams = new URLSearchParams(window.location.search);
+        const endpoint = `/api/shopify/auth/callback?${callbackParams.toString()}`;
 
         const response = await fetch(`${baseUrl}${endpoint}`, {
           method: 'GET',
@@ -111,7 +94,7 @@ export default function ShopifyCallback() {
         }
 
         const data = await response.json();
-        jwtToken = data.token;
+        const jwtToken = data.token;
 
         // Se o backend retornou um token (auto-login/registro), salva no localStorage
         if (jwtToken) {

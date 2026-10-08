@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,9 +11,13 @@ import { api } from '@/lib/api';
 type Step = 'email' | 'code' | 'password' | 'success';
 
 export default function ForgotPassword() {
-  const [step, setStep] = useState<Step>('email');
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+  const [searchParams] = useSearchParams();
+  const initialEmail = searchParams.get('email') || sessionStorage.getItem('passwordResetEmail') || '';
+  const initialCode = searchParams.get('code') || '';
+
+  const [step, setStep] = useState<Step>(initialCode && initialEmail ? 'password' : initialEmail ? 'code' : 'email');
+  const [email, setEmail] = useState(initialEmail);
+  const [code, setCode] = useState(initialCode);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +37,10 @@ export default function ForgotPassword() {
 
     setIsLoading(true);
     try {
-      await api.forgotPassword(email);
+      const normalizedEmail = email.trim().toLowerCase();
+      await api.forgotPassword(normalizedEmail);
+      sessionStorage.setItem('passwordResetEmail', normalizedEmail);
+      setEmail(normalizedEmail);
       toast({
         title: 'Código enviado',
         description: 'Verifique seu e-mail para o código de recuperação',
@@ -106,6 +113,7 @@ export default function ForgotPassword() {
     setIsLoading(true);
     try {
       await api.resetPassword(email, code, password, confirmPassword);
+      sessionStorage.removeItem('passwordResetEmail');
       setStep('success');
       toast({
         title: 'Senha redefinida!',

@@ -71,7 +71,7 @@ export function ImportSalesDialog({ open, onOpenChange, onImportComplete }: Impo
                 'Metodo Pagamento': 'credit_card',
                 Status: 'completed',
                 Canal: 'direct',
-                Data: format(new Date(), 'yyyy-MM-dd HH:mm:ss')
+                Data: formatDateOnly(new Date())
             },
             {
                 Email: 'maria@teste.com',
@@ -84,7 +84,7 @@ export function ImportSalesDialog({ open, onOpenChange, onImportComplete }: Impo
                 'Metodo Pagamento': 'pix',
                 Status: 'completed',
                 Canal: 'instagram',
-                Data: format(new Date(), 'yyyy-MM-dd HH:mm:ss')
+                Data: formatDateOnly(new Date())
             }
         ];
 
@@ -201,7 +201,6 @@ export function ImportSalesDialog({ open, onOpenChange, onImportComplete }: Impo
     );
 }
 
-function format(date: Date, fmt: string) {
-    // Simple format helper
-    return date.toISOString().replace('T', ' ').split('.')[0];
+function formatDateOnly(date: Date) {
+    return date.toISOString().split('T')[0];
 }

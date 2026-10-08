@@ -125,6 +125,26 @@ interface Purchase {
   date: string;
   value: number;
   product: string;
+  status?: string;
+}
+
+const COMPLETED_SALE_STATUSES = new Set([
+  'completed',
+  'completo',
+  'pago',
+  'aprovado',
+  'approved',
+  'paid',
+  'success',
+  'sucesso',
+  'delivered',
+  'entregue',
+  'shipped',
+  'fulfilled',
+]);
+
+function isCompletedSaleStatus(status?: string) {
+  return COMPLETED_SALE_STATUSES.has((status || '').toLowerCase().trim());
 }
 
 interface HistoryEvent {
@@ -479,7 +499,7 @@ export default function Contatos() {
         }
 
         // Usar as vendas que já vieram no contato
-        (contact.sales || []).forEach((sale) => {
+        (contact.sales || []).filter((sale) => isCompletedSaleStatus(sale.status)).forEach((sale) => {
           const purchaseValue = typeof sale.totalValue === 'string'
             ? parseFloat(sale.totalValue)
             : sale.totalValue;
@@ -490,6 +510,7 @@ export default function Contatos() {
             date: sale.createdAt,
             value: purchaseValue,
             product: sale.product?.name || 'Produto',
+            status: sale.status,
           });
 
           purchasesByContact[contact.id].ltv += purchaseValue;
